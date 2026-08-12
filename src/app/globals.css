@@ -1,0 +1,279 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Terminal semantic tokens */
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --color-warn: var(--warn);
+  --color-research: var(--research);
+  --color-mdata: var(--mdata);
+  --color-pos-soft: var(--pos-soft);
+  --color-neg-soft: var(--neg-soft);
+
+  /* Surface ramp */
+  --color-base: var(--base);
+  --color-panel: var(--panel);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-hover: var(--hover);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* =========================================================================
+   Z TERMINAL — Dark-first professional market terminal palette
+   Base: near-black / graphite / charcoal. Accents are SEMANTIC, not decorative.
+   ========================================================================= */
+:root {
+  --radius: 0.375rem; /* 6px — tight, professional */
+
+  /* Light theme (secondary; terminal defaults to dark) */
+  --background: oklch(0.985 0.002 95);
+  --foreground: oklch(0.22 0.006 95);
+  --base: oklch(0.985 0.002 95);
+  --panel: oklch(0.97 0.003 95);
+  --surface: oklch(0.955 0.003 95);
+  --elevated: oklch(0.94 0.003 95);
+  --hover: oklch(0.925 0.004 95);
+  --card: oklch(0.97 0.003 95);
+  --card-foreground: oklch(0.22 0.006 95);
+  --popover: oklch(0.99 0.002 95);
+  --popover-foreground: oklch(0.22 0.006 95);
+  --primary: oklch(0.26 0.006 95);
+  --primary-foreground: oklch(0.985 0.002 95);
+  --secondary: oklch(0.94 0.003 95);
+  --secondary-foreground: oklch(0.26 0.006 95);
+  --muted: oklch(0.94 0.003 95);
+  --muted-foreground: oklch(0.5 0.006 95);
+  --accent: oklch(0.93 0.004 95);
+  --accent-foreground: oklch(0.22 0.006 95);
+  --destructive: oklch(0.55 0.21 25);
+  --border: oklch(0.88 0.004 95);
+  --input: oklch(0.9 0.004 95);
+  --ring: oklch(0.55 0.01 200);
+
+  /* Semantic accents (shared light/dark — restrained, not neon) */
+  --pos: oklch(0.62 0.14 158);          /* emerald  */
+  --neg: oklch(0.6 0.2 25);             /* red      */
+  --warn: oklch(0.74 0.13 75);          /* amber/gold */
+  --research: oklch(0.62 0.11 295);     /* violet   */
+  --mdata: oklch(0.7 0.09 205);         /* cyan (market data) */
+  --pos-soft: oklch(0.62 0.05 158);
+  --neg-soft: oklch(0.6 0.06 25);
+
+  --chart-1: var(--pos);
+  --chart-2: var(--neg);
+  --chart-3: var(--warn);
+  --chart-4: var(--research);
+  --chart-5: var(--mdata);
+
+  --sidebar: oklch(0.965 0.003 95);
+  --sidebar-foreground: oklch(0.26 0.006 95);
+  --sidebar-primary: oklch(0.3 0.006 95);
+  --sidebar-primary-foreground: oklch(0.985 0.002 95);
+  --sidebar-accent: oklch(0.93 0.004 95);
+  --sidebar-accent-foreground: oklch(0.26 0.006 95);
+  --sidebar-border: oklch(0.9 0.004 95);
+  --sidebar-ring: oklch(0.55 0.01 200);
+}
+
+.dark {
+  /* The terminal identity — graphite ramped surfaces */
+  --background: oklch(0.155 0.004 95);   /* near-black, slightly warm */
+  --foreground: oklch(0.91 0.004 95);   /* warm off-white */
+  --base: oklch(0.155 0.004 95);
+  --panel: oklch(0.185 0.005 95);       /* graphite */
+  --surface: oklch(0.215 0.005 95);     /* charcoal */
+  --elevated: oklch(0.245 0.006 95);
+  --hover: oklch(0.285 0.006 95);
+  --card: oklch(0.185 0.005 95);
+  --card-foreground: oklch(0.91 0.004 95);
+  --popover: oklch(0.2 0.005 95);
+  --popover-foreground: oklch(0.91 0.004 95);
+  --primary: oklch(0.91 0.004 95);
+  --primary-foreground: oklch(0.18 0.005 95);
+  --secondary: oklch(0.245 0.006 95);
+  --secondary-foreground: oklch(0.91 0.004 95);
+  --muted: oklch(0.245 0.006 95);
+  --muted-foreground: oklch(0.62 0.006 95);
+  --accent: oklch(0.275 0.007 95);
+  --accent-foreground: oklch(0.91 0.004 95);
+  --destructive: oklch(0.6 0.2 25);
+  --border: oklch(0.3 0.006 95 / 60%);  /* subtle hairline */
+  --input: oklch(0.26 0.006 95);
+  --ring: oklch(0.7 0.09 205);
+
+  /* Semantic — slightly brightened for dark bg legibility */
+  --pos: oklch(0.72 0.15 158);
+  --neg: oklch(0.65 0.21 25);
+  --warn: oklch(0.78 0.13 75);
+  --research: oklch(0.68 0.12 295);
+  --mdata: oklch(0.74 0.1 205);
+  --pos-soft: oklch(0.4 0.06 158);
+  --neg-soft: oklch(0.38 0.08 25);
+
+  --chart-1: var(--pos);
+  --chart-2: var(--neg);
+  --chart-3: var(--warn);
+  --chart-4: var(--research);
+  --chart-5: var(--mdata);
+
+  --sidebar: oklch(0.17 0.005 95);
+  --sidebar-foreground: oklch(0.88 0.004 95);
+  --sidebar-primary: oklch(0.91 0.004 95);
+  --sidebar-primary-foreground: oklch(0.18 0.005 95);
+  --sidebar-accent: oklch(0.245 0.006 95);
+  --sidebar-accent-foreground: oklch(0.91 0.004 95);
+  --sidebar-border: oklch(0.3 0.006 95 / 60%);
+  --sidebar-ring: oklch(0.7 0.09 205);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Tabular numerals everywhere financial numbers appear by default on .tnum */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv11";
+  }
+  .nums {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+}
+
+@layer utilities {
+  /* Hairline borders for terminal panels */
+  .hairline {
+    border-color: color-mix(in oklch, var(--foreground) 8%, transparent);
+  }
+  .hairline-strong {
+    border-color: color-mix(in oklch, var(--foreground) 14%, transparent);
+  }
+  /* Subtle inner panel texture used on chart backdrop */
+  .chart-grid-bg {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+  /* Compact professional scrollbars */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent) transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--foreground) 16%, transparent);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--foreground) 28%, transparent);
+    background-clip: padding-box;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Text colors bound to semantic tokens */
+  .text-pos { color: var(--pos); }
+  .text-neg { color: var(--neg); }
+  .text-warn { color: var(--warn); }
+  .text-research { color: var(--research); }
+  .text-mdata { color: var(--mdata); }
+  .bg-pos { background-color: var(--pos); }
+  .bg-neg { background-color: var(--neg); }
+  .bg-warn { background-color: var(--warn); }
+  .bg-research { background-color: var(--research); }
+  .bg-mdata { background-color: var(--mdata); }
+  .border-pos { border-color: var(--pos); }
+  .border-neg { border-color: var(--neg); }
+  .border-warn { border-color: var(--warn); }
+  .border-research { border-color: var(--research); }
+  .border-mdata { border-color: var(--mdata); }
+
+  .bg-base { background-color: var(--base); }
+  .bg-panel { background-color: var(--panel); }
+  .bg-surface { background-color: var(--surface); }
+  .bg-elevated { background-color: var(--elevated); }
+  .bg-hover { background-color: var(--hover); }
+
+  /* Mono utility for figures */
+  .font-mono-num {
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Focus ring used by terminal controls */
+  .focus-ring {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px var(--ring);
+  }
+}
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
