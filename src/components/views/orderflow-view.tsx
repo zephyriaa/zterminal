@@ -5,7 +5,7 @@ import { Activity, BarChart3, Radio, Waves } from "lucide-react";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { useWorkspace } from "@/stores/workspace";
 import { getContract, listContracts } from "@/lib/market/contracts";
-import { Panel, Pill, SimulatedTag } from "../terminal/primitives";
+import { Panel, Pill } from "../terminal/primitives";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -20,7 +20,7 @@ export function OrderFlowView() {
   const { symbol, setSymbol } = useWorkspace();
   const c = getContract(symbol);
   const [tab, setTab] = useState<OFTab>("dom");
-  const { trades, depth, quote } = useMarketStream(symbol, { trades: 300, depth: true });
+  const { trades, depth, quote, dataStatus, provider, state } = useMarketStream(symbol, { trades: 300, depth: true });
 
   const lastPrice = trades[trades.length - 1]?.price ?? c.basePrice;
 
@@ -70,12 +70,14 @@ export function OrderFlowView() {
         <Pill tone={c.supportsDepth ? "pos" : "warn"}>{c.supportsDepth ? "Depth" : "Top-of-book"}</Pill>
         {!c.supportsDepth && (
           <span className="text-[10px] text-muted-foreground">
-            True exchange-level order flow unavailable for {symbol}; depth shown is SIMULATED.
+            Exchange depth is unavailable for {symbol}; no synthetic depth is substituted.
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
           <span className="text-[14px] tnum font-semibold text-foreground">{fmt(lastPrice, c.tickSize)}</span>
-          <SimulatedTag />
+          <Pill tone={dataStatus === "LIVE" ? "pos" : dataStatus === "STALE" || state === "degraded" ? "warn" : "default"}>
+            {(provider ?? "gateio").toUpperCase()} · {dataStatus}
+          </Pill>
         </div>
       </div>
 

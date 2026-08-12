@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, Search } from "lucide-react";
-import { Panel, PanelHeader, SimulatedTag } from "../terminal/primitives";
+import { Panel, PanelHeader, Pill } from "../terminal/primitives";
 import { useWorkspace } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ export function MarketsView() {
   const [rows, setRows] = useState<MarketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [providerState, setProviderState] = useState({ provider: "gateio", dataStatus: "DISCONNECTED" });
 
   useEffect(() => {
     let cancelled = false;
@@ -41,14 +42,18 @@ export function MarketsView() {
       const r = await fetch("/api/markets");
       const j = await r.json();
       if (!cancelled) {
-        setRows(j.rows);
+        setRows(Array.isArray(j.rows) ? j.rows : []);
+        setProviderState({ provider: j.provider ?? "gateio", dataStatus: j.dataStatus ?? "UNAVAILABLE" });
         setLoading(false);
       }
     })();
     const id = setInterval(async () => {
       const r = await fetch("/api/markets");
       const j = await r.json();
-      if (!cancelled) setRows(j.rows);
+      if (!cancelled) {
+        setRows(Array.isArray(j.rows) ? j.rows : []);
+        setProviderState({ provider: j.provider ?? "gateio", dataStatus: j.dataStatus ?? "UNAVAILABLE" });
+      }
     }, 8000);
     return () => {
       cancelled = true;
@@ -64,7 +69,9 @@ export function MarketsView() {
     <div className="h-full flex flex-col bg-background">
       <div className="h-10 border-b hairline bg-panel flex items-center gap-2 px-3">
         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Markets</span>
-        <SimulatedTag />
+        <Pill tone={providerState.dataStatus === "LIVE" ? "pos" : "warn"}>
+          {providerState.provider.toUpperCase()} · {providerState.dataStatus}
+        </Pill>
         <div className="relative ml-auto w-56">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input

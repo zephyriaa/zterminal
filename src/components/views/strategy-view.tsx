@@ -1,5 +1,8 @@
 "use client";
 
+/* Initial strategy validation intentionally synchronizes editor diagnostics on mount. */
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useState } from "react";
 import {
   AlertCircle,

@@ -1,5 +1,8 @@
 "use client";
 
+/* Canvas rendering intentionally coordinates refs and browser observers outside React render state. */
+/* eslint-disable react-hooks/refs, react-hooks/set-state-in-effect, react-hooks/immutability */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getContract } from "@/lib/market/contracts";
 import type { Bar } from "@/lib/market/types";

@@ -9,10 +9,10 @@
  * See MARKET_DATA_SCHEMA.md for the full specification.
  */
 
-export type ProviderId = "mock" | "rithmic-test" | "rithmic-prod" | "databento";
+export type ProviderId = "mock" | "gateio" | "rithmic-test" | "rithmic-prod" | "databento";
 export type Environment = "simulation" | "paper" | "live";
 
-export type Exchange = "CME" | "CBOT" | "COMEX" | "NYMEX" | "NASDAQ" | "NYSE" | "ICE";
+export type Exchange = "CME" | "CBOT" | "COMEX" | "NYMEX" | "NASDAQ" | "NYSE" | "ICE" | "GATEIO";
 export type Side = "buy" | "sell";
 export type Aggressor = "buy" | "sell" | "unknown";
 
@@ -22,11 +22,11 @@ export interface ContractMetadata {
   symbol: string;          // e.g. "NQH5"
   description: string;     // e.g. "E-mini Nasdaq-100 (Mar 2025)"
   exchange: Exchange;
-  product: "future" | "equity" | "index";
+  product: "future" | "perpetual" | "equity" | "index";
   tickSize: number;        // minimum price increment
   tickValue: number;       // $ value of one tick (per contract / share)
   multiplier: number;      // point multiplier (futures) or 1 (equities)
-  currency: "USD";
+  currency: "USD" | "USDT";
   expiry?: string;         // ISO date for futures
   session: SessionId;
   /** True only when the underlying provider genuinely supplies real depth/MBO. */
@@ -34,7 +34,7 @@ export interface ContractMetadata {
   supportsMBO: boolean;
 }
 
-export type SessionId = "cme" | "equity";
+export type SessionId = "cme" | "equity" | "crypto";
 
 /** Trade (time & sales) — normalized across providers. */
 export interface TradeEvent {
@@ -184,7 +184,7 @@ export interface AccountSnapshot {
   equity: number;
   marginUsed: number;
   marginAvailable: number;
-  currency: "USD";
+  currency: "USD" | "USDT";
 }
 
 export type ConnectionState =
@@ -192,7 +192,16 @@ export type ConnectionState =
   | "connecting"
   | "connected"
   | "reconnecting"
+  | "stale"
   | "degraded"
   | "error";
 
-export type DataStatus = "LIVE" | "HISTORICAL" | "DELAYED" | "SIMULATED" | "DISCONNECTED";
+export type DataStatus =
+  | "LIVE"
+  | "HISTORICAL"
+  | "DELAYED"
+  | "SIMULATED"
+  | "STALE"
+  | "DEGRADED"
+  | "UNAVAILABLE"
+  | "DISCONNECTED";

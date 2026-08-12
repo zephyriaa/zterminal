@@ -73,7 +73,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
 ];
 
 export function Sidebar() {
-  const { activeView, setView, sidebarCollapsed, toggleSidebar } = useWorkspace();
+  const { activeView, setView, sidebarCollapsed, toggleSidebar, connection } = useWorkspace();
   const collapsed = sidebarCollapsed;
 
   return (
@@ -154,10 +154,10 @@ export function Sidebar() {
       {/* Footer status */}
       <div className="border-t hairline px-2 py-2">
         <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
-          <span className="w-1.5 h-1.5 rounded-full bg-mdata shadow-[0_0_6px_var(--mdata)]" />
+          <span className={cn("w-1.5 h-1.5 rounded-full", connection.dataStatus === "LIVE" ? "bg-mdata shadow-[0_0_6px_var(--mdata)]" : "bg-warn")} />
           {!collapsed && (
             <span className="text-[10.5px] text-muted-foreground uppercase tracking-wider">
-              Simulated Feed
+              {(connection.provider ?? "gateio").toUpperCase()} · {connection.dataStatus}
             </span>
           )}
         </div>
