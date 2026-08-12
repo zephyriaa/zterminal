@@ -10,6 +10,7 @@ import {
   FlaskConical,
   Plug,
   Plus,
+  Radio,
   Settings as SettingsIcon,
   ShieldAlert,
   NotebookPen,
@@ -360,43 +361,67 @@ export function JournalView() {
 
 export function ConnectionsView() {
   const { connection, setConnection } = useWorkspace();
-  const isMock = connection.provider === "mock";
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
+  const [system, setSystem] = useState<"Rithmic Paper Trading" | "Rithmic Test">("Rithmic Paper Trading");
+  const [connecting, setConnecting] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  async function connectRithmic() {
+    setConnecting(true);
+    setResult(null);
+    try {
+      const response = await fetch("/api/connectors/rithmic", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId, password, system }),
+      });
+      const body = await response.json();
+      setResult(body.message ?? body.error ?? "Rithmic connector is unavailable.");
+      setConnection({ provider: "rithmic-test", environment: "paper", state: "unavailable", dataStatus: "UNAVAILABLE" });
+    } catch {
+      setResult("The connector request could not reach the server. No credentials were stored.");
+    } finally {
+      // Credentials must never survive a runtime request in the client UI.
+      setPassword("");
+      setConnecting(false);
+    }
+  }
+
   return (
     <ViewShell title="Connections" icon={Plug}>
-      <div className="p-3 space-y-3">
+      <div className="p-3 space-y-3 max-w-3xl">
         <Panel className="p-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[6px] bg-surface border hairline grid place-items-center"><Plug className="w-4 h-4 text-muted-foreground" /></div>
+            <div className="w-9 h-9 rounded-[6px] bg-surface border hairline grid place-items-center"><Radio className="w-4 h-4 text-mdata" /></div>
             <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-semibold">Rithmic — Test / Exchange Simulator</span>
-                <Pill tone={connection.state === "connected" ? "pos" : "warn"}>{connection.state}</Pill>
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">R | Protocol API · server-side adapter only</div>
+              <div className="flex items-center gap-2"><span className="text-[13px] font-semibold">Gate.io — Public USDT Perpetual Data</span><Pill tone={connection.provider === "gateio" && connection.dataStatus === "LIVE" ? "pos" : "warn"}>{connection.dataStatus}</Pill></div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">Read-only public market data · QQQX_USDT · no API key or account permission required</div>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Stat label="Market Data" value={isMock ? "SIMULATED" : "—"} tone="warn" />
-            <Stat label="Execution" value="SIMULATED" tone="warn" />
-            <Stat label="Environment" value="simulation" />
-            <Stat label="Credentials" value="Server-side" tone="muted" />
+            <Stat label="Market Data" value={connection.provider === "gateio" ? connection.dataStatus : "UNAVAILABLE"} tone={connection.dataStatus === "LIVE" ? "pos" : "warn"} />
+            <Stat label="Execution" value="DISABLED" tone="muted" />
+            <Stat label="Environment" value="live / read-only" />
+            <Stat label="Credentials" value="Not required" tone="muted" />
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <Button size="sm" variant={isMock ? "outline" : "default"} onClick={() => setConnection({ provider: "mock", environment: "simulation", state: "connected", dataStatus: "SIMULATED" })} className="h-7 text-[12px]"><Check className="w-3.5 h-3.5 mr-1" />Use Mock (SIMULATED)</Button>
-            <Button size="sm" variant="outline" disabled className="h-7 text-[12px] opacity-60" title="Requires Rithmic dev-kit + credentials + conformance">Connect Rithmic Test</Button>
-            <Button size="sm" variant="outline" disabled className="h-7 text-[12px] opacity-60" title="Production access requires authorization">Connect Rithmic Prod</Button>
-          </div>
+          <div className="mt-3 flex items-center gap-2"><Button size="sm" variant="outline" onClick={() => setConnection({ provider: "mock", environment: "simulation", state: "connected", dataStatus: "SIMULATED" })} className="h-7 text-[12px]"><Check className="w-3.5 h-3.5 mr-1" />Use Mock (SIMULATED)</Button></div>
         </Panel>
-        <div className="flex items-start gap-2 p-3 border border-warn/30 bg-warn/5 rounded-[6px]">
-          <AlertTriangle className="w-4 h-4 text-warn shrink-0 mt-0.5" />
-          <p className="text-[11.5px] text-foreground/85 leading-relaxed">
-            No Rithmic protobuf dev-kit or credentials are present in this environment. The Rithmic
-            adapter is implemented as an interface (<span className="font-mono-num text-[11px]">IRithmicProvider</span>)
-            with a clearly-labeled SIMULATED mock. Production integration requires the official Rithmic
-            R | Protocol API dev-kit, conformance testing, and authorized credentials — see
-            <span className="font-mono-num text-[11px]"> RITHMIC_INTEGRATION.md</span>.
-          </p>
-        </div>
+
+        <Panel className="p-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[6px] bg-surface border hairline grid place-items-center"><Plug className="w-4 h-4 text-muted-foreground" /></div>
+            <div className="flex-1"><div className="flex items-center gap-2"><span className="text-[13px] font-semibold">Rithmic — Runtime Connector</span><Pill tone="warn">Approval-gated</Pill></div><div className="text-[11px] text-muted-foreground mt-0.5">R | Protocol API · credentials are submitted for this request only and are never stored in the browser, database, logs, or repository.</div></div>
+          </div>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_190px] gap-2">
+            <Input value={userId} onChange={(event) => setUserId(event.target.value)} type="email" autoComplete="username" placeholder="Rithmic user ID / email" className="h-8 text-[12px] bg-surface" />
+            <Input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" placeholder="Rithmic password" className="h-8 text-[12px] bg-surface" />
+            <Select value={system} onValueChange={(value) => setSystem(value as typeof system)}><SelectTrigger className="h-8 text-[12px] bg-surface"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Rithmic Paper Trading">Rithmic Paper Trading</SelectItem><SelectItem value="Rithmic Test">Rithmic Test</SelectItem></SelectContent></Select>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2"><Button size="sm" onClick={connectRithmic} disabled={connecting || !userId || !password} className="h-7 text-[12px]">{connecting ? "Checking connector…" : "Connect Rithmic"}</Button><span className="text-[10px] text-muted-foreground">Password is cleared immediately after each request.</span></div>
+          {result && <p className="mt-2 text-[11px] text-warn leading-relaxed">{result}</p>}
+        </Panel>
+        <div className="flex items-start gap-2 p-3 border border-warn/30 bg-warn/5 rounded-[6px]"><AlertTriangle className="w-4 h-4 text-warn shrink-0 mt-0.5" /><p className="text-[11.5px] text-foreground/85 leading-relaxed">The secure connector form is ready, but this deployment will refuse a live Rithmic login until the official R | Protocol development kit, Rithmic Test integration, and conformance approval are installed. ZTerminal will never falsely label this connection as live. See <span className="font-mono-num text-[11px]">RITHMIC_INTEGRATION.md</span>.</p></div>
       </div>
     </ViewShell>
   );
@@ -424,7 +449,7 @@ export function SettingsView() {
         </Panel>
         <Panel className="p-3">
           <PanelHeader title="Data" className="-mx-3 -mt-3 mb-2" />
-          <StatRow label="Default provider" value="Mock (SIMULATED)" tone="warn" />
+          <StatRow label="Default provider" value="Gate.io (LIVE, read-only)" tone="pos" />
           <StatRow label="Timezone (internal)" value="UTC" />
           <StatRow label="Session calendar" value="America/New_York" />
         </Panel>
@@ -469,8 +494,8 @@ function Toggle({ label, hint, on, set }: { label: string; hint?: string; on: bo
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "warn" | "muted" }) {
-  const cls = tone === "warn" ? "text-warn" : tone === "muted" ? "text-muted-foreground" : "text-foreground";
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "warn" | "muted" | "pos" }) {
+  const cls = tone === "warn" ? "text-warn" : tone === "muted" ? "text-muted-foreground" : tone === "pos" ? "text-pos" : "text-foreground";
   return (
     <div className="border hairline rounded-[5px] p-2 bg-surface">
       <div className="text-[9.5px] uppercase tracking-wider text-muted-foreground">{label}</div>

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { TerminalChart, type ChartType, type ChartIndicators } from "../terminal/terminal-chart";
 import { useWorkspace } from "@/stores/workspace";
-import { Panel, Pill, SimulatedTag } from "../terminal/primitives";
+import { Panel, Pill } from "../terminal/primitives";
 import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import type { Timeframe } from "@/lib/market/types";
@@ -53,11 +53,11 @@ export function ChartView() {
   const [full, setFull] = useState(false);
 
   // live quote for the header
-  const { quote, lastTrade, trades } = useMarketStream(symbol, { trades: 40, depth: false });
+  const { quote, lastTrade, trades, dataStatus, provider } = useMarketStream(symbol, { trades: 40, depth: false });
 
   const dayChange = useMemo(() => {
     if (!lastTrade) return null;
-    // approximate vs basePrice (SIMULATED)
+    // Approximate change versus the configured reference price.
     const ch = lastTrade.price - contract.basePrice;
     return { ch, pct: (ch / contract.basePrice) * 100 };
   }, [lastTrade, contract.basePrice]);
@@ -140,7 +140,9 @@ export function ChartView() {
         <ToolBtn label="Settings"><Settings2 className="w-3.5 h-3.5" /></ToolBtn>
 
         <div className="ml-auto flex items-center gap-1">
-          <SimulatedTag />
+          <Pill tone={dataStatus === "LIVE" ? "pos" : dataStatus === "STALE" || dataStatus === "DEGRADED" ? "warn" : "default"}>
+            {(provider ?? "gateio").toUpperCase()} · {dataStatus}
+          </Pill>
           <ToolBtn label={full ? "Exit fullscreen" : "Fullscreen"} onClick={toggleFull}>
             {full ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </ToolBtn>
@@ -168,7 +170,7 @@ export function ChartView() {
                 onChange={(e) => setReplayIdx(Math.round((Number(e.target.value) / 100) * 500))}
                 className="flex-1 accent-[var(--mdata)] h-1"
               />
-              <span className="text-[10px] tnum text-muted-foreground">SIMULATED</span>
+              <span className="text-[10px] tnum text-muted-foreground">Historical replay</span>
             </div>
           )}
         </div>
@@ -214,7 +216,7 @@ export function ChartView() {
                     </tr>
                   ))}
                   {!trades.length && (
-                    <tr><td className="px-2 py-3 text-muted-foreground text-[10px]">Awaiting simulated feed…</td></tr>
+                    <tr><td className="px-2 py-3 text-muted-foreground text-[10px]">Awaiting {provider ?? "provider"} market data…</td></tr>
                   )}
                 </tbody>
               </table>

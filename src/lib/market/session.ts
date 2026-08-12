@@ -32,7 +32,8 @@ export interface SessionWindow {
 }
 
 /** Classify a UTC timestamp against CME ETH + equity RTH windows. */
-export function classifySession(symbolSession: "cme" | "equity", utcMs: number): SessionWindow {
+export function classifySession(symbolSession: "cme" | "equity" | "crypto", utcMs: number): SessionWindow {
+  if (symbolSession === "crypto") return { label: "rth", isRTH: true };
   const m = minutesSinceMidnightET(utcMs);
   const dow = dayOfWeekET(utcMs);
   if (symbolSession === "equity") {

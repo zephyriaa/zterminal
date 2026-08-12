@@ -95,17 +95,29 @@ Rithmic documentation and dev-kit to implement against them.
 
 ## 4. Credential handling (enforced)
 
-Rithmic credentials are server-side secrets. The following is enforced by
-code review and must remain true:
+Rithmic credentials are **never committed, logged, persisted, or returned by
+this application**. The Connections screen provides a runtime-only password
+form so an authorized operator can supply credentials when an official adapter
+is available. The browser necessarily holds the entered value only in the
+password input and request memory; it clears the password immediately after the
+HTTPS request and does not use `localStorage`, URL parameters, analytics, or
+client-side persistence.
 
-- Credentials are read from **server-side environment variables** only —
-  never hardcoded, never committed, never logged.
-- Credentials **never reach the browser** — no exposure via API responses,
-  no `localStorage`, no URL parameters, no client bundles.
-- The Rithmic adapter runs **server-side only** (Next.js route handlers or a
-  dedicated server process). It is not imported by any client component.
-- Logs must redact credentials and tokens. Heartbeat and reconnect logs must
-  not include authentication payloads.
+The current route, `POST /api/connectors/rithmic`, validates the request in
+memory and deliberately returns an unavailable state because the official
+Rithmic dev-kit and conformance-approved adapter are not installed. It does
+not write credentials to a database, file, cache, log, response, or environment
+variable. When the official adapter is added, it must consume the request
+credential only for the in-memory login operation and must retain all of the
+following requirements:
+
+- Credentials are never hardcoded, committed, logged, cached, or returned by
+  an API response.
+- The login route is served only over HTTPS in production, is rate-limited,
+  and uses same-origin/origin protections.
+- The Rithmic protocol adapter runs **server-side only**. No Rithmic dev-kit,
+  protocol message, credential, or session token is bundled into client code.
+- Connection, heartbeat, and reconnect logs redact all authentication payloads.
 
 See `SECURITY.md` for the full credential policy.
 
@@ -121,10 +133,12 @@ the gap is explicit:
    pairing, heartbeat cadence, and reconnect/restore behavior.
 3. Run conformance testing against Rithmic Test (Exchange Simulator) before
    any Production consideration.
-4. Add server-side credential configuration (environment secrets) and a
-   connection-health surface in the UI.
+4. Replace the current runtime-only unavailable connector boundary with a
+   conformance-approved server-side login session, connection-health surface,
+   credential redaction tests, and documented session-expiry behavior.
 5. Only then, with explicit authorization, consider Production.
 
-No part of the current codebase is authorized for live trading. Until the
-above is complete, all market data shown in the terminal is `SIMULATED` and
-must be labeled as such.
+No part of the current codebase is authorized for live trading. Gate.io
+public data may be displayed as read-only `LIVE` data when its provider is
+connected; Rithmic remains `UNAVAILABLE` until the requirements above are
+complete and must never be labeled as live before then.

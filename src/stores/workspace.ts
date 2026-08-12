@@ -46,10 +46,10 @@ interface WorkspaceState {
 
   // Market data connection (mock by default)
   connection: {
-    state: "connected" | "connecting" | "reconnecting" | "disconnected" | "degraded";
-    provider: "mock" | "rithmic-test" | "rithmic-prod";
+    state: "connected" | "connecting" | "reconnecting" | "stale" | "disconnected" | "degraded" | "unavailable";
+    provider: "mock" | "gateio" | "rithmic-test" | "rithmic-prod";
     environment: "simulation" | "paper" | "live";
-    dataStatus: "SIMULATED" | "LIVE" | "HISTORICAL" | "DELAYED" | "DISCONNECTED";
+    dataStatus: "SIMULATED" | "LIVE" | "HISTORICAL" | "DELAYED" | "STALE" | "DEGRADED" | "UNAVAILABLE" | "DISCONNECTED";
   };
   setConnection: (c: Partial<WorkspaceState["connection"]>) => void;
 
@@ -71,7 +71,7 @@ export const useWorkspace = create<WorkspaceState>()(
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebar: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
-      symbol: "NQ",
+      symbol: "QQQX_USDT",
       setSymbol: (s) => set({ symbol: s }),
 
       timeframe: "5m",
@@ -82,9 +82,9 @@ export const useWorkspace = create<WorkspaceState>()(
 
       connection: {
         state: "connecting",
-        provider: "mock",
-        environment: "simulation",
-        dataStatus: "SIMULATED",
+        provider: "gateio",
+        environment: "live",
+        dataStatus: "DISCONNECTED",
       },
       setConnection: (c) =>
         set((s) => ({ connection: { ...s.connection, ...c } })),

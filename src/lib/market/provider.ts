@@ -23,6 +23,7 @@ import type {
   Bar,
   ContractMetadata,
   ConnectionState,
+  DepthEvent,
   DepthLevel,
   Environment,
   ProviderId,

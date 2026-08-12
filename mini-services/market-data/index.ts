@@ -1,206 +1,246 @@
-/**
- * Z TERMINAL — Market-Data streaming mini-service (socket.io, port 3003).
- *
- * Streams SIMULATED trades / quotes / depth for subscribed symbols.
- * All data is clearly SIMULATED — the frontend surfaces DataStatus="SIMULATED".
- *
- * Connection: frontend uses io("/?XTransformPort=3003") — never a direct port.
- *
- * Lifecycle implemented: heartbeat (socket.io ping), reconnect (client-side
- * exponential backoff), subscription restoration (client re-subscribes on
- * reconnect), sequence validation (per-symbol monotonic seq).
- *
- * No real Rithmic connection — see RITHMIC_INTEGRATION.md.
- */
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { mulberry32, gaussian, hashString } from "../../src/lib/market/rng.js";
-import {
-  getContract,
-  listContracts,
-} from "../../src/lib/market/contracts.js";
-import {
-  classifySession,
-  sessionVolMultiplier,
-} from "../../src/lib/market/session.js";
+import { normalizeGateioSymbol } from "../../src/lib/market/gateio.js";
+import { listContracts } from "../../src/lib/market/contracts.js";
+import { MockLiveMarket } from "../../src/lib/market/mock-provider.js";
+import type { ContractMetadata, DepthLevel, QuoteEvent, TradeEvent } from "../../src/lib/market/types.js";
+import { GateioFuturesProvider, type GateEvent, type ProviderStatus } from "./gateio-provider.js";
 
-const PORT = 3003;
-const httpServer = createServer();
-const io = new Server(httpServer, {
-  path: "/",
-  cors: { origin: "*", methods: ["GET", "POST"] },
-  pingTimeout: 60000,
-  pingInterval: 25000,
+const PORT = Number(process.env.MARKET_DATA_PORT ?? 3003);
+const PROVIDER_MODE = process.env.MARKET_PROVIDER === "mock" ? "mock" : "gateio";
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN?.split(",").map((value) => value.trim()).filter(Boolean);
+
+interface ClientSubscription {
+  symbol: string;
+  types: Set<string>;
+}
+
+interface MockState {
+  market: MockLiveMarket;
+  interval: ReturnType<typeof setInterval>;
+}
+
+let providerStatus: ProviderStatus | "simulated" = PROVIDER_MODE === "mock" ? "simulated" : "connecting";
+let providerReason: string | undefined;
+let providerInitialized = PROVIDER_MODE === "mock";
+let liveContracts: ContractMetadata[] = PROVIDER_MODE === "mock" ? listContracts() : [];
+const subscriptions = new Map<string, Set<string>>();
+const clientSubscriptions = new Map<string, Map<string, ClientSubscription>>();
+const mockStates = new Map<string, MockState>();
+
+const httpServer = createServer((request, response) => {
+  const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
+  if (url.pathname === "/healthz") {
+    response.writeHead(200, { "content-type": "application/json" });
+    response.end(JSON.stringify({ ok: true, provider: PROVIDER_MODE, state: providerStatus, at: Date.now() }));
+    return;
+  }
+  if (url.pathname === "/readyz") {
+    // Readiness means the service has discovered the provider contract catalogue
+    // and can accept a new subscription. Live freshness remains per-symbol and
+    // is emitted over Socket.IO once a client subscribes.
+    const ready = providerInitialized && liveContracts.length > 0;
+    response.writeHead(ready ? 200 : 503, { "content-type": "application/json" });
+    response.end(JSON.stringify({ ready, provider: PROVIDER_MODE, state: providerStatus, reason: providerReason, at: Date.now() }));
+    return;
+  }
+  response.writeHead(404, { "content-type": "application/json" });
+  response.end(JSON.stringify({ error: "not found" }));
 });
 
-interface LiveState {
-  symbol: string;
-  price: number;
-  seq: number;
-  tickInterval: ReturnType<typeof setInterval> | null;
-}
+const io = new Server(httpServer, {
+  path: "/socket.io",
+  cors: { origin: ALLOWED_ORIGINS && ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : true, methods: ["GET", "POST"] },
+  pingTimeout: 60_000,
+  pingInterval: 25_000,
+});
 
-const live = new Map<string, LiveState>();
-const subscribers = new Map<string, Set<string>>(); // symbol -> socket ids
+const gateio = PROVIDER_MODE === "gateio" ? new GateioFuturesProvider() : null;
 
-function roundTick(p: number, tick: number) {
-  return Math.round(p / tick) * tick;
-}
-
-function startSymbol(symbol: string) {
-  if (live.has(symbol)) return;
-  const c = getContract(symbol);
-  const state: LiveState = {
-    symbol,
-    price: c.basePrice,
-    seq: 0,
-    tickInterval: null,
+function emitStatus(socket?: Parameters<typeof io.to>[0]) {
+  const payload = {
+    state: providerStatus,
+    provider: PROVIDER_MODE,
+    environment: PROVIDER_MODE === "gateio" ? "live" : "simulation",
+    dataStatus:
+      PROVIDER_MODE === "mock"
+        ? "SIMULATED"
+        : providerStatus === "live"
+          ? "LIVE"
+          : providerStatus === "stale"
+            ? "STALE"
+            : providerStatus === "degraded"
+              ? "DEGRADED"
+              : providerStatus === "unavailable"
+                ? "UNAVAILABLE"
+                : "DISCONNECTED",
+    reason: providerReason,
+    at: Date.now(),
   };
-  live.set(symbol, state);
+  if (socket) io.to(socket).emit("state", payload);
+  else io.emit("state", payload);
+}
 
-  // Emit ~6 ticks/sec, bursty.
-  state.tickInterval = setInterval(() => {
-    const subs = subscribers.get(symbol);
-    if (!subs || subs.size === 0) return;
+function subscribersFor(symbol: string) {
+  return subscriptions.get(symbol) ?? new Set<string>();
+}
+
+function publishToSubscribers(symbol: string, event: "trade" | "quote" | "depth", payload: unknown) {
+  for (const socketId of subscribersFor(symbol)) {
+    io.to(socketId).emit(event, payload);
+  }
+}
+
+function handleGateEvent(event: GateEvent) {
+  if (event.type === "contracts") {
+    liveContracts = event.contracts;
+    io.emit("contracts", liveContracts);
+    return;
+  }
+  if (event.type === "status") {
+    providerStatus = event.state;
+    providerReason = event.reason;
+    emitStatus();
+    return;
+  }
+  if (event.type === "trade") publishToSubscribers(event.data.symbol, "trade", event.data);
+  if (event.type === "quote") publishToSubscribers(event.data.symbol, "quote", event.data);
+  if (event.type === "depth") publishToSubscribers(event.symbol, "depth", event);
+}
+
+gateio?.on(handleGateEvent);
+
+async function bootGateio() {
+  if (!gateio) return;
+  try {
+    liveContracts = await gateio.discoverContracts();
+    providerInitialized = true;
+    providerStatus = "connecting";
+    providerReason = undefined;
+  } catch (error) {
+    providerInitialized = false;
+    providerStatus = "unavailable";
+    providerReason = error instanceof Error ? error.message : "Gate.io contract discovery failed";
+  }
+}
+
+function startMockSymbol(symbol: string) {
+  if (mockStates.has(symbol)) return;
+  const market = new MockLiveMarket(symbol);
+  const interval = setInterval(() => {
+    const interested = subscribersFor(symbol);
+    if (!interested.size) return;
     const now = Date.now();
-    const rng = mulberry32(hashString(`${symbol}|${now}|${state.seq}`));
-    const sess = classifySession(c.session, now);
-    const volMul = sessionVolMultiplier(now);
-    const step =
-      state.price * c.dailyVolPct * 0.05 * volMul * (sess.label === "closed" ? 0.15 : 1);
-    const delta = gaussian(rng) * step;
-    state.price = roundTick(Math.max(state.price + delta, c.tickSize), c.tickSize);
-    const side = delta >= 0 ? "buy" : "sell";
-    const qty = Math.max(
-      1,
-      Math.floor((c.product === "equity" ? 80 : 6) * (0.3 + rng() * 2))
-    );
-    state.seq++;
-    const spread = c.tickSize;
-    const bid = roundTick(state.price - spread / 2, c.tickSize);
-    const ask = roundTick(state.price + spread / 2, c.tickSize);
-
-    const trade = {
-      type: "trade",
-      provider: "mock",
-      environment: "simulation",
-      symbol,
-      exchange: c.exchange,
-      timestamp: now,
-      sequence: state.seq,
-      price: state.price,
-      quantity: qty,
-      side,
-    };
-    const quote = {
-      type: "quote",
-      provider: "mock",
-      environment: "simulation",
-      symbol,
-      exchange: c.exchange,
-      timestamp: now,
-      sequence: state.seq,
-      bid,
-      ask,
-      bidSize: Math.max(1, Math.floor(8 + rng() * 40)),
-      askSize: Math.max(1, Math.floor(8 + rng() * 40)),
-    };
-    // depth ladder
-    const levels = 10;
-    const depthLevels = [];
-    for (let i = 1; i <= levels; i++) {
-      depthLevels.push({
-        price: roundTick(state.price - i * c.tickSize, c.tickSize),
-        size: Math.max(1, Math.floor((c.product === "equity" ? 200 : 12) * (0.5 + rng() * 2))),
-        side: "buy",
-      });
-      depthLevels.push({
-        price: roundTick(state.price + i * c.tickSize, c.tickSize),
-        size: Math.max(1, Math.floor((c.product === "equity" ? 200 : 12) * (0.5 + rng() * 2))),
-        side: "sell",
-      });
-    }
+    const { trade, quote } = market.tick(now);
     const depth = {
-      type: "depth",
-      provider: "mock",
-      environment: "simulation",
+      type: "depth" as const,
+      provider: "mock" as const,
+      environment: "simulation" as const,
       symbol,
-      exchange: c.exchange,
+      exchange: market.contract.exchange,
       timestamp: now,
-      sequence: state.seq,
-      levels: depthLevels,
+      sequence: trade.sequence,
+      levels: market.depth(now) as DepthLevel[],
     };
-
-    for (const sid of subs) {
-      const s = io.sockets.sockets.get(sid);
-      if (s) {
-        s.emit("trade", trade);
-        s.emit("quote", quote);
-        s.emit("depth", depth);
-      }
-    }
+    publishToSubscribers(symbol, "trade", trade);
+    publishToSubscribers(symbol, "quote", quote);
+    publishToSubscribers(symbol, "depth", depth);
   }, 160);
+  mockStates.set(symbol, { market, interval });
+}
+
+function stopMockSymbol(symbol: string) {
+  const state = mockStates.get(symbol);
+  if (state) clearInterval(state.interval);
+  mockStates.delete(symbol);
+}
+
+function normalizeSymbol(input: string) {
+  const candidate = input.trim().toUpperCase();
+  if (PROVIDER_MODE === "gateio") return normalizeGateioSymbol(candidate);
+  return liveContracts.some((contract) => contract.symbol === candidate) ? candidate : null;
+}
+
+async function startSymbol(symbol: string) {
+  if (PROVIDER_MODE === "gateio") await gateio?.subscribe(symbol);
+  else startMockSymbol(symbol);
 }
 
 function stopSymbol(symbol: string) {
-  const s = live.get(symbol);
-  if (s && s.tickInterval) clearInterval(s.tickInterval);
-  live.delete(symbol);
+  if (PROVIDER_MODE === "gateio") gateio?.unsubscribe(symbol);
+  else stopMockSymbol(symbol);
 }
 
 io.on("connection", (socket) => {
-  // initial contract list
-  socket.emit("contracts", listContracts().map((c) => ({ ...c })));
-  socket.emit("state", { state: "connected", at: Date.now() });
+  clientSubscriptions.set(socket.id, new Map());
+  socket.emit("contracts", liveContracts);
+  emitStatus(socket.id);
 
-  socket.on("subscribe", (msg: { symbol: string; types?: string[] }) => {
-    const symbol = (msg?.symbol || "").toUpperCase();
-    if (!getContract(symbol)) return;
-    let set = subscribers.get(symbol);
-    if (!set) {
-      set = new Set();
-      subscribers.set(symbol, set);
+  socket.on("subscribe", async (message: { symbol?: string; types?: string[] }, acknowledge?: (result: unknown) => void) => {
+    const symbol = normalizeSymbol(message?.symbol ?? "");
+    if (!symbol) {
+      acknowledge?.({ ok: false, error: "unsupported symbol" });
+      return;
     }
-    set.add(socket.id);
-    startSymbol(symbol);
-    socket.emit("subscribed", { symbol });
+    const types = new Set(message?.types ?? ["trade", "quote", "depth"]);
+    const client = clientSubscriptions.get(socket.id);
+    client?.set(symbol, { symbol, types });
+    let interested = subscriptions.get(symbol);
+    const firstSubscriber = !interested || interested.size === 0;
+    if (!interested) {
+      interested = new Set();
+      subscriptions.set(symbol, interested);
+    }
+    interested.add(socket.id);
+    try {
+      if (firstSubscriber) await startSymbol(symbol);
+      socket.emit("subscribed", { ok: true, symbol, provider: PROVIDER_MODE });
+      acknowledge?.({ ok: true, symbol, provider: PROVIDER_MODE });
+    } catch (error) {
+      providerStatus = "degraded";
+      providerReason = error instanceof Error ? error.message : "provider subscription failed";
+      emitStatus();
+      acknowledge?.({ ok: false, error: providerReason });
+    }
   });
 
-  socket.on("unsubscribe", (msg: { symbol: string }) => {
-    const symbol = (msg?.symbol || "").toUpperCase();
-    const set = subscribers.get(symbol);
-    if (set) {
-      set.delete(socket.id);
-      if (set.size === 0) {
-        subscribers.delete(symbol);
-        stopSymbol(symbol);
-      }
+  socket.on("unsubscribe", (message: { symbol?: string }) => {
+    const symbol = normalizeSymbol(message?.symbol ?? "");
+    if (!symbol) return;
+    clientSubscriptions.get(socket.id)?.delete(symbol);
+    const interested = subscriptions.get(symbol);
+    interested?.delete(socket.id);
+    if (!interested || interested.size === 0) {
+      subscriptions.delete(symbol);
+      stopSymbol(symbol);
     }
-  });
-
-  socket.on("ping-symbol", (msg: { symbol: string }, ack?: (v: unknown) => void) => {
-    const s = live.get((msg?.symbol || "").toUpperCase());
-    ack?.({ symbol: msg?.symbol, price: s?.price ?? null, seq: s?.seq ?? 0, at: Date.now() });
   });
 
   socket.on("disconnect", () => {
-    for (const [symbol, set] of subscribers) {
-      set.delete(socket.id);
-      if (set.size === 0) {
-        subscribers.delete(symbol);
+    const client = clientSubscriptions.get(socket.id);
+    for (const symbol of client?.keys() ?? []) {
+      const interested = subscriptions.get(symbol);
+      interested?.delete(socket.id);
+      if (!interested || interested.size === 0) {
+        subscriptions.delete(symbol);
         stopSymbol(symbol);
       }
     }
+    clientSubscriptions.delete(socket.id);
   });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`[market-data] socket.io listening on ${PORT} (SIMULATED)`);
+void bootGateio().finally(() => {
+  httpServer.listen(PORT, () => {
+    console.log(`[market-data] socket.io listening on ${PORT} (${PROVIDER_MODE.toUpperCase()})`);
+    emitStatus();
+  });
 });
 
-process.on("SIGTERM", () => {
+function shutdown() {
+  for (const symbol of mockStates.keys()) stopMockSymbol(symbol);
+  gateio?.close();
   httpServer.close(() => process.exit(0));
-});
-process.on("SIGINT", () => {
-  httpServer.close(() => process.exit(0));
-});
+}
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

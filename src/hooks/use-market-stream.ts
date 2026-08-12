@@ -2,70 +2,85 @@
 
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-import type {
-  DepthLevel,
-  QuoteEvent,
-  TradeEvent,
-} from "@/lib/market/types";
+import type { DataStatus, DepthLevel, QuoteEvent, TradeEvent } from "@/lib/market/types";
 import { useWorkspace } from "@/stores/workspace";
 
-/**
- * Singleton socket to the market-data mini-service.
- *
- * Connection per the gateway rules: io("/?XTransformPort=3003").
- * Reconnection + subscription restoration are handled here and in the
- * server (heartbeats via socket.io ping/pong).
- */
-let socket: Socket | null = null;
-const subscribers = new Map<string, Set<(t: TradeEvent) => void>>();
-const quoteSubs = new Map<string, Set<(q: QuoteEvent) => void>>();
-const depthSubs = new Map<string, Set<(d: DepthLevel[]) => void>>();
-let backoff = 1000;
+type StreamState = "connected" | "connecting" | "reconnecting" | "stale" | "degraded" | "unavailable" | "disconnected";
+type GatewayState = {
+  state?: string;
+  provider?: "mock" | "gateio" | "rithmic-test" | "rithmic-prod";
+  environment?: "simulation" | "paper" | "live";
+  dataStatus?: DataStatus;
+  reason?: string;
+  at?: number;
+};
 
-function ensureSocket(onState: (s: string) => void): Socket {
+let socket: Socket | null = null;
+const tradeSubscribers = new Map<string, Set<(trade: TradeEvent) => void>>();
+const quoteSubscribers = new Map<string, Set<(quote: QuoteEvent) => void>>();
+const depthSubscribers = new Map<string, Set<(levels: DepthLevel[]) => void>>();
+const stateSubscribers = new Set<(state: GatewayState) => void>();
+let latestGatewayState: GatewayState = { state: "connecting", provider: "gateio", environment: "live", dataStatus: "DISCONNECTED" };
+
+function allSymbols() {
+  return new Set([...tradeSubscribers.keys(), ...quoteSubscribers.keys(), ...depthSubscribers.keys()]);
+}
+
+function normalizeStreamState(state?: string): StreamState {
+  if (state === "live" || state === "connected") return "connected";
+  if (state === "reconnecting") return "reconnecting";
+  if (state === "stale") return "stale";
+  if (state === "degraded") return "degraded";
+  if (state === "unavailable") return "unavailable";
+  if (state === "connecting") return "connecting";
+  return "disconnected";
+}
+
+function publishState(next: GatewayState) {
+  latestGatewayState = { ...latestGatewayState, ...next };
+  for (const listener of stateSubscribers) listener(latestGatewayState);
+}
+
+function ensureSocket(): Socket {
   if (socket) return socket;
-  socket = io("/?XTransformPort=3003", {
-    path: "/",
+  const isLocalGateway = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const gatewayUrl = isLocalGateway ? `${window.location.protocol}//${window.location.hostname}:3003` : "/?XTransformPort=3003";
+  socket = io(gatewayUrl, {
+    path: "/socket.io",
     transports: ["websocket"],
     reconnection: true,
     reconnectionAttempts: Infinity,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 8000,
+    reconnectionDelay: 1_000,
+    reconnectionDelayMax: 8_000,
   });
   socket.on("connect", () => {
-    backoff = 1000;
-    onState("connected");
-    // restore subscriptions
-    for (const symbol of subscribers.keys()) {
-      socket!.emit("subscribe", { symbol });
-    }
+    publishState({ state: "connecting", dataStatus: "DISCONNECTED" });
+    for (const symbol of allSymbols()) socket!.emit("subscribe", { symbol, types: ["trade", "quote", "depth"] });
   });
-  socket.on("disconnect", () => onState("disconnected"));
-  socket.on("reconnect_attempt", () => onState("reconnecting"));
-  socket.on("reconnect_failed", () => onState("disconnected"));
-
-  socket.on("trade", (t: TradeEvent) => {
-    const set = subscribers.get(t.symbol);
-    if (set) for (const fn of set) fn(t);
+  socket.on("disconnect", () => publishState({ state: "disconnected", dataStatus: "DISCONNECTED" }));
+  socket.on("reconnect_attempt", () => publishState({ state: "reconnecting", dataStatus: "DISCONNECTED" }));
+  socket.on("reconnect_failed", () => publishState({ state: "unavailable", dataStatus: "UNAVAILABLE" }));
+  socket.on("state", (state: GatewayState) => publishState(state));
+  socket.on("trade", (trade: TradeEvent) => {
+    for (const listener of tradeSubscribers.get(trade.symbol) ?? []) listener(trade);
   });
-  socket.on("quote", (q: QuoteEvent) => {
-    const set = quoteSubs.get(q.symbol);
-    if (set) for (const fn of set) fn(q);
+  socket.on("quote", (quote: QuoteEvent) => {
+    for (const listener of quoteSubscribers.get(quote.symbol) ?? []) listener(quote);
   });
-  socket.on("depth", (d: { symbol: string; levels: DepthLevel[] }) => {
-    const set = depthSubs.get(d.symbol);
-    if (set) for (const fn of set) fn(d.levels);
+  socket.on("depth", (depth: { symbol: string; levels: DepthLevel[] }) => {
+    for (const listener of depthSubscribers.get(depth.symbol) ?? []) listener(depth.levels);
   });
   return socket;
 }
 
-function refSymbol(symbol: string) {
-  let s = subscribers.get(symbol);
-  if (!s) {
-    s = new Set();
-    subscribers.set(symbol, s);
-  }
-  return s;
+function subscribeSet<T>(map: Map<string, Set<(value: T) => void>>, symbol: string, listener: (value: T) => void) {
+  const current = map.get(symbol) ?? new Set<(value: T) => void>();
+  current.add(listener);
+  map.set(symbol, current);
+  return () => {
+    current.delete(listener);
+    if (!current.size) map.delete(symbol);
+  };
 }
 
 export interface MarketStream {
@@ -73,78 +88,84 @@ export interface MarketStream {
   lastTrade: TradeEvent | null;
   quote: QuoteEvent | null;
   depth: DepthLevel[];
-  state: "connected" | "connecting" | "reconnecting" | "disconnected";
+  state: StreamState;
+  dataStatus: DataStatus;
+  provider: GatewayState["provider"];
+  reason?: string;
 }
 
 /**
- * Subscribe to live (SIMULATED) trades/quotes/depth for a symbol.
- * Keeps a bounded buffer of recent trades for the UI.
+ * Subscribe to read-only market data from the server-side gateway. The UI
+ * preserves an explicit SIMULATED state only when the server is configured
+ * with MARKET_PROVIDER=mock; it never silently manufactures live values.
  */
-export function useMarketStream(symbol: string, opts?: { trades?: number; depth?: boolean }) {
-  const tradeCap = opts?.trades ?? 60;
-  const wantDepth = opts?.depth ?? true;
-  const setConnection = useWorkspace((s) => s.setConnection);
+export function useMarketStream(symbol: string, options?: { trades?: number; depth?: boolean }) {
+  const tradeCap = options?.trades ?? 60;
+  const wantDepth = options?.depth ?? true;
+  const setConnection = useWorkspace((state) => state.setConnection);
   const [trades, setTrades] = useState<TradeEvent[]>([]);
   const [quote, setQuote] = useState<QuoteEvent | null>(null);
   const [depth, setDepth] = useState<DepthLevel[]>([]);
-  const [state, setState] = useState<MarketStream["state"]>("connecting");
+  const [gatewayState, setGatewayState] = useState<GatewayState>(latestGatewayState);
   const rafRef = useRef<number>(0);
   const pendingTrades = useRef<TradeEvent[]>([]);
 
   useEffect(() => {
-    const sym = symbol.toUpperCase();
-    const s = ensureSocket((st) => {
-      setState(st as MarketStream["state"]);
-      setConnection({ state: st as never, dataStatus: st === "connected" ? "SIMULATED" : "DISCONNECTED" });
-    });
+    const onState = (next: GatewayState) => {
+      setGatewayState(next);
+      const normalized = normalizeStreamState(next.state);
+      setConnection({
+        state: normalized,
+        provider: next.provider ?? "gateio",
+        environment: next.environment ?? "live",
+        dataStatus: next.dataStatus ?? "DISCONNECTED",
+      });
+    };
+    stateSubscribers.add(onState);
+    onState(latestGatewayState);
+    return () => {
+      stateSubscribers.delete(onState);
+    };
+  }, [setConnection]);
 
-    const tHandler = (t: TradeEvent) => {
-      pendingTrades.current.push(t);
+  useEffect(() => {
+    const sym = symbol.toUpperCase();
+    const activeSocket = ensureSocket();
+    const removeTrade = subscribeSet(tradeSubscribers, sym, (trade) => {
+      pendingTrades.current.push(trade);
       if (!rafRef.current) {
         rafRef.current = requestAnimationFrame(() => {
           rafRef.current = 0;
           const batch = pendingTrades.current;
           pendingTrades.current = [];
-          setTrades((prev) => {
-            const next = prev.concat(batch);
-            return next.length > tradeCap ? next.slice(next.length - tradeCap) : next;
+          setTrades((previous) => {
+            const next = previous.concat(batch);
+            return next.length > tradeCap ? next.slice(-tradeCap) : next;
           });
         });
       }
-    };
-    const qHandler = (q: QuoteEvent) => setQuote(q);
-    const dHandler = (lv: DepthLevel[]) => setDepth(lv);
+    });
+    const removeQuote = subscribeSet(quoteSubscribers, sym, setQuote);
+    const removeDepth = wantDepth ? subscribeSet(depthSubscribers, sym, setDepth) : () => undefined;
 
-    refSymbol(sym).add(tHandler);
-    let qs = quoteSubs.get(sym);
-    if (!qs) {
-      qs = new Set();
-      quoteSubs.set(sym, qs);
-    }
-    qs.add(qHandler);
-    if (wantDepth) {
-      let ds = depthSubs.get(sym);
-      if (!ds) {
-        ds = new Set();
-        depthSubs.set(sym, ds);
-      }
-      ds.add(dHandler);
-    }
-
-    if (s.connected) {
-      // already connected — sync state without a synchronous effect setState
-      queueMicrotask(() => setState("connected"));
-    }
-    s.emit("subscribe", { symbol: sym });
-
+    activeSocket.emit("subscribe", { symbol: sym, types: ["trade", "quote", "depth"] });
     return () => {
-      subscribers.get(sym)?.delete(tHandler);
-      quoteSubs.get(sym)?.delete(qHandler);
-      depthSubs.get(sym)?.delete(dHandler);
-      s.emit("unsubscribe", { symbol: sym });
+      removeTrade();
+      removeQuote();
+      removeDepth();
+      if (!allSymbols().has(sym)) activeSocket.emit("unsubscribe", { symbol: sym });
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [symbol, tradeCap, wantDepth]);
 
-  return { trades, lastTrade: trades[trades.length - 1] ?? null, quote, depth, state };
+  return {
+    trades,
+    lastTrade: trades.at(-1) ?? null,
+    quote,
+    depth,
+    state: normalizeStreamState(gatewayState.state),
+    dataStatus: gatewayState.dataStatus ?? "DISCONNECTED",
+    provider: gatewayState.provider,
+    reason: gatewayState.reason,
+  } satisfies MarketStream;
 }

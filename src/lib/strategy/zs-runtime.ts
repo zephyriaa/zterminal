@@ -208,7 +208,8 @@ export function runStrategy(
     reason: string;
     submittedBar: number;
   }
-  let position: { side: "long" | "short"; qty: number; entryPrice: number; entryTime: number; entryBar: number; id: string; reason: string } | null = null;
+  interface OpenPosition { side: "long" | "short"; qty: number; entryPrice: number; entryTime: number; entryBar: number; id: string; reason: string }
+  let position: OpenPosition | null = null;
   const pending: Pending[] = [];
   const trades: BacktestTrade[] = [];
   let tradeId = 1;
@@ -219,7 +220,7 @@ export function runStrategy(
   let peak = cfg.initialCapital;
 
   // Build a context for evaluating expressions at bar i
-  function evalExpr(n: ZSNode, i: number): number | boolean {
+  function evalExpr(n: ZSNode, i: number): number | boolean | string {
     switch (n.kind) {
       case "num": return n.value;
       case "bool": return n.value;
@@ -315,11 +316,12 @@ export function runStrategy(
         return NaN;
       }
     }
+    return NaN;
   }
 
   // locals hold lazy thunks (i => value) so series like `var f = ema(close, Fast)`
   // support lookback (crossover/crossunder evaluate at i and i-1).
-  const locals = new Map<string, number | ((i: number) => number | boolean)>();
+  const locals = new Map<string, number | boolean | string | ((i: number) => number | boolean | string)>();
 
   function handleStrategyCall(callee: string, args: { name?: string; value: ZSNode }[], i: number, params: StrategyParams) {
     const argV = (idx: number) => evalExpr(args[idx]?.value, i);
@@ -400,7 +402,7 @@ export function runStrategy(
 
   // Register top-level assignment thunks ONCE (lazy series — supports lookback).
   // `var f = ema(close, Fast)` becomes f(i) = ema(close, Fast)[i].
-  for (const node of compiled.ast) {
+  for (const node of compiled.ast ?? []) {
     if (node.kind === "assign") {
       const rhs = node.value;
       locals.set(node.target, (i: number) => evalExpr(rhs, i));
@@ -420,7 +422,8 @@ export function runStrategy(
     }
     // mark-to-market equity
     const price = bars[i].c;
-    const unreal = position ? (position.side === "long" ? price - position.entryPrice : position.entryPrice - price) * position.qty * cfg.multiplier : 0;
+    const activePosition = position as OpenPosition | null;
+    const unreal = activePosition ? (activePosition.side === "long" ? price - activePosition.entryPrice : activePosition.entryPrice - price) * activePosition.qty * cfg.multiplier : 0;
     const eq = cash + unreal;
     equity.push({ t: bars[i].t, v: eq });
     peak = Math.max(peak, eq);

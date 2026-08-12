@@ -21,10 +21,13 @@ const MARKET_LABEL: Record<string, { label: string; tone: "pos" | "warn" | "mute
 
 export function Topbar() {
   const { symbol, setCommandOpen, connection } = useWorkspace();
-  const [now, setNow] = useState(() => Date.now());
+  // Start from a stable server/client value, then hydrate the live clocks.
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    const updateClock = () => setNow(Date.now());
+    updateClock();
+    const id = setInterval(updateClock, 1_000);
     return () => clearInterval(id);
   }, []);
 
@@ -65,8 +68,8 @@ export function Topbar() {
         </div>
 
         {/* Clocks */}
-        <Clock label="NY" value={formatClockET(now)} />
-        <Clock label="UTC" value={formatClockUTC(now)} />
+        <Clock label="NY" value={now ? formatClockET(now) : "—"} />
+        <Clock label="UTC" value={now ? formatClockUTC(now) : "—"} />
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">

@@ -1,5 +1,8 @@
 "use client"
 
+/* Embla emits selection state through its external event API. */
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,

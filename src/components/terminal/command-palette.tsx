@@ -72,7 +72,7 @@ export function CommandPalette() {
   };
 
   return (
-    <CommandDialog open={commandOpen} onOpenChange={setCommandOpen} commandProps={{ className: "max-w-xl" }}>
+    <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
       <CommandInput placeholder="Search symbols, views, actions…" />
       <CommandList className="scroll-thin">
         <CommandEmpty>No results.</CommandEmpty>

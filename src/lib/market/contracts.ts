@@ -25,6 +25,15 @@ function futExpiry(year: number, month: number): string {
 
 /** Front-month futures symbols currently modeled. */
 export const CONTRACTS: Record<string, ContractDef> = {
+  QQQX_USDT: {
+    root: "QQQX", symbol: "QQQX_USDT", description: "QQQX / USDT Perpetual (Gate.io)",
+    exchange: "GATEIO", product: "perpetual",
+    // Live Gate.io metadata is fetched at runtime by the market-data gateway.
+    // These values only keep the UI usable before the gateway contract event arrives.
+    tickSize: 0.01, tickValue: 0.01, multiplier: 1, currency: "USDT",
+    session: "crypto", supportsDepth: true, supportsMBO: false,
+    basePrice: 600, dailyVolPct: 0.02,
+  },
   NQ: {
     root: "NQ", symbol: "NQ", description: "E-mini Nasdaq-100 Futures",
     exchange: "CME", product: "future",
