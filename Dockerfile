@@ -16,6 +16,8 @@ RUN npm ci --include=dev
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/mini-services ./mini-services
+# The TypeScript gateway imports the shared Gate.io normalization module at runtime.
+COPY --from=builder /app/src/lib/market ./src/lib/market
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/Caddyfile ./Caddyfile
 
