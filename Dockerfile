@@ -8,13 +8,16 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NPM_CONFIG_UNSAFE_PERM=true
+RUN apk add --no-cache bash caddy
 COPY --from=builder /app/package*.json ./
-# Install all dependencies (including tsx for running mini-services)
-RUN npm ci --omit=dev || npm install
+# The market-data gateway is executed with tsx at runtime.
+RUN npm ci --include=dev
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/mini-services ./mini-services
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/Caddyfile ./Caddyfile
 
-EXPOSE 3000 3003
-CMD ["bash", "scripts/start-production.sh"]
+EXPOSE 8080
+CMD ["/bin/bash", "scripts/start-production.sh"]

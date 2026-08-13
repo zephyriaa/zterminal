@@ -43,8 +43,10 @@ function publishState(next: GatewayState) {
 
 function ensureSocket(): Socket {
   if (socket) return socket;
+  // Production traffic is proxied through the public application origin. Locally,
+  // the development gateway keeps its explicit port for a frictionless dev setup.
   const isLocalGateway = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  const gatewayUrl = isLocalGateway ? `${window.location.protocol}//${window.location.hostname}:3003` : "/?XTransformPort=3003";
+  const gatewayUrl = isLocalGateway ? `${window.location.protocol}//${window.location.hostname}:3003` : undefined;
   socket = io(gatewayUrl, {
     path: "/socket.io",
     transports: ["websocket"],
