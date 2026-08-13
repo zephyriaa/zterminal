@@ -11,8 +11,8 @@ ENV NODE_ENV=production
 ENV NPM_CONFIG_UNSAFE_PERM=true
 RUN apk add --no-cache bash
 COPY --from=builder /app/package*.json ./
-# Install all dependencies (including tsx for running mini-services)
-RUN npm ci --omit=dev || npm install
+# Install all dependencies including devDependencies for tsx
+RUN npm install
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/mini-services ./mini-services
