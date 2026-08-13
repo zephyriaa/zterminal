@@ -1,0 +1,11 @@
+{
+  "name": "zterminal-market-data",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.3"
+  }
+}
