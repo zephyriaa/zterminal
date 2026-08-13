@@ -6,10 +6,10 @@ import {
   gateContractToMetadata,
   parseGateDecimal,
   type GateContract,
-} from "../../src/lib/market/gateio.js";
+} from "../../src/lib/market/gateio";
 import WebSocket from "ws";
-import type { ContractMetadata, DepthLevel, QuoteEvent, TradeEvent } from "../../src/lib/market/types.js";
-import { GateOrderBook, type GateBookDelta, type GateBookSnapshot } from "./order-book.js";
+import type { ContractMetadata, DepthLevel, QuoteEvent, TradeEvent } from "../../src/lib/market/types";
+import { GateOrderBook, type GateBookDelta, type GateBookSnapshot } from "./order-book";
 
 const BOOK_DEPTH = 100;
 const BOOK_FREQUENCY = "100ms";

@@ -1,10 +1,10 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { normalizeGateioSymbol } from "../../src/lib/market/gateio.js";
-import { listContracts } from "../../src/lib/market/contracts.js";
-import { MockLiveMarket } from "../../src/lib/market/mock-provider.js";
-import type { ContractMetadata, DepthLevel, QuoteEvent, TradeEvent } from "../../src/lib/market/types.js";
-import { GateioFuturesProvider, type GateEvent, type ProviderStatus } from "./gateio-provider.js";
+import { normalizeGateioSymbol } from "../../src/lib/market/gateio";
+import { listContracts } from "../../src/lib/market/contracts";
+import { MockLiveMarket } from "../../src/lib/market/mock-provider";
+import type { ContractMetadata, DepthLevel, QuoteEvent, TradeEvent } from "../../src/lib/market/types";
+import { GateioFuturesProvider, type GateEvent, type ProviderStatus } from "./gateio-provider";
 
 const PORT = Number(process.env.MARKET_DATA_PORT ?? 3003);
 const PROVIDER_MODE = process.env.MARKET_PROVIDER === "mock" ? "mock" : "gateio";
@@ -27,6 +27,8 @@ let liveContracts: ContractMetadata[] = PROVIDER_MODE === "mock" ? listContracts
 const subscriptions = new Map<string, Set<string>>();
 const clientSubscriptions = new Map<string, Map<string, ClientSubscription>>();
 const mockStates = new Map<string, MockState>();
+let bootRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let bootRetryAttempt = 0;
 
 const httpServer = createServer((request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -111,16 +113,24 @@ function handleGateEvent(event: GateEvent) {
 gateio?.on(handleGateEvent);
 
 async function bootGateio() {
-  if (!gateio) return;
+  if (!gateio || bootRetryTimer) return;
   try {
     liveContracts = await gateio.discoverContracts();
     providerInitialized = true;
     providerStatus = "connecting";
     providerReason = undefined;
+    bootRetryAttempt = 0;
   } catch (error) {
     providerInitialized = false;
     providerStatus = "unavailable";
     providerReason = error instanceof Error ? error.message : "Gate.io contract discovery failed";
+    const delay = Math.min(30_000, 1_000 * 2 ** Math.min(bootRetryAttempt, 5));
+    bootRetryAttempt += 1;
+    console.warn(`[market-data] ${providerReason}; retrying contract discovery in ${delay}ms`);
+    bootRetryTimer = setTimeout(() => {
+      bootRetryTimer = null;
+      void bootGateio();
+    }, delay);
   }
 }
 
@@ -238,6 +248,7 @@ void bootGateio().finally(() => {
 });
 
 function shutdown() {
+  if (bootRetryTimer) clearTimeout(bootRetryTimer);
   for (const symbol of mockStates.keys()) stopMockSymbol(symbol);
   gateio?.close();
   httpServer.close(() => process.exit(0));

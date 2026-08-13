@@ -52,10 +52,12 @@ curl -fsS http://127.0.0.1:3003/readyz
 
 ## Reverse Proxy and TLS
 
-The supplied `Caddyfile` routes the web application to port `3000` and proxy
-requests containing `XTransformPort=3003` to the internal gateway. Keep the
-socket service bound to loopback or an internal network. Terminate TLS at the
-public proxy and never make an unauthenticated control/connector endpoint
+The supplied `Caddyfile` exposes one public application port and routes `/socket.io`,
+`/healthz`, and `/readyz` to the internal market-data gateway on port `3003`.
+All remaining traffic is routed to the Next.js application on port `3000`. This
+keeps browser WebSocket traffic same-origin on any supported Docker host, while
+the gateway remains inaccessible as a separately exposed public service. Terminate
+TLS at the host proxy and never make an unauthenticated control/connector endpoint
 available over plain HTTP.
 
 ## Persistent Hosting
