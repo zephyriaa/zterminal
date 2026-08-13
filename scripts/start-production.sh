@@ -20,7 +20,8 @@ trap cleanup EXIT INT TERM
 ./node_modules/.bin/tsx mini-services/market-data/index.ts &
 MARKET_PID=$!
 
-PORT="$APP_PORT" node .next/standalone/server.js &
+# Render injects HOSTNAME for the container. Bind explicitly to all interfaces so Caddy can reach Next.js via 127.0.0.1.
+PORT="$APP_PORT" HOSTNAME="0.0.0.0" node .next/standalone/server.js &
 APP_PID=$!
 
 caddy run --config Caddyfile --adapter caddyfile &
