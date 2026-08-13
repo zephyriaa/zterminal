@@ -12,7 +12,9 @@ import { GateOrderBook } from "../mini-services/market-data/order-book";
 test("normalizes TradingView-style QQQX aliases to Gate.io native contract", () => {
   assert.equal(normalizeGateioSymbol("QQQX_USDT"), "QQQX_USDT");
   assert.equal(normalizeGateioSymbol("qqqxusdt.p"), "QQQX_USDT");
+  assert.equal(normalizeGateioSymbol("QQQX_USDT.P"), "QQQX_USDT");
   assert.equal(normalizeGateioSymbol("GATEIO:QQQXUSDT.P"), "QQQX_USDT");
+  assert.equal(normalizeGateioSymbol("GATEIO:QQQX_USDT.P"), "QQQX_USDT");
   assert.equal(normalizeGateioSymbol("NQ"), null);
 });
 

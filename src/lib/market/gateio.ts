@@ -11,7 +11,9 @@ const ALIASES: Record<string, string> = {
   QQQX_USDT: "QQQX_USDT",
   QQQXUSDT: "QQQX_USDT",
   "QQQXUSDT.P": "QQQX_USDT",
+  "QQQX_USDT.P": "QQQX_USDT",
   "GATEIO:QQQXUSDT.P": "QQQX_USDT",
+  "GATEIO:QQQX_USDT.P": "QQQX_USDT",
 };
 
 export function normalizeGateioSymbol(input: string | null | undefined): string | null {
