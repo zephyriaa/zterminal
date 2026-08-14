@@ -303,7 +303,7 @@ function ChartSettingsPopover({
           <SettingsToggle label="Last price line" checked={settings.showPriceLine} onChange={(showPriceLine) => update({ showPriceLine })} />
           <SettingsToggle label="Crosshair" checked={settings.showCrosshair} onChange={(showCrosshair) => update({ showCrosshair })} />
         </div>
-        <p className="text-[10px] leading-4 text-muted-foreground">Drag to pan, use your scroll wheel to zoom at the cursor, and double-click the chart to reset the viewport.</p>
+        <p className="text-[10px] leading-4 text-muted-foreground">Drag the plot to pan time. Drag or scroll the right price scale to stretch or compress candle height. Double-click a scale to reset it.</p>
       </PopoverContent>
     </Popover>
   );
