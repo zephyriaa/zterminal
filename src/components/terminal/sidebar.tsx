@@ -87,7 +87,7 @@ export function Sidebar() {
       {/* Brand */}
       <div className="h-11 flex items-center gap-2 px-3 border-b hairline">
         <img
-          src="/brand/zterminal-mark.png"
+          src="/brand/zterminal-mark-v2.png"
           alt="Z Terminal"
           className="h-7 w-7 shrink-0 rounded-[7px] object-contain"
         />

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     "research terminal",
   ],
   authors: [{ name: "Z Terminal" }],
-  icons: { icon: "/brand/zterminal-mark.png", shortcut: "/brand/zterminal-mark.png", apple: "/brand/zterminal-mark.png" },
+  icons: { icon: "/brand/zterminal-mark-v2.png", shortcut: "/brand/zterminal-mark-v2.png", apple: "/brand/zterminal-mark-v2.png" },
 };
 
 export default function RootLayout({
