@@ -14,7 +14,13 @@ import {
   Settings2,
   TrendingUp,
 } from "lucide-react";
-import { TerminalChart, type ChartType, type ChartIndicators } from "../terminal/terminal-chart";
+import {
+  DEFAULT_CHART_SETTINGS,
+  TerminalChart,
+  type ChartSettings,
+  type ChartType,
+  type ChartIndicators,
+} from "../terminal/terminal-chart";
 import { useWorkspace } from "@/stores/workspace";
 import { Panel, Pill } from "../terminal/primitives";
 import { getContract } from "@/lib/market/contracts";
@@ -51,6 +57,23 @@ export function ChartView() {
   const [replay, setReplay] = useState(false);
   const [replayIdx, setReplayIdx] = useState<number | null>(null);
   const [full, setFull] = useState(false);
+  const [chartSettings, setChartSettings] = useState<ChartSettings>(() => {
+    if (typeof window === "undefined") return DEFAULT_CHART_SETTINGS;
+    try {
+      const saved = window.localStorage.getItem("zterminal.chart-settings.v1");
+      return saved ? { ...DEFAULT_CHART_SETTINGS, ...JSON.parse(saved) } : DEFAULT_CHART_SETTINGS;
+    } catch {
+      return DEFAULT_CHART_SETTINGS;
+    }
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem("zterminal.chart-settings.v1", JSON.stringify(chartSettings));
+  }, [chartSettings]);
+
+  const updateChartSettings = (patch: Partial<ChartSettings>) => {
+    setChartSettings((current) => ({ ...current, ...patch }));
+  };
 
   // live quote for the header
   const { quote, lastTrade, trades, dataStatus, provider } = useMarketStream(symbol, { trades: 40, depth: false });
@@ -137,7 +160,7 @@ export function ChartView() {
 
         <ToolBtn label="Draw"><Ruler className="w-3.5 h-3.5" /></ToolBtn>
         <ToolBtn label="Replay" active={replay} onClick={() => setReplay((r) => !r)}><Play className="w-3.5 h-3.5" /></ToolBtn>
-        <ToolBtn label="Settings"><Settings2 className="w-3.5 h-3.5" /></ToolBtn>
+        <ChartSettingsPopover settings={chartSettings} update={updateChartSettings} reset={() => setChartSettings(DEFAULT_CHART_SETTINGS)} />
 
         <div className="ml-auto flex items-center gap-1">
           <Pill tone={dataStatus === "LIVE" ? "pos" : dataStatus === "STALE" || dataStatus === "DEGRADED" ? "warn" : "default"}>
@@ -157,6 +180,7 @@ export function ChartView() {
             timeframe={timeframe as Timeframe}
             chartType={chartType}
             indicators={indicators}
+            settings={chartSettings}
             replayIndex={replay ? replayIdx : null}
           />
           {replay && (
@@ -224,6 +248,93 @@ export function ChartView() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ChartSettingsPopover({
+  settings,
+  update,
+  reset,
+}: {
+  settings: ChartSettings;
+  update: (patch: Partial<ChartSettings>) => void;
+  reset: () => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <ToolBtn label="Chart settings"><Settings2 className="w-3.5 h-3.5" /></ToolBtn>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 space-y-3 bg-popover p-3 text-popover-foreground border hairline">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[12px] font-semibold">Chart settings</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">Saved for this browser</p>
+          </div>
+          <button onClick={reset} className="text-[10px] text-mdata hover:underline">Reset defaults</button>
+        </div>
+
+        <RangeSetting
+          label="Future space"
+          value={settings.futureBars}
+          min={0}
+          max={80}
+          suffix=" bars"
+          onChange={(futureBars) => update({ futureBars })}
+        />
+        <RangeSetting
+          label="Grid intensity"
+          value={Math.round(settings.gridOpacity * 100)}
+          min={0}
+          max={18}
+          suffix="%"
+          onChange={(value) => update({ gridOpacity: value / 100 })}
+        />
+
+        <div className="grid grid-cols-3 gap-2">
+          <ColorSetting label="Up" value={settings.candleUpColor} onChange={(candleUpColor) => update({ candleUpColor })} />
+          <ColorSetting label="Down" value={settings.candleDownColor} onChange={(candleDownColor) => update({ candleDownColor })} />
+          <ColorSetting label="Canvas" value={settings.backgroundColor} onChange={(backgroundColor) => update({ backgroundColor })} />
+        </div>
+
+        <div className="space-y-1 rounded-[5px] border hairline bg-surface/50 p-1.5">
+          <SettingsToggle label="Grid" checked={settings.showGrid} onChange={(showGrid) => update({ showGrid })} />
+          <SettingsToggle label="Last price line" checked={settings.showPriceLine} onChange={(showPriceLine) => update({ showPriceLine })} />
+          <SettingsToggle label="Crosshair" checked={settings.showCrosshair} onChange={(showCrosshair) => update({ showCrosshair })} />
+        </div>
+        <p className="text-[10px] leading-4 text-muted-foreground">Drag to pan, use your scroll wheel to zoom at the cursor, and double-click the chart to reset the viewport.</p>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function RangeSetting({ label, value, min, max, suffix, onChange }: { label: string; value: number; min: number; max: number; suffix: string; onChange: (value: number) => void }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="flex justify-between text-[11px] text-muted-foreground"><span>{label}</span><span className="tnum text-foreground">{value}{suffix}</span></span>
+      <input type="range" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} className="h-1.5 w-full accent-[var(--mdata)]" />
+    </label>
+  );
+}
+
+function ColorSetting({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="space-y-1 text-[10px] text-muted-foreground">
+      <span>{label}</span>
+      <span className="flex h-7 items-center gap-1.5 rounded-[4px] border hairline bg-surface px-1.5">
+        <input aria-label={`${label} color`} type="color" value={value} onChange={(event) => onChange(event.target.value)} className="h-4 w-4 cursor-pointer border-0 bg-transparent p-0" />
+        <span className="font-mono text-[9px] uppercase text-foreground">{value.slice(1)}</span>
+      </span>
+    </label>
+  );
+}
+
+function SettingsToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between px-1 py-0.5">
+      <span className="text-[11px]">{label}</span>
+      <Switch checked={checked} onCheckedChange={onChange} className="h-4 w-7" />
     </div>
   );
 }
