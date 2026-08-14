@@ -27,6 +27,28 @@ export interface TradeMarker {
   label?: string;
 }
 
+export interface ChartSettings {
+  futureBars: number;
+  gridOpacity: number;
+  candleUpColor: string;
+  candleDownColor: string;
+  backgroundColor: string;
+  showGrid: boolean;
+  showPriceLine: boolean;
+  showCrosshair: boolean;
+}
+
+export const DEFAULT_CHART_SETTINGS: ChartSettings = {
+  futureBars: 24,
+  gridOpacity: 0.075,
+  candleUpColor: "#34d399",
+  candleDownColor: "#ef4444",
+  backgroundColor: "#0a0a0a",
+  showGrid: true,
+  showPriceLine: true,
+  showCrosshair: true,
+};
+
 interface ChartProps {
   symbol: string;
   timeframe: Timeframe;
@@ -34,6 +56,7 @@ interface ChartProps {
   indicators: ChartIndicators;
   replayIndex?: number | null; // when in replay, show bars up to this index
   markers?: TradeMarker[];
+  settings?: ChartSettings;
   onCrosshair?: (b: Bar | null) => void;
 }
 
@@ -119,6 +142,7 @@ export function TerminalChart({
   indicators,
   replayIndex,
   markers,
+  settings = DEFAULT_CHART_SETTINGS,
   onCrosshair,
 }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -126,11 +150,15 @@ export function TerminalChart({
   const [bars, setBars] = useState<Bar[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [viewVersion, setViewVersion] = useState(0);
 
-  // view state
-  const view = useRef({ right: 0, count: 120 }); // right = index past the right edge
+  // right is the number of time slots reserved after the latest candle.
+  // Keeping it in a ref gives pointer events immediate feedback, while the
+  // version state invalidates the derived viewport after every interaction.
+  const view = useRef({ right: settings.futureBars, count: 120 }); // right = index past the right edge
+  const priceView = useRef({ offset: 0, zoom: 1 });
   const cross = useRef<{ x: number; y: number } | null>(null);
-  const dragging = useRef<{ x: number; right: number } | null>(null);
+  const dragging = useRef<{ mode: "time" | "price"; x: number; y: number; right: number; priceOffset: number } | null>(null);
   const raf = useRef(0);
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
 
@@ -155,7 +183,10 @@ export function TerminalChart({
         const json = await r.json();
         if (cancelled) return;
         const b: Bar[] = json.bars;
-        if (b.length) view.current.right = Math.min(20, b.length);
+        if (b.length) {
+          view.current.right = settings.futureBars;
+          setViewVersion((version) => version + 1);
+        }
         setBars(b);
         setLoading(false);
       } catch (e) {
@@ -168,7 +199,7 @@ export function TerminalChart({
     return () => {
       cancelled = true;
     };
-  }, [symbol, timeframe, tfSec]);
+  }, [symbol, timeframe, tfSec, settings.futureBars]);
 
   // live update last candle from trade stream
   useEffect(() => {
@@ -197,7 +228,6 @@ export function TerminalChart({
           v: lastTrade.quantity,
         });
         if (next.length > 2000) next.shift();
-        view.current.right = Math.min(view.current.right + 1, 20);
       }
       return next;
     });
@@ -225,25 +255,24 @@ export function TerminalChart({
       raf.current = 0;
       draw();
     });
-  }, [bars, chartType, indicators, replayIndex, markers]);
+  }, [bars, chartType, indicators, replayIndex, markers, settings, viewVersion]);
 
   // redraw when data/view changes
   useEffect(() => {
     scheduleDraw();
-  }, [bars, chartType, indicators, replayIndex, markers, scheduleDraw]);
+  }, [bars, chartType, indicators, replayIndex, markers, settings, viewVersion, scheduleDraw]);
 
-  const visibleBars = useMemo(() => {
-    let end = bars.length - view.current.right;
-    if (replayIndex != null) end = Math.min(end, replayIndex + 1);
-    end = Math.max(1, Math.min(end, bars.length));
+  const viewport = useMemo(() => {
     const count = view.current.count;
-    let start = end - count;
-    if (start < 0) {
-      end = Math.min(bars.length, end - start);
-      start = 0;
-    }
-    return bars.slice(start, end);
-  }, [bars, replayIndex]);
+    const availableBars = replayIndex == null ? bars.length : Math.min(bars.length, replayIndex + 1);
+    // A positive right offset intentionally projects the timeline beyond the
+    // latest market candle. A negative offset pans backward through history.
+    const virtualEnd = availableBars + view.current.right;
+    const virtualStart = virtualEnd - count;
+    const start = Math.max(0, Math.ceil(virtualStart));
+    const end = Math.max(start, Math.min(availableBars, Math.floor(virtualEnd)));
+    return { bars: bars.slice(start, end), count, start, virtualStart, availableBars };
+  }, [bars, replayIndex, viewVersion]);
 
   // ----- drawing -----
   const draw = useCallback(() => {
@@ -260,13 +289,15 @@ export function TerminalChart({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const c = themeColors();
     ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = settings.backgroundColor;
+    ctx.fillRect(0, 0, w, h);
 
     const plotW = w - PRICE_AXIS_W;
     const priceH = h - TIME_AXIS_H - (indicators.volume ? VOL_PANE_H + 6 : 0);
     const volTop = priceH + 6;
     const volH = indicators.volume ? VOL_PANE_H : 0;
 
-    const vb = visibleBars;
+    const vb = viewport.bars;
     if (!vb.length) {
       ctx.fillStyle = c.axisText;
       ctx.font = "11px var(--font-geist-mono), monospace";
@@ -289,14 +320,24 @@ export function TerminalChart({
     for (const v of [...ema20, ...ema50, ...vwap]) if (typeof v === "number") { hi = Math.max(hi, v); lo = Math.min(lo, v); }
     const pad = (hi - lo) * 0.08 || hi * 0.01;
     hi += pad; lo -= pad;
+    const autoRange = hi - lo || 1;
+    const manualRange = autoRange / priceView.current.zoom;
+    const autoCenter = (hi + lo) / 2;
+    const manualCenter = autoCenter + priceView.current.offset * autoRange;
+    hi = manualCenter + manualRange / 2;
+    lo = manualCenter - manualRange / 2;
     const range = hi - lo || 1;
 
-    const xFor = (i: number) => (i + 0.5) * (plotW / vb.length);
-    const candleW = Math.max(1, Math.min(14, (plotW / vb.length) * 0.7));
+    const slotW = plotW / viewport.count;
+    // Map bars into a virtual timeline. When the viewport extends beyond the
+    // newest candle, the unused right-hand slots stay deliberately blank.
+    const xFor = (i: number) => (i + viewport.start - viewport.virtualStart + 0.5) * slotW;
+    const candleW = Math.max(1, Math.min(14, slotW * 0.7));
+    const gridColor = `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})`;
     const yFor = (p: number) => priceH - ((p - lo) / range) * priceH;
 
     // grid (horizontal price lines, ~6)
-    ctx.strokeStyle = c.grid;
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
     ctx.font = "10px ui-monospace, monospace";
     ctx.fillStyle = c.axisText;
@@ -316,7 +357,7 @@ export function TerminalChart({
     ctx.textAlign = "center";
     for (let i = 0; i < vb.length; i += timeStep) {
       const x = xFor(i);
-      ctx.strokeStyle = c.grid;
+      ctx.strokeStyle = gridColor;
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, priceH);
@@ -331,10 +372,10 @@ export function TerminalChart({
         const b = vb[i];
         const vh = (b.v / maxVol) * (volH - 4);
         const x = xFor(i) - candleW / 2;
-        ctx.fillStyle = b.c >= b.o ? "rgba(52,211,153,0.28)" : "rgba(239,68,68,0.28)";
+        ctx.fillStyle = b.c >= b.o ? `${settings.candleUpColor}48` : `${settings.candleDownColor}48`;
         ctx.fillRect(x, volTop + (volH - vh), candleW, vh);
       }
-      ctx.strokeStyle = c.grid;
+      ctx.strokeStyle = gridColor;
       ctx.beginPath();
       ctx.moveTo(0, volTop + volH);
       ctx.lineTo(plotW, volTop + volH);
@@ -347,7 +388,7 @@ export function TerminalChart({
       const b = vb[i];
       const x = xFor(i);
       const up = b.c >= b.o;
-      const col = up ? c.pos : c.neg;
+      const col = up ? settings.candleUpColor : settings.candleDownColor;
       if (chartType === "candles" || chartType === "bars") {
         ctx.strokeStyle = col;
         ctx.fillStyle = col;
@@ -441,14 +482,16 @@ export function TerminalChart({
     // last price line + label
     const last = vb[vb.length - 1];
     const lastY = yFor(last.c);
-    ctx.strokeStyle = "rgba(255,255,255,0.18)";
-    ctx.setLineDash([2, 3]);
-    ctx.beginPath();
-    ctx.moveTo(0, lastY);
-    ctx.lineTo(plotW, lastY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = last.c >= last.o ? c.pos : c.neg;
+    if (settings.showPriceLine) {
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, lastY);
+      ctx.lineTo(plotW, lastY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.fillStyle = last.c >= last.o ? settings.candleUpColor : settings.candleDownColor;
     ctx.fillRect(plotW, lastY - 8, PRICE_AXIS_W, 16);
     ctx.fillStyle = "#0a0a0a";
     ctx.font = "bold 10.5px ui-monospace, monospace";
@@ -456,7 +499,7 @@ export function TerminalChart({
     ctx.fillText(fmtPrice(last.c, contract.tickSize), plotW + 6, lastY + 3);
 
     // crosshair
-    if (cross.current) {
+    if (settings.showCrosshair && cross.current) {
       const { x, y } = cross.current;
       if (x < plotW && y < priceH) {
         ctx.strokeStyle = c.cross;
@@ -476,9 +519,11 @@ export function TerminalChart({
         ctx.fillText(fmtPrice(p, contract.tickSize), plotW + 6, y + 3);
 
         // OHLC tooltip
-        const i = Math.floor((x / plotW) * vb.length);
-        const b = vb[Math.max(0, Math.min(vb.length - 1, i))];
+        const virtualIndex = Math.floor(x / slotW + viewport.virtualStart);
+        const localIndex = virtualIndex - viewport.start;
+        const b = vb[localIndex];
         if (b && onCrosshair) onCrosshair(b);
+        if (!b) return;
         const up = b.c >= b.o;
         const lines = [
           ["O", fmtPrice(b.o, contract.tickSize)],
@@ -501,26 +546,55 @@ export function TerminalChart({
         onCrosshair(null);
       }
     }
-  }, [visibleBars, chartType, indicators, contract.tickSize, markers, timeframe, onCrosshair]);
+  }, [viewport, chartType, indicators, contract.tickSize, markers, timeframe, onCrosshair, settings]);
 
   // pointer handlers
+  const maxFutureBars = Math.max(settings.futureBars * 5, 160);
+  const minRightOffset = -Math.max(0, bars.length - 1);
+  const clampRight = (right: number) => Math.max(minRightOffset, Math.min(maxFutureBars, right));
+  const invalidateViewport = () => setViewVersion((version) => version + 1);
+  const resetViewport = () => {
+    view.current.right = settings.futureBars;
+    view.current.count = 120;
+    priceView.current = { offset: 0, zoom: 1 };
+    invalidateViewport();
+  };
+
   const onPointerMove = (e: React.PointerEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     if (dragging.current) {
-      const dx = e.clientX - dragging.current.x;
-      const barsPerPx = view.current.count / (rect.width - PRICE_AXIS_W);
-      const shifted = Math.round(dx * barsPerPx);
-      view.current.right = Math.max(0, Math.min(bars.length - view.current.count, dragging.current.right - shifted));
-      scheduleDraw();
+      if (dragging.current.mode === "price") {
+        const priceHeight = Math.max(1, rect.height - TIME_AXIS_H - (indicators.volume ? VOL_PANE_H + 6 : 0));
+        priceView.current.offset = Math.max(-3, Math.min(3, dragging.current.priceOffset + (e.clientY - dragging.current.y) / priceHeight / priceView.current.zoom));
+        invalidateViewport();
+      } else {
+        const dx = e.clientX - dragging.current.x;
+        const plotWidth = Math.max(1, rect.width - PRICE_AXIS_W);
+        const shifted = Math.round(dx * (view.current.count / plotWidth));
+        const nextRight = clampRight(dragging.current.right - shifted);
+        if (nextRight !== view.current.right) {
+          view.current.right = nextRight;
+          invalidateViewport();
+        }
+      }
     }
     cross.current = { x, y };
     scheduleDraw();
   };
   const onPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    canvasRef.current?.focus();
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    dragging.current = { x: e.clientX, right: view.current.right };
+    const x = e.clientX - canvasRef.current!.getBoundingClientRect().left;
+    dragging.current = {
+      mode: x >= canvasRef.current!.getBoundingClientRect().width - PRICE_AXIS_W ? "price" : "time",
+      x: e.clientX,
+      y: e.clientY,
+      right: view.current.right,
+      priceOffset: priceView.current.offset,
+    };
   };
   const onPointerUp = () => {
     dragging.current = null;
@@ -531,9 +605,24 @@ export function TerminalChart({
     scheduleDraw();
   };
   const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const isPriceAxis = e.clientX - rect.left >= rect.width - PRICE_AXIS_W;
+    if (isPriceAxis) {
+      const factor = e.deltaY > 0 ? 0.87 : 1.15;
+      priceView.current.zoom = Math.max(0.35, Math.min(8, priceView.current.zoom * factor));
+      invalidateViewport();
+      return;
+    }
+    const pivot = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width - PRICE_AXIS_W)));
+    const previousCount = view.current.count;
     const delta = e.deltaY > 0 ? 1.15 : 0.87;
-    view.current.count = Math.max(30, Math.min(400, Math.round(view.current.count * delta)));
-    scheduleDraw();
+    const nextCount = Math.max(30, Math.min(400, Math.round(previousCount * delta)));
+    // Preserve the candle under the cursor while zooming, matching the
+    // expected charting-terminal behaviour rather than jumping to the edge.
+    view.current.right = clampRight(view.current.right + (nextCount - previousCount) * (1 - pivot));
+    view.current.count = nextCount;
+    invalidateViewport();
   };
 
   // keyboard pan/zoom
@@ -541,14 +630,25 @@ export function TerminalChart({
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
-      if (e.key === "+" || e.key === "=") { view.current.count = Math.max(30, Math.round(view.current.count * 0.87)); scheduleDraw(); }
-      else if (e.key === "-" || e.key === "_") { view.current.count = Math.min(400, Math.round(view.current.count * 1.15)); scheduleDraw(); }
-      else if (e.key === "ArrowLeft") { view.current.right = Math.min(bars.length - view.current.count, view.current.right + Math.round(view.current.count * 0.1)); scheduleDraw(); }
-      else if (e.key === "ArrowRight") { view.current.right = Math.max(0, view.current.right - Math.round(view.current.count * 0.1)); scheduleDraw(); }
+      if (e.key === "+" || e.key === "=") {
+        view.current.count = Math.max(30, Math.round(view.current.count * 0.87));
+        invalidateViewport();
+      } else if (e.key === "-" || e.key === "_") {
+        view.current.count = Math.min(400, Math.round(view.current.count * 1.15));
+        invalidateViewport();
+      } else if (e.key === "ArrowLeft") {
+        view.current.right = clampRight(view.current.right - Math.max(1, Math.round(view.current.count * 0.1)));
+        invalidateViewport();
+      } else if (e.key === "ArrowRight") {
+        view.current.right = clampRight(view.current.right + Math.max(1, Math.round(view.current.count * 0.1)));
+        invalidateViewport();
+      } else if (e.key === "Home" || e.key === "Escape") {
+        resetViewport();
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [bars.length, scheduleDraw]);
+  }, [bars.length, settings.futureBars]);
 
   return (
     <div ref={wrapRef} className="relative h-full w-full bg-background">
@@ -560,8 +660,37 @@ export function TerminalChart({
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerLeave}
         onWheel={onWheel}
-        aria-label={`${symbol} ${timeframe} chart`}
+        onDoubleClick={(event) => {
+          const rect = canvasRef.current!.getBoundingClientRect();
+          if (event.clientX - rect.left >= rect.width - PRICE_AXIS_W) {
+            priceView.current = { offset: 0, zoom: 1 };
+            invalidateViewport();
+          } else {
+            resetViewport();
+          }
+        }}
+        tabIndex={0}
+        aria-label={`${symbol} ${timeframe} chart; drag the plot to pan time, drag the price scale to pan price, scroll to zoom, double click to reset`}
       />
+      <div className="pointer-events-none absolute bottom-7 left-2 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={resetViewport}
+          className="pointer-events-auto rounded-[4px] border hairline bg-panel/90 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-hover hover:text-foreground"
+          title="Reset chart viewport (double click, Home, or Escape)"
+        >
+          Reset view
+        </button>
+        {view.current.right < settings.futureBars - 1 && (
+          <button
+            type="button"
+            onClick={() => { view.current.right = settings.futureBars; invalidateViewport(); }}
+            className="pointer-events-auto rounded-[4px] border border-mdata/30 bg-mdata/10 px-2 py-1 text-[10px] font-medium text-mdata shadow-sm backdrop-blur transition-colors hover:bg-mdata/20"
+          >
+            Go to realtime
+          </button>
+        )}
+      </div>
       {loading && (
         <div className="absolute inset-0 grid place-items-center text-[11px] text-muted-foreground uppercase tracking-wider">
           loading…
