@@ -1,5 +1,3 @@
-# ZTerminal
-
 <p align="center">
   <img src="/zterminal.png" alt="ZTerminal Logo" width="160">
 </p>
