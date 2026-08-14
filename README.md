@@ -1,7 +1,7 @@
 # ZTerminal
 
 <p align="center">
-  <img src="assets/zterminal.png" alt="ZTerminal Logo" width="160">
+  <img src="/zterminal.png" alt="ZTerminal Logo" width="160">
 </p>
 
 <p align="center">
