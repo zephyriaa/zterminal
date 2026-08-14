@@ -77,7 +77,7 @@ export function CommandPalette() {
       <CommandList className="scroll-thin">
         <CommandEmpty>No results.</CommandEmpty>
         <CommandGroup heading="Symbols">
-          {listContracts().map((c) => (
+          {listContracts().filter((contract) => contract.exchange === "GATEIO").map((c) => (
             <CommandItem
               key={c.symbol}
               value={`symbol ${c.symbol} ${c.description}`}
@@ -122,23 +122,6 @@ export function CommandPalette() {
           >
             <Save className="w-3.5 h-3.5 text-muted-foreground" />
             <span>Save current workspace</span>
-          </CommandItem>
-          <CommandItem
-            value="connect rithmic mock provider"
-            onSelect={() => {
-              useWorkspace.getState().setConnection({
-                provider: "mock",
-                environment: "simulation",
-                state: "connected",
-                dataStatus: "SIMULATED",
-              });
-              setView("connections");
-              setCommandOpen(false);
-            }}
-            className="flex items-center gap-2"
-          >
-            <Plug className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Connect provider (Mock / SIMULATED)</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

@@ -61,6 +61,32 @@ interface WorkspaceState {
   setLastBacktest: (id: string | null) => void;
 }
 
+const LIVE_GATEIO_SYMBOL = "QQQX_USDT";
+const LIVE_GATEIO_TIMEFRAMES = new Set(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]);
+
+type PersistedWorkspace = Partial<Pick<WorkspaceState, "sidebarCollapsed" | "symbol" | "timeframe" | "workspaces">>;
+
+/**
+ * Previous releases persisted CME/NQ selections in browsers. The live release
+ * supports Gate.io QQQX_USDT only, so those stale selections must be migrated
+ * before the chart or socket layer subscribes and fails against an unsupported
+ * venue symbol.
+ */
+function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
+  const persisted = (value ?? {}) as PersistedWorkspace;
+  const timeframe = typeof persisted.timeframe === "string" && LIVE_GATEIO_TIMEFRAMES.has(persisted.timeframe)
+    ? persisted.timeframe
+    : "5m";
+  const workspaces = Array.isArray(persisted.workspaces)
+    ? persisted.workspaces.map((workspace) => ({
+        ...workspace,
+        symbol: LIVE_GATEIO_SYMBOL,
+        timeframe: LIVE_GATEIO_TIMEFRAMES.has(workspace.timeframe) ? workspace.timeframe : "5m",
+      }))
+    : [];
+  return { ...persisted, symbol: LIVE_GATEIO_SYMBOL, timeframe, workspaces };
+}
+
 export const useWorkspace = create<WorkspaceState>()(
   persist(
     (set, get) => ({
@@ -117,6 +143,8 @@ export const useWorkspace = create<WorkspaceState>()(
     }),
     {
       name: "zterminal-workspace",
+      version: 2,
+      migrate: (persistedState) => migratePersistedWorkspace(persistedState),
       partialize: (s) => ({
         sidebarCollapsed: s.sidebarCollapsed,
         symbol: s.symbol,
