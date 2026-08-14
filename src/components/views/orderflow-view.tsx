@@ -41,6 +41,21 @@ export function OrderFlowView() {
 
   const maxBin = Math.max(1, ...footprint.map(([, b]) => b.buy + b.sell));
 
+  const domRows = useMemo(() => {
+    const bids = depth.filter((level) => level.side === "buy").sort((a, b) => b.price - a.price);
+    const asks = depth.filter((level) => level.side === "sell").sort((a, b) => a.price - b.price);
+    return Array.from({ length: Math.max(bids.length, asks.length) }, (_, index) => ({ bid: bids[index], ask: asks[index] }));
+  }, [depth]);
+
+  const cumulativeBids = useMemo(() => {
+    let cumulative = 0;
+    return depth
+      .filter((level) => level.side === "buy")
+      .sort((a, b) => b.price - a.price)
+      .map((level) => ({ ...level, cumulative: cumulative += level.size }));
+  }, [depth]);
+  const maxCumulativeBid = cumulativeBids.at(-1)?.cumulative ?? 1;
+
   // CVD over time buckets
   const cvd = useMemo(() => {
     const buckets = new Map<number, number>();
@@ -103,36 +118,33 @@ export function OrderFlowView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {depth.slice().sort((a, b) => b.price - a.price).map((lv, i) => {
-                    if (lv.side === "buy") return null;
-                    const bid = depth.find((d) => d.price < lv.price && d.side === "buy");
-                    return (
-                      <tr key={i} className={cn("border-b hairline/40", Math.abs(lv.price - lastPrice) < c.tickSize * 2 && "bg-hover/40")}>
-                        <td className="px-3 py-1 text-right text-muted-foreground">{bid?.size ?? ""}</td>
-                        <td className="px-2 py-1 text-right text-neg">{bid ? fmt(bid.price, c.tickSize) : ""}</td>
-                        <td className="px-2 py-1 text-right text-pos">{fmt(lv.price, c.tickSize)}</td>
-                        <td className="px-3 py-1 text-right text-muted-foreground">{lv.size}</td>
-                      </tr>
-                    );
-                  })}
+                  {domRows.map(({ bid, ask }, index) => (
+                    <tr key={`${bid?.price ?? "none"}-${ask?.price ?? "none"}-${index}`} className={cn("border-b hairline/40", (bid && Math.abs(bid.price - lastPrice) < c.tickSize * 2) || (ask && Math.abs(ask.price - lastPrice) < c.tickSize * 2) ? "bg-hover/40" : undefined)}>
+                      <td className="px-3 py-1 text-right text-muted-foreground">{bid?.size ?? ""}</td>
+                      <td className="px-2 py-1 text-right text-neg">{bid ? fmt(bid.price, c.tickSize) : ""}</td>
+                      <td className="px-2 py-1 text-right text-pos">{ask ? fmt(ask.price, c.tickSize) : ""}</td>
+                      <td className="px-3 py-1 text-right text-muted-foreground">{ask?.size ?? ""}</td>
+                    </tr>
+                  ))}
+                  {!domRows.length && <tr><td colSpan={4} className="px-3 py-6 text-center text-[11px] text-muted-foreground">Awaiting a verified order-book snapshot from {provider ?? "the active provider"}.</td></tr>}
                 </tbody>
               </table>
             </div>
             {/* cumulative depth */}
             <div className="w-[200px] border-l hairline overflow-y-auto scroll-thin">
               <div className="h-7 border-b hairline bg-panel flex items-center px-2.5"><span className="text-[10px] uppercase tracking-wider text-muted-foreground">Cumulative</span></div>
-              {depth.filter((d) => d.side === "buy").sort((a, b) => b.price - a.price).map((lv, i) => {
-                const cum = depth.filter((d) => d.side === "buy" && d.price <= lv.price).reduce((s, d) => s + d.size, 0);
-                const pct = Math.min(100, (cum / 800) * 100);
+              {cumulativeBids.map((level) => {
+                const pct = Math.min(100, (level.cumulative / maxCumulativeBid) * 100);
                 return (
-                  <div key={i} className="px-2 py-1 border-b hairline/40 flex items-center gap-2">
+                  <div key={level.price} className="px-2 py-1 border-b hairline/40 flex items-center gap-2">
                     <div className="flex-1 h-1 bg-surface rounded-full overflow-hidden">
                       <div className="h-full bg-pos/50" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-[10px] tnum text-muted-foreground w-10 text-right">{cum}</span>
+                    <span className="text-[10px] tnum text-muted-foreground w-10 text-right">{level.cumulative}</span>
                   </div>
                 );
               })}
+              {!cumulativeBids.length && <p className="px-2 py-3 text-[10px] text-muted-foreground">No bid levels received.</p>}
             </div>
           </div>
         )}
@@ -146,6 +158,7 @@ export function OrderFlowView() {
                 <span className="text-center">Price</span>
                 <span className="text-left">Ask vol</span>
               </div>
+              {!footprint.length && <p className="px-2 py-4 text-center text-[11px] text-muted-foreground">Awaiting observed public trades. No synthetic footprint levels are generated.</p>}
               {footprint.map(([price, b]) => {
                 const total = b.buy + b.sell;
                 const buyPct = total ? (b.buy / total) * 100 : 0;
@@ -177,7 +190,7 @@ export function OrderFlowView() {
               <CVDChart cvd={cvd} range={cvdRange} />
             </div>
             <div className="h-[200px] border-t hairline overflow-y-auto scroll-thin">
-              <div className="h-7 border-b hairline bg-panel flex items-center px-2.5"><span className="text-[10px] uppercase tracking-wider text-muted-foreground">Time & Sales</span></div>
+              <div className="h-7 border-b hairline bg-panel flex items-center px-2.5"><span className="text-[10px] uppercase tracking-wider text-muted-foreground">Time & Sales</span><span className="ml-auto text-[9.5px] text-muted-foreground">exchange-reported side</span></div>
               <table className="w-full text-[10.5px] tnum">
                 <tbody>
                   {trades.slice().reverse().slice(0, 60).map((t) => (

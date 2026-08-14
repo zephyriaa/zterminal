@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateBars } from "@/lib/market/mock-provider";
 import { getContract } from "@/lib/market/contracts";
+import { fetchGateioHistoricalBars, isGateioTimeframe, normalizeGateioSymbol } from "@/lib/market/gateio";
 import { runStrategy, type BacktestConfig, type StrategyParams } from "@/lib/strategy/zs-runtime";
 import { compileStrategy } from "@/lib/strategy/zs-compiler";
-import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
+import { TIMEFRAME_SECONDS } from "@/lib/market/types";
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +12,13 @@ export const dynamic = "force-dynamic";
  *
  * Identical inputs (source, symbol, timeframe, range, costs, params)
  * always produce an identical result (same hash + trades). No
- * randomness in the engine. Data is SIMULATED (mock provider).
+ * randomness in the engine. Candles are fetched from Gate.io’s public historical endpoint and provenance is returned with every successful run.
  */
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const src: string = body?.src ?? "";
-  const symbol: string = (body?.symbol ?? "NQ").toUpperCase();
-  const tf = (body?.timeframe ?? "5m") as Timeframe;
+  const symbol: string = (body?.symbol ?? "QQQX_USDT").toUpperCase();
+  const tf = String(body?.timeframe ?? "5m");
   const from = Number(body?.from ?? Date.now() - 30 * 86400_000);
   const to = Number(body?.to ?? Date.now());
   const initialCapital = Number(body?.initialCapital ?? 100_000);
@@ -29,17 +29,45 @@ export async function POST(req: NextRequest) {
   const params: StrategyParams = body?.params ?? {};
   const executionModel: "next_bar_open" = "next_bar_open";
 
+  if (!isGateioTimeframe(tf)) return NextResponse.json({ error: "unsupported Gate.io historical timeframe" }, { status: 400 });
+  if (![from, to, initialCapital, commissionPerContract, slippageTicks, spreadTicks, positionSize].every(Number.isFinite)) {
+    return NextResponse.json({ error: "backtest configuration must contain finite numeric values" }, { status: 400 });
+  }
+  if (from >= to || from < 0) return NextResponse.json({ error: "backtest range must have a valid start before its end" }, { status: 400 });
+  if (initialCapital <= 0 || positionSize <= 0 || commissionPerContract < 0 || slippageTicks < 0 || spreadTicks < 0) {
+    return NextResponse.json({ error: "capital and position size must be positive; execution costs cannot be negative" }, { status: 400 });
+  }
+  const maxHistoricalRangeMs = TIMEFRAME_SECONDS[tf] * 1_000 * 2_000 * 48;
+  if (to - from > maxHistoricalRangeMs) {
+    return NextResponse.json({ error: "requested historical range exceeds the verified Gate.io pagination limit for this timeframe" }, { status: 400 });
+  }
+
   const c = getContract(symbol);
   if (!c) return NextResponse.json({ error: "unknown symbol" }, { status: 400 });
+  const gateSymbol = normalizeGateioSymbol(symbol);
+  if (!gateSymbol) {
+    return NextResponse.json({
+      error: `historical data is currently available only for supported Gate.io USDT perpetual contracts; ${symbol} is not mapped`,
+      dataStatus: "UNAVAILABLE",
+    }, { status: 400 });
+  }
 
   const compiled = compileStrategy(src);
   if (!compiled.ok && compiled.diagnostics.some((d) => d.severity === "error")) {
     return NextResponse.json({ error: "strategy has compile errors", diagnostics: compiled.diagnostics }, { status: 400 });
   }
 
-  const bars = generateBars(symbol, tf, from, to);
+  let bars;
+  try {
+    bars = await fetchGateioHistoricalBars(gateSymbol, tf, from, to);
+  } catch (error) {
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : "historical market data is unavailable",
+      dataStatus: "UNAVAILABLE",
+    }, { status: 502 });
+  }
   if (bars.length < 5) {
-    return NextResponse.json({ error: "insufficient data for the selected range" }, { status: 400 });
+    return NextResponse.json({ error: "insufficient verified historical data for the selected range", dataStatus: "UNAVAILABLE" }, { status: 400 });
   }
 
   const cfg: BacktestConfig = {
@@ -68,7 +96,15 @@ export async function POST(req: NextRequest) {
     monthly,
     timeframeSeconds: TIMEFRAME_SECONDS[tf],
     diagnostics: compiled.diagnostics,
-    dataStatus: "SIMULATED",
+    dataStatus: "HISTORICAL",
+    dataProvenance: {
+      provider: "gateio",
+      nativeSymbol: gateSymbol,
+      range: { from, to },
+      timeframe: tf,
+      fetchedAt: Date.now(),
+      barCount: bars.length,
+    },
   });
 }
 

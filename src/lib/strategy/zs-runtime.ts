@@ -11,7 +11,7 @@
  * Determinism: identical (bars, strategy, parameters, costs) -> identical
  * trades. No Math.random. All cost assumptions are explicit.
  */
-import type { Bar } from "@/lib/market/types";
+import type { Bar, DataStatus, Timeframe } from "@/lib/market/types";
 import type { ZSNode } from "./zs-compiler";
 
 export interface StrategyParams {
@@ -58,6 +58,16 @@ export interface BacktestResult {
   hash: string;       // deterministic hash of inputs
   ranAt: number;
   barsProcessed: number;
+  /** Source truthfulness is attached by the API layer, never inferred by the UI. */
+  dataStatus?: DataStatus;
+  dataProvenance?: {
+    provider: string;
+    nativeSymbol: string;
+    range: { from: number; to: number };
+    timeframe: Timeframe;
+    fetchedAt: number;
+    barCount: number;
+  };
 }
 
 export interface BacktestMetrics {

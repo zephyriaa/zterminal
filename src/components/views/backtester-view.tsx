@@ -9,11 +9,10 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { TerminalChart, type ChartType, type ChartIndicators, type TradeMarker } from "../terminal/terminal-chart";
-import { Panel, PanelHeader, Pill, SimulatedTag, StatRow } from "../terminal/primitives";
+import { Panel, PanelHeader, Pill, StatRow } from "../terminal/primitives";
 import { useStrategy } from "@/stores/strategy";
 import { useWorkspace } from "@/stores/workspace";
-import { getContract } from "@/lib/market/contracts";
-import type { BacktestResult, BacktestTrade } from "@/lib/strategy/zs-runtime";
+import type { BacktestResult } from "@/lib/strategy/zs-runtime";
 import type { Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 import {
@@ -70,7 +69,6 @@ export function BacktesterView() {
   }
 
   const r = lastResult;
-  const contract = getContract(r.config.symbol);
   const m = r.metrics;
   const equityData = r.equity.map((e) => ({ t: e.t, v: Math.round(e.v) }));
   const ddData = r.drawdown.map((d) => ({ t: d.t, v: Math.round(d.v) }));
@@ -242,6 +240,7 @@ export function BacktesterView() {
             <Panel className="p-3">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Configuration</div>
               <StatRow label="Symbol" value={r.config.symbol} />
+              <StatRow label="Data source" value={r.dataProvenance ? `${r.dataProvenance.provider.toUpperCase()} · ${r.dataProvenance.nativeSymbol}` : r.dataStatus ?? "UNLABELLED"} tone={r.dataStatus === "HISTORICAL" ? "pos" : "warn"} />
               <StatRow label="Timeframe" value={r.config.timeframe} />
               <StatRow label="Bars" value={String(r.barsProcessed)} />
               <StatRow label="Capital" value={`$${r.config.initialCapital.toLocaleString()}`} />
@@ -253,7 +252,7 @@ export function BacktesterView() {
             <div className="flex items-start gap-2 p-2 border border-warn/30 bg-warn/5 rounded-[5px]">
               <TrendingDown className="w-3.5 h-3.5 text-warn shrink-0 mt-0.5" />
               <p className="text-[10px] text-foreground/80 leading-relaxed">
-                Results are SIMULATED on synthetic data. Profitable backtests are not edges. Classify by evidence (out-of-sample, walk-forward, robustness) — not by raw return.
+                Historical market data and explicit cost assumptions improve reproducibility, but a profitable backtest is not evidence of an edge. Review data coverage, out-of-sample results, walk-forward stability, and cost stress before relying on a protocol.
               </p>
             </div>
           </div>
@@ -277,7 +276,7 @@ function Header({ result, setView }: { result: BacktestResult | null; setView: (
         </>
       )}
       <div className="ml-auto flex items-center gap-1.5">
-        <SimulatedTag />
+        {result && <Pill tone={result.dataStatus === "HISTORICAL" ? "pos" : "warn"}>{result.dataStatus ?? "UNLABELLED"}</Pill>}
         <button onClick={() => setView("strategy")} className="h-7 px-2.5 rounded-[5px] border hairline bg-surface hover:bg-hover text-[11px]">Edit strategy</button>
       </div>
     </div>
