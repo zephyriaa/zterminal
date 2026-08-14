@@ -19,6 +19,7 @@ import { Panel, PanelHeader, Pill, SimulatedTag, StatRow } from "../terminal/pri
 import { useWorkspace } from "@/stores/workspace";
 import { listContracts, getContract } from "@/lib/market/contracts";
 import { PROVIDER_CATALOG, type ProviderCatalogEntry } from "@/lib/market/capabilities";
+import { calculateFixedRiskSizing } from "@/domain/risk/sizing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,22 +99,18 @@ export function AlertsView() {
     return listContracts().filter((contract) => contract.symbol === "QQQX_USDT");
   }, [connection.dataStatus, connection.provider]);
 
-  useEffect(() => {
-    if (liveContracts.some((contract) => contract.symbol === sym)) return;
-    if (liveContracts[0]) setSym(liveContracts[0].symbol);
-  }, [liveContracts, sym]);
-
   const add = () => {
     const p = Number(price);
     if (!Number.isFinite(p) || p <= 0) {
       setError("Enter a positive numeric trigger price.");
       return;
     }
-    if (!liveContracts.some((contract) => contract.symbol === sym)) {
+    const alertSymbol = liveContracts.some((contract) => contract.symbol === sym) ? sym : liveContracts[0]?.symbol;
+    if (!alertSymbol) {
       setError("Choose a symbol with an active live market-data subscription before creating an alert.");
       return;
     }
-    setAlerts((current) => [...current, { id: crypto.randomUUID(), symbol: sym, cond, price: p, active: true }]);
+    setAlerts((current) => [...current, { id: crypto.randomUUID(), symbol: alertSymbol, cond, price: p, active: true }]);
     setError(null);
     setPrice("");
   };
@@ -294,20 +291,20 @@ export function RiskView() {
   const c = getContract(symbol);
   const [acct, setAcct] = useState("100000");
   const [risk, setRisk] = useState("1");
-  const [stop, setStop] = useState(String(c.tickSize * 8));
-
-  useEffect(() => {
-    setStop(String(c.tickSize * 8));
-  }, [c.tickSize]);
+  const [stop, setStop] = useState<{ symbol: string; value: string } | null>(null);
+  const stopValue = stop?.symbol === symbol ? stop.value : String(c.tickSize * 8);
 
   const acctN = Math.max(0, Number(acct) || 0);
   const riskN = Math.max(0, Number(risk) || 0);
-  const stopN = Math.max(0, Number(stop) || 0);
-  const riskAmount = acctN * (riskN / 100);
-  const stopTicks = c.tickSize > 0 ? stopN / c.tickSize : 0;
-  // Native-contract loss estimate: price distance × venue-supplied multiplier.
-  const perContractRisk = stopN * c.multiplier;
-  const size = perContractRisk > 0 ? Math.max(0, Math.floor(riskAmount / perContractRisk)) : 0;
+  const stopN = Math.max(0, Number(stopValue) || 0);
+  const sizing = calculateFixedRiskSizing({
+    accountEquity: acctN,
+    riskPercent: riskN,
+    stopDistance: stopN,
+    tickSize: c.tickSize,
+    multiplier: c.multiplier,
+  });
+  const { riskAmount, stopTicks, perUnitRisk: perContractRisk, maxQuantity: size } = sizing;
   const nativeContract = c.exchange === "GATEIO";
 
   return (
@@ -319,7 +316,7 @@ export function RiskView() {
             <Field label="Instrument"><div className="font-mono-num text-[12px] font-semibold">{symbol}</div></Field>
             <Field label={`Account equity (${c.currency})`}><Input value={acct} onChange={(e) => setAcct(e.target.value)} type="number" min="0" className="h-7 text-[12px] tnum bg-surface" /></Field>
             <Field label="Risk per trade (%)"><Input value={risk} onChange={(e) => setRisk(e.target.value)} type="number" min="0" className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label={`Stop distance (${c.currency} price)`}><Input value={stop} onChange={(e) => setStop(e.target.value)} type="number" min="0" step={c.tickSize} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label={`Stop distance (${c.currency} price)`}><Input value={stopValue} onChange={(e) => setStop({ symbol, value: e.target.value })} type="number" min="0" step={c.tickSize} className="h-7 text-[12px] tnum bg-surface" /></Field>
           </div>
         </Panel>
         <Panel className="p-3">
