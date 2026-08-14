@@ -25,6 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Timeframe } from "@/lib/market/types";
 import type { BacktestResult } from "@/lib/strategy/zs-runtime";
+import { useInstitutionalProtocol } from "@/stores/institutional-protocol";
+import { ProtocolStrategyPanel } from "./protocol-strategy-panel";
+import { assessSampleAdequacy, baselineFingerprint } from "@/domain/protocol/policy";
+import { buildSingleVariableSource } from "@/domain/protocol/generation";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
 const HISTORICAL_GATEIO_SYMBOLS = ["QQQX_USDT"];
@@ -38,6 +42,10 @@ export function StrategyView() {
     lastResult, setLastResult,
   } = useStrategy();
   const { setView, setSymbol } = useWorkspace();
+  const { projects, activeProjectId, addRun, completeIncrementalRun } = useInstitutionalProtocol();
+  const activeProtocol = projects.find((project) => project.id === activeProjectId) ?? null;
+  const lockedArtifact = activeProtocol?.artifacts.at(-1);
+  const protocolBaselineLocked = lockedArtifact?.approval === "APPROVED";
   const [busy, setBusy] = useState<"validate" | "backtest" | null>(null);
   const [tab, setTab] = useState<"console" | "errors" | "warnings">("console");
   const [log, setLog] = useState<string[]>([]);
@@ -70,17 +78,57 @@ export function StrategyView() {
     }
   };
 
-  // run backtest
+  // Protocol baselines are immutable; downstream tests consume exactly one staged variable change.
   const runBacktest = async () => {
+    const pendingChange = activeProtocol?.pendingVariableChange ?? null;
+    const protocolReady = Boolean(activeProtocol && protocolBaselineLocked && lockedArtifact && activeProtocol.revisions.at(-1) && activeProtocol.assessments.at(-1)?.selectedDataset);
+    const isProtocolIncremental = Boolean(protocolReady && pendingChange);
+    const isProtocolBaseline = Boolean(protocolReady && !pendingChange);
+    const to = Date.now();
+    const from = to - config.days * 86400_000;
+    const baseInput = protocolReady && activeProtocol && lockedArtifact
+      ? {
+          ruleSpecRevisionHash: activeProtocol.revisions.at(-1)!.hash,
+          generatedArtifactHash: lockedArtifact.hash,
+          datasetIdentity: JSON.stringify(activeProtocol.assessments.at(-1)!.selectedDataset),
+          executionModel: "next-bar-open",
+          costModel: `commission:${config.commissionPerContract}|slippage:${config.slippageTicks}|spread:${config.spreadTicks}`,
+          initialCapital: config.initialCapital,
+          positionSize: config.positionSize,
+        }
+      : null;
+    const fingerprint = isProtocolBaseline && baseInput ? baselineFingerprint(baseInput) : null;
+    const existingBaseline = fingerprint && activeProtocol?.runs.find((run) => run.runClass === "BASELINE" && run.fingerprint === fingerprint);
+    const priorProtocolBaseline = activeProtocol && lockedArtifact ? activeProtocol.runs.find((run) => run.runClass === "BASELINE" && run.generatedArtifactId === lockedArtifact.id) : null;
+    if (isProtocolBaseline && priorProtocolBaseline && fingerprint && priorProtocolBaseline.fingerprint !== fingerprint) {
+      setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] BASELINE BLOCKED: settings differ from the immutable baseline. Create one declared Stage 6 variable change instead.`, ...current].slice(0, 50));
+      setTab("errors");
+      return;
+    }
+    if (existingBaseline) {
+      setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] baseline reused — fingerprint ${fingerprint}. Changed settings require a one-variable incremental experiment.`, ...current].slice(0, 50));
+      setView("backtester");
+      return;
+    }
+    if (activeProtocol && protocolBaselineLocked && !baseInput) {
+      setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] BASELINE BLOCKED: attach a verified dataset before running the frozen protocol code.`, ...current].slice(0, 50));
+      setTab("errors");
+      return;
+    }
+    const transformed = isProtocolIncremental && pendingChange ? buildSingleVariableSource(lockedArtifact!.source, pendingChange) : null;
+    if (transformed && !transformed.ok) {
+      setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] INCREMENTAL BLOCKED: ${transformed.reason}`, ...current].slice(0, 50));
+      setTab("errors");
+      return;
+    }
+    const executionSource = transformed?.ok ? transformed.source : source;
     setBusy("backtest");
     try {
-      const to = Date.now();
-      const from = to - config.days * 86400_000;
       const r = await fetch("/api/backtest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          src: source,
+          src: executionSource,
           symbol: config.symbol,
           timeframe: config.timeframe,
           from,
@@ -93,17 +141,33 @@ export function StrategyView() {
           params,
         }),
       });
-      const j: BacktestResult & { diagnostics?: any[]; error?: string } = await r.json();
+      const j: BacktestResult & { diagnostics?: unknown[]; error?: string } = await r.json();
       if (j.error) {
         setLog((l) => [`[${new Date().toISOString().slice(11, 19)}] BACKTEST ERROR: ${j.error}`, ...l].slice(0, 50));
         setTab("errors");
         return;
       }
       setLastResult(j);
-      setLog((l) => [
-        `[${new Date().toISOString().slice(11, 19)}] backtest complete — ${j.metrics.totalTrades} trades · net ${(j.metrics.netProfit >= 0 ? "+" : "") + j.metrics.netProfit.toFixed(0)} · PF ${j.metrics.profitFactor.toFixed(2)} · DD ${j.metrics.maxDrawdownPct.toFixed(1)}% · hash ${j.hash}`,
-        ...l,
-      ].slice(0, 50));
+      const adequacy = assessSampleAdequacy(j.metrics.winners, j.metrics.totalTrades);
+      const common = activeProtocol && lockedArtifact ? {
+        ruleSpecRevisionId: activeProtocol.revisions.at(-1)!.id,
+        generatedArtifactId: lockedArtifact.id,
+        resultHash: j.hash,
+        metrics: { totalTrades: j.metrics.totalTrades, winRate: j.metrics.winRate, avgWin: j.metrics.avgWin, avgLoss: j.metrics.avgLoss, expectancy: j.metrics.expectancy, maxDrawdown: j.metrics.maxDrawdown, netProfit: j.metrics.netProfit },
+        adequacy,
+        provenanceWarnings: activeProtocol.assessments.at(-1)?.selectedDataset?.qualityWarnings ?? ["Dataset provenance is not attached."],
+        createdAt: new Date().toISOString(),
+      } : null;
+      if (isProtocolBaseline && activeProtocol && fingerprint && common) {
+        addRun(activeProtocol.id, { id: `run_${j.runId}`, runClass: "BASELINE", fingerprint, parentRunId: null, variableChange: null, ...common });
+        setLog((l) => [`[${new Date().toISOString().slice(11, 19)}] BASELINE COMPLETE — no optimization · ${j.metrics.totalTrades} trades · 95% hit-rate interval ${(adequacy.hitRateInterval.lower * 100).toFixed(1)}–${(adequacy.hitRateInterval.upper * 100).toFixed(1)}% · ${adequacy.status}`, ...l].slice(0, 50));
+      } else if (isProtocolIncremental && activeProtocol && pendingChange && priorProtocolBaseline && baseInput && common) {
+        const incrementalFingerprint = baselineFingerprint({ ...baseInput, datasetIdentity: `${baseInput.datasetIdentity}|variable:${pendingChange.id}`, executionModel: "next-bar-open-incremental", costModel: `${baseInput.costModel}|variable:${pendingChange.kind}:${pendingChange.after}` });
+        completeIncrementalRun(activeProtocol.id, { id: `run_${j.runId}`, runClass: "INCREMENTAL", fingerprint: incrementalFingerprint, parentRunId: priorProtocolBaseline.id, variableChange: pendingChange, ...common });
+        setLog((l) => [`[${new Date().toISOString().slice(11, 19)}] INCREMENTAL COMPLETE — ${pendingChange.label} · direct-parent comparison is labelled TUNED and kept separate from baseline.`, ...l].slice(0, 50));
+      } else {
+        setLog((l) => [`[${new Date().toISOString().slice(11, 19)}] standard backtest complete — ${j.metrics.totalTrades} trades · net ${(j.metrics.netProfit >= 0 ? "+" : "") + j.metrics.netProfit.toFixed(0)} · PF ${j.metrics.profitFactor.toFixed(2)} · DD ${j.metrics.maxDrawdownPct.toFixed(1)}% · hash ${j.hash}`, ...l].slice(0, 50));
+      }
       setSymbol(config.symbol);
       setView("backtester");
     } finally {
@@ -134,7 +198,7 @@ export function StrategyView() {
         </Button>
         <Button size="sm" variant="outline" onClick={validate} disabled={busy === "validate"} className="h-7 text-[12px] gap-1.5">Compile</Button>
         <Button size="sm" onClick={runBacktest} disabled={busy === "backtest"} className="h-7 text-[12px] gap-1.5 bg-research text-research-foreground hover:bg-research/90">
-          <Play className="w-3.5 h-3.5" />{busy === "backtest" ? "Running…" : "Run Backtest"}
+          <Play className="w-3.5 h-3.5" />{busy === "backtest" ? "Running…" : protocolBaselineLocked ? "Run Baseline · no optimization" : "Run Backtest"}
         </Button>
         <div className="ml-auto flex items-center gap-1.5">
           <Pill tone={lastCompile?.ok ? "pos" : "default"}>
@@ -153,7 +217,7 @@ export function StrategyView() {
             <span className="text-[11px] text-muted-foreground">strategy.zs</span>
           </div>
           <div className="flex-1 min-h-0">
-            <CodeEditor value={source} onChange={setSource} />
+            <CodeEditor value={source} onChange={setSource} readOnly={protocolBaselineLocked} />
           </div>
         </div>
 
@@ -174,6 +238,7 @@ export function StrategyView() {
                     type="number"
                     value={String(params[inp.name] ?? inp.default)}
                     onChange={(e) => setParam(inp.name, Number(e.target.value))}
+                    disabled={protocolBaselineLocked}
                     className="h-7 text-[12px] tnum bg-surface"
                   />
                   {(inp.minval != null || inp.maxval != null) && (
@@ -192,15 +257,15 @@ export function StrategyView() {
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Configuration</span>
           </div>
           <div className="overflow-y-auto scroll-thin p-2.5 space-y-2">
-            <CfgSelect label="Instrument" value={config.symbol} onChange={(v) => setConfig({ symbol: v })} options={HISTORICAL_GATEIO_SYMBOLS} />
-            <CfgSelect label="Timeframe" value={config.timeframe} onChange={(v) => setConfig({ timeframe: v })} options={TIMEFRAMES} />
-            <Field label="Lookback (days)"><Input type="number" min="1" max="60" value={String(config.days)} onChange={(e) => setConfig({ days: Math.max(1, Math.min(60, Number(e.target.value) || 1)) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Initial capital (USDT)"><Input type="number" min="1" value={String(config.initialCapital)} onChange={(e) => setConfig({ initialCapital: Math.max(1, Number(e.target.value) || 1) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Native contract quantity"><Input type="number" min="1" step="1" value={String(config.positionSize)} onChange={(e) => setConfig({ positionSize: Math.max(1, Math.floor(Number(e.target.value) || 1)) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Commission / native contract (USDT)"><Input type="number" min="0" step="0.0001" value={String(config.commissionPerContract)} onChange={(e) => setConfig({ commissionPerContract: Math.max(0, Number(e.target.value) || 0) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Slippage (ticks)"><Input type="number" min="0" step="0.1" value={String(config.slippageTicks)} onChange={(e) => setConfig({ slippageTicks: Math.max(0, Number(e.target.value) || 0) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Spread (ticks)"><Input type="number" min="0" step="0.1" value={String(config.spreadTicks)} onChange={(e) => setConfig({ spreadTicks: Math.max(0, Number(e.target.value) || 0) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <div className="text-[9.5px] text-muted-foreground leading-relaxed">Lookback is capped at 60 days in the interface; the API separately enforces the verified Gate.io page limit for each selected timeframe.</div>
+            <CfgSelect label="Instrument" value={config.symbol} onChange={(v) => setConfig({ symbol: v })} options={HISTORICAL_GATEIO_SYMBOLS} disabled={protocolBaselineLocked} />
+            <CfgSelect label="Timeframe" value={config.timeframe} onChange={(v) => setConfig({ timeframe: v })} options={TIMEFRAMES} disabled={protocolBaselineLocked} />
+            <Field label="Lookback (days)"><Input type="number" min="1" max="60" value={String(config.days)} onChange={(e) => setConfig({ days: Math.max(1, Math.min(60, Number(e.target.value) || 1)) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Initial capital (USDT)"><Input type="number" min="1" value={String(config.initialCapital)} onChange={(e) => setConfig({ initialCapital: Math.max(1, Number(e.target.value) || 1) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Native contract quantity"><Input type="number" min="1" step="1" value={String(config.positionSize)} onChange={(e) => setConfig({ positionSize: Math.max(1, Math.floor(Number(e.target.value) || 1)) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Commission / native contract (USDT)"><Input type="number" min="0" step="0.0001" value={String(config.commissionPerContract)} onChange={(e) => setConfig({ commissionPerContract: Math.max(0, Number(e.target.value) || 0) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Slippage (ticks)"><Input type="number" min="0" step="0.1" value={String(config.slippageTicks)} onChange={(e) => setConfig({ slippageTicks: Math.max(0, Number(e.target.value) || 0) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Spread (ticks)"><Input type="number" min="0" step="0.1" value={String(config.spreadTicks)} onChange={(e) => setConfig({ spreadTicks: Math.max(0, Number(e.target.value) || 0) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <div className="text-[9.5px] text-muted-foreground leading-relaxed">{protocolBaselineLocked ? "Baseline code and configuration are frozen. Any changed setting must be created as one declared downstream variable, never rerun as a baseline." : "Lookback is capped at 60 days in the interface; the API separately enforces the verified Gate.io page limit for each selected timeframe."}</div>
             <div className="pt-2 border-t hairline">
               <StatRow label="Execution" value="next-bar open" tone="muted" hint="Anti look-ahead: signals on bar[i] fill at bar[i+1].open" />
               <StatRow label="Data" value="GATE.IO · HISTORICAL" tone="pos" hint="Public USDT-perpetual candles with range and provider provenance attached to each run." />
@@ -208,6 +273,8 @@ export function StrategyView() {
           </div>
         </div>
       </div>
+
+      {activeProtocol && <ProtocolStrategyPanel onAdoptSource={(generatedSource) => { setSource(generatedSource); setLastCompile(null); setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] protocol generation staged — validate the generated minimal source before baseline review`, ...current].slice(0, 50)); }} />}
 
       {/* Bottom console */}
       <div className="h-[200px] shrink-0 border-t hairline bg-panel flex flex-col">
@@ -272,11 +339,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function CfgSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+function CfgSelect({ label, value, onChange, options, disabled = false }: { label: string; value: string; onChange: (v: string) => void; options: string[]; disabled?: boolean }) {
   return (
     <label className="block">
       <span className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{label}</span>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="h-7 text-[12px] bg-surface"><SelectValue /></SelectTrigger>
         <SelectContent>
           {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}

@@ -35,19 +35,23 @@ model Post {
 }
 
 model Workspace {
-  id         String            @id @default(cuid())
-  ownerId    String?
-  name       String
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-  owner      User?             @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  datasets   Dataset[]
-  strategies Strategy[]
-  riskPlans  RiskPlan[]
-  alerts     AlertDefinition[]
-  journals   JournalEntry[]
-  backtests  BacktestRun[]
-  audits     AuditEvent[]
+  id                String             @id @default(cuid())
+  ownerId           String?
+  name              String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  owner             User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  datasets          Dataset[]
+  strategies        Strategy[]
+  riskPlans         RiskPlan[]
+  alerts            AlertDefinition[]
+  journals          JournalEntry[]
+  backtests         BacktestRun[]
+  audits            AuditEvent[]
+  researchSources   ResearchSource[]
+  ruleSpecs         RuleSpec[]
+  protocolDecisions ProtocolDecision[]
+  datasetImports    DatasetImport[]
 
   @@index([ownerId])
 }
@@ -73,21 +77,27 @@ model Strategy {
  * explicit at the application boundary. `sourceHash` identifies exact authored content.
  */
 model StrategyVersion {
-  id                   String         @id @default(cuid())
-  strategyId           String
-  version              Int
-  language             String
-  source               String?
-  structuredDefinition String?
-  parameterSchema      String
-  riskModel            String
-  sourceHash           String
-  datasetId            String?
-  createdAt            DateTime       @default(now())
-  strategy             Strategy       @relation(fields: [strategyId], references: [id], onDelete: Cascade)
-  dataset              Dataset?       @relation(fields: [datasetId], references: [id], onDelete: SetNull)
-  backtests            BacktestRun[]
-  journals             JournalEntry[]
+  id                     String                     @id @default(cuid())
+  strategyId             String
+  version                Int
+  language               String
+  source                 String?
+  structuredDefinition   String?
+  parameterSchema        String
+  riskModel              String
+  sourceHash             String
+  datasetId              String?
+  createdAt              DateTime                   @default(now())
+  strategy               Strategy                   @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  dataset                Dataset?                   @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  backtests              BacktestRun[]
+  journals               JournalEntry[]
+  generatedArtifactId    String?
+  protocolClassification String                     @default("NON_PROTOCOL")
+  parentVersionId        String?
+  generatedArtifact      GeneratedStrategyArtifact? @relation(fields: [generatedArtifactId], references: [id], onDelete: SetNull)
+  parentVersion          StrategyVersion?           @relation("StrategyVersionLineage", fields: [parentVersionId], references: [id], onDelete: SetNull)
+  childVersions          StrategyVersion[]          @relation("StrategyVersionLineage")
 
   @@unique([strategyId, version])
   @@index([strategyId])
@@ -115,6 +125,7 @@ model Dataset {
   workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   strategyVersions StrategyVersion[]
   backtests        BacktestRun[]
+  imports          DatasetImport[]
 
   @@index([workspaceId, createdAt])
   @@index([contentHash])
@@ -124,26 +135,183 @@ model Dataset {
  * A deterministic run points to immutable strategy/dataset inputs and stores its complete result artifact.
  */
 model BacktestRun {
-  id                String           @id @default(cuid())
-  workspaceId       String
-  strategyVersionId String?
-  datasetId         String?
-  determinismHash   String           @unique
-  config            String
-  parameters        String
-  metrics           String
-  tradeLog          String
-  equityCurve       String
-  validationStatus  String           @default("unvalidated")
-  createdAt         DateTime         @default(now())
-  workspace         Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  strategyVersion   StrategyVersion? @relation(fields: [strategyVersionId], references: [id], onDelete: SetNull)
-  dataset           Dataset?         @relation(fields: [datasetId], references: [id], onDelete: SetNull)
-  journals          JournalEntry[]
+  id                  String                     @id @default(cuid())
+  workspaceId         String
+  strategyVersionId   String?
+  datasetId           String?
+  determinismHash     String                     @unique
+  config              String
+  parameters          String
+  metrics             String
+  tradeLog            String
+  equityCurve         String
+  validationStatus    String                     @default("unvalidated")
+  runClass            String                     @default("LEGACY")
+  baselineFingerprint String?                    @unique
+  generatedArtifactId String?
+  parentRunId         String?
+  protocolWarnings    String                     @default("[]")
+  generatedArtifact   GeneratedStrategyArtifact? @relation(fields: [generatedArtifactId], references: [id], onDelete: SetNull)
+  parentRun           BacktestRun?               @relation("BacktestRunLineage", fields: [parentRunId], references: [id], onDelete: SetNull)
+  childRuns           BacktestRun[]              @relation("BacktestRunLineage")
+  variableChange      VariableChange?
+  createdAt           DateTime                   @default(now())
+  workspace           Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  strategyVersion     StrategyVersion?           @relation(fields: [strategyVersionId], references: [id], onDelete: SetNull)
+  dataset             Dataset?                   @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  journalEntries      JournalEntry[]
 
   @@index([workspaceId, createdAt])
   @@index([strategyVersionId])
   @@index([datasetId])
+  @@index([generatedArtifactId])
+  @@index([parentRunId])
+}
+
+model ResearchSource {
+  id          String                  @id @default(cuid())
+  workspaceId String
+  title       String
+  author      String
+  year        Int
+  sourceType  String
+  reference   String
+  sourceText  String
+  contentHash String
+  rightsNote  String?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  workspace   Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  excerpts    ResearchSourceExcerpt[]
+  ruleSpecs   RuleSpec[]
+
+  @@index([workspaceId, createdAt])
+  @@index([contentHash])
+}
+
+model ResearchSourceExcerpt {
+  id                String         @id @default(cuid())
+  sourceId          String
+  locator           String
+  text              String
+  reviewerConfirmed Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  source            ResearchSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId])
+}
+
+model RuleSpec {
+  id                String             @id @default(cuid())
+  workspaceId       String
+  sourceId          String
+  name              String
+  stage             String
+  deferredVariables String             @default("[]")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  source            ResearchSource     @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  revisions         RuleSpecRevision[]
+  decisions         ProtocolDecision[]
+
+  @@index([workspaceId, stage])
+  @@index([sourceId])
+}
+
+model RuleSpecRevision {
+  id              String                      @id @default(cuid())
+  ruleSpecId      String
+  revision        Int
+  entryRule       String
+  exitRule        String
+  sizingRule      String
+  excerptIds      String                      @default("[]")
+  scopeValidation String
+  contentHash     String
+  createdAt       DateTime                    @default(now())
+  ruleSpec        RuleSpec                    @relation(fields: [ruleSpecId], references: [id], onDelete: Cascade)
+  assessments     DataRequirementAssessment[]
+  artifacts       GeneratedStrategyArtifact[]
+
+  @@unique([ruleSpecId, revision])
+  @@index([contentHash])
+}
+
+model DataRequirementAssessment {
+  id                 String           @id @default(cuid())
+  ruleSpecRevisionId String
+  requirements       String
+  selectedDataset    String?
+  readyForGeneration Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  ruleSpecRevision   RuleSpecRevision @relation(fields: [ruleSpecRevisionId], references: [id], onDelete: Cascade)
+
+  @@index([ruleSpecRevisionId, createdAt])
+}
+
+model DatasetImport {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  datasetId     String?
+  sourceMode    String
+  fileHash      String?
+  schemaVersion String
+  qualityReport String
+  createdAt     DateTime  @default(now())
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dataset       Dataset?  @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@index([datasetId])
+}
+
+model GeneratedStrategyArtifact {
+  id                      String            @id @default(cuid())
+  ruleSpecRevisionId      String
+  language                String
+  source                  String
+  semanticManifest        String
+  assumptions             String
+  unsupportedRequirements String            @default("[]")
+  extrasDetected          String            @default("[]")
+  approval                String
+  generatorProvider       String
+  generatorReference      String?
+  contentHash             String
+  createdAt               DateTime          @default(now())
+  ruleSpecRevision        RuleSpecRevision  @relation(fields: [ruleSpecRevisionId], references: [id], onDelete: Restrict)
+  strategyVersions        StrategyVersion[]
+  backtests               BacktestRun[]
+
+  @@index([ruleSpecRevisionId, createdAt])
+  @@index([contentHash])
+}
+
+model VariableChange {
+  id        String      @id @default(cuid())
+  runId     String      @unique
+  label     String
+  kind      String
+  before    String
+  after     String
+  rationale String
+  createdAt DateTime    @default(now())
+  run       BacktestRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model ProtocolDecision {
+  id          String    @id @default(cuid())
+  workspaceId String
+  ruleSpecId  String?
+  type        String
+  detail      String
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ruleSpec    RuleSpec? @relation(fields: [ruleSpecId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@index([ruleSpecId, createdAt])
 }
 
 /**
