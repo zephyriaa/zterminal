@@ -157,8 +157,9 @@ export function TerminalChart({
   // version state invalidates the derived viewport after every interaction.
   const view = useRef({ right: settings.futureBars, count: 120 }); // right = index past the right edge
   const priceView = useRef({ offset: 0, zoom: 1 });
+  const priceMetrics = useRef({ autoCenter: 0, autoRange: 1, priceHeight: 1 });
   const cross = useRef<{ x: number; y: number } | null>(null);
-  const dragging = useRef<{ mode: "time" | "price"; x: number; y: number; right: number; priceOffset: number } | null>(null);
+  const dragging = useRef<{ mode: "time" | "price"; x: number; y: number; right: number; priceZoom: number } | null>(null);
   const raf = useRef(0);
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
 
@@ -323,6 +324,7 @@ export function TerminalChart({
     const autoRange = hi - lo || 1;
     const manualRange = autoRange / priceView.current.zoom;
     const autoCenter = (hi + lo) / 2;
+    priceMetrics.current = { autoCenter, autoRange, priceHeight: Math.max(1, priceH) };
     const manualCenter = autoCenter + priceView.current.offset * autoRange;
     hi = manualCenter + manualRange / 2;
     lo = manualCenter - manualRange / 2;
@@ -559,6 +561,25 @@ export function TerminalChart({
     priceView.current = { offset: 0, zoom: 1 };
     invalidateViewport();
   };
+  const resetPriceScale = () => {
+    priceView.current = { offset: 0, zoom: 1 };
+    invalidateViewport();
+  };
+  const zoomPriceScaleAtPointer = (nextZoom: number, clientY: number, rect: DOMRect) => {
+    const metrics = priceMetrics.current;
+    const zoom = Math.max(0.35, Math.min(8, nextZoom));
+    const fractionFromCenter = 0.5 - Math.max(0, Math.min(1, (clientY - rect.top) / metrics.priceHeight));
+    const currentCenter = metrics.autoCenter + priceView.current.offset * metrics.autoRange;
+    const currentRange = metrics.autoRange / priceView.current.zoom;
+    const anchoredPrice = currentCenter + fractionFromCenter * currentRange;
+    const nextRange = metrics.autoRange / zoom;
+    const nextCenter = anchoredPrice - fractionFromCenter * nextRange;
+    priceView.current = {
+      zoom,
+      offset: Math.max(-3, Math.min(3, (nextCenter - metrics.autoCenter) / metrics.autoRange)),
+    };
+    invalidateViewport();
+  };
 
   const onPointerMove = (e: React.PointerEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
@@ -566,9 +587,11 @@ export function TerminalChart({
     const y = e.clientY - rect.top;
     if (dragging.current) {
       if (dragging.current.mode === "price") {
-        const priceHeight = Math.max(1, rect.height - TIME_AXIS_H - (indicators.volume ? VOL_PANE_H + 6 : 0));
-        priceView.current.offset = Math.max(-3, Math.min(3, dragging.current.priceOffset + (e.clientY - dragging.current.y) / priceHeight / priceView.current.zoom));
-        invalidateViewport();
+        // TradingView-style: dragging the price scale stretches or compresses
+        // candle height around the pointer rather than panning the time series.
+        const deltaY = e.clientY - dragging.current.y;
+        const nextZoom = dragging.current.priceZoom * Math.exp(-deltaY * 0.01);
+        zoomPriceScaleAtPointer(nextZoom, e.clientY, rect);
       } else {
         const dx = e.clientX - dragging.current.x;
         const plotWidth = Math.max(1, rect.width - PRICE_AXIS_W);
@@ -593,7 +616,7 @@ export function TerminalChart({
       x: e.clientX,
       y: e.clientY,
       right: view.current.right,
-      priceOffset: priceView.current.offset,
+      priceZoom: priceView.current.zoom,
     };
   };
   const onPointerUp = () => {
@@ -610,8 +633,7 @@ export function TerminalChart({
     const isPriceAxis = e.clientX - rect.left >= rect.width - PRICE_AXIS_W;
     if (isPriceAxis) {
       const factor = e.deltaY > 0 ? 0.87 : 1.15;
-      priceView.current.zoom = Math.max(0.35, Math.min(8, priceView.current.zoom * factor));
-      invalidateViewport();
+      zoomPriceScaleAtPointer(priceView.current.zoom * factor, e.clientY, rect);
       return;
     }
     const pivot = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width - PRICE_AXIS_W)));
@@ -663,14 +685,13 @@ export function TerminalChart({
         onDoubleClick={(event) => {
           const rect = canvasRef.current!.getBoundingClientRect();
           if (event.clientX - rect.left >= rect.width - PRICE_AXIS_W) {
-            priceView.current = { offset: 0, zoom: 1 };
-            invalidateViewport();
+            resetPriceScale();
           } else {
             resetViewport();
           }
         }}
         tabIndex={0}
-        aria-label={`${symbol} ${timeframe} chart; drag the plot to pan time, drag the price scale to pan price, scroll to zoom, double click to reset`}
+        aria-label={`${symbol} ${timeframe} chart; drag the plot to pan time, drag or scroll the price scale to vertically stretch or compress candles, double click to reset`}
       />
       <div className="pointer-events-none absolute bottom-7 left-2 flex items-center gap-1.5">
         <button
