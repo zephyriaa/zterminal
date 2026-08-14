@@ -7,7 +7,9 @@ const globalForPrisma = globalThis as unknown as {
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: ['query'],
+    // Query payloads can contain user-authored strategy, journal, and risk data.
+    // Keep operational error visibility without emitting query values by default.
+    log: ["error", "warn"],
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db

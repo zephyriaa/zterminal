@@ -5,10 +5,12 @@ import { listContracts } from "../../src/lib/market/contracts";
 import { MockLiveMarket } from "../../src/lib/market/mock-provider";
 import type { ContractMetadata, DepthLevel, QuoteEvent, TradeEvent } from "../../src/lib/market/types";
 import { GateioFuturesProvider, type GateEvent, type ProviderStatus } from "./gateio-provider";
+import { resolveGatewayOrigins, validateSubscriptionRequest } from "../../src/lib/market/gateway-policy";
 
 const PORT = Number(process.env.MARKET_DATA_PORT ?? 3003);
 const PROVIDER_MODE = process.env.MARKET_PROVIDER === "mock" ? "mock" : "gateio";
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN?.split(",").map((value) => value.trim()).filter(Boolean);
+const ALLOWED_ORIGINS = resolveGatewayOrigins(process.env.NODE_ENV, process.env.ALLOWED_ORIGIN);
+const MAX_SUBSCRIPTIONS_PER_CLIENT = Math.min(20, Math.max(1, Number(process.env.MAX_SUBSCRIPTIONS_PER_CLIENT ?? 8) || 8));
 
 interface ClientSubscription {
   symbol: string;
@@ -52,7 +54,7 @@ const httpServer = createServer((request, response) => {
 
 const io = new Server(httpServer, {
   path: "/socket.io",
-  cors: { origin: ALLOWED_ORIGINS && ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : true, methods: ["GET", "POST"] },
+  cors: { origin: ALLOWED_ORIGINS, methods: ["GET", "POST"] },
   pingTimeout: 60_000,
   pingInterval: 25_000,
 });
@@ -89,7 +91,8 @@ function subscribersFor(symbol: string) {
 
 function publishToSubscribers(symbol: string, event: "trade" | "quote" | "depth", payload: unknown) {
   for (const socketId of subscribersFor(symbol)) {
-    io.to(socketId).emit(event, payload);
+    const subscription = clientSubscriptions.get(socketId)?.get(symbol);
+    if (subscription?.types.has(event)) io.to(socketId).emit(event, payload);
   }
 }
 
@@ -187,13 +190,21 @@ io.on("connection", (socket) => {
   emitStatus(socket.id);
 
   socket.on("subscribe", async (message: { symbol?: string; types?: string[] }, acknowledge?: (result: unknown) => void) => {
+    const client = clientSubscriptions.get(socket.id);
+    const request = validateSubscriptionRequest(message ?? {}, {
+      activeSubscriptionCount: client?.size ?? 0,
+      maximumSubscriptions: MAX_SUBSCRIPTIONS_PER_CLIENT,
+    });
+    if (!request.ok) {
+      acknowledge?.({ ok: false, error: request.error });
+      return;
+    }
     const symbol = normalizeSymbol(message?.symbol ?? "");
     if (!symbol) {
       acknowledge?.({ ok: false, error: "unsupported symbol" });
       return;
     }
-    const types = new Set(message?.types ?? ["trade", "quote", "depth"]);
-    const client = clientSubscriptions.get(socket.id);
+    const types = request.types;
     client?.set(symbol, { symbol, types });
     let interested = subscriptions.get(symbol);
     const firstSubscriber = !interested || interested.size === 0;

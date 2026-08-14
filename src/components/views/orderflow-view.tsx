@@ -5,6 +5,7 @@ import { Activity, BarChart3, Radio, Waves } from "lucide-react";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { useWorkspace } from "@/stores/workspace";
 import { getContract, listContracts } from "@/lib/market/contracts";
+import type { DepthLevel } from "@/lib/market/types";
 import { Panel, Pill } from "../terminal/primitives";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,11 +49,13 @@ export function OrderFlowView() {
   }, [depth]);
 
   const cumulativeBids = useMemo(() => {
-    let cumulative = 0;
     return depth
       .filter((level) => level.side === "buy")
       .sort((a, b) => b.price - a.price)
-      .map((level) => ({ ...level, cumulative: cumulative += level.size }));
+      .reduce<Array<DepthLevel & { cumulative: number }>>((levels, level) => {
+        const cumulative = (levels.at(-1)?.cumulative ?? 0) + level.size;
+        return [...levels, { ...level, cumulative }];
+      }, []);
   }, [depth]);
   const maxCumulativeBid = cumulativeBids.at(-1)?.cumulative ?? 1;
 

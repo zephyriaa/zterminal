@@ -1,0 +1,77 @@
+name: Quality Gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web-quality:
+    name: Web quality and migration checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Verify migrations on a fresh database
+        env:
+          DATABASE_URL: file:/tmp/zterminal-ci.db
+        run: |
+          rm -f /tmp/zterminal-ci.db
+          npx prisma migrate deploy
+      - name: Run automated tests
+        run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Build web application
+        run: npm run build
+      - name: Build local desktop frontend
+        run: npm run desktop:build
+      - name: Enforce high-severity production dependency threshold
+        run: npm audit --omit=dev --audit-level=high
+      - name: Capture production dependency audit
+        if: always()
+        run: npm audit --omit=dev --json > npm-audit-production.json || true
+      - name: Upload dependency audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-production
+          path: npm-audit-production.json
+          if-no-files-found: error
+
+  windows-desktop:
+    name: Windows desktop build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build unsigned Windows installers
+        run: npm run tauri build
+      - name: Upload Windows desktop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zterminal-windows-unsigned
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: error
