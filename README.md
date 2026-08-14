@@ -1,486 +1,583 @@
 <p align="center">
-  <img src="/zterminal.png" alt="ZTerminal" width="180">
+  <img src="zterminal.png" alt="ZTerminal" width="180" />
 </p>
 
 <h1 align="center">ZTerminal</h1>
 
 <p align="center">
-  <strong>Trade with evidence. Not noise.</strong>
+  <strong>Quantitative market intelligence for better trading decisions.</strong>
 </p>
 
 <p align="center">
-  A quantitative market terminal built to help traders see the market, test their ideas, understand their risk, and make better decisions.
+  Research · Market Context · Risk · Alerts · Journaling
 </p>
 
 <p align="center">
-  <a href="https://zterminal.onrender.com"><strong>Launch ZTerminal →</strong></a>
+  <a href="https://zterminal.onrender.com">Live App</a>
+  &nbsp;·&nbsp;
+  <a href="#roadmap">Roadmap</a>
+  &nbsp;·&nbsp;
+  <a href="#contributing">Contributing</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/status-in%20development-111827?style=flat-square" />
+  <img src="https://img.shields.io/badge/platform-web-111827?style=flat-square" />
+  <img src="https://img.shields.io/badge/desktop-Windows-111827?style=flat-square" />
+  <img src="https://img.shields.io/badge/focus-quant%20research-111827?style=flat-square" />
+</p>
+
+<br>
+
+<p align="center">
+  <img src="assets/dashboard.png" alt="ZTerminal dashboard" width="900" />
 </p>
 
 ---
 
-## The market gives you data.
+## What is ZTerminal?
 
-### The problem is knowing what matters.
+ZTerminal is a **quantitative market research and decision-support terminal** built for traders who want more than charts and disconnected indicators.
 
-Trading platforms have charts.
+It brings market context, strategy research, statistical validation, risk analysis, alerts and trade review into one workflow.
 
-They have indicators.
+> **Don't trade because a chart looks right. Trade because you understand the setup.**
 
-They have hundreds of signals, alerts, dashboards and numbers.
+ZTerminal is designed around a simple loop:
 
-But more information doesn't automatically create better decisions.
+**Research → Validate → Monitor → Decide → Execute → Review**
 
-**ZTerminal is built around a different idea.**
-
-> Give the trader the context, the evidence and the risk — then let the trader decide.
+The final decision stays with the trader.
 
 ---
 
-# See the market differently.
+## Why ZTerminal?
 
-ZTerminal brings the pieces of serious market research into one environment.
-
-**Market Context**
-Understand where price is, where value is, how volatility is behaving and what the market is doing.
-
-**Order Flow & Structure**
-Look beyond the candle and study the behavior underneath the move.
-
-**Quantitative Research**
-Turn an idea into rules. Test it. Measure it. Try to break it.
-
-**Risk Intelligence**
-Know what you're risking before you care about what you could make.
-
-**Alerts & Monitoring**
-Let the terminal watch the market while you focus on the decision.
-
-**Trade Journal & Feedback**
-Turn every trade into another piece of research.
-
----
-
-# Don't ask:
-
-> "Does this look like a good trade?"
-
-Ask:
-
-> **"What does the evidence say?"**
-
-That is the philosophy behind ZTerminal.
-
-A setup shouldn't become interesting because a chart looks convincing.
-
-It should become interesting when you can understand:
-
-**Why it exists.**
-
-**When it works.**
-
-**When it fails.**
-
-**What the historical distribution looks like.**
-
-**How much you're risking.**
-
-**And whether the current market actually resembles the conditions where the idea has an edge.**
-
----
-
-# From idea → evidence
-
-ZTerminal is being built around a research loop:
+Trading workflows are usually fragmented.
 
 ```text
-        OBSERVE
-           ↓
-       HYPOTHESIZE
-           ↓
-        FORMALIZE
-           ↓
-          TEST
-           ↓
-        VALIDATE
-           ↓
-      MANAGE RISK
-           ↓
-        MONITOR
-           ↓
-     MAKE A DECISION
-           ↓
-       EXECUTE
-           ↓
-         REVIEW
-           ↓
-        RESEARCH
+Charting
+   +
+Market Data
+   +
+Volume / Order Flow
+   +
+Backtesting
+   +
+Risk Calculator
+   +
+Alerts
+   +
+Trade Journal
+        ↓
+   7 different tools
 ```
 
-Not:
+ZTerminal is built around bringing those pieces together.
 
 ```text
-Indicator → Signal → Trade → Hope
+                    ZTERMINAL
+
+   ┌────────────┬────────────┬────────────┐
+   │   Markets  │  Research  │    Risk    │
+   └────────────┴────────────┴────────────┘
+                     │
+                  Alerts
+                     │
+                  Decision
+                     │
+               Manual Execution
+                     │
+                   Review
 ```
 
----
+Less context switching.
 
-# Your terminal should do the boring work.
-
-Markets don't need another dashboard full of decorative numbers.
-
-They need software that handles the repetitive parts properly.
-
-ZTerminal is being designed to automate the work around the trade:
-
-◆ Market scanning
-◆ Calculations
-◆ Statistical analysis
-◆ Backtesting
-◆ Setup monitoring
-◆ Risk calculations
-◆ Alerts
-◆ Trade journaling
-◆ Performance analysis
-
-So you can spend more time on:
-
-**understanding the market and making the decision.**
+More context.
 
 ---
 
-# Quantitative research without the spreadsheet hell.
+## Built for the decision, not the signal
 
-Have an idea?
+A trading system shouldn't stop at:
 
-Turn it into a hypothesis.
+> **BUY**
 
-Turn the hypothesis into rules.
+It should help answer:
 
-Then let the system ask the uncomfortable questions:
+* Where is price relative to value?
+* What regime are we in?
+* Where is liquidity?
+* What does volume say?
+* Has this setup worked historically?
+* How stable is the result?
+* How much am I risking?
+* Does the current environment resemble the conditions where the idea actually worked?
 
-> How often did it actually work?
+That's the direction ZTerminal is being built toward.
+
+---
+
+## Core capabilities
+
+<table>
+<tr>
+<td width="50%">
+
+### Market Intelligence
+
+Understand the market before acting.
+
+* VWAP
+* Opening Range
+* Volume Profile
+* POC / VAH / VAL
+* HVN / LVN
+* Order Flow
+* Volatility
+* Market Regimes
+* Session Context
+
+</td>
+<td width="50%">
+
+### Quantitative Research
+
+Turn ideas into measurable hypotheses.
+
+* Strategy rules
+* Historical backtesting
+* Expectancy
+* Profit factor
+* Drawdown
+* R-multiple analysis
+* Monte Carlo
+* Walk-forward testing
+* Out-of-sample analysis
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+### Risk & Decision Support
+
+Know the risk before the trade.
+
+* Position sizing
+* Stop / target planning
+* Dollar risk
+* R:R
+* Exposure
+* Drawdown monitoring
+* Risk limits
+
+</td>
+<td>
+
+### Monitoring & Review
+
+Close the loop after the trade.
+
+* Context-aware alerts
+* Setup monitoring
+* Trade journaling
+* Execution analysis
+* Strategy performance
+* Trader performance
+* Historical comparisons
+
+</td>
+</tr>
+</table>
+
+---
+
+# One workflow
+
+<p align="center">
+  <strong>DATA → CONTEXT → RESEARCH → VALIDATION → RISK → ALERT → DECISION → REVIEW</strong>
+</p>
+
+### 01 — Understand the market
+
+Price is only one piece of the puzzle.
+
+ZTerminal is designed to combine price with:
+
+`VWAP` · `Volume` · `Profile` · `Liquidity` · `Volatility` · `Regime`
+
+### 02 — Test the idea
+
+Turn a trading idea into objective rules.
+
+Then test it against historical data.
+
+### 03 — Try to break it
+
+A strategy is more interesting when it survives:
+
+`Out-of-Sample` · `Walk-Forward` · `Monte Carlo` · `Parameter Sensitivity` · `Slippage`
+
+### 04 — Define the risk
+
+Before execution:
+
+`Entry → Stop → Position Size → Risk → Target`
+
+### 05 — Let the terminal watch
+
+Instead of staring at charts all day, let ZTerminal monitor predefined conditions and surface relevant setups.
+
+### 06 — Decide yourself
+
+The platform provides the context.
+
+**You decide whether to take the trade.**
+
+### 07 — Learn from the result
+
+Every trade can become another data point.
+
+That creates the feedback loop:
+
+**Trade → Data → Analysis → Improvement**
+
+---
+
+# Quant research without the spreadsheet maze
+
+The objective isn't to find the prettiest equity curve.
+
+It's to understand whether an idea has a **repeatable, measurable and sufficiently robust behavior**.
+
+A research workflow can look like:
+
+```text
+Idea
+  ↓
+Hypothesis
+  ↓
+Objective Rules
+  ↓
+Historical Data
+  ↓
+Backtest
+  ↓
+Statistical Analysis
+  ↓
+Robustness
+  ↓
+Out-of-Sample
+  ↓
+Risk Model
+  ↓
+Live Monitoring
+```
+
+The uncomfortable questions matter:
+
+> Does it still work outside the sample?
+
+> How sensitive is it to parameters?
 
 > What happens when volatility changes?
 
-> What happens outside the sample?
+> How bad can the drawdown get?
 
-> How sensitive is the strategy to its parameters?
+> What happens after costs and slippage?
 
-> What happens after realistic costs and slippage?
-
-> How ugly can the drawdown get?
-
-> Is there an edge here — or did we just overfit history?
-
-That's the standard.
+> Is there an actual edge — or just a good-looking backtest?
 
 ---
 
-# The chart is only the beginning.
+# A different approach to automation
 
-Price alone tells you what happened.
+ZTerminal is being designed around **human-in-the-loop trading**.
 
-The real research starts with **context**.
-
-ZTerminal is being built around tools and concepts such as:
-
-**VWAP**
-
-**Opening Range**
-
-**Volume Profile**
-
-**POC / VAH / VAL**
-
-**HVN / LVN**
-
-**Order Flow**
-
-**Volatility**
-
-**Market Regimes**
-
-**Liquidity**
-
-**Statistical Distributions**
-
-Because a price move without context is just a price move.
-
----
-
-# Risk before conviction.
-
-A trade idea isn't complete until the risk is defined.
-
-ZTerminal is designed to make the risk visible:
+The system can automate the repetitive work:
 
 ```text
-ENTRY
-  ↓
-STOP
-  ↓
-POSITION SIZE
-  ↓
-DOLLAR RISK
-  ↓
-TARGET
-  ↓
-R-MULTIPLE
-  ↓
-EXPOSURE
+Research
+Analysis
+Calculations
+Backtesting
+Validation
+Monitoring
+Risk calculations
+Alerts
+Journaling
 ```
 
-The objective isn't to maximize the number on the screen.
-
-It's to make sure **one bad decision doesn't become a catastrophic one.**
-
----
-
-# Let the machine watch.
-
-You don't need to stare at every candle.
-
-ZTerminal can monitor predefined conditions and bring your attention back when something relevant happens.
-
-For example:
+The trader retains control of:
 
 ```text
-ORB CONDITION DETECTED
-
-VWAP: ABOVE
-REGIME: TRENDING
-VOLATILITY: ELEVATED
-VOLUME: ABOVE AVERAGE
-
-Historical Context:
-+0.31R expectancy
-
-Risk:
-$XX
-
-[ REVIEW SETUP ]
+TAKE
+or
+SKIP
 ```
 
-Not:
+and the actual order execution.
 
-> BUY NOW!!!
+The goal is not:
 
-Because the goal isn't to replace judgment.
+> **Replace the trader.**
 
-The goal is to **improve it**.
+It's:
+
+> **Reduce the work around the decision so the trader can focus on the decision itself.**
 
 ---
 
-# Human in the loop.
+# Built for context
 
-ZTerminal is being designed around a simple principle:
+A breakout by itself doesn't tell you much.
 
-### Automation should remove repetitive work.
+A breakout with context does.
 
-### It shouldn't remove responsibility.
-
-The system can:
-
-**Research**
-
-**Calculate**
-
-**Validate**
-
-**Monitor**
-
-**Alert**
-
-**Journal**
-
-But the final decision stays with the trader.
+ZTerminal is designed to combine things such as:
 
 ```text
-ZTerminal
-    ↓
-Context
-    ↓
-Evidence
-    ↓
-Risk
-    ↓
-You
-    ↓
-TAKE / SKIP
+Price
+ + VWAP
+ + Volume
+ + Profile
+ + Volatility
+ + Market Regime
+ + Session Structure
+ + Historical Statistics
+```
+
+The result should be a **decision environment**, not another pile of indicators.
+
+---
+
+# Designed for serious workflows
+
+The long-term product is being built toward two experiences.
+
+### Web
+
+Fast, accessible and cross-platform.
+
+### Windows Desktop
+
+A dedicated terminal experience with plans for:
+
+* Persistent workspaces
+* Multi-window layouts
+* Native notifications
+* Global shortcuts
+* Background monitoring
+* Local persistence
+* Faster terminal-style workflows
+
+The objective is not to put the website inside an `.exe`.
+
+The objective is to build a proper desktop client around the same ZTerminal platform.
+
+---
+
+# Product direction
+
+```text
+                     ZTERMINAL
+                         │
+          ┌──────────────┴──────────────┐
+          │                             │
+        WEB                         WINDOWS
+                                      │
+                                    TAURI
+          │                             │
+          └──────────────┬──────────────┘
+                         │
+                  SHARED PLATFORM
+                         │
+       ┌─────────────────┼─────────────────┐
+       │                 │                 │
+   MARKET DATA       ANALYTICS         RESEARCH
+       │                 │                 │
+       │            VWAP / ORB        BACKTEST
+       │            PROFILE           MONTE CARLO
+       │            ORDER FLOW        WALK-FORWARD
+       │            REGIME            OOS
+       │
+       └─────────────────┬─────────────────┘
+                         │
+                       RISK
+                         │
+                      ALERTS
+                         │
+                     DECISION
+                         │
+                    EXECUTION
+                         │
+                      JOURNAL
 ```
 
 ---
 
-# One place for the whole process.
+# What we're building toward
 
-Instead of:
+### Market research
 
-```text
-Charting platform
-      +
-Market data
-      +
-Spreadsheet
-      +
-Backtester
-      +
-Risk calculator
-      +
-Journal
-      +
-Alert system
-```
+A place to understand what's happening.
 
-ZTerminal is moving toward:
+### Quantitative validation
 
-```text
-                 ZTERMINAL
-                     │
-        ┌────────────┼────────────┐
-        │            │            │
-      MARKETS      RESEARCH      RISK
-        │            │            │
-        └────────────┼────────────┘
-                     │
-                   ALERTS
-                     │
-                  DECISION
-                     │
-                 EXECUTION
-                     │
-                   REVIEW
-```
+A place to test whether an idea actually has evidence behind it.
 
-One workflow.
+### Risk intelligence
 
-One terminal.
+A place to understand exactly what the trade costs if it goes wrong.
 
-One source of context.
+### Decision support
+
+A place where the important information appears together.
+
+### Continuous improvement
+
+A place where historical trades become future research.
 
 ---
 
-# Built for traders who want to know WHY.
+# Roadmap
 
-ZTerminal isn't being built to tell you that a green candle means "bullish."
+### Research
 
-It's being built for questions like:
+* [x] Initial research workflow
+* [x] Strategy-oriented foundation
+* [ ] Advanced backtesting
+* [ ] Monte Carlo analysis
+* [ ] Walk-forward validation
+* [ ] Parameter sensitivity
+* [ ] Expanded statistical research
 
-**Where is value?**
+### Market Intelligence
 
-**Where is liquidity?**
+* [ ] Advanced market-regime detection
+* [ ] Deeper volume-profile analytics
+* [ ] Expanded order-flow analysis
+* [ ] Cross-market context
+* [ ] Additional real-time data integrations
 
-**What regime are we in?**
+### Risk & Monitoring
 
-**What happened the last time this setup appeared?**
+* [ ] Advanced risk engine
+* [ ] Context-rich alerts
+* [ ] Exposure analytics
+* [ ] Advanced trade-plan workspace
 
-**How much risk am I taking?**
+### Review
 
-**Does the edge survive outside the backtest?**
+* [ ] Automated journaling
+* [ ] Execution analytics
+* [ ] Strategy vs. trader performance
+* [ ] Performance attribution
 
-**Did I execute the strategy correctly?**
+### Desktop
 
-Those are much harder questions.
+* [ ] Tauri Windows client
+* [ ] Native notifications
+* [ ] Global shortcuts
+* [ ] Multi-window workspaces
+* [ ] Background monitoring
+* [ ] Persistent local workspace
 
-They're also much more useful.
-
----
-
-# From research to execution.
-
-The long-term vision is simple:
-
-### Research in the same environment where you prepare the trade.
-
-### Prepare the trade in the same environment where you monitor it.
-
-### Review the trade in the same environment where you researched it.
-
-No context switching.
-
-No spreadsheet maze.
-
-No twenty browser tabs.
-
-Just a continuous loop:
-
-**Research → Decide → Execute → Learn**
-
----
-
-# And then there's the desktop.
-
-ZTerminal is being designed toward a **dedicated Windows terminal**, not just a website inside a window.
-
-The goal is a workspace built for long sessions:
-
-◆ Persistent layouts
-◆ Multi-window workflows
-◆ Native notifications
-◆ Global shortcuts
-◆ Background monitoring
-◆ Fast market monitoring
-◆ The same ZTerminal experience, available from the browser
-
-One product.
-
-Two ways to use it.
-
-**Web when you want access.**
-
-**Desktop when you want a terminal.**
+> The roadmap is intentionally iterative. Features are prioritized by usefulness rather than feature count.
 
 ---
 
-# ZTerminal isn't finished.
+# Philosophy
 
-And that's intentional.
+### Evidence over intuition
 
-The project is evolving toward a much larger idea:
+A compelling chart is not evidence by itself.
 
-> **A market research and decision-support environment where quantitative research, market context, risk management, monitoring and trade review live together.**
+### Context over isolated indicators
 
-The goal isn't to become the platform with the most buttons.
+A number without context is just another number.
 
-The goal is to become the platform where **every important button has a reason to exist.**
+### Risk before conviction
+
+Know what you're risking before thinking about what you might make.
+
+### Robustness over optimization
+
+A stable strategy is more interesting than a perfectly optimized backtest.
+
+### Human control over blind automation
+
+Automation should remove repetitive work, not remove responsibility.
+
+### Signal over noise
+
+Every component should earn its place.
 
 ---
 
-# The bigger vision
+# Status
 
-Most trading software starts with the question:
+ZTerminal is an **actively developing project**.
 
-> **"How do we help people trade faster?"**
+The current platform is a foundation for a much broader terminal and research environment. Architecture, analytics, integrations and workflows are still evolving.
 
-ZTerminal starts somewhere else:
+This repository should be treated as a work in progress rather than a finished institutional trading product.
 
-> **"How do we help people make better decisions?"**
+---
 
-Speed matters.
+# Contributing
 
-Execution matters.
+ZTerminal is being developed with a focus on:
 
-Data matters.
+* quantitative correctness
+* reliable market data
+* research integrity
+* risk management
+* performance
+* useful UX
+* security
+* maintainable architecture
 
-But none of them matter much if the underlying decision process is weak.
+Contributions that improve those areas are especially valuable.
 
-That's what we're trying to fix.
+Before proposing a large feature, consider one question:
+
+> **Does this make the trading research and decision workflow meaningfully better?**
+
+If not, it probably doesn't belong.
+
+---
+
+# Disclaimer
+
+ZTerminal is software for market analysis, research and decision support.
+
+It does not guarantee profitability or future performance.
+
+Backtested results are hypothetical and do not guarantee future results.
+
+Market data may be delayed, incomplete or inaccurate.
+
+Trading involves substantial risk. Users are responsible for their own decisions and losses.
 
 ---
 
 <p align="center">
 
-### See the market.
+## Research the market.
 
-### Test the idea.
+## Validate the idea.
 
-### Know the risk.
+## Know the risk.
 
-### Make the decision.
+## Make the decision.
 
 <br>
 
 <strong>ZTerminal</strong>
 
-<em>Trade with evidence. Not noise.</em>
+<sub>Quantitative market intelligence — built around the trader.</sub>
 
 </p>
