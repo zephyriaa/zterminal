@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Bell,
   Briefcase,
   Calendar as CalendarIcon,
-  Check,
   FlaskConical,
   Plug,
   Plus,
@@ -19,6 +18,7 @@ import {
 import { Panel, PanelHeader, Pill, SimulatedTag, StatRow } from "../terminal/primitives";
 import { useWorkspace } from "@/stores/workspace";
 import { listContracts, getContract } from "@/lib/market/contracts";
+import { PROVIDER_CATALOG, type ProviderCatalogEntry } from "@/lib/market/capabilities";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,8 @@ const ECON_EVENTS = [
 
 export function CalendarView() {
   return (
-    <ViewShell title="Economic Calendar" icon={CalendarIcon}>
+    <ViewShell title="Economic Calendar" icon={CalendarIcon} right={<Pill tone="warn">Sample events</Pill>}>
+      <div className="px-3 py-2 border-b hairline text-[10.5px] text-muted-foreground">Illustrative event rows only. A provider-backed calendar has not been connected yet.</div>
       <div className="overflow-y-auto scroll-thin">
         <table className="w-full text-[12px]">
           <thead className="sticky top-0 bg-panel border-b hairline">
@@ -85,29 +86,45 @@ interface Alert {
 }
 
 export function AlertsView() {
-  const { setSymbol, setView } = useWorkspace();
-  const [alerts, setAlerts] = useState<Alert[]>([
-    { id: "1", symbol: "NQ", cond: "above", price: 21800, active: true },
-    { id: "2", symbol: "ES", cond: "below", price: 6000, active: true },
-  ]);
-  const [sym, setSym] = useState("NQ");
+  const { setSymbol, setView, symbol, connection } = useWorkspace();
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [sym, setSym] = useState(symbol);
   const [cond, setCond] = useState<"above" | "below">("above");
   const [price, setPrice] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const liveContracts = useMemo(() => {
+    if (connection.provider !== "gateio" || connection.dataStatus !== "LIVE") return [];
+    return listContracts().filter((contract) => contract.symbol === "QQQX_USDT");
+  }, [connection.dataStatus, connection.provider]);
+
+  useEffect(() => {
+    if (liveContracts.some((contract) => contract.symbol === sym)) return;
+    if (liveContracts[0]) setSym(liveContracts[0].symbol);
+  }, [liveContracts, sym]);
 
   const add = () => {
     const p = Number(price);
-    if (!p) return;
-    setAlerts((a) => [...a, { id: crypto.randomUUID(), symbol: sym, cond, price: p, active: true }]);
+    if (!Number.isFinite(p) || p <= 0) {
+      setError("Enter a positive numeric trigger price.");
+      return;
+    }
+    if (!liveContracts.some((contract) => contract.symbol === sym)) {
+      setError("Choose a symbol with an active live market-data subscription before creating an alert.");
+      return;
+    }
+    setAlerts((current) => [...current, { id: crypto.randomUUID(), symbol: sym, cond, price: p, active: true }]);
+    setError(null);
     setPrice("");
   };
 
   return (
-    <ViewShell title="Alerts" icon={Bell} right={<SimulatedTag />}>
+    <ViewShell title="Alerts" icon={Bell} right={<Pill tone="warn">Session only</Pill>}>
       <div className="p-3 border-b hairline flex flex-wrap items-end gap-2">
         <Field label="Symbol">
-          <Select value={sym} onValueChange={setSym}>
-            <SelectTrigger className="h-7 w-24 text-[12px] bg-surface"><SelectValue /></SelectTrigger>
-            <SelectContent>{listContracts().map((c) => <SelectItem key={c.symbol} value={c.symbol}>{c.symbol}</SelectItem>)}</SelectContent>
+          <Select value={sym} onValueChange={setSym} disabled={!liveContracts.length}>
+            <SelectTrigger className="h-7 w-28 text-[12px] bg-surface"><SelectValue placeholder="No live symbols" /></SelectTrigger>
+            <SelectContent>{liveContracts.map((contract) => <SelectItem key={contract.symbol} value={contract.symbol}>{contract.symbol}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
         <Field label="Condition">
@@ -117,9 +134,13 @@ export function AlertsView() {
           </Select>
         </Field>
         <Field label="Price">
-          <Input value={price} onChange={(e) => setPrice(e.target.value)} type="number" className="h-7 w-28 text-[12px] tnum bg-surface" />
+          <Input value={price} onChange={(e) => { setPrice(e.target.value); setError(null); }} type="number" min="0" step="any" aria-invalid={Boolean(error)} className="h-7 w-28 text-[12px] tnum bg-surface" />
         </Field>
-        <Button size="sm" onClick={add} className="h-7 text-[12px]"><Plus className="w-3.5 h-3.5 mr-1" />Add</Button>
+        <Button size="sm" onClick={add} disabled={!liveContracts.length} className="h-7 text-[12px]"><Plus className="w-3.5 h-3.5 mr-1" />Add</Button>
+      </div>
+      <div className="px-3 py-2 border-b hairline text-[10.5px] text-muted-foreground">
+        {liveContracts.length ? `Provider: ${connection.provider.toUpperCase()} · alerts are kept only in this browser session until the durable alert service is released.` : "No active live provider is available. Reconnect public market data before adding an alert."}
+        {error && <span className="block mt-1 text-neg" role="alert">{error}</span>}
       </div>
       <div className="overflow-y-auto scroll-thin flex-1">
         <table className="w-full text-[12px]">
@@ -190,7 +211,7 @@ export function ResearchView() {
     <ViewShell title="Research Lab" icon={FlaskConical} right={<SimulatedTag />}>
       <div className="p-3 border-b hairline text-[11.5px] text-muted-foreground leading-relaxed">
         Trading is a hypothesis-testing problem. Define a hypothesis, select a dataset, run the test,
-        and classify the result by evidence — never by raw profitability.
+        and classify the result by evidence — never by raw profitability. The cards below are illustrative only; no historical dataset or validation artifact is attached yet.
       </div>
       <div className="overflow-y-auto scroll-thin p-3 space-y-2">
         {HYPOTHESES.map((h) => {
@@ -206,7 +227,7 @@ export function ResearchView() {
                   <div className="text-[12.5px] mt-1">{h.title}</div>
                   <div className="text-[10.5px] text-muted-foreground mt-1">Sample n={h.sample} · estimated expectancy {h.edge >= 0 ? "+" : ""}{(h.edge * 100).toFixed(1)}R</div>
                 </div>
-                <Button size="sm" variant="outline" className="h-7 text-[11px]">Open</Button>
+                <Button size="sm" variant="outline" disabled title="Research detail requires a historical dataset and persisted validation run" className="h-7 text-[11px]">Not linked</Button>
               </div>
             </Panel>
           );
@@ -219,7 +240,7 @@ export function ResearchView() {
 /* ----------------------------- Portfolio ----------------------------- */
 
 const POSITIONS = [
-  { symbol: "NQ", net: 2, avg: 21420, last: 21455, pnl: 3500 },
+  { symbol: "NQ", net: 2, avg: 21420, last: 21455, pnl: 1400 },
   { symbol: "ES", net: -1, avg: 6045, last: 6040, pnl: 250 },
 ];
 
@@ -227,6 +248,7 @@ export function PortfolioView() {
   const total = POSITIONS.reduce((s, p) => s + p.pnl, 0);
   return (
     <ViewShell title="Portfolio" icon={Briefcase} right={<><SimulatedTag /><Pill tone={total >= 0 ? "pos" : "neg"}>{total >= 0 ? "+" : ""}${total.toLocaleString()}</Pill></>}>
+      <div className="px-3 py-2 border-b hairline text-[10.5px] text-muted-foreground">Illustrative simulation only. No broker or account position feed is connected.</div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 p-3 border-b hairline">
         <Panel className="p-3"><StatRow label="Equity" value="$102,350" tone="default" /><StatRow label="Realized P&L" value="+$1,240" tone="pos" /><StatRow label="Unrealized P&L" value={`+${total.toLocaleString()}`} tone="pos" /></Panel>
         <Panel className="p-3"><StatRow label="Margin used" value="$8,400" /><StatRow label="Margin avail" value="$93,950" /><StatRow label="Exposure" value="8.2%" /></Panel>
@@ -262,6 +284,11 @@ export function PortfolioView() {
 
 /* ----------------------------- Risk ----------------------------- */
 
+function formatQuoteAmount(value: number, currency: string) {
+  const fractionDigits = Math.abs(value) < 0.01 ? 4 : 2;
+  return `${currency === "USD" ? "$" : ""}${value.toLocaleString(undefined, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits })}${currency === "USDT" ? " USDT" : ""}`;
+}
+
 export function RiskView() {
   const { symbol } = useWorkspace();
   const c = getContract(symbol);
@@ -269,38 +296,44 @@ export function RiskView() {
   const [risk, setRisk] = useState("1");
   const [stop, setStop] = useState(String(c.tickSize * 8));
 
-  const acctN = Number(acct) || 0;
-  const riskN = Number(risk) || 0;
-  const stopN = Number(stop) || 0;
-  const riskUsd = acctN * (riskN / 100);
-  const stopTicks = stopN / c.tickSize;
-  const stopUsd = stopTicks * c.tickValue;
-  const size = stopUsd > 0 ? Math.max(0, Math.floor(riskUsd / stopUsd)) : 0;
+  useEffect(() => {
+    setStop(String(c.tickSize * 8));
+  }, [c.tickSize]);
+
+  const acctN = Math.max(0, Number(acct) || 0);
+  const riskN = Math.max(0, Number(risk) || 0);
+  const stopN = Math.max(0, Number(stop) || 0);
+  const riskAmount = acctN * (riskN / 100);
+  const stopTicks = c.tickSize > 0 ? stopN / c.tickSize : 0;
+  // Native-contract loss estimate: price distance × venue-supplied multiplier.
+  const perContractRisk = stopN * c.multiplier;
+  const size = perContractRisk > 0 ? Math.max(0, Math.floor(riskAmount / perContractRisk)) : 0;
+  const nativeContract = c.exchange === "GATEIO";
 
   return (
-    <ViewShell title="Risk" icon={ShieldAlert} right={<SimulatedTag />}>
+    <ViewShell title="Risk" icon={ShieldAlert} right={<Pill tone="warn">ILLUSTRATIVE</Pill>}>
       <div className="p-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Panel className="p-3">
           <PanelHeader title="Position Sizing" className="-mx-3 -mt-3 mb-2" />
           <div className="space-y-2">
             <Field label="Instrument"><div className="font-mono-num text-[12px] font-semibold">{symbol}</div></Field>
-            <Field label="Account equity ($)"><Input value={acct} onChange={(e) => setAcct(e.target.value)} type="number" className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Risk per trade (%)"><Input value={risk} onChange={(e) => setRisk(e.target.value)} type="number" className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Stop distance (price)"><Input value={stop} onChange={(e) => setStop(e.target.value)} type="number" className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label={`Account equity (${c.currency})`}><Input value={acct} onChange={(e) => setAcct(e.target.value)} type="number" min="0" className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Risk per trade (%)"><Input value={risk} onChange={(e) => setRisk(e.target.value)} type="number" min="0" className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label={`Stop distance (${c.currency} price)`}><Input value={stop} onChange={(e) => setStop(e.target.value)} type="number" min="0" step={c.tickSize} className="h-7 text-[12px] tnum bg-surface" /></Field>
           </div>
         </Panel>
         <Panel className="p-3">
           <PanelHeader title="Calculation" className="-mx-3 -mt-3 mb-2" />
-          <StatRow label="Risk amount" value={`$${riskUsd.toLocaleString()}`} tone="neg" />
-          <StatRow label="Stop distance" value={`${stopTicks.toFixed(0)} ticks`} />
-          <StatRow label="Per-contract risk" value={`$${stopUsd.toLocaleString()}`} />
-          <StatRow label="Tick value" value={`$${c.tickValue}`} />
-          <StatRow label="Multiplier" value={`${c.multiplier}x`} />
+          <StatRow label={`Risk amount (${c.currency})`} value={formatQuoteAmount(riskAmount, c.currency)} tone="neg" />
+          <StatRow label="Stop distance" value={`${stopTicks.toFixed(2)} ticks`} />
+          <StatRow label="Per-native-contract risk" value={formatQuoteAmount(perContractRisk, c.currency)} />
+          <StatRow label="Tick value" value={formatQuoteAmount(c.tickValue, c.currency)} />
+          <StatRow label="Quantity multiplier" value={`${c.multiplier} ${c.currency}/price point`} />
           <div className="mt-2 pt-2 border-t hairline">
-            <StatRow label="Position size" value={`${size} contract${size === 1 ? "" : "s"}`} tone="pos" />
+            <StatRow label="Maximum native quantity" value={`${size.toLocaleString()} contract${size === 1 ? "" : "s"}`} tone="pos" />
           </div>
           <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
-            Presentation of calculations and assumptions only — not personalized financial advice.
+            {nativeContract ? "QQQX uses Gate.io native-contract terms (0.01 quantity multiplier); verify current venue specifications, fees, leverage, liquidation rules, and account currency before any order." : "Illustrative calculation based on static contract metadata only. Verify current venue specifications, fees, leverage, liquidation rules, and account currency before any order."} This is not personalized financial advice.
           </p>
         </Panel>
       </div>
@@ -320,17 +353,16 @@ interface Entry {
   note: string;
 }
 
-const SEED_ENTRIES: Entry[] = [
-  { id: "1", date: "2024-11-12", symbol: "NQ", side: "long", setup: "ORB + VWAP", result: 350, note: "Clean break above opening range, held above VWAP." },
-  { id: "2", date: "2024-11-11", symbol: "ES", side: "short", setup: "Mean reversion", result: -120, note: "Stopped at overnight high; entry was early." },
-];
+const SEED_ENTRIES: Entry[] = [];
 
 export function JournalView() {
+  const { symbol } = useWorkspace();
   const [entries, setEntries] = useState<Entry[]>(SEED_ENTRIES);
   const [note, setNote] = useState("");
   const add = () => {
-    if (!note.trim()) return;
-    setEntries((e) => [{ id: crypto.randomUUID(), date: new Date().toISOString().slice(0, 10), symbol: useWorkspace.getState().symbol, side: "long", setup: "Manual", result: 0, note }, ...e]);
+    const trimmedNote = note.trim();
+    if (!trimmedNote) return;
+    setEntries((entries) => [{ id: crypto.randomUUID(), date: new Date().toISOString().slice(0, 10), symbol, side: "long", setup: "Manual", result: 0, note: trimmedNote }, ...entries]);
     setNote("");
   };
   return (
@@ -340,6 +372,7 @@ export function JournalView() {
         <Button size="sm" onClick={add} className="h-7 text-[12px]"><Plus className="w-3.5 h-3.5 mr-1" />Entry</Button>
       </div>
       <div className="overflow-y-auto scroll-thin p-3 space-y-2">
+        {!entries.length && <Panel className="p-4 text-[11px] text-muted-foreground">No journal entries are stored yet. Entries created here remain in this browser session until the durable journal service is released.</Panel>}
         {entries.map((e) => (
           <Panel key={e.id} className="p-3">
             <div className="flex items-center gap-2 text-[11px]">
@@ -405,7 +438,7 @@ export function ConnectionsView() {
             <Stat label="Environment" value="live / read-only" />
             <Stat label="Credentials" value="Not required" tone="muted" />
           </div>
-          <div className="mt-3 flex items-center gap-2"><Button size="sm" variant="outline" onClick={() => setConnection({ provider: "mock", environment: "simulation", state: "connected", dataStatus: "SIMULATED" })} className="h-7 text-[12px]"><Check className="w-3.5 h-3.5 mr-1" />Use Mock (SIMULATED)</Button></div>
+          <div className="mt-3 text-[10.5px] text-muted-foreground">This deployment is configured for live, read-only Gate.io data. Simulation mode is a server deployment setting and cannot be toggled from this client, preventing a misleading one-way state change.</div>
         </Panel>
 
         <Panel className="p-3">
@@ -430,13 +463,24 @@ export function ConnectionsView() {
 /* ----------------------------- Settings ----------------------------- */
 
 export function SettingsView() {
-  const { sidebarCollapsed, setSidebar } = useWorkspace();
+  const { sidebarCollapsed, setSidebar, connection } = useWorkspace();
   const [tabular, setTabular] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [confirmOrders, setConfirmOrders] = useState(true);
+  const [preferredProvider, setPreferredProvider] = useState<ProviderCatalogEntry["id"]>(() => {
+    if (typeof window === "undefined") return "gateio";
+    const saved = window.localStorage.getItem("zterminal.preferred-provider");
+    return PROVIDER_CATALOG.some((provider) => provider.id === saved) ? saved as ProviderCatalogEntry["id"] : "gateio";
+  });
+  const [aggregatedView, setAggregatedView] = useState(false);
+
+  useEffect(() => {
+    window.localStorage.setItem("zterminal.preferred-provider", preferredProvider);
+  }, [preferredProvider]);
+
   return (
     <ViewShell title="Settings" icon={SettingsIcon}>
-      <div className="p-3 space-y-3 max-w-2xl">
+      <div className="p-3 space-y-3 max-w-3xl overflow-y-auto scroll-thin">
         <Panel className="p-3">
           <PanelHeader title="Interface" className="-mx-3 -mt-3 mb-2" />
           <Toggle label="Collapse sidebar by default" on={sidebarCollapsed} set={(v) => setSidebar(v)} />
@@ -445,13 +489,30 @@ export function SettingsView() {
         </Panel>
         <Panel className="p-3">
           <PanelHeader title="Execution" className="-mx-3 -mt-3 mb-2" />
-          <Toggle label="Confirm orders before submission" on={confirmOrders} set={setConfirmOrders} />
+          <Toggle label="Confirm orders before submission" hint="Order routing is not implemented; this preference is retained for the future manual-execution workflow." on={confirmOrders} set={setConfirmOrders} />
         </Panel>
         <Panel className="p-3">
-          <PanelHeader title="Data" className="-mx-3 -mt-3 mb-2" />
-          <StatRow label="Default provider" value="Gate.io (LIVE, read-only)" tone="pos" />
-          <StatRow label="Timezone (internal)" value="UTC" />
-          <StatRow label="Session calendar" value="America/New_York" />
+          <PanelHeader title="Market data" className="-mx-3 -mt-3 mb-3" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label="Preferred public-data venue">
+              <Select value={preferredProvider} onValueChange={(value) => setPreferredProvider(value as ProviderCatalogEntry["id"])}>
+                <SelectTrigger className="h-8 text-[12px] bg-surface"><SelectValue /></SelectTrigger>
+                <SelectContent>{PROVIDER_CATALOG.map((provider) => <SelectItem key={provider.id} value={provider.id}>{provider.label} · {provider.streamIntegration === "active" ? "stream active" : "catalogued"}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <div className="rounded-[5px] border hairline bg-surface px-2.5 py-2">
+              <div className="text-[9.5px] uppercase tracking-wider text-muted-foreground">Active gateway</div>
+              <div className={cn("mt-0.5 text-[12px] font-medium", connection.dataStatus === "LIVE" ? "text-pos" : "text-warn")}>{connection.provider.toUpperCase()} · {connection.dataStatus}</div>
+              <div className="mt-0.5 text-[10px] text-muted-foreground">The preferred venue does not replace a live stream until its adapter passes validation.</div>
+            </div>
+          </div>
+          <div className="mt-3 border-t hairline pt-2">
+            <Toggle label="Aggregated market view" hint="Disabled until equivalent instrument mappings, freshness checks, and contributor disclosure pass validation. Venue-specific depth, funding, OI, and liquidations will not be averaged." on={aggregatedView} set={setAggregatedView} disabled />
+          </div>
+          <div className="mt-3 space-y-2">
+            {PROVIDER_CATALOG.map((provider) => <ProviderCapabilityCard key={provider.id} provider={provider} active={connection.provider === provider.id} preferred={preferredProvider === provider.id} />)}
+          </div>
+          <div className="mt-3 pt-2 border-t hairline text-[10.5px] text-muted-foreground">All timestamps are normalized to UTC internally. Session display is currently America/New_York. Public data access requests no account, trading, or withdrawal credentials.</div>
         </Panel>
       </div>
     </ViewShell>
@@ -459,6 +520,22 @@ export function SettingsView() {
 }
 
 /* ----------------------------- shared shell ----------------------------- */
+
+function ProviderCapabilityCard({ provider, active, preferred }: { provider: ProviderCatalogEntry; active: boolean; preferred: boolean }) {
+  return (
+    <div className={cn("rounded-[5px] border hairline bg-surface p-2.5", preferred && "border-mdata/50")}>
+      <div className="flex items-center gap-2">
+        <span className="text-[12px] font-semibold">{provider.label}</span>
+        {active && <Pill tone="pos">ACTIVE</Pill>}
+        {preferred && <Pill tone="mdata">PREFERRED</Pill>}
+        <Pill tone={provider.streamIntegration === "active" ? "pos" : "warn"} className="ml-auto">{provider.streamIntegration === "active" ? "stream active" : "catalogued"}</Pill>
+      </div>
+      <div className="mt-1 text-[10.5px] text-muted-foreground leading-relaxed">{provider.notice}</div>
+      <div className="mt-2 flex flex-wrap gap-1">{provider.capabilities.map((capability) => <span key={capability} className="rounded border hairline px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">{capability.replaceAll("_", " ")}</span>)}</div>
+      <div className="mt-2 text-[9.5px] text-muted-foreground">Example mapping: {provider.canonicalExample} → {provider.nativeExample} · aggregation: {provider.aggregation.replaceAll("-", " ")}</div>
+    </div>
+  );
+}
 
 function ViewShell({ title, icon: Icon, right, children }: { title: string; icon: React.ComponentType<{ className?: string }>; right?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -482,14 +559,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Toggle({ label, hint, on, set }: { label: string; hint?: string; on: boolean; set: (v: boolean) => void }) {
+function Toggle({ label, hint, on, set, disabled = false }: { label: string; hint?: string; on: boolean; set: (v: boolean) => void; disabled?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1.5">
+    <div className={cn("flex items-center justify-between py-1.5", disabled && "opacity-70")}>
       <div>
         <div className="text-[12.5px]">{label}</div>
         {hint && <div className="text-[10.5px] text-muted-foreground">{hint}</div>}
       </div>
-      <Switch checked={on} onCheckedChange={set} className="h-4 w-7" />
+      <Switch checked={on} onCheckedChange={set} disabled={disabled} className="h-4 w-7" />
     </div>
   );
 }

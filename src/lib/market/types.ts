@@ -9,10 +9,10 @@
  * See MARKET_DATA_SCHEMA.md for the full specification.
  */
 
-export type ProviderId = "mock" | "gateio" | "rithmic-test" | "rithmic-prod" | "databento";
+export type ProviderId = "mock" | "gateio" | "binance" | "bybit" | "okx" | "mexc" | "rithmic-test" | "rithmic-prod" | "databento";
 export type Environment = "simulation" | "paper" | "live";
 
-export type Exchange = "CME" | "CBOT" | "COMEX" | "NYMEX" | "NASDAQ" | "NYSE" | "ICE" | "GATEIO";
+export type Exchange = "CME" | "CBOT" | "COMEX" | "NYMEX" | "NASDAQ" | "NYSE" | "ICE" | "GATEIO" | "BINANCE" | "BYBIT" | "OKX" | "MEXC";
 export type Side = "buy" | "sell";
 export type Aggressor = "buy" | "sell" | "unknown";
 

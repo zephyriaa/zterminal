@@ -254,7 +254,10 @@ const BUILTIN_FUNCS = new Set([
   "atr", "rsi", "stdev", "plot", "strategy", "input", "max", "min", "abs",
 ]);
 
-const BUILTIN_SERIES = new Set(["open", "high", "low", "close", "volume", "time", "hl2", "hlc3", "ohlc4", "vwap"]);
+const BUILTIN_SERIES = new Set([
+  "open", "high", "low", "close", "volume", "time", "hl2", "hlc3", "ohlc4", "vwap",
+  "strategy.long", "strategy.short",
+]);
 
 export function compileStrategy(src: string): ZSCompileResult {
   const diag: ZSDiagnostic[] = [];
@@ -286,6 +289,9 @@ export function compileStrategy(src: string): ZSCompileResult {
               step: (n.args.find((a) => a.name === "step")?.value as { value?: number })?.value,
             };
             inputs.push(inp);
+            // Inputs are valid identifiers in the statements that follow their
+            // declaration, including the bundled EMA/VWAP example.
+            seenIdents.add(inp.name);
           }
         }
         if (!BUILTIN_FUNCS.has(n.callee) && !n.callee.startsWith("input.") && !n.callee.startsWith("strategy.")) {

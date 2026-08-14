@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Bar, ContractMetadata, Timeframe } from "./types";
+import { TIMEFRAME_SECONDS, type Bar, type ContractMetadata, type Timeframe } from "./types";
 
 /** Public, read-only Gate.io USDT perpetual market-data endpoints. */
 export const GATEIO_REST_URL = "https://api.gateio.ws/api/v4";
@@ -112,4 +112,57 @@ export function normalizeBars(bars: Bar[]): Bar[] {
 export function upsertBar(bars: Bar[], next: Bar, maxBars = 2_000): Bar[] {
   const normalized = normalizeBars([...bars, next]);
   return normalized.length > maxBars ? normalized.slice(-maxBars) : normalized;
+}
+
+const MAX_GATE_CANDLES_PER_REQUEST = 2_000;
+const MAX_GATE_CANDLE_PAGES = 48;
+
+type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
+
+/**
+ * Fetches an immutable range of public Gate.io USDT perpetual candles in
+ * bounded pages. Results remain provider-labelled and are never replaced by
+ * synthetic bars when an upstream request fails or yields no coverage.
+ */
+export async function fetchGateioHistoricalBars(
+  inputSymbol: string,
+  timeframe: Timeframe,
+  fromMs: number,
+  toMs: number,
+  fetcher: FetchLike = fetch,
+): Promise<Bar[]> {
+  const symbol = normalizeGateioSymbol(inputSymbol);
+  if (!symbol) throw new Error(`unsupported Gate.io USDT perpetual symbol: ${inputSymbol}`);
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs >= toMs) {
+    throw new Error("invalid historical candle range");
+  }
+
+  const intervalMs = TIMEFRAME_SECONDS[timeframe] * 1_000;
+  const output: Bar[] = [];
+  let cursor = Math.floor(fromMs / intervalMs) * intervalMs;
+  let pages = 0;
+
+  while (cursor <= toMs) {
+    if (pages >= MAX_GATE_CANDLE_PAGES) {
+      throw new Error(`historical request exceeds ${MAX_GATE_CANDLE_PAGES} Gate.io pages; reduce the range or use a larger timeframe`);
+    }
+    const pageEnd = Math.min(toMs, cursor + intervalMs * (MAX_GATE_CANDLES_PER_REQUEST - 1));
+    const url = new URL(`${GATEIO_REST_URL}/futures/usdt/candlesticks`);
+    url.searchParams.set("contract", symbol);
+    url.searchParams.set("interval", timeframe);
+    url.searchParams.set("from", String(Math.floor(cursor / 1_000)));
+    url.searchParams.set("to", String(Math.floor(pageEnd / 1_000)));
+
+    const response = await fetcher(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+    if (!response.ok) throw new Error(`Gate.io historical candles failed (${response.status})`);
+    const raw = await response.json();
+    if (!Array.isArray(raw)) throw new Error("invalid Gate.io historical candle response");
+    output.push(...raw.map(gateCandleToBar));
+
+    if (pageEnd >= toMs) break;
+    cursor = pageEnd + intervalMs;
+    pages += 1;
+  }
+
+  return normalizeBars(output).filter((bar) => bar.t >= fromMs && bar.t <= toMs);
 }

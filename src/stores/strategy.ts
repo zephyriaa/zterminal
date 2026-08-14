@@ -72,7 +72,7 @@ export const useStrategy = create<StrategyState>()(
       lastResult: null,
       setLastResult: (r) => set({ lastResult: r }),
       config: {
-        symbol: "NQ",
+        symbol: "QQQX_USDT",
         timeframe: "5m",
         days: 30,
         initialCapital: 100_000,

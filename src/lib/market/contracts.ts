@@ -30,7 +30,8 @@ export const CONTRACTS: Record<string, ContractDef> = {
     exchange: "GATEIO", product: "perpetual",
     // Live Gate.io metadata is fetched at runtime by the market-data gateway.
     // These values only keep the UI usable before the gateway contract event arrives.
-    tickSize: 0.01, tickValue: 0.01, multiplier: 1, currency: "USDT",
+    // Gate.io public contract metadata: order_price_round 0.01, quanto_multiplier 0.01.
+    tickSize: 0.01, tickValue: 0.0001, multiplier: 0.01, currency: "USDT",
     session: "crypto", supportsDepth: true, supportsMBO: false,
     basePrice: 600, dailyVolPct: 0.02,
   },

@@ -37,6 +37,13 @@ import { Switch } from "@/components/ui/switch";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
 
+type MarketReference = {
+  symbol: string;
+  price: number;
+  change: number;
+  changePct: number;
+};
+
 function fmtPrice(p: number, tick: number) {
   const decimals = tick >= 1 ? 2 : Math.max(2, Math.round(-Math.log10(tick)));
   return p.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -75,15 +82,40 @@ export function ChartView() {
     setChartSettings((current) => ({ ...current, ...patch }));
   };
 
-  // live quote for the header
+  // Live data and a provider-sourced session reference. The displayed change
+  // must share the same source as the Markets view; mock contract base prices
+  // are never valid as a live reference.
   const { quote, lastTrade, trades, dataStatus, provider } = useMarketStream(symbol, { trades: 40, depth: false });
+  const [marketReference, setMarketReference] = useState<MarketReference | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/markets", { cache: "no-store" });
+        if (!response.ok) throw new Error("market reference unavailable");
+        const body = await response.json() as { rows?: MarketReference[] };
+        const next = body.rows?.find((row) => row.symbol === symbol) ?? null;
+        if (active) setMarketReference(next);
+      } catch {
+        if (active) setMarketReference(null);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 15_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [symbol]);
 
   const dayChange = useMemo(() => {
-    if (!lastTrade) return null;
-    // Approximate change versus the configured reference price.
-    const ch = lastTrade.price - contract.basePrice;
-    return { ch, pct: (ch / contract.basePrice) * 100 };
-  }, [lastTrade, contract.basePrice]);
+    if (!lastTrade || !marketReference) return null;
+    const sessionReference = marketReference.price - marketReference.change;
+    if (!Number.isFinite(sessionReference) || sessionReference <= 0) return null;
+    const ch = lastTrade.price - sessionReference;
+    return { ch, pct: (ch / sessionReference) * 100 };
+  }, [lastTrade, marketReference]);
 
   const toggleFull = () => setFull((f) => !f);
 
@@ -104,12 +136,14 @@ export function ChartView() {
           <span className={cn("text-[15px] tnum font-semibold", dayChange && (dayChange.ch >= 0 ? "text-pos" : "text-neg"))}>
             {lastTrade ? fmtPrice(lastTrade.price, contract.tickSize) : "—"}
           </span>
-          {dayChange && (
-            <span className={cn("text-[11px] tnum", dayChange.ch >= 0 ? "text-pos" : "text-neg")}>
+          {dayChange ? (
+            <span className={cn("text-[11px] tnum", dayChange.ch >= 0 ? "text-pos" : "text-neg")} title="Provider-sourced 24h reference">
               {dayChange.ch >= 0 ? "+" : ""}
               {fmtPrice(dayChange.ch, contract.tickSize)} ({dayChange.pct >= 0 ? "+" : ""}
               {dayChange.pct.toFixed(2)}%)
             </span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">reference unavailable</span>
           )}
         </div>
 

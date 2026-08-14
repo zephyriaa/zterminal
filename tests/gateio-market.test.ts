@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  fetchGateioHistoricalBars,
   gateCandleToBar,
   normalizeBars,
   normalizeGateioSymbol,
@@ -8,6 +9,7 @@ import {
   upsertBar,
 } from "../src/lib/market/gateio";
 import { GateOrderBook } from "../mini-services/market-data/order-book";
+import { compileStrategy } from "../src/lib/strategy/zs-compiler";
 
 test("normalizes TradingView-style QQQX aliases to Gate.io native contract", () => {
   assert.equal(normalizeGateioSymbol("QQQX_USDT"), "QQQX_USDT");
@@ -33,6 +35,20 @@ test("normalizes, deduplicates, and upserts Gate candles by timestamp", () => {
   assert.deepEqual(upsertBar(normalized, { ...second, c: 5.5 }), [{ ...replacement }, { ...second, c: 5.5 }]);
 });
 
+test("pages and normalizes a requested Gate.io historical candle range", async () => {
+  const requests: URL[] = [];
+  const bars = await fetchGateioHistoricalBars("QQQX_USDT", "1m", 0, 120_000_000, async (input) => {
+    const url = new URL(input.toString());
+    requests.push(url);
+    const from = Number(url.searchParams.get("from"));
+    return new Response(JSON.stringify([{ t: String(from), o: "1", h: "2", l: "1", c: "1.5", v: "3" }]), { status: 200 });
+  });
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0].searchParams.get("contract"), "QQQX_USDT");
+  assert.equal(requests[0].searchParams.has("limit"), false);
+  assert.deepEqual(bars.map((bar) => bar.t), [0, 120_000_000]);
+});
+
 test("bridges a REST order-book snapshot with buffered deltas", () => {
   const book = new GateOrderBook();
   book.buffer({ U: 101, u: 102, t: 1, b: [{ p: "99", s: "3" }], a: [{ p: "101", s: "0" }] });
@@ -50,6 +66,19 @@ test("bridges a REST order-book snapshot with buffered deltas", () => {
     { price: 99, size: 3, side: "buy" },
     { price: 98, size: 2, side: "buy" },
   ]);
+});
+
+test("accepts declared inputs and built-in strategy directions in the bundled DSL pattern", () => {
+  const source = `strategy("EMA Cross + VWAP Filter", overlay=true)
+input.float("Fast", 8, minval=1, maxval=200)
+input.float("Slow", 21, minval=1, maxval=400)
+var fastEma = ema(close, Fast)
+var slowEma = ema(close, Slow)
+if close > vwap
+  strategy.entry("long", strategy.long, qty=1)`;
+  const compiled = compileStrategy(source);
+  assert.equal(compiled.ok, true);
+  assert.deepEqual(compiled.diagnostics.filter((diagnostic) => diagnostic.severity === "warning"), []);
 });
 
 test("detects sequence gaps and removes zero-size depth levels", () => {

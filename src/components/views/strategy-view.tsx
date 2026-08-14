@@ -16,10 +16,9 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { CodeEditor } from "../terminal/code-editor";
-import { Panel, PanelHeader, Pill, SimulatedTag, StatRow } from "../terminal/primitives";
+import { Panel, PanelHeader, Pill, StatRow } from "../terminal/primitives";
 import { useStrategy } from "@/stores/strategy";
 import { useWorkspace } from "@/stores/workspace";
-import { listContracts, getContract } from "@/lib/market/contracts";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +27,7 @@ import type { Timeframe } from "@/lib/market/types";
 import type { BacktestResult } from "@/lib/strategy/zs-runtime";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
+const HISTORICAL_GATEIO_SYMBOLS = ["QQQX_USDT"];
 
 export function StrategyView() {
   const {
@@ -140,7 +140,7 @@ export function StrategyView() {
           <Pill tone={lastCompile?.ok ? "pos" : "default"}>
             {lastCompile?.ok ? <><CheckCircle2 className="w-3 h-3" />Compiled</> : lastCompile ? <><AlertCircle className="w-3 h-3" />{errs.length} error{errs.length === 1 ? "" : "s"}</> : "Not compiled"}
           </Pill>
-          <SimulatedTag />
+          <Pill tone="pos">Gate.io historical</Pill>
         </div>
       </div>
 
@@ -192,17 +192,18 @@ export function StrategyView() {
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Configuration</span>
           </div>
           <div className="overflow-y-auto scroll-thin p-2.5 space-y-2">
-            <CfgSelect label="Instrument" value={config.symbol} onChange={(v) => setConfig({ symbol: v })} options={listContracts().map((c) => c.symbol)} />
+            <CfgSelect label="Instrument" value={config.symbol} onChange={(v) => setConfig({ symbol: v })} options={HISTORICAL_GATEIO_SYMBOLS} />
             <CfgSelect label="Timeframe" value={config.timeframe} onChange={(v) => setConfig({ timeframe: v })} options={TIMEFRAMES} />
-            <Field label="Lookback (days)"><Input type="number" value={String(config.days)} onChange={(e) => setConfig({ days: Number(e.target.value) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Initial capital ($)"><Input type="number" value={String(config.initialCapital)} onChange={(e) => setConfig({ initialCapital: Number(e.target.value) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Position size"><Input type="number" value={String(config.positionSize)} onChange={(e) => setConfig({ positionSize: Number(e.target.value) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Commission / contract ($)"><Input type="number" value={String(config.commissionPerContract)} onChange={(e) => setConfig({ commissionPerContract: Number(e.target.value) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Slippage (ticks)"><Input type="number" value={String(config.slippageTicks)} onChange={(e) => setConfig({ slippageTicks: Number(e.target.value) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <Field label="Spread (ticks)"><Input type="number" value={String(config.spreadTicks)} onChange={(e) => setConfig({ spreadTicks: Number(e.target.value) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Lookback (days)"><Input type="number" min="1" max="60" value={String(config.days)} onChange={(e) => setConfig({ days: Math.max(1, Math.min(60, Number(e.target.value) || 1)) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Initial capital (USDT)"><Input type="number" min="1" value={String(config.initialCapital)} onChange={(e) => setConfig({ initialCapital: Math.max(1, Number(e.target.value) || 1) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Native contract quantity"><Input type="number" min="1" step="1" value={String(config.positionSize)} onChange={(e) => setConfig({ positionSize: Math.max(1, Math.floor(Number(e.target.value) || 1)) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Commission / native contract (USDT)"><Input type="number" min="0" step="0.0001" value={String(config.commissionPerContract)} onChange={(e) => setConfig({ commissionPerContract: Math.max(0, Number(e.target.value) || 0) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Slippage (ticks)"><Input type="number" min="0" step="0.1" value={String(config.slippageTicks)} onChange={(e) => setConfig({ slippageTicks: Math.max(0, Number(e.target.value) || 0) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <Field label="Spread (ticks)"><Input type="number" min="0" step="0.1" value={String(config.spreadTicks)} onChange={(e) => setConfig({ spreadTicks: Math.max(0, Number(e.target.value) || 0) })} className="h-7 text-[12px] tnum bg-surface" /></Field>
+            <div className="text-[9.5px] text-muted-foreground leading-relaxed">Lookback is capped at 60 days in the interface; the API separately enforces the verified Gate.io page limit for each selected timeframe.</div>
             <div className="pt-2 border-t hairline">
               <StatRow label="Execution" value="next-bar open" tone="muted" hint="Anti look-ahead: signals on bar[i] fill at bar[i+1].open" />
-              <StatRow label="Data" value="SIMULATED" tone="warn" />
+              <StatRow label="Data" value="GATE.IO · HISTORICAL" tone="pos" hint="Public USDT-perpetual candles with range and provider provenance attached to each run." />
             </div>
           </div>
         </div>
