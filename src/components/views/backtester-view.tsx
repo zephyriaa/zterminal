@@ -15,6 +15,8 @@ import { useWorkspace } from "@/stores/workspace";
 import type { BacktestResult } from "@/lib/strategy/zs-runtime";
 import type { Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
+import { useInstitutionalProtocol } from "@/stores/institutional-protocol";
+import { ProtocolBacktestPanel } from "./protocol-backtest-panel";
 import {
   AreaChart,
   Area,
@@ -31,6 +33,9 @@ import {
 export function BacktesterView() {
   const { lastResult } = useStrategy();
   const { setView } = useWorkspace();
+  const { projects, activeProjectId } = useInstitutionalProtocol();
+  const activeProtocol = projects.find((project) => project.id === activeProjectId) ?? null;
+  const protocolRunClass = lastResult ? activeProtocol?.runs.find((run) => run.resultHash === lastResult.hash)?.runClass ?? null : null;
 
   const [tab, setTab] = useState<"equity" | "drawdown" | "trades" | "monthly">("equity");
 
@@ -47,7 +52,7 @@ export function BacktesterView() {
   if (!lastResult) {
     return (
       <div className="h-full flex flex-col bg-background">
-        <Header result={null} setView={setView} />
+        <Header result={null} setView={setView} protocolRunClass={null} />
         <div className="flex-1 grid place-items-center">
           <div className="text-center max-w-sm">
             <FlaskConical className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
@@ -76,7 +81,8 @@ export function BacktesterView() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <Header result={r} setView={setView} />
+      <Header result={r} setView={setView} protocolRunClass={protocolRunClass} />
+      {activeProtocol && <ProtocolBacktestPanel resultHash={r.hash} onOpenStrategy={() => setView("strategy")} />}
 
       <div className="flex-1 min-h-0 flex">
         {/* left/main: chart + bottom tabs */}
@@ -262,7 +268,7 @@ export function BacktesterView() {
   );
 }
 
-function Header({ result, setView }: { result: BacktestResult | null; setView: (v: any) => void }) {
+function Header({ result, setView, protocolRunClass }: { result: BacktestResult | null; setView: (v: any) => void; protocolRunClass: "BASELINE" | "INCREMENTAL" | null }) {
   return (
     <div className="h-10 shrink-0 border-b hairline bg-panel flex items-center gap-2 px-3">
       <FlaskConical className="w-3.5 h-3.5 text-research" />
@@ -276,6 +282,7 @@ function Header({ result, setView }: { result: BacktestResult | null; setView: (
         </>
       )}
       <div className="ml-auto flex items-center gap-1.5">
+        {protocolRunClass && <Pill tone={protocolRunClass === "BASELINE" ? "research" : "warn"}>{protocolRunClass === "BASELINE" ? "BASELINE · NO OPTIMIZATION" : "TUNED · ONE VARIABLE"}</Pill>}
         {result && <Pill tone={result.dataStatus === "HISTORICAL" ? "pos" : "warn"}>{result.dataStatus ?? "UNLABELLED"}</Pill>}
         <button onClick={() => setView("strategy")} className="h-7 px-2.5 rounded-[5px] border hairline bg-surface hover:bg-hover text-[11px]">Edit strategy</button>
       </div>

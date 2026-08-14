@@ -22,6 +22,8 @@ import { PROVIDER_CATALOG, type ProviderCatalogEntry } from "@/lib/market/capabi
 import { calculateFixedRiskSizing } from "@/domain/risk/sizing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { InstitutionalProtocolLab } from "./institutional-protocol-lab";
+import { ProtocolJournalLedger } from "./protocol-journal-ledger";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -204,34 +206,8 @@ const HYP_TONE: Record<string, { tone: "warn" | "mdata" | "pos" | "research" | "
 };
 
 export function ResearchView() {
-  return (
-    <ViewShell title="Research Lab" icon={FlaskConical} right={<SimulatedTag />}>
-      <div className="p-3 border-b hairline text-[11.5px] text-muted-foreground leading-relaxed">
-        Trading is a hypothesis-testing problem. Define a hypothesis, select a dataset, run the test,
-        and classify the result by evidence — never by raw profitability. The cards below are illustrative only; no historical dataset or validation artifact is attached yet.
-      </div>
-      <div className="overflow-y-auto scroll-thin p-3 space-y-2">
-        {HYPOTHESES.map((h) => {
-          const m = HYP_TONE[h.status];
-          return (
-            <Panel key={h.id} className="p-3">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono-num text-[12px] font-semibold">{h.symbol}</span>
-                    <Pill tone={m.tone}>{m.label}</Pill>
-                  </div>
-                  <div className="text-[12.5px] mt-1">{h.title}</div>
-                  <div className="text-[10.5px] text-muted-foreground mt-1">Sample n={h.sample} · estimated expectancy {h.edge >= 0 ? "+" : ""}{(h.edge * 100).toFixed(1)}R</div>
-                </div>
-                <Button size="sm" variant="outline" disabled title="Research detail requires a historical dataset and persisted validation run" className="h-7 text-[11px]">Not linked</Button>
-              </div>
-            </Panel>
-          );
-        })}
-      </div>
-    </ViewShell>
-  );
+  const { setView } = useWorkspace();
+  return <InstitutionalProtocolLab onOpenStrategy={() => setView("strategy")} />;
 }
 
 /* ----------------------------- Portfolio ----------------------------- */
@@ -356,6 +332,7 @@ export function JournalView() {
   const { symbol } = useWorkspace();
   const [entries, setEntries] = useState<Entry[]>(SEED_ENTRIES);
   const [note, setNote] = useState("");
+  const [tab, setTab] = useState<"protocol" | "trade-notes">("protocol");
   const add = () => {
     const trimmedNote = note.trim();
     if (!trimmedNote) return;
@@ -364,25 +341,12 @@ export function JournalView() {
   };
   return (
     <ViewShell title="Journal" icon={NotebookPen}>
-      <div className="p-3 border-b hairline flex items-center gap-2">
-        <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Log an observation, setup, or mistake…" className="h-7 text-[12px] bg-surface" />
-        <Button size="sm" onClick={add} className="h-7 text-[12px]"><Plus className="w-3.5 h-3.5 mr-1" />Entry</Button>
+      <div className="border-b hairline bg-panel px-3 py-2 flex flex-wrap items-center gap-2">
+        <button onClick={() => setTab("protocol")} className={cn("h-7 rounded px-2.5 text-[11px]", tab === "protocol" ? "bg-research text-research-foreground" : "bg-surface text-muted-foreground hover:text-foreground")}>Institutional Protocol Ledger</button>
+        <button onClick={() => setTab("trade-notes")} className={cn("h-7 rounded px-2.5 text-[11px]", tab === "trade-notes" ? "bg-hover text-foreground" : "bg-surface text-muted-foreground hover:text-foreground")}>Trade notes</button>
+        <span className="text-[9.5px] text-muted-foreground">Protocol history is versioned and reconstructable; manual notes remain session-only in this increment.</span>
       </div>
-      <div className="overflow-y-auto scroll-thin p-3 space-y-2">
-        {!entries.length && <Panel className="p-4 text-[11px] text-muted-foreground">No journal entries are stored yet. Entries created here remain in this browser session until the durable journal service is released.</Panel>}
-        {entries.map((e) => (
-          <Panel key={e.id} className="p-3">
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="tnum text-muted-foreground">{e.date}</span>
-              <span className="font-mono-num font-semibold">{e.symbol}</span>
-              <Pill tone={e.side === "long" ? "pos" : "neg"}>{e.side}</Pill>
-              <span className="text-muted-foreground">{e.setup}</span>
-              <span className={cn("ml-auto tnum font-medium", e.result >= 0 ? "text-pos" : "text-neg")}>{e.result >= 0 ? "+" : ""}${e.result}</span>
-            </div>
-            <p className="text-[12px] mt-1.5 text-foreground/85">{e.note}</p>
-          </Panel>
-        ))}
-      </div>
+      {tab === "protocol" ? <div className="overflow-y-auto scroll-thin p-3"><ProtocolJournalLedger /></div> : <><div className="p-3 border-b hairline flex items-center gap-2"><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Log an observation, setup, or mistake…" className="h-7 text-[12px] bg-surface" /><Button size="sm" onClick={add} className="h-7 text-[12px]"><Plus className="w-3.5 h-3.5 mr-1" />Entry</Button></div><div className="overflow-y-auto scroll-thin p-3 space-y-2">{!entries.length && <Panel className="p-4 text-[11px] text-muted-foreground">No journal entries are stored yet. Entries created here remain in this browser session until the durable journal service is released.</Panel>}{entries.map((e) => <Panel key={e.id} className="p-3"><div className="flex items-center gap-2 text-[11px]"><span className="tnum text-muted-foreground">{e.date}</span><span className="font-mono-num font-semibold">{e.symbol}</span><Pill tone={e.side === "long" ? "pos" : "neg"}>{e.side}</Pill><span className="text-muted-foreground">{e.setup}</span><span className={cn("ml-auto tnum font-medium", e.result >= 0 ? "text-pos" : "text-neg")}>{e.result >= 0 ? "+" : ""}${e.result}</span></div><p className="text-[12px] mt-1.5 text-foreground/85">{e.note}</p></Panel>)}</div></>}
     </ViewShell>
   );
 }
