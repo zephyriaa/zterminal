@@ -86,14 +86,17 @@ export function Sidebar() {
     >
       {/* Brand */}
       <div className="h-11 flex items-center gap-2 px-3 border-b hairline">
-        <div className="w-6 h-6 grid place-items-center shrink-0">
-          <ZMark className="w-5 h-5" />
-        </div>
+        <img
+          src="/brand/zterminal-mark.png"
+          alt="Z Terminal"
+          className="h-7 w-7 shrink-0 rounded-[7px] object-contain"
+        />
         {!collapsed && (
-          <div className="flex items-baseline gap-1.5 min-w-0">
-            <span className="text-[13px] font-semibold tracking-[0.14em] uppercase">Z</span>
-            <span className="text-[13px] font-semibold tracking-[0.14em] uppercase">Terminal</span>
-          </div>
+          <img
+            src="/brand/zterminal-wordmark.png"
+            alt="Z Terminal"
+            className="h-6 w-[96px] min-w-0 object-contain object-left"
+          />
         )}
         <button
           onClick={toggleSidebar}
@@ -166,13 +169,5 @@ export function Sidebar() {
   );
 }
 
-function ZMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
-      <path d="M7 17 L17 7 L7 7" stroke="currentColor" strokeWidth="2" strokeLinejoin="miter" />
-      <path d="M17 7 L17 17 L7 17" stroke="var(--pos)" strokeWidth="2" strokeLinejoin="miter" />
-    </svg>
-  );
-}
 
 export { Layers };
