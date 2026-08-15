@@ -12,3 +12,10 @@
 - [ ] Prepare Render-native build, start, health-check, and environment configuration for the hosted research terminal.
 - [ ] Synchronize the validated hosted-project source to the GitHub deployment branch selected for Render.
 - [ ] Create the Render service from the connected GitHub source and verify the public runtime, public-data adapter, and non-execution disclosures.
+- [x] Implement the approved layer-driven Canvas as the primary chart-first interaction model.
+- [x] Add Focus as a low-distraction Canvas state and Research as an in-context hypothesis-to-evidence state.
+- [x] Consolidate redundant permanent dashboard surfaces into contextual layers and compact inspection details.
+- [x] Add explicit tested capability metadata so unavailable CVD and GEX layers cannot be represented as candle-derived analytics.
+- [x] Add reproducible research-draft context including verified dataset source, interval, timestamp, and bar coverage.
+- [x] Split the production bundle into cacheable route and vendor chunks, removing the measured oversized-chunk warning.
+- [ ] Validate the selected interaction model, public-data truthfulness, performance, and existing Render deployment.

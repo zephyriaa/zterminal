@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveChartMetrics, rangeToTimeframe, summarizeDataset, toProviderInterval, type TerminalBar } from "../client/src/lib/terminalWorkspace";
+import { deriveChartMetrics, getResearchLayerCapability, rangeToTimeframe, summarizeDataset, toProviderInterval, type TerminalBar } from "../client/src/lib/terminalWorkspace";
 
 const bars: TerminalBar[] = [
   { t: 1, o: 100, h: 104, l: 98, c: 102, v: 10 },
@@ -21,5 +21,11 @@ describe("terminal workspace helpers", () => {
     expect(metrics.range).toEqual({ high: 110, low: 98 });
     expect(metrics.windowVwap).not.toBeNull();
     expect(summary).toEqual({ barCount: 3, changePercent: 5.88235294117647, high: 110, low: 98 });
+  });
+
+  it("keeps tape and options layers unavailable without their verified source data", () => {
+    expect(getResearchLayerCapability("vwap")).toMatchObject({ availability: "available", source: "Loaded Gate.io public candles" });
+    expect(getResearchLayerCapability("cvd")).toMatchObject({ availability: "unavailable", source: "Verified public trade tape required" });
+    expect(getResearchLayerCapability("gex")).toMatchObject({ availability: "unavailable", source: "Verified options-chain and Greek data required" });
   });
 });
