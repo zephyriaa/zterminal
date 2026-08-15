@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1786797499061,
+      "tag": "0000_tan_wind_dancer",
+      "breakpoints": true
+    }
+  ]
 }
