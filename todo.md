@@ -18,4 +18,6 @@
 - [x] Add explicit tested capability metadata so unavailable CVD and GEX layers cannot be represented as candle-derived analytics.
 - [x] Add reproducible research-draft context including verified dataset source, interval, timestamp, and bar coverage.
 - [x] Split the production bundle into cacheable route and vendor chunks, removing the measured oversized-chunk warning.
-- [ ] Validate the selected interaction model, public-data truthfulness, performance, and existing Render deployment.
+- [x] Validate the selected interaction model, public-data truthfulness, performance, and existing Render deployment.
+- [x] Document the unified information architecture, component hierarchy, layer model, state model, responsive behavior, and visual system for the selected design.
+- [x] Verify the Canvas, Focus, and Research implementation against the supplied five-second, chart, clutter, differentiation, progressive-disclosure, and consistency tests.
