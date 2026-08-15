@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: zterminal-research-terminal
+    runtime: node
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
