@@ -19,8 +19,8 @@ export const RESEARCH_LAYER_CAPABILITIES: ResearchLayerCapability[] = [
   { id: "profile", label: "Volume profile", category: "context", availability: "available", source: "Loaded Gate.io public candles", detail: "Volume distribution grouped from the loaded verified candle window; not tick-level volume-at-price." },
   { id: "sessions", label: "Sessions", category: "context", availability: "available", source: "Loaded Gate.io public candle timestamps", detail: "Subtle UTC session regions inferred from verified candle timestamps." },
   { id: "structure", label: "Structure", category: "context", availability: "available", source: "Loaded Gate.io public candles", detail: "Loaded-window high, low, and midpoint context; not a predictive signal." },
-  { id: "cvd", label: "CVD", category: "flow", availability: "unavailable", source: "Verified public trade tape required", detail: "Cumulative volume delta is not calculated from candle bars." },
-  { id: "gex", label: "GEX", category: "positioning", availability: "unavailable", source: "Verified options-chain and Greek data required", detail: "Gamma exposure is not estimated from public candle data." },
+  { id: "cvd", label: "CVD", category: "flow", availability: "available", source: "Gate.io public taker-signed trade tape", detail: "Cumulative signed size from the current bounded public trade-stream window. Positive size is exchange-reported taker buy; negative size is exchange-reported taker sell. It is not derived from candle bars or a historical tick archive." },
+  { id: "gex", label: "GEX", category: "positioning", availability: "unavailable", source: "Options-feed required (Deribit/CME/OPRA)", detail: "Gamma exposure is not estimated from public candle or perpetual trade data." },
 ];
 
 export function getResearchLayerCapability(id: ResearchLayerId) {

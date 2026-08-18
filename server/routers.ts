@@ -9,6 +9,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { listResearchDrafts, saveResearchDraft } from "./researchStore";
 import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
+import { gateioTradeStream } from "./gateioTradeStream";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
 const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks";
@@ -20,6 +21,11 @@ const SnapshotInput = z.object({ symbol: z.string().trim().min(1).max(40).option
 const ContractListInput = z.object({
   symbol: z.string().trim().min(1).max(40).optional(),
   limit: z.number().int().min(1).max(250).default(100),
+}).optional();
+
+const TradeTapeInput = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(1).max(500).default(250),
 }).optional();
 
 const CandleInput = z.object({
@@ -158,6 +164,15 @@ export const appRouter = router({
           retryable: failure.retryable,
         };
       }
+    }),
+    tradeTape: publicProcedure.input(TradeTapeInput).query(({ input }) => {
+      const symbol = input?.symbol ? resolveSymbol(input.symbol) : DEFAULT_SYMBOL;
+      if (!symbol) return gateioTradeStream.getSnapshot(input?.symbol ?? "");
+      const snapshot = gateioTradeStream.getSnapshot(symbol);
+      return {
+        ...snapshot,
+        trades: snapshot.trades.slice(-(input?.limit ?? 250)),
+      };
     }),
     snapshot: publicProcedure.input(SnapshotInput).query(async ({ input }) => {
       const at = Date.now();

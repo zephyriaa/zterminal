@@ -23,9 +23,9 @@ describe("terminal workspace helpers", () => {
     expect(summary).toEqual({ barCount: 3, changePercent: 5.88235294117647, high: 110, low: 98 });
   });
 
-  it("keeps tape and options layers unavailable without their verified source data", () => {
+  it("exposes CVD only through its verified public tape source while retaining the options-data gate for GEX", () => {
     expect(getResearchLayerCapability("vwap")).toMatchObject({ availability: "available", source: "Loaded Gate.io public candles" });
-    expect(getResearchLayerCapability("cvd")).toMatchObject({ availability: "unavailable", source: "Verified public trade tape required" });
-    expect(getResearchLayerCapability("gex")).toMatchObject({ availability: "unavailable", source: "Verified options-chain and Greek data required" });
+    expect(getResearchLayerCapability("cvd")).toMatchObject({ availability: "available", source: "Gate.io public taker-signed trade tape" });
+    expect(getResearchLayerCapability("gex")).toMatchObject({ availability: "unavailable", source: "Options-feed required (Deribit/CME/OPRA)" });
   });
 });

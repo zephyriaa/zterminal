@@ -40,3 +40,11 @@ CVD is now eligible for a controlled implementation slice, but it must remain `U
 [1] [Gate Futures WebSocket v4.0.0](https://www.gate.com/docs/developers/futures/ws/en/)
 
 [2] [Gate API v4](https://www.gate.com/docs/developers/apiv4/en/)
+
+## Captured Public Transport Evidence
+
+A bounded, read-only transport probe against `BTC_USDT` completed on 2026-08-18. It subscribed successfully to `futures.trades` using the documented decimal-size header and captured both a positive (`"30"`) and a negative (`"-2"`) string-valued size, with exchange millisecond timestamps and sequential trade IDs. This is consistent with Gate’s documented positive-taker-buyer / negative-taker-seller definition; the raw sanitized capture is retained at [`evidence/gateio-trade-spike.json`](./evidence/gateio-trade-spike.json).
+
+A separate bounded depth probe subscribed to `futures.order_book_update` at `100ms` / 100 levels while fetching a REST `with_id=true` snapshot. The capture returned a snapshot identity of `121779446002`, 100 bids, 100 asks, string-valued depth quantities, a cached update satisfying the documented recovery condition at index 21, and contiguous subsequent update ranges. The sanitized evidence is retained at [`evidence/gateio-depth-spike.json`](./evidence/gateio-depth-spike.json).
+
+> These captures prove that the documented public event shapes and reconciliation procedure are observable from the current environment. They do **not** yet prove that a long-running production stream meets uptime, reconnect, load, or multi-subscriber requirements. CVD and DOM remain unavailable until the canonical adapter implements the corresponding lifecycle and fixture tests.

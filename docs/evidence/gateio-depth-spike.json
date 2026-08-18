@@ -1,0 +1,243 @@
+{
+  "probe": "gateio-order-book-reconciliation",
+  "endpoint": "wss://fx-ws.gateio.ws/v4/ws/usdt",
+  "restEndpoint": "https://api.gateio.ws/api/v4/futures/usdt/order_book?contract=BTC_USDT&limit=100&with_id=true",
+  "symbol": "BTC_USDT",
+  "requestedHeaders": {
+    "X-Gate-Size-Decimal": "1"
+  },
+  "snapshot": {
+    "id": 121779446002,
+    "bidCount": 100,
+    "askCount": 100,
+    "firstBidSizeType": "string",
+    "firstAskSizeType": "string"
+  },
+  "updates": [
+    {
+      "U": 121779445114,
+      "u": 121779445153,
+      "t": 1787055095589,
+      "symbol": "BTC_USDT",
+      "bidCount": 1,
+      "askCount": 0,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": null
+    },
+    {
+      "U": 121779445154,
+      "u": 121779445177,
+      "t": 1787055095688,
+      "symbol": "BTC_USDT",
+      "bidCount": 0,
+      "askCount": 0,
+      "firstBidSizeType": null,
+      "firstAskSizeType": null
+    },
+    {
+      "U": 121779445178,
+      "u": 121779445217,
+      "t": 1787055095792,
+      "symbol": "BTC_USDT",
+      "bidCount": 1,
+      "askCount": 1,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445218,
+      "u": 121779445241,
+      "t": 1787055095892,
+      "symbol": "BTC_USDT",
+      "bidCount": 1,
+      "askCount": 0,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": null
+    },
+    {
+      "U": 121779445242,
+      "u": 121779445297,
+      "t": 1787055095993,
+      "symbol": "BTC_USDT",
+      "bidCount": 4,
+      "askCount": 4,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445298,
+      "u": 121779445357,
+      "t": 1787055096092,
+      "symbol": "BTC_USDT",
+      "bidCount": 4,
+      "askCount": 7,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445358,
+      "u": 121779445431,
+      "t": 1787055096192,
+      "symbol": "BTC_USDT",
+      "bidCount": 6,
+      "askCount": 7,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445432,
+      "u": 121779445459,
+      "t": 1787055096283,
+      "symbol": "BTC_USDT",
+      "bidCount": 0,
+      "askCount": 1,
+      "firstBidSizeType": null,
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445460,
+      "u": 121779445498,
+      "t": 1787055096382,
+      "symbol": "BTC_USDT",
+      "bidCount": 3,
+      "askCount": 0,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": null
+    },
+    {
+      "U": 121779445499,
+      "u": 121779445521,
+      "t": 1787055096484,
+      "symbol": "BTC_USDT",
+      "bidCount": 0,
+      "askCount": 0,
+      "firstBidSizeType": null,
+      "firstAskSizeType": null
+    },
+    {
+      "U": 121779445522,
+      "u": 121779445580,
+      "t": 1787055096592,
+      "symbol": "BTC_USDT",
+      "bidCount": 6,
+      "askCount": 2,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445581,
+      "u": 121779445620,
+      "t": 1787055096690,
+      "symbol": "BTC_USDT",
+      "bidCount": 4,
+      "askCount": 4,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445621,
+      "u": 121779445670,
+      "t": 1787055096790,
+      "symbol": "BTC_USDT",
+      "bidCount": 8,
+      "askCount": 7,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445671,
+      "u": 121779445696,
+      "t": 1787055096892,
+      "symbol": "BTC_USDT",
+      "bidCount": 2,
+      "askCount": 0,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": null
+    },
+    {
+      "U": 121779445697,
+      "u": 121779445731,
+      "t": 1787055096993,
+      "symbol": "BTC_USDT",
+      "bidCount": 2,
+      "askCount": 4,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445732,
+      "u": 121779445774,
+      "t": 1787055097093,
+      "symbol": "BTC_USDT",
+      "bidCount": 5,
+      "askCount": 0,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": null
+    },
+    {
+      "U": 121779445775,
+      "u": 121779445820,
+      "t": 1787055097193,
+      "symbol": "BTC_USDT",
+      "bidCount": 4,
+      "askCount": 4,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445821,
+      "u": 121779445868,
+      "t": 1787055097291,
+      "symbol": "BTC_USDT",
+      "bidCount": 0,
+      "askCount": 4,
+      "firstBidSizeType": null,
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445869,
+      "u": 121779445907,
+      "t": 1787055097384,
+      "symbol": "BTC_USDT",
+      "bidCount": 3,
+      "askCount": 2,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445908,
+      "u": 121779445935,
+      "t": 1787055097489,
+      "symbol": "BTC_USDT",
+      "bidCount": 2,
+      "askCount": 2,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445936,
+      "u": 121779445981,
+      "t": 1787055097586,
+      "symbol": "BTC_USDT",
+      "bidCount": 0,
+      "askCount": 5,
+      "firstBidSizeType": null,
+      "firstAskSizeType": "string"
+    },
+    {
+      "U": 121779445982,
+      "u": 121779446012,
+      "t": 1787055097688,
+      "symbol": "BTC_USDT",
+      "bidCount": 2,
+      "askCount": 0,
+      "firstBidSizeType": "string",
+      "firstAskSizeType": null
+    }
+  ],
+  "reconciliation": {
+    "candidateIndex": 21,
+    "contiguousAfterCandidate": true
+  },
+  "detail": "captured reconciled snapshot-plus-delta evidence"
+}

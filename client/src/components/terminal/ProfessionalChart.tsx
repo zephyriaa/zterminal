@@ -14,6 +14,7 @@ import {
 import { Activity, AlertTriangle, Crosshair, LoaderCircle, RefreshCw } from "lucide-react";
 import type { ResearchLayerId, TerminalBar } from "@/lib/terminalWorkspace";
 import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries } from "@shared/features/registry";
+import { calculateCvd, type GatePublicTrade } from "@shared/market/orderFlowContracts";
 
 type HoveredBar = {
   time: number;
@@ -35,6 +36,8 @@ type ProfessionalChartProps = {
   coverageLabel: string;
   onRetry?: () => void;
   showMomentum?: boolean;
+  cvdTrades?: GatePublicTrade[];
+  cvdState?: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE";
 };
 
 const chartColors = {
@@ -48,6 +51,7 @@ const chartColors = {
   ema50: "#4d95ff",
   structure: "rgba(167, 126, 255, 0.52)",
   profile: "rgba(92, 223, 205, 0.48)",
+  cvd: "#ffb454",
 };
 
 function priceFormatter(value: number) {
@@ -93,6 +97,14 @@ function calculateRsi(bars: TerminalBar[], period = 14) {
   });
 }
 
+function toCvdSeries(trades: GatePublicTrade[]) {
+  const points = new Map<number, number>();
+  for (const point of calculateCvd(trades)) points.set(Math.floor(point.timestamp / 1_000), point.value);
+  return Array.from(points.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([time, value]) => ({ time: time as UTCTimestamp, value }));
+}
+
 function useLastVerifiedBars(bars: TerminalBar[]) {
   const lastGood = useRef<TerminalBar[]>([]);
   if (bars.length) lastGood.current = bars;
@@ -110,6 +122,8 @@ export function ProfessionalChart({
   coverageLabel,
   onRetry,
   showMomentum = true,
+  cvdTrades = [],
+  cvdState = "UNAVAILABLE",
 }: ProfessionalChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [hoveredBar, setHoveredBar] = useState<HoveredBar>(null);
@@ -118,6 +132,8 @@ export function ProfessionalChart({
   const lastBar = visibleBars.at(-1) ?? null;
   const previousBar = visibleBars.at(-2) ?? null;
   const barChange = lastBar && previousBar && previousBar.c !== 0 ? ((lastBar.c - previousBar.c) / previousBar.c) * 100 : null;
+
+  const cvdSeriesData = useMemo(() => toCvdSeries(cvdTrades), [cvdTrades]);
 
   const studies = useMemo(() => {
     const ema20 = calculateEmaSeries(visibleBars, 20);
@@ -229,6 +245,19 @@ export function ProfessionalChart({
         vwap.setData(visibleBars.map((bar, index) => ({ time: Math.floor(bar.t / 1000) as UTCTimestamp, value: studies.vwap[index] ?? bar.c })));
       }
 
+      if (has("cvd") && cvdSeriesData.length) {
+        const cvdSeries = chart.addSeries(LineSeries, {
+          color: chartColors.cvd,
+          lineWidth: 2,
+          lastValueVisible: true,
+          priceLineVisible: false,
+          crosshairMarkerVisible: false,
+        });
+        cvdSeries.moveToPane(showMomentum ? 3 : 2);
+        cvdSeries.setData(cvdSeriesData);
+        cvdSeries.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.18 }, borderColor: "rgba(255,180,84,0.18)" });
+      }
+
       if (has("structure") && studies.high !== null && studies.low !== null && studies.midpoint !== null) {
         candleSeries.createPriceLine({ price: studies.high, color: "rgba(29,207,195,0.52)", lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: "Window high" });
         candleSeries.createPriceLine({ price: studies.midpoint, color: chartColors.structure, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: "Mid" });
@@ -242,9 +271,10 @@ export function ProfessionalChart({
         candleSeries.createPriceLine({ price: profile.valueAreaLow, color: "rgba(159,85,239,0.52)", lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: "VAL" });
       }
 
-      candleSeries.getPane().setStretchFactor(showMomentum ? 6 : 7);
+      candleSeries.getPane().setStretchFactor(has("cvd") && cvdSeriesData.length ? 5.2 : showMomentum ? 6 : 7);
       volumeSeries?.getPane().setStretchFactor(1.35);
-      if (showMomentum) chart.panes()[2]?.setStretchFactor(1.65);
+      if (showMomentum) chart.panes()[2]?.setStretchFactor(has("cvd") && cvdSeriesData.length ? 1.35 : 1.65);
+      if (has("cvd") && cvdSeriesData.length) chart.panes()[showMomentum ? 3 : 2]?.setStretchFactor(1.45);
 
       const initialBars = Math.min(visibleBars.length, Math.max(75, Math.round(width / 11)));
       chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, visibleBars.length - initialBars), to: visibleBars.length + 4 });
@@ -269,7 +299,7 @@ export function ProfessionalChart({
       resizeObserver?.disconnect();
       chart?.remove();
     };
-  }, [visibleBars, activeLayers, has, showMomentum, studies]);
+  }, [visibleBars, activeLayers, has, showMomentum, studies, cvdSeriesData]);
 
   const quote = hoveredBar ?? (lastBar ? { time: lastBar.t, open: lastBar.o, high: lastBar.h, low: lastBar.l, close: lastBar.c, volume: lastBar.v } : null);
   const showingPrevious = !bars.length && visibleBars.length > 0;
@@ -281,7 +311,7 @@ export function ProfessionalChart({
         <span className="chart-interval">{interval}</span>
         {quote && <><span>O <b>{priceFormatter(quote.open)}</b></span><span>H <b>{priceFormatter(quote.high)}</b></span><span>L <b>{priceFormatter(quote.low)}</b></span><span>C <b className={quote.close >= quote.open ? "positive" : "negative"}>{priceFormatter(quote.close)}</b></span><span>Vol <b>{volumeFormatter(quote.volume)}</b></span></>}
       </div>
-      <div className="chart-meta-status"><Activity size={13} /><span>{showingPrevious ? "Showing last verified window" : coverageLabel}</span></div>
+      <div className="chart-meta-status"><Activity size={13} /><span>{showingPrevious ? "Showing last verified window" : coverageLabel}</span>{has("cvd") && <span className={`chart-flow-status ${cvdState.toLowerCase()}`}>CVD · {cvdState === "LIVE" ? `${cvdTrades.length.toLocaleString("en-US")} live tape trades` : cvdState.toLowerCase()}</span>}</div>
     </div>
     <div className="chart-stage" ref={containerRef}>
       {visibleBars.length === 0 && !isLoading && <div className="chart-empty-state"><AlertTriangle size={20} /><strong>No verified chart window</strong><p>{errorMessage ?? "Load a supported Gate.io USDT perpetual symbol to begin."}</p>{onRetry && <button onClick={onRetry}><RefreshCw size={14} /> Retry market data</button>}</div>}
