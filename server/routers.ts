@@ -6,15 +6,43 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { finiteNumber, normalizePublicBars } from "./marketData";
 import { alignRange, classifyProviderFailure, coverageForBars, MARKET_INTERVALS, normalizeGatePerpetualSymbol } from "./marketContracts";
 import { systemRouter } from "./_core/systemRouter";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, rateLimitedPublicProcedure, router } from "./_core/trpc";
 import { listResearchDrafts, saveResearchDraft } from "./researchStore";
+import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
+import { gateioTradeStream } from "./gateioTradeStream";
+import { gateioDepthStream } from "./gateioDepthStream";
+import { multiExchangeTradeStream } from "./multiExchangeTradeStream";
+import { compileZS } from "@shared/strategy/zsCompiler";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
 const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks";
+const GATE_CONTRACTS_URL = "https://api.gateio.ws/api/v4/futures/usdt/contracts";
 const DEFAULT_SYMBOL = "QQQX_USDT";
 const MAX_CANDLE_LIMIT = 2_000;
 
 const SnapshotInput = z.object({ symbol: z.string().trim().min(1).max(40).optional() }).optional();
+const ContractListInput = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(1).max(250).default(100),
+}).optional();
+
+const TradeTapeInput = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(1).max(500).default(250),
+}).optional();
+
+const DepthInput = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(5).max(50).default(20),
+}).optional();
+
+const MultiExchangeTradeTapeInput = z.object({
+  provider: z.enum(["binance_usdm", "bybit_linear"]),
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(1).max(500).default(250),
+});
+const FeedHealthInput = z.object({ symbol: z.string().trim().min(1).max(40).optional() }).optional();
+
 const CandleInput = z.object({
   interval: z.enum(MARKET_INTERVALS),
   symbol: z.string().trim().min(1).max(40).optional(),
@@ -45,6 +73,10 @@ const ResearchDatasetInput = z.object({
   sourceTimestamp: z.number().int().nullable(),
   fetchedAt: z.number().int().positive(),
 });
+const StrategyCompileInput = z.object({
+  source: z.string().max(16_000),
+});
+
 const SaveResearchDraftInput = z.object({
   id: z.string().uuid().optional(),
   workspaceName: z.string().trim().max(160).optional(),
@@ -64,6 +96,9 @@ export const appRouter = router({
       return { success: true } as const;
     }),
   }),
+  strategy: router({
+    compile: rateLimitedPublicProcedure.input(StrategyCompileInput).mutation(({ input }) => compileZS(input.source)),
+  }),
   research: router({
     listDrafts: protectedProcedure.query(async ({ ctx }) => {
       const drafts = await listResearchDrafts(ctx.user.id);
@@ -78,16 +113,112 @@ export const appRouter = router({
   }),
 
   market: router({
-    capabilities: publicProcedure.query(() => ({
+    capabilities: rateLimitedPublicProcedure.query(() => ({
       provider: "gateio" as const,
       environment: "public-read-only" as const,
       state: "CONNECTED" as const,
       instruments: { search: "provider-verified-on-request", aliases: true },
       history: { ranges: true, maximumBarsPerRequest: MAX_CANDLE_LIMIT, intervals: MARKET_INTERVALS },
-      orderFlow: { state: "UNAVAILABLE" as const, reason: "Verified public trade-tape coverage is required." },
-      gex: { state: "UNAVAILABLE" as const, reason: "Verified options-chain and Greek data are required." },
+      orderFlow: { state: "PARTIAL" as const, reason: "Gate.io DOM uses a reconciled public depth snapshot plus sequenced deltas. Gate.io, Binance USDⓈ-M, and Bybit linear expose bounded public trade tapes with explicit live/stale/degraded states; cross-venue depth and historical tick replay are unavailable." },
+      gex: { state: "UNAVAILABLE" as const, reason: "Options-feed required (Deribit/CME/OPRA); Gate.io perpetual data does not provide options-chain or Greek inputs." },
+      providerCatalog: PROVIDER_CATALOG,
     })),
-    snapshot: publicProcedure.input(SnapshotInput).query(async ({ input }) => {
+    providers: rateLimitedPublicProcedure.query(() => ({
+      at: Date.now(),
+      activeProvider: "gateio" as const,
+      providers: PROVIDER_CATALOG,
+    })),
+    contracts: rateLimitedPublicProcedure.input(ContractListInput).query(async ({ input }) => {
+      const fetchedAt = Date.now();
+      const requestedSymbol = input?.symbol ? resolveSymbol(input.symbol) : null;
+      if (input?.symbol && !requestedSymbol) {
+        return {
+          provider: "gateio" as const,
+          state: "UNAVAILABLE" as const,
+          fetchedAt,
+          contracts: [],
+          reasonCode: "UNSUPPORTED_INSTRUMENT" as const,
+          reason: "The requested instrument is not a Gate.io USDT perpetual symbol.",
+          retryable: false,
+        };
+      }
+      try {
+        const response = await axios.get<unknown>(GATE_CONTRACTS_URL, {
+          headers: { Accept: "application/json" },
+          timeout: 12_000,
+          responseType: "json",
+        });
+        if (!Array.isArray(response.data)) throw new Error("Gate.io returned an invalid futures-contract payload");
+        const contracts = response.data
+          .map(contract => gateContractToMarketMetadata(contract, fetchedAt))
+          .filter((contract): contract is NonNullable<typeof contract> => contract !== null)
+          .filter(contract => requestedSymbol === null || contract.nativeSymbol === requestedSymbol)
+          .slice(0, input?.limit ?? 100);
+        if (requestedSymbol && contracts.length === 0) {
+          return {
+            provider: "gateio" as const,
+            state: "UNAVAILABLE" as const,
+            fetchedAt,
+            contracts: [],
+            reasonCode: "UNSUPPORTED_INSTRUMENT" as const,
+            reason: "Gate.io did not return metadata for the requested USDT perpetual symbol.",
+            retryable: false,
+          };
+        }
+        return {
+          provider: "gateio" as const,
+          state: contracts.length ? "CONNECTED" as const : "EMPTY" as const,
+          fetchedAt,
+          contracts,
+          reasonCode: null,
+          reason: null,
+          retryable: false,
+        };
+      } catch (error) {
+        const failure = classifyProviderFailure(error);
+        return {
+          provider: "gateio" as const,
+          state: "UNAVAILABLE" as const,
+          fetchedAt,
+          contracts: [],
+          reasonCode: failure.reasonCode,
+          reason: failure.message,
+          retryable: failure.retryable,
+        };
+      }
+    }),
+    tradeTape: rateLimitedPublicProcedure.input(TradeTapeInput).query(({ input }) => {
+      const symbol = input?.symbol ? resolveSymbol(input.symbol) : DEFAULT_SYMBOL;
+      if (!symbol) return gateioTradeStream.getSnapshot(input?.symbol ?? "");
+      const snapshot = gateioTradeStream.getSnapshot(symbol);
+      return {
+        ...snapshot,
+        trades: snapshot.trades.slice(-(input?.limit ?? 250)),
+      };
+    }),
+    depth: rateLimitedPublicProcedure.input(DepthInput).query(({ input }) => {
+      const symbol = input?.symbol ? resolveSymbol(input.symbol) : DEFAULT_SYMBOL;
+      if (!symbol) return gateioDepthStream.getSnapshot(input?.symbol ?? "");
+      const snapshot = gateioDepthStream.getSnapshot(symbol);
+      return {
+        ...snapshot,
+        bids: snapshot.bids.slice(0, input?.limit ?? 20),
+        asks: snapshot.asks.slice(0, input?.limit ?? 20),
+      };
+    }),
+    multiTradeTape: rateLimitedPublicProcedure.input(MultiExchangeTradeTapeInput).query(({ input }) => {
+      const snapshot = multiExchangeTradeStream.getSnapshot(input.provider, input.symbol ?? "BTC_USDT");
+      return { ...snapshot, trades: snapshot.trades.slice(-(input.limit ?? 250)) };
+    }),
+    feedHealth: rateLimitedPublicProcedure.input(FeedHealthInput).query(({ input }) => {
+      const requested = input?.symbol ?? "BTC_USDT";
+      const gateSymbol = resolveSymbol(requested);
+      const gate = gateSymbol ? gateioTradeStream.getSnapshot(gateSymbol) : gateioTradeStream.getSnapshot(requested);
+      const binance = multiExchangeTradeStream.getSnapshot("binance_usdm", requested);
+      const bybit = multiExchangeTradeStream.getSnapshot("bybit_linear", requested);
+      return { symbol: requested, checkedAt: Date.now(), feeds: [gate, binance, bybit] };
+    }),
+    snapshot: rateLimitedPublicProcedure.input(SnapshotInput).query(async ({ input }) => {
       const at = Date.now();
       const symbol = resolveSymbol(input?.symbol);
       if (!symbol) return {
@@ -115,7 +246,7 @@ export const appRouter = router({
         };
       }
     }),
-    bars: publicProcedure.input(CandleInput).query(async ({ input }) => {
+    bars: rateLimitedPublicProcedure.input(CandleInput).query(async ({ input }) => {
       const fetchedAt = Date.now();
       const symbol = resolveSymbol(input.symbol);
       if (!symbol) return {

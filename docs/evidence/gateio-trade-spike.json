@@ -1,0 +1,41 @@
+{
+  "probe": "gateio-public-trades",
+  "endpoint": "wss://fx-ws.gateio.ws/v4/ws/usdt",
+  "symbol": "BTC_USDT",
+  "requestedHeaders": {
+    "X-Gate-Size-Decimal": "1"
+  },
+  "captured": [
+    {
+      "kind": "subscription",
+      "error": null,
+      "result": {
+        "status": "success"
+      }
+    },
+    {
+      "kind": "trade",
+      "id": 809721262,
+      "contract": "BTC_USDT",
+      "price": "64246.1",
+      "size": "30",
+      "createTimeMs": 1787055069471,
+      "isInternal": null
+    },
+    {
+      "kind": "trade",
+      "id": 809721263,
+      "contract": "BTC_USDT",
+      "price": "64246",
+      "size": "-2",
+      "createTimeMs": 1787055069679,
+      "isInternal": null
+    }
+  ],
+  "observed": {
+    "tradeCount": 2,
+    "bothTakerSigns": true,
+    "decimalSizeStrings": true
+  },
+  "detail": "captured public trade events with both documented taker signs"
+}
