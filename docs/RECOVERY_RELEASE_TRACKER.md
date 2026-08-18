@@ -26,12 +26,15 @@
 | P14 | Product-sprint safe coded strategy evaluation | Closed ZS AST interpretation drives deterministic historical-candle signals and next-open evidence in the browser worker | **Complete in production** (`90cde49`; deployed in `23557cc`) | Runtime/engine fixtures, no-escape and unavailable-series tests, protocol-gate browser evidence, full regression and build |
 | OF2 | Product-sprint professional order-flow context | Opt-in UTC session candle-volume context and selected-venue live reported-size large-print evidence | **Complete in production** (`c7f951e`; deployed in `23557cc`) | Pure source-contract fixtures, live and degraded browser states, full regression and build |
 | IQ1 | Product-sprint interaction quality and accessibility | Keyboard reference, semantic command-palette navigation, focus restoration, live Focus-mode status, and strict chart-only Focus view | **Complete in production** (`06f8718`; deployed in `23557cc`) | Command fixtures, desktop browser evidence, static responsive-rule validation, full regression and build |
+| PF1 | Product platform foundation | Public landing and explicit terminal/account routes, a closed candle-only Indicator Lab, and Coinbase Exchange USD-spot selected public tape | **Complete on product branch** (`6748114`; not yet promoted) | Closed-runtime and provider fixtures, live Coinbase browser evidence, no cross-venue Flow Pulse combination, `pnpm check`, 80-test regression, and production build |
 
 ## First Active Slice
 
 The validated recovery baseline remains visible in [PR #4](https://github.com/zephyriaa/zterminal/pull/4) from `recovery/final-form-foundation` to `render-hosted-research-terminal`. The pull request is still open, but its cumulative recovery content was independently included in the user-authorized product promotion [PR #5](https://github.com/zephyriaa/zterminal/pull/5), merged as `23557cc` and deployed live on Render. PR #4 was not merged or altered by the production promotion.
 
 **Current production state:** MEX1, MEX2, OF1, P15, P14, OF2, and IQ1 are live on `https://zterminal.onrender.com`. The product exposes evidence-backed public-feed health, a bounded multi-exchange tape foundation, browser-local interface persistence, opt-in Flow Pulse, premium one-screen workstation hierarchy, a closed coded-strategy path to deterministic historical-candle evaluation, UTC session candle-volume context, selected-venue live reported-size large-print evidence, and keyboard-first interaction quality. Strategy source is not JavaScript and can neither access host capabilities nor create any execution route. Flow Pulse and large-print evidence remain descriptive rather than automated: selected-venue tape and Gate.io depth remain separately labelled, with no cross-venue consolidation, dollar-notional conversion, prediction, or execution claim. Binance remains `VERIFYING`, and both Binance and Bybit were displayed as `DEGRADED` in the production verification; the interface does not claim live status absent current evidence.
+
+**Next promotion candidate:** PF1 is complete on `product/orderflow-research-terminal` at `6748114`. It adds the public landing and account disclosure routes, safe local custom indicators, and a browser-verified Coinbase Exchange USD-spot tape for supported BTC/USD and ETH/USD mappings. Coinbase depth, cross-venue Flow Pulse combination, durable account persistence, and any execution path remain deliberately unavailable.
 
 ## Change-Control Checkpoints
 
@@ -68,3 +71,6 @@ The validated recovery baseline remains visible in [PR #4](https://github.com/ze
 - [OF2 order-flow context validation](./OF2_ORDER_FLOW_CONTEXT_VALIDATION.md)
 - [IQ1 interaction and accessibility validation](./IQ1_INTERACTION_ACCESSIBILITY_VALIDATION.md)
 - [Production deployment validation](./PRODUCTION_DEPLOYMENT_VALIDATION.md)
+- [Platform foundation validation](./PLATFORM_FOUNDATION_VALIDATION.md)
+- [Indicator Lab validation](./INDICATOR_LAB_VALIDATION.md)
+- [Coinbase adapter validation](./COINBASE_ADAPTER_VALIDATION.md)
