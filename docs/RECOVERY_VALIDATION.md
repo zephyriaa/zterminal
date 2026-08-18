@@ -37,3 +37,13 @@ The local Canvas continued to show the verified one-day Gate.io coverage after c
 
 
 The volume-profile inspector was also verified locally. It disclosed that the feature is a candle-volume distribution rather than tick-level volume-at-price, then showed `volumeProfile · v1.0.0`, the same dataset fingerprint, a derived POC of `732.7631`, and a 70% value area of `732.6225 — 735.9975` for the loaded window. This establishes visible provenance for the shared calculation without misrepresenting it as order-flow data.
+
+
+## 2026-08-18 — Reproducible evaluation preflight
+
+Before opening the evaluation panel, the local Canvas loaded a verified QQQX/USDT one-day 15-minute dataset from `2026-08-17 00:30:00 UTC` through `2026-08-18 00:30:00 UTC`, comprising 97 bars and fingerprint `fnv1a-4e1a0fe8`. This exact normalized dataset is the sole input available to the browser-side research evaluation; no synthetic data, broker route, or forecast is introduced.
+
+
+### Browser-visible next-bar evaluation
+
+In Research mode, the recovered panel evaluated the same 97 verified bars with the labelled `EMA 20/50 + VWAP long-only` template. The UI disclosed that signals occur at bar close and fills occur at next bar open, showed the $100,000 fixed-capital and zero-cost defaults, and produced run `bt_a-8f8c43e4` with an input/result hash `fnv1a-8f8c43e4`. The panel reported one trade, net P&L `+0.12`, return `+0.00%`, and maximum drawdown `-0.73`, then visibly stated that the output is not investment advice and makes no broker-route, forecast, optimization, or intrabar-fill claim.

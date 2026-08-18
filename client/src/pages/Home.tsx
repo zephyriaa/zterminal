@@ -34,6 +34,7 @@ import {
 import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
 import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft, writeLocalResearchDraft } from "@/lib/researchDraft";
 import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries, evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
+import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES } from "@shared/backtest/engine";
 
 const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663159529167/hrJwjiFAGWcrxDpw.png";
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
@@ -179,6 +180,7 @@ function ResearchCanvas({ bars, historical, symbol, onNotice }: { bars: Terminal
   const [hypothesis, setHypothesis] = useState("VWAP acceptance after opening-range expansion");
   const [condition, setCondition] = useState("Price remains above loaded-window VWAP");
   const [draftState, setDraftState] = useState<"idle" | "local" | "syncing" | "synced" | "sync-failed">("idle");
+  const [backtest, setBacktest] = useState<ReturnType<typeof runBacktest> | null>(null);
   const { user, loading: authLoading } = useAuth();
   const migratedUserId = useRef<number | null>(null);
   const dataset = summarizeDataset(bars);
@@ -228,6 +230,16 @@ function ResearchCanvas({ bars, historical, symbol, onNotice }: { bars: Terminal
     });
   }, [user, saveDraft, onNotice]);
 
+  const runLoadedBacktest = () => {
+    if (!historical) {
+      onNotice("A reproducible evaluation requires the same verified historical dataset shown on the chart.");
+      return;
+    }
+    const result = runBacktest("ema20_50_vwap_long", bars, DEFAULT_BACKTEST_CONFIG);
+    setBacktest(result);
+    onNotice(result.status === "COMPLETED" ? `Reproducible evaluation ${result.runId} completed with next-bar-open fills and explicit zero-cost defaults.` : "The loaded range does not contain enough verified bars for an EMA 50 evaluation.");
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const draft = toDraft();
@@ -266,6 +278,7 @@ function ResearchCanvas({ bars, historical, symbol, onNotice }: { bars: Terminal
       <div className="data-contract"><span>Data contract</span><b>{historical ? `Gate.io · ${historical.symbol} · ${historical.interval}` : "Awaiting verified bars"}</b><small>{dataset.barCount ? `${dataset.barCount} bars · ${formatUtc(historical?.coverage.effectiveFrom)} → ${formatUtc(historical?.coverage.effectiveTo)}` : "No dataset available"}</small></div>
       <button className="primary-action" type="submit" disabled={saveDraft.isPending}><FlaskConical size={15} /> {user ? "Sync research definition" : "Save local research draft"}</button>
     </form>
+    <section className="backtest-panel" aria-label="Reproducible research evaluation"><div className="backtest-heading"><span>Reproducible evaluation</span><b>Research only</b></div><p>{STRATEGY_TEMPLATES.ema20_50_vwap_long.label} · signals at bar close, fills at next bar open.</p><div className="backtest-config"><span>Capital ${DEFAULT_BACKTEST_CONFIG.initialCapital.toLocaleString("en-US")}</span><span>Size {DEFAULT_BACKTEST_CONFIG.positionSize}</span><span>Costs explicit</span></div><button className="secondary-action" type="button" onClick={runLoadedBacktest}>Run loaded window</button>{backtest && <div className="backtest-result"><b>{backtest.status === "COMPLETED" ? `Run ${backtest.runId}` : "Evaluation unavailable"}</b>{backtest.metrics ? <><small>{backtest.data.barCount} bars · {backtest.hash}</small><dl><div><dt>Net P&amp;L</dt><dd>{backtest.metrics.netPnl >= 0 ? "+" : ""}{backtest.metrics.netPnl.toFixed(2)}</dd></div><div><dt>Return</dt><dd>{backtest.metrics.returnPct >= 0 ? "+" : ""}{backtest.metrics.returnPct.toFixed(2)}%</dd></div><div><dt>Trades</dt><dd>{backtest.metrics.tradeCount}</dd></div><div><dt>Max drawdown</dt><dd>{backtest.metrics.maxDrawdown.toFixed(2)}</dd></div></dl></> : <small>{backtest.limitations.at(-1)}</small>}<em>Not investment advice. No broker route, forecast, optimization, or intrabar-fill claim.</em></div>}</section>
     <div className="evidence-stack"><span>Evidence requirements</span><p>Configuration fingerprint, effective coverage, source timestamp, and limitations are captured before any backtest is considered.</p>{!user && <button className="secondary-action" type="button" onClick={() => startLogin()}>Sign in to sync this draft</button>}{draftState === "local" && <div className="research-saved">Local-only draft · sign in to migrate</div>}{draftState === "synced" && <div className="research-saved">Workspace draft synced · user review required</div>}{draftState === "sync-failed" && <div className="research-saved warning">Workspace sync failed · local draft retained</div>}</div>
   </aside>;
 }
