@@ -53,6 +53,12 @@ export type TimeAndSalesRow = {
   side: "BUY" | "SELL";
 };
 
+export type LargeTapePrint = TimeAndSalesRow & {
+  provider: PublicOrderFlowProvider;
+  symbol: string;
+  minimumReportedSize: number;
+};
+
 export type FootprintLevel = {
   price: number;
   buySize: number;
@@ -169,6 +175,14 @@ export function toTimeAndSales(trades: SignedPublicTrade[]): TimeAndSalesRow[] {
     size: Math.abs(trade.signedSize),
     side: trade.signedSize > 0 ? "BUY" : "SELL",
   }));
+}
+
+/** Filters current selected-venue tape by exchange-reported contract size. It is not dollar notional, historical tape, or a trade signal. */
+export function findLargeTapePrints(trades: SignedPublicTrade[], minimumReportedSize: number): LargeTapePrint[] {
+  if (!Number.isFinite(minimumReportedSize) || minimumReportedSize <= 0) return [];
+  return orderPublicTrades(trades)
+    .filter(trade => Math.abs(trade.signedSize) >= minimumReportedSize)
+    .map(trade => ({ provider: trade.provider, symbol: trade.symbol, tradeId: trade.id, timestamp: trade.timestamp, price: trade.price, size: Math.abs(trade.signedSize), side: trade.signedSize > 0 ? "BUY" : "SELL", minimumReportedSize }));
 }
 
 /** Aggregates only the bounded live tape by exact exchange trade price; it is not candle-based footprint. */

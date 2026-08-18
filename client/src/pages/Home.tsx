@@ -42,18 +42,18 @@ import {
 } from "@/lib/terminalWorkspace";
 import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
 import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft, writeLocalResearchDraft } from "@/lib/researchDraft";
-import { evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
+import { calculateUtcSessionVolumeProfile, evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
 import { CommandPalette } from "@/components/terminal/CommandPalette";
 import { isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
-import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
+import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, findLargeTapePrints, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { DEFAULT_LOCAL_WORKSPACE, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
 import zterminalMark from "@/assets/zterminal-mark.png";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
-const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessions", "structure", "cvd", "dom", "tape", "footprint", "flowPulse", "gex"];
+const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessionProfile", "sessions", "structure", "cvd", "dom", "tape", "largePrints", "footprint", "flowPulse", "gex"];
 const STARTING_MARKETS = ["BTC_USDT", "ETH_USDT", "SOL_USDT", "QQQX_USDT"];
 
 type MarketState = "CONNECTED" | "DEGRADED" | "UNAVAILABLE";
@@ -168,6 +168,27 @@ function LiveFlowPulsePanel({ tape, depth }: { tape: TradeTape | undefined; dept
   </section>;
 }
 
+function SessionVolumePanel({ bars }: { bars: TerminalBar[] }) {
+  const profile = useMemo(() => calculateUtcSessionVolumeProfile(bars, 24), [bars]);
+  return <section className={`session-volume-panel order-flow-panel ${profile ? "is-live" : "is-pending"}`} aria-label="UTC session candle-volume context">
+    <header><div><span className="drawer-kicker">Candle context</span><h2>UTC session volume</h2></div><span className={`depth-state ${profile ? "live" : "unavailable"}`}>{profile ? "VERIFIED" : "WITHHELD"}</span></header>
+    <p>Latest UTC day · candle-close volume bins · not tick volume-at-price</p>
+    {!profile ? <div className="depth-notice"><b>Session context withheld</b><span>Awaiting a non-flat latest UTC session from verified historical candles.</span></div> : <><div className="session-volume-metrics"><div><span>POC</span><b>{formatQuote(profile.pointOfControl)}</b></div><div><span>VAH</span><b>{formatQuote(profile.valueAreaHigh)}</b></div><div><span>VAL</span><b>{formatQuote(profile.valueAreaLow)}</b></div></div><div className="session-volume-histogram">{profile.bins.map((bin) => <i key={bin.midpoint} style={{ height: `${Math.max(5, Math.round((bin.volume / Math.max(...profile.bins.map(item => item.volume), 1)) * 100))}%` }} title={`${formatQuote(bin.midpoint)} · ${formatVolume(bin.volume)} candle volume`} />)}</div><footer><span>{profile.candleCount} verified candles · 70% value area</span><span>UTC day only</span></footer></>}
+  </section>;
+}
+
+function LiveLargePrintsPanel({ tape }: { tape: TradeTape | undefined }) {
+  const [minimumReportedSize, setMinimumReportedSize] = useState(10);
+  const isLive = tape?.dataStatus === "LIVE";
+  const prints = isLive ? findLargeTapePrints(tape?.trades ?? [], minimumReportedSize).slice(-8).reverse() : [];
+  return <section className={`large-prints-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Selected venue large tape prints">
+    <header><div><span className="drawer-kicker">Order flow</span><h2>Large tape prints</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
+    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} current bounded tape · reported size, not USD notional</p>
+    <label className="large-print-threshold"><span>Minimum reported size</span><input type="number" min="0.000001" step="any" value={minimumReportedSize} onChange={(event) => setMinimumReportedSize(Math.max(0.000001, Number(event.target.value) || 0.000001))} /><small>Selected venue contract units</small></label>
+    {!isLive ? <div className="depth-notice"><b>Large prints withheld</b><span>{tape?.reason ?? "Awaiting a current selected public trade-tape window."}</span></div> : <>{prints.length ? <div className="large-print-rows">{prints.map((print) => <div className={`large-print-row ${print.side.toLowerCase()}`} key={print.tradeId}><span>{new Date(print.timestamp).toISOString().slice(11, 19)}</span><b>{formatQuote(print.price)}</b><em>{print.side === "BUY" ? "+" : "−"}{formatVolume(print.size)}</em></div>)}</div> : <div className="depth-notice"><b>No current print meets the threshold</b><span>Threshold applies only to the retained live tape window; it does not query historical ticks.</span></div>}<footer><span>{prints.length} current rows · threshold {formatVolume(minimumReportedSize)}</span><span>Not a trade signal</span></footer></>}
+  </section>;
+}
+
 function IconRail({ showLayers, showResearch, focusMode, onLayers, onResearch, onFocus, onReset }: { showLayers: boolean; showResearch: boolean; focusMode: boolean; onLayers: () => void; onResearch: () => void; onFocus: () => void; onReset: () => void }) {
   return <aside className="terminal-icon-rail" aria-label="Terminal tools">
     <button className={showLayers ? "active" : ""} onClick={onLayers} aria-label="Open studies"><Layers3 size={18} /></button>
@@ -197,7 +218,7 @@ function StudiesDrawer({ activeLayers, selectedLayer, bars, cvdState, domState, 
         <button className={`study-toggle ${active ? "enabled" : ""}`} disabled={unavailable} onClick={() => onToggle(id)} aria-label={`${active ? "Hide" : "Show"} ${layer.label}`}><span /></button>
       </div>;
     })}</div>
-    {selected && <section className="study-detail"><span className={`detail-state ${selected.availability === "available" ? "available" : "locked"}`}>{selected.availability === "available" ? "Verified study" : "Capability gate"}</span><h3>{selected.label}</h3><p>{selected.detail}</p><dl><div><dt>Source</dt><dd>{selected.source}</dd></div><div><dt>Loaded window</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "footprint" || selectedLayer === "flowPulse" ? "Current bounded public tape" : selectedLayer === "dom" ? "Current reconciled public book" : dataset.barCount ? `${dataset.barCount.toLocaleString("en-US")} bars` : "Awaiting verified bars"}</dd></div>{definition && <><div><dt>Feature version</dt><dd>{definition.id} · v{definition.version}</dd></div><div><dt>Dataset fingerprint</dt><dd>{features.fingerprint ?? "Awaiting bars"}</dd></div></>}{profile && <><div><dt>Profile POC</dt><dd>{formatQuote(profile.pointOfControl)}</dd></div><div><dt>Value area</dt><dd>{formatQuote(profile.valueAreaLow)} — {formatQuote(profile.valueAreaHigh)}</dd></div></>}<div><dt>Status</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "footprint" || selectedLayer === "flowPulse" ? cvdState === "LIVE" ? "Rendered from live public trade tape" : `Not rendered while live tape is ${cvdState.toLowerCase()}` : selectedLayer === "dom" ? domState === "LIVE" ? "Rendered from reconciled live public depth" : `Not rendered while public depth is ${domState.toLowerCase()}` : selected.availability === "available" ? "Rendered from verified candle data" : "Not rendered without its required dataset"}</dd></div></dl></section>}
+    {selected && <section className="study-detail"><span className={`detail-state ${selected.availability === "available" ? "available" : "locked"}`}>{selected.availability === "available" ? "Verified study" : "Capability gate"}</span><h3>{selected.label}</h3><p>{selected.detail}</p><dl><div><dt>Source</dt><dd>{selected.source}</dd></div><div><dt>Loaded window</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "largePrints" || selectedLayer === "footprint" || selectedLayer === "flowPulse" ? "Current selected bounded public tape" : selectedLayer === "dom" ? "Current reconciled public book" : selectedLayer === "sessionProfile" ? "Latest UTC-day segment of verified candles" : dataset.barCount ? `${dataset.barCount.toLocaleString("en-US")} bars` : "Awaiting verified bars"}</dd></div>{definition && <><div><dt>Feature version</dt><dd>{definition.id} · v{definition.version}</dd></div><div><dt>Dataset fingerprint</dt><dd>{features.fingerprint ?? "Awaiting bars"}</dd></div></>}{profile && <><div><dt>Profile POC</dt><dd>{formatQuote(profile.pointOfControl)}</dd></div><div><dt>Value area</dt><dd>{formatQuote(profile.valueAreaLow)} — {formatQuote(profile.valueAreaHigh)}</dd></div></>}<div><dt>Status</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "largePrints" || selectedLayer === "footprint" || selectedLayer === "flowPulse" ? cvdState === "LIVE" ? "Rendered from live selected public tape" : `Not rendered while selected live tape is ${cvdState.toLowerCase()}` : selectedLayer === "dom" ? domState === "LIVE" ? "Rendered from reconciled live public depth" : `Not rendered while public depth is ${domState.toLowerCase()}` : selected.availability === "available" ? "Rendered from verified candle data" : "Not rendered without its required dataset"}</dd></div></dl></section>}
   </aside>;
 }
 
@@ -294,7 +315,7 @@ export default function Home() {
   const cvdEnabled = activeLayers.includes("cvd");
   const flowPulseEnabled = activeLayers.includes("flowPulse");
   const domEnabled = activeLayers.includes("dom") || flowPulseEnabled;
-  const tapeEnabled = activeLayers.some((layer) => layer === "cvd" || layer === "tape" || layer === "footprint" || layer === "flowPulse");
+  const tapeEnabled = activeLayers.some((layer) => layer === "cvd" || layer === "tape" || layer === "largePrints" || layer === "footprint" || layer === "flowPulse");
   const needsGateTradeTape = activeLayers.includes("cvd") || (tapeEnabled && activeTapeProvider === "gateio");
   const gateTradeTapeQuery = trpc.market.tradeTape.useQuery({ symbol, limit: 500 }, { enabled: needsGateTradeTape, refetchInterval: needsGateTradeTape ? 2_500 : false, staleTime: 1_500, retry: 1, placeholderData: (previous) => previous });
   const multiTradeTapeQuery = trpc.market.multiTradeTape.useQuery({ provider: activeTapeProvider === "gateio" ? "binance_usdm" : activeTapeProvider, symbol, limit: 500 }, { enabled: tapeEnabled && activeTapeProvider !== "gateio", refetchInterval: tapeEnabled && activeTapeProvider !== "gateio" ? 2_500 : false, staleTime: 1_500, retry: 1, placeholderData: (previous) => previous });
@@ -331,7 +352,7 @@ export default function Home() {
   const selectedTape = activeTapeProvider === "gateio" ? gateTapeForVerifiedSymbol : multiTradeTape?.symbol === verifiedSymbol ? multiTradeTape : undefined;
   const cvdTrades = cvdState === "LIVE" ? gateTapeForVerifiedSymbol?.trades ?? [] : [];
   const domState = depthBook?.symbol === verifiedSymbol ? depthBook.dataStatus : "UNAVAILABLE";
-  const orderFlowDockOpen = domEnabled || activeLayers.includes("tape") || activeLayers.includes("footprint") || flowPulseEnabled;
+  const orderFlowDockOpen = activeLayers.includes("sessionProfile") || domEnabled || activeLayers.includes("tape") || activeLayers.includes("largePrints") || activeLayers.includes("footprint") || flowPulseEnabled;
   const researchDataset = useMemo(() => {
     if (!displayHistorical) return null;
     return {
@@ -440,7 +461,7 @@ export default function Home() {
         <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={() => { setShowStudies(true); setShowResearch(false); }}><Layers3 size={14} /> Studies</button><button onClick={() => { setShowResearch(true); setShowStudies(false); }}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Maximize2 size={16} /></button></div>
         {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
         <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} />
-        {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in live order-flow panels">{activeLayers.includes("dom") && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={selectedTape} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={selectedTape} />}{flowPulseEnabled && <LiveFlowPulsePanel tape={selectedTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}</aside>}
+        {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in order-flow and candle-context panels">{activeLayers.includes("sessionProfile") && <SessionVolumePanel bars={displayHistorical?.bars ?? []} />}{activeLayers.includes("dom") && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={selectedTape} />}{activeLayers.includes("largePrints") && <LiveLargePrintsPanel tape={selectedTape} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={selectedTape} />}{flowPulseEnabled && <LiveFlowPulsePanel tape={selectedTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}</aside>}
         <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
       {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={() => setShowStudies(false)} />}

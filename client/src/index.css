@@ -680,3 +680,27 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 
 .instrument-identity h1 { white-space: nowrap; }
 @media (max-width: 640px) { .instrument-identity h1 { white-space: nowrap; } }
+
+/* OF2 keeps candle context and selected-venue prints compact, source-labelled, and opt-in.
+   These panels deliberately share the dock rather than competing with the chart canvas. */
+.session-volume-panel, .large-prints-panel { display: grid; overflow: auto; border: 1px solid rgba(107, 210, 198, .3); border-radius: 9px; background: linear-gradient(160deg, rgba(11, 16, 25, .96), rgba(8, 10, 17, .97)); box-shadow: 0 16px 38px rgba(0, 0, 0, .38), inset 0 1px rgba(255,255,255,.05); backdrop-filter: blur(13px); scrollbar-width: thin; }
+.session-volume-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; padding: 8px 9px 5px; }
+.session-volume-metrics > div { display: grid; gap: 3px; padding: 5px 4px; border: 1px solid rgba(145,133,187,.12); border-radius: 4px; background: rgba(123,82,193,.045); }
+.session-volume-metrics span { color: #777b8b; font: 700 7px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; }
+.session-volume-metrics b { color: #dff2ef; font: 680 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.session-volume-histogram { display: flex; align-items: flex-end; gap: 2px; height: 42px; margin: 2px 11px 9px; padding: 4px 2px; border-bottom: 1px solid rgba(85,214,197,.22); }
+.session-volume-histogram i { flex: 1 1 0; min-width: 2px; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, rgba(72,223,205,.8), rgba(91,112,213,.34)); box-shadow: 0 0 7px rgba(65,221,202,.15); }
+.large-print-threshold { display: grid; grid-template-columns: 1fr 62px; align-items: center; column-gap: 7px; row-gap: 3px; padding: 8px 11px 7px; border-bottom: 1px solid rgba(145,133,187,.1); color: #a5a5b4; font: 680 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.large-print-threshold input { width: 100%; border: 1px solid rgba(109,210,195,.26); border-radius: 4px; outline: 0; background: rgba(4,7,12,.76); color: #e3f3f0; padding: 4px 5px; font: 700 9px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+.large-print-threshold input:focus { border-color: rgba(93,218,201,.52); box-shadow: 0 0 0 2px rgba(38,196,180,.07); }
+.large-print-threshold small { grid-column: 1 / -1; color: #727786; font-size: 7px; }
+.large-print-rows { display: grid; gap: 1px; padding: 4px 0; }
+.large-print-row { position: relative; display: grid; grid-template-columns: .8fr 1fr .78fr; align-items: center; gap: 4px; min-height: 20px; padding: 0 10px; color: #aeb1bd; font: 600 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.large-print-row:nth-child(odd) { background: rgba(255,255,255,.018); }
+.large-print-row b, .large-print-row em { text-align: right; }
+.large-print-row b { color: #e5e2ed; }
+.large-print-row em { font-style: normal; }
+.large-print-row.buy::before, .large-print-row.sell::before { position: absolute; top: 4px; bottom: 4px; left: 5px; width: 2px; border-radius: 3px; content: ""; }
+.large-print-row.buy::before { background: #36d8bf; }.large-print-row.sell::before { background: #dd8bc3; }
+.large-print-row.buy em { color: #79e4d5; }.large-print-row.sell em { color: #e2a0ca; }
+@media (max-width: 760px) { .session-volume-histogram { height: 48px; } }

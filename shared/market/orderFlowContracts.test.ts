@@ -3,6 +3,7 @@ import {
   calculateCvd,
   calculateLiveTapeBuckets,
   calculateLiveTapeFootprint,
+  findLargeTapePrints,
   normalizeGateOrderBookSnapshot,
   normalizeGateOrderBookUpdate,
   normalizeGatePublicTrades,
@@ -42,6 +43,19 @@ describe("Gate.io order-flow contracts", () => {
       { price: 100, buySize: 2, sellSize: 1.5, delta: 0.5, tradeCount: 2 },
       { price: 99, buySize: 4, sellSize: 0, delta: 4, tradeCount: 1 },
     ]);
+  });
+
+  it("filters large prints only from the selected bounded public tape by a reported-size threshold", () => {
+    const trades = normalizeGatePublicTrades([
+      { id: 3, contract: "BTC_USDT", price: "102", size: "4", create_time_ms: 3_000 },
+      { id: 1, contract: "BTC_USDT", price: "100", size: "-2.5", create_time_ms: 1_000 },
+      { id: 2, contract: "BTC_USDT", price: "101", size: "3", create_time_ms: 2_000 },
+    ]);
+    expect(findLargeTapePrints(trades, 3)).toEqual([
+      { provider: "gateio", symbol: "BTC_USDT", tradeId: "2", timestamp: 2_000, price: 101, size: 3, side: "BUY", minimumReportedSize: 3 },
+      { provider: "gateio", symbol: "BTC_USDT", tradeId: "3", timestamp: 3_000, price: 102, size: 4, side: "BUY", minimumReportedSize: 3 },
+    ]);
+    expect(findLargeTapePrints(trades, 0)).toEqual([]);
   });
 
   it("buckets live signed tape and summarizes depth without manufacturing a directional prediction", () => {

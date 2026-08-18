@@ -23,6 +23,7 @@ export const FEATURE_REGISTRY: Record<FeatureId, FeatureDefinition> = {
 
 export type VolumeProfileBin = { low: number; high: number; midpoint: number; volume: number };
 export type VolumeProfile = { bins: VolumeProfileBin[]; pointOfControl: number | null; valueAreaHigh: number | null; valueAreaLow: number | null; valueAreaVolumePct: number };
+export type UtcSessionVolumeProfile = VolumeProfile & { source: "UTC_SESSION_CANDLE_CLOSE_VOLUME"; sessionStart: number; sessionEnd: number; candleCount: number };
 export type EvaluatedFeatures = {
   vwap: number | null;
   ema20: number | null;
@@ -96,6 +97,20 @@ export function calculateVolumeProfile(bars: MarketBar[], binCount = 24, valueAr
     valueAreaLow: Math.min(...selected.map((bin) => bin.low)),
     valueAreaVolumePct,
   };
+}
+
+/** Latest UTC-day candle-volume context. Each candle's full reported volume is grouped at its close-price bin; this is not tick-level volume-at-price. */
+export function calculateUtcSessionVolumeProfile(bars: MarketBar[], binCount = 24, valueAreaVolumePct = 0.7): UtcSessionVolumeProfile | null {
+  const values = validBars(bars);
+  const latest = values.reduce<MarketBar | null>((current, bar) => !current || bar.t > current.t ? bar : current, null);
+  if (!latest) return null;
+  const date = new Date(latest.t);
+  const sessionStart = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  const sessionEnd = sessionStart + 24 * 60 * 60 * 1_000;
+  const sessionBars = values.filter(bar => bar.t >= sessionStart && bar.t < sessionEnd);
+  const profile = calculateVolumeProfile(sessionBars, binCount, valueAreaVolumePct);
+  if (!profile) return null;
+  return { ...profile, source: "UTC_SESSION_CANDLE_CLOSE_VOLUME", sessionStart, sessionEnd, candleCount: sessionBars.length };
 }
 
 export function featureFingerprint(bars: MarketBar[]) {
