@@ -15,7 +15,7 @@ import {
 import { Activity, AlertTriangle, Crosshair, LoaderCircle, RefreshCw } from "lucide-react";
 import type { ResearchLayerId, TerminalBar } from "@/lib/terminalWorkspace";
 import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries } from "@shared/features/registry";
-import { calculateCvd, type GatePublicTrade } from "@shared/market/orderFlowContracts";
+import { calculateCvd, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import type { BacktestMarker } from "@shared/backtest/engine";
 
 type HoveredBar = {
@@ -38,7 +38,7 @@ type ProfessionalChartProps = {
   coverageLabel: string;
   onRetry?: () => void;
   showMomentum?: boolean;
-  cvdTrades?: GatePublicTrade[];
+  cvdTrades?: SignedPublicTrade[];
   cvdState?: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE";
   tradeMarkers?: BacktestMarker[];
 };
@@ -100,7 +100,7 @@ function calculateRsi(bars: TerminalBar[], period = 14) {
   });
 }
 
-function toCvdSeries(trades: GatePublicTrade[]) {
+function toCvdSeries(trades: SignedPublicTrade[]) {
   const points = new Map<number, number>();
   for (const point of calculateCvd(trades)) points.set(Math.floor(point.timestamp / 1_000), point.value);
   return Array.from(points.entries())

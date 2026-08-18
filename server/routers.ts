@@ -11,6 +11,7 @@ import { listResearchDrafts, saveResearchDraft } from "./researchStore";
 import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
 import { gateioTradeStream } from "./gateioTradeStream";
 import { gateioDepthStream } from "./gateioDepthStream";
+import { multiExchangeTradeStream } from "./multiExchangeTradeStream";
 import { compileZS } from "@shared/strategy/zsCompiler";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
@@ -34,6 +35,13 @@ const DepthInput = z.object({
   symbol: z.string().trim().min(1).max(40).optional(),
   limit: z.number().int().min(5).max(50).default(20),
 }).optional();
+
+const MultiExchangeTradeTapeInput = z.object({
+  provider: z.enum(["binance_usdm", "bybit_linear"]),
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(1).max(500).default(250),
+});
+const FeedHealthInput = z.object({ symbol: z.string().trim().min(1).max(40).optional() }).optional();
 
 const CandleInput = z.object({
   interval: z.enum(MARKET_INTERVALS),
@@ -111,7 +119,7 @@ export const appRouter = router({
       state: "CONNECTED" as const,
       instruments: { search: "provider-verified-on-request", aliases: true },
       history: { ranges: true, maximumBarsPerRequest: MAX_CANDLE_LIMIT, intervals: MARKET_INTERVALS },
-      orderFlow: { state: "PARTIAL" as const, reason: "CVD uses a verified bounded public trade tape; DOM uses a reconciled public depth snapshot plus sequenced deltas. Footprint and Time & Sales remain unavailable." },
+      orderFlow: { state: "PARTIAL" as const, reason: "Gate.io DOM uses a reconciled public depth snapshot plus sequenced deltas. Gate.io, Binance USDⓈ-M, and Bybit linear expose bounded public trade tapes with explicit live/stale/degraded states; cross-venue depth and historical tick replay are unavailable." },
       gex: { state: "UNAVAILABLE" as const, reason: "Options-feed required (Deribit/CME/OPRA); Gate.io perpetual data does not provide options-chain or Greek inputs." },
       providerCatalog: PROVIDER_CATALOG,
     })),
@@ -197,6 +205,18 @@ export const appRouter = router({
         bids: snapshot.bids.slice(0, input?.limit ?? 20),
         asks: snapshot.asks.slice(0, input?.limit ?? 20),
       };
+    }),
+    multiTradeTape: rateLimitedPublicProcedure.input(MultiExchangeTradeTapeInput).query(({ input }) => {
+      const snapshot = multiExchangeTradeStream.getSnapshot(input.provider, input.symbol ?? "BTC_USDT");
+      return { ...snapshot, trades: snapshot.trades.slice(-(input.limit ?? 250)) };
+    }),
+    feedHealth: rateLimitedPublicProcedure.input(FeedHealthInput).query(({ input }) => {
+      const requested = input?.symbol ?? "BTC_USDT";
+      const gateSymbol = resolveSymbol(requested);
+      const gate = gateSymbol ? gateioTradeStream.getSnapshot(gateSymbol) : gateioTradeStream.getSnapshot(requested);
+      const binance = multiExchangeTradeStream.getSnapshot("binance_usdm", requested);
+      const bybit = multiExchangeTradeStream.getSnapshot("bybit_linear", requested);
+      return { symbol: requested, checkedAt: Date.now(), feeds: [gate, binance, bybit] };
     }),
     snapshot: rateLimitedPublicProcedure.input(SnapshotInput).query(async ({ input }) => {
       const at = Date.now();

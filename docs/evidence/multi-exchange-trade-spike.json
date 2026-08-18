@@ -1,0 +1,14 @@
+{
+  "capturedAt": 1787077405563,
+  "captures": {
+    "bybit": {
+      "topic": "publicTrade.BTCUSDT",
+      "tradeId": "cafe1ad7-034d-5c71-a205-d6a41f4aaf5e",
+      "symbol": "BTCUSDT",
+      "takerSide": "Buy",
+      "price": "64761.20",
+      "size": "0.011",
+      "tradeTime": 1787077404901
+    }
+  }
+}

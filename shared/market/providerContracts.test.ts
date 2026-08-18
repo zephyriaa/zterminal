@@ -2,11 +2,19 @@ import { describe, expect, it } from "vitest";
 import { PROVIDER_CATALOG, gateContractToMarketMetadata, getProviderCatalogEntry, providerCapability } from "./providerContracts";
 
 describe("provider contracts", () => {
-  it("keeps Gate.io active while exposing unimplemented real-time capabilities as verifying", () => {
+  it("lists released bounded public trade tapes separately from unreleased provider capabilities", () => {
     const gateio = getProviderCatalogEntry("gateio");
+    const binance = getProviderCatalogEntry("binance_usdm");
+    const bybit = getProviderCatalogEntry("bybit_linear");
     expect(gateio?.lifecycle).toBe("ACTIVE");
     expect(providerCapability(gateio!, "HISTORICAL_CANDLES")).toMatchObject({ state: "AVAILABLE" });
-    expect(providerCapability(gateio!, "PUBLIC_TRADES")).toMatchObject({ state: "VERIFYING" });
+    expect(providerCapability(gateio!, "PUBLIC_TRADES")).toMatchObject({ state: "AVAILABLE" });
+    expect(providerCapability(gateio!, "ORDER_BOOK_DEPTH")).toMatchObject({ state: "AVAILABLE" });
+    expect(binance?.lifecycle).toBe("ACTIVE");
+    expect(providerCapability(binance!, "PUBLIC_TRADES")).toMatchObject({ state: "VERIFYING" });
+    expect(providerCapability(binance!, "ORDER_BOOK_DEPTH")).toMatchObject({ state: "VERIFYING" });
+    expect(bybit?.lifecycle).toBe("ACTIVE");
+    expect(providerCapability(bybit!, "PUBLIC_TRADES")).toMatchObject({ state: "AVAILABLE" });
     expect(providerCapability(gateio!, "OPTIONS_CHAIN")).toMatchObject({ state: "UNAVAILABLE" });
     expect(PROVIDER_CATALOG.some(provider => provider.id === "deribit_options" && provider.lifecycle === "CATALOGUED")).toBe(true);
   });

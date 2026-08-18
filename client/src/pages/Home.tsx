@@ -48,7 +48,8 @@ import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
 import { CommandPalette } from "@/components/terminal/CommandPalette";
 import { isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
-import { calculateLiveTapeFootprint, toTimeAndSales, type DepthLevel, type GatePublicTrade } from "@shared/market/orderFlowContracts";
+import { calculateLiveTapeFootprint, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
+import zterminalMark from "@/assets/zterminal-mark.png";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
 const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessions", "structure", "cvd", "dom", "tape", "footprint", "gex"];
@@ -58,7 +59,8 @@ type MarketState = "CONNECTED" | "DEGRADED" | "UNAVAILABLE";
 type Coverage = { requestedFrom: number | null; requestedTo: number | null; effectiveFrom: number | null; effectiveTo: number | null; returnedBars: number; complete: boolean; granularity: string };
 type Snapshot = { symbol: string | null; price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; state: MarketState; reason?: string; retryable?: boolean };
 type Historical = { symbol: string; interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; state: MarketState; coverage: Coverage; reason?: string; retryable?: boolean };
-type TradeTape = { symbol: string; state: "CONNECTING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastTradeAt: number | null; lastMessageAt: number | null; reason: string | null; trades: GatePublicTrade[] };
+type TradeTape = { provider: "gateio" | "binance_usdm" | "bybit_linear"; symbol: string; state: "CONNECTING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastTradeAt: number | null; lastMessageAt: number | null; reason: string | null; trades: SignedPublicTrade[] };
+type FeedHealth = { symbol: string; checkedAt: number; feeds: TradeTape[] };
 type DepthBook = { symbol: string; state: "CONNECTING" | "SYNCING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastDepthAt: number | null; lastUpdateId: number | null; reason: string | null; bids: DepthLevel[]; asks: DepthLevel[] };
 type Feedback = { kind: "info" | "success" | "warning"; message: string } | null;
 
@@ -93,6 +95,28 @@ function InstrumentMetric({ label, value, accent }: { label: string; value: stri
   return <div className="instrument-metric"><span>{label}</span><b className={accent}>{value}</b></div>;
 }
 
+const FEED_LABEL: Record<TradeTape["provider"], string> = {
+  gateio: "Gate.io",
+  binance_usdm: "Binance USDⓈ-M",
+  bybit_linear: "Bybit Linear",
+};
+
+function ExchangeHealthStrip({ health, selectedProvider, onSelect }: { health: FeedHealth | undefined; selectedProvider: TradeTape["provider"]; onSelect: (provider: TradeTape["provider"]) => void }) {
+  const feeds = health?.feeds ?? [];
+  return <section className="exchange-health-strip" aria-label="Public market connection health">
+    <span className="feed-health-label"><Radio size={13} /> Public feeds</span>
+    {(["gateio", "binance_usdm", "bybit_linear"] as const).map((provider) => {
+      const feed = feeds.find((item) => item.provider === provider);
+      const state = feed?.dataStatus ?? "UNAVAILABLE";
+      const selected = selectedProvider === provider;
+      return <button key={provider} className={`feed-health-chip ${state.toLowerCase()} ${selected ? "selected" : ""}`} onClick={() => onSelect(provider)} aria-pressed={selected} title={feed?.reason ?? `${FEED_LABEL[provider]} public trade tape`}>
+        <i aria-hidden="true" /><span>{FEED_LABEL[provider]}</span><b>{state}</b>
+      </button>;
+    })}
+    <small>{feeds.some((feed) => feed.dataStatus !== "LIVE") ? "Non-live tape is withheld from live order-flow studies." : "All requested public tapes are current."}</small>
+  </section>;
+}
+
 function LiveDepthPanel({ depth }: { depth: DepthBook | undefined }) {
   const isLive = depth?.dataStatus === "LIVE";
   const maximumSize = Math.max(1, ...(depth?.bids ?? []).map(level => level.size), ...(depth?.asks ?? []).map(level => level.size));
@@ -110,7 +134,7 @@ function LiveTapePanel({ tape }: { tape: TradeTape | undefined }) {
   const rows = isLive ? toTimeAndSales(tape?.trades ?? []).slice(-12).reverse() : [];
   return <section className={`time-sales-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Live Time and Sales">
     <header><div><span className="drawer-kicker">Order flow</span><h2>Time &amp; Sales</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
-    <p>Gate.io public taker-signed trades · bounded live tape</p>
+    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} public taker-signed trades · bounded live tape</p>
     {!isLive ? <div className="depth-notice"><b>Tape not rendered</b><span>{tape?.reason ?? "Awaiting a current public trade-tape window."}</span></div> : <><div className="tape-columns"><span>Time</span><span>Price</span><span>Size</span></div><div className="tape-rows">{rows.map(row => <div className={`tape-row ${row.side.toLowerCase()}`} key={row.tradeId}><span>{new Date(row.timestamp).toISOString().slice(11, 19)}</span><b>{formatQuote(row.price)}</b><span>{row.side === "BUY" ? "+" : "−"}{formatVolume(row.size)}</span></div>)}</div><footer><span>{rows.length} shown</span><span>No historical ticks</span></footer></>}
   </section>;
 }
@@ -120,7 +144,7 @@ function LiveFootprintPanel({ tape }: { tape: TradeTape | undefined }) {
   const levels = isLive ? calculateLiveTapeFootprint(tape?.trades ?? []).slice(0, 12) : [];
   return <section className={`footprint-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Live trade-tape footprint">
     <header><div><span className="drawer-kicker">Order flow</span><h2>Live footprint</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
-    <p>Exact-price public tape aggregation · current bounded window</p>
+    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} exact-price public tape aggregation · current bounded window</p>
     {!isLive ? <div className="depth-notice"><b>Footprint not rendered</b><span>{tape?.reason ?? "Awaiting a current public trade-tape window."}</span></div> : <><div className="footprint-columns"><span>Price</span><span>Buy</span><span>Sell</span><span>Δ</span></div><div className="footprint-rows">{levels.map(level => <div className="footprint-row" key={level.price}><b>{formatQuote(level.price)}</b><span>{formatVolume(level.buySize)}</span><span>{formatVolume(level.sellSize)}</span><em className={level.delta >= 0 ? "positive" : "negative"}>{level.delta >= 0 ? "+" : "−"}{formatVolume(Math.abs(level.delta))}</em></div>)}</div><footer><span>{levels.length} prices</span><span>Not candle volume</span></footer></>}
   </section>;
 }
@@ -224,6 +248,7 @@ export default function Home() {
   const [rangePreset, setRangePreset] = useState<RangePreset>("1D");
   const [symbol, setSymbol] = useState("QQQX_USDT");
   const [symbolDraft, setSymbolDraft] = useState("QQQX_USDT");
+  const [activeTapeProvider, setActiveTapeProvider] = useState<TradeTape["provider"]>("gateio");
   const [showStudies, setShowStudies] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
@@ -243,13 +268,18 @@ export default function Home() {
   const cvdEnabled = activeLayers.includes("cvd");
   const domEnabled = activeLayers.includes("dom");
   const tapeEnabled = activeLayers.some((layer) => layer === "cvd" || layer === "tape" || layer === "footprint");
-  const tradeTapeQuery = trpc.market.tradeTape.useQuery({ symbol, limit: 500 }, { enabled: tapeEnabled, refetchInterval: tapeEnabled ? 2_500 : false, staleTime: 1_500, retry: 1, placeholderData: (previous) => previous });
+  const needsGateTradeTape = activeLayers.includes("cvd") || (tapeEnabled && activeTapeProvider === "gateio");
+  const gateTradeTapeQuery = trpc.market.tradeTape.useQuery({ symbol, limit: 500 }, { enabled: needsGateTradeTape, refetchInterval: needsGateTradeTape ? 2_500 : false, staleTime: 1_500, retry: 1, placeholderData: (previous) => previous });
+  const multiTradeTapeQuery = trpc.market.multiTradeTape.useQuery({ provider: activeTapeProvider === "gateio" ? "binance_usdm" : activeTapeProvider, symbol, limit: 500 }, { enabled: tapeEnabled && activeTapeProvider !== "gateio", refetchInterval: tapeEnabled && activeTapeProvider !== "gateio" ? 2_500 : false, staleTime: 1_500, retry: 1, placeholderData: (previous) => previous });
+  const feedHealthQuery = trpc.market.feedHealth.useQuery({ symbol }, { refetchInterval: 4_000, staleTime: 2_500, retry: 1, placeholderData: (previous) => previous });
   const depthQuery = trpc.market.depth.useQuery({ symbol, limit: 12 }, { enabled: domEnabled, refetchInterval: domEnabled ? 1_500 : false, staleTime: 750, retry: 1, placeholderData: (previous) => previous });
   const incomingSnapshot = snapshotQuery.data as Snapshot | undefined;
   const incomingHistorical = historicalQuery.data as Historical | undefined;
   const currentSnapshot = incomingSnapshot?.dataStatus === "LIVE" && incomingSnapshot.symbol === symbol ? incomingSnapshot : null;
   const currentHistorical = incomingHistorical?.dataStatus === "HISTORICAL" && incomingHistorical.symbol === symbol ? incomingHistorical : null;
-  const tradeTape = tradeTapeQuery.data as TradeTape | undefined;
+  const gateTradeTape = gateTradeTapeQuery.data as TradeTape | undefined;
+  const multiTradeTape = multiTradeTapeQuery.data as TradeTape | undefined;
+  const feedHealth = feedHealthQuery.data as FeedHealth | undefined;
   const depthBook = depthQuery.data as DepthBook | undefined;
 
   useEffect(() => { if (currentSnapshot) setLastVerifiedSnapshot(currentSnapshot); }, [currentSnapshot]);
@@ -266,9 +296,10 @@ export default function Home() {
   const requestedMarketIsValid = Boolean(currentHistorical && currentSnapshot);
   const verifiedSymbol = displayHistorical?.symbol ?? displaySnapshot?.symbol ?? symbol;
   const isShowingLastVerifiedMarket = !requestedMarketIsValid && verifiedSymbol !== symbol;
-  const cvdState = tradeTape?.symbol === verifiedSymbol ? tradeTape.dataStatus : "UNAVAILABLE";
-  const tapeForVerifiedSymbol = tradeTape?.symbol === verifiedSymbol ? tradeTape : undefined;
-  const cvdTrades = cvdState === "LIVE" ? tapeForVerifiedSymbol?.trades ?? [] : [];
+  const cvdState = gateTradeTape?.symbol === verifiedSymbol ? gateTradeTape.dataStatus : "UNAVAILABLE";
+  const gateTapeForVerifiedSymbol = gateTradeTape?.symbol === verifiedSymbol ? gateTradeTape : undefined;
+  const selectedTape = activeTapeProvider === "gateio" ? gateTapeForVerifiedSymbol : multiTradeTape?.symbol === verifiedSymbol ? multiTradeTape : undefined;
+  const cvdTrades = cvdState === "LIVE" ? gateTapeForVerifiedSymbol?.trades ?? [] : [];
   const domState = depthBook?.symbol === verifiedSymbol ? depthBook.dataStatus : "UNAVAILABLE";
   const orderFlowDockOpen = domEnabled || activeLayers.includes("tape") || activeLayers.includes("footprint");
   const researchDataset = useMemo(() => {
@@ -323,7 +354,7 @@ export default function Home() {
     if (layer.availability === "unavailable") { setFeedback({ kind: "warning", message: `${layer.label} is gated: ${layer.detail}` }); return; }
     setActiveLayers((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   };
-  const retry = () => { void Promise.all([snapshotQuery.refetch(), historicalQuery.refetch(), ...(tapeEnabled ? [tradeTapeQuery.refetch()] : []), ...(domEnabled ? [depthQuery.refetch()] : [])]); setFeedback({ kind: "info", message: domEnabled ? "Retrying public snapshot, history, live trade tape, and reconciled depth requests." : tapeEnabled ? "Retrying public snapshot, historical, and live trade-tape requests." : "Retrying the public snapshot and historical data requests." }); };
+  const retry = () => { void Promise.all([snapshotQuery.refetch(), historicalQuery.refetch(), feedHealthQuery.refetch(), ...(needsGateTradeTape ? [gateTradeTapeQuery.refetch()] : []), ...(activeTapeProvider !== "gateio" && tapeEnabled ? [multiTradeTapeQuery.refetch()] : []), ...(domEnabled ? [depthQuery.refetch()] : [])]); setFeedback({ kind: "info", message: domEnabled ? "Retrying verified Gate.io chart data, selected public tape, connection health, and reconciled Gate.io depth." : tapeEnabled ? "Retrying verified chart data, selected public tape, and connection health." : "Retrying verified chart data and public connection health." }); };
   const runCommand = (id: TerminalCommandId) => {
     setCommandPaletteOpen(false);
     if (id === "open-research") { setShowResearch(true); setShowStudies(false); return; }
@@ -357,7 +388,7 @@ export default function Home() {
 
   return <main className={`premium-terminal ${focusMode ? "is-focus" : ""}`}>
     <header className="premium-topbar">
-      <button className="brand-lockup" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><span className="brand-glyph"><span /><span /></span><span><b>ZTERMINAL</b><small>deep research workstation</small></span></button>
+      <button className="brand-lockup" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><img src={zterminalMark} className="brand-mark" alt="" /><span><b>ZTERMINAL</b><small>crypto order-flow research</small></span></button>
       <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={() => { setShowResearch(true); setShowStudies(false); }} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={() => { setShowStudies(true); setShowResearch(false); }} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button></nav>
       <div className="topbar-actions"><button onClick={() => setCommandPaletteOpen(true)} aria-label="Open command palette"><Command size={16} /></button><button onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><span className="account-orb"><Sparkles size={13} /></span></div>
     </header>
@@ -365,7 +396,8 @@ export default function Home() {
     <section className="instrument-command-bar">
       <form className="market-command" onSubmit={(event) => { event.preventDefault(); setMarket(symbolDraft); }}><Search size={16} /><input ref={marketInputRef} value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="Search Gate.io perpetual" aria-label="Gate.io perpetual market" spellCheck="false" /><button type="submit">Load market</button></form>
       <div className="quick-markets" aria-label="Suggested markets">{STARTING_MARKETS.map((item) => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}>{item.replace("_", " / ")}</button>)}</div>
-      <div className={`market-state ${requestedMarketIsValid ? "live" : isUpdating ? "updating" : "unavailable"}`}><span /><b>{requestedMarketIsValid ? "Verified live data" : isUpdating ? "Verifying market" : "Market unavailable"}</b><small>{formatAge(displaySnapshot?.at)}</small></div>
+      <ExchangeHealthStrip health={feedHealth} selectedProvider={activeTapeProvider} onSelect={(provider) => { setActiveTapeProvider(provider); setFeedback({ kind: "info", message: provider === "gateio" ? "Gate.io tape selected. CVD, DOM, and chart history share verified Gate.io provenance." : `${FEED_LABEL[provider]} public tape selected. Chart history and DOM remain explicitly Gate.io-only until a cross-venue history/depth contract is released.` }); }} />
+      <div className={`market-state ${requestedMarketIsValid ? "live" : isUpdating ? "updating" : "unavailable"}`}><span /><b>{requestedMarketIsValid ? "Verified chart data" : isUpdating ? "Verifying market" : "Market unavailable"}</b><small>{formatAge(displaySnapshot?.at)}</small></div>
     </section>
 
     <section className="instrument-summary">
@@ -381,7 +413,7 @@ export default function Home() {
         <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={() => { setShowStudies(true); setShowResearch(false); }}><Layers3 size={14} /> Studies</button><button onClick={() => { setShowResearch(true); setShowStudies(false); }}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Maximize2 size={16} /></button></div>
         {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
         <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} />
-        {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in live order-flow panels">{domEnabled && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={tapeForVerifiedSymbol} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={tapeForVerifiedSymbol} />}</aside>}
+        {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in live order-flow panels">{domEnabled && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={selectedTape} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={selectedTape} />}</aside>}
         <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
       {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={() => setShowStudies(false)} />}

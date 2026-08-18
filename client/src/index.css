@@ -553,3 +553,20 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .is-focus .chart-stage { height: calc(100dvh - 42px); }
 .is-focus .chart-watermark { opacity: .42; }
 @media (max-width: 640px) { .command-palette-backdrop { padding: 10vh 9px 9px; } .command-palette footer { flex-direction: column; align-items: flex-start; } .is-focus .topbar-actions button:nth-child(2)::after { content: "Exit · Esc"; } }
+
+/* Product sprint: public exchange health and supplied brand mark. */
+.brand-mark { width: 32px; height: 32px; border: 1px solid rgba(210, 201, 246, .2); border-radius: 8px; object-fit: contain; background: #020204; box-shadow: 0 0 18px rgba(145, 91, 238, .2); mix-blend-mode: screen; }
+.exchange-health-strip { display: flex; align-items: center; gap: 5px; min-width: 0; padding: 3px 5px; border: 1px solid rgba(145, 133, 187, .16); border-radius: 7px; background: rgba(7, 8, 14, .58); }
+.feed-health-label { display: inline-flex; align-items: center; gap: 4px; padding: 0 4px; color: #7d7f91; font-size: 8px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.feed-health-label svg { color: #52dbc9; }
+.feed-health-chip { display: inline-flex; align-items: center; gap: 5px; height: 25px; padding: 0 7px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #9d9ead; font-size: 9px; font-weight: 680; white-space: nowrap; }
+.feed-health-chip:hover { border-color: rgba(159, 112, 242, .24); background: rgba(133, 82, 209, .1); color: #f0eff8; }
+.feed-health-chip.selected { border-color: rgba(44, 219, 196, .3); background: linear-gradient(135deg, rgba(23, 133, 119, .2), rgba(103, 64, 166, .18)); color: #dcfffa; }
+.feed-health-chip i { width: 6px; height: 6px; border-radius: 50%; background: #747684; box-shadow: 0 0 7px rgba(119, 121, 136, .35); }
+.feed-health-chip.live i { background: #27d8c1; box-shadow: 0 0 9px rgba(39, 216, 193, .8); }
+.feed-health-chip.stale i, .feed-health-chip.degraded i { background: #f1ae5d; box-shadow: 0 0 9px rgba(241, 174, 93, .72); }
+.feed-health-chip.unavailable i { background: #c878e9; box-shadow: 0 0 9px rgba(200, 120, 233, .58); }
+.feed-health-chip b { color: currentColor; font: 700 8px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .03em; }
+.exchange-health-strip > small { display: none; }
+@media (max-width: 1380px) { .exchange-health-strip { order: 4; width: 100%; } .instrument-command-bar { flex-wrap: wrap; } .market-state { margin-left: 0; } }
+@media (max-width: 760px) { .brand-lockup { min-width: 0; } .brand-mark { width: 29px; height: 29px; } .exchange-health-strip { overflow-x: auto; scrollbar-width: none; } .feed-health-label { display: none; } .feed-health-chip { flex: 0 0 auto; } }

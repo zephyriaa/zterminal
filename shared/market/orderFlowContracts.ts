@@ -1,11 +1,18 @@
-export type GatePublicTrade = {
-  provider: "gateio";
+export type PublicOrderFlowProvider = "gateio" | "binance_usdm" | "bybit_linear";
+
+/** A public exchange trade whose taker side is reported by the venue, never inferred from price movement. */
+export type SignedPublicTrade = {
+  provider: PublicOrderFlowProvider;
   symbol: string;
   id: string;
   price: number;
   signedSize: number;
   timestamp: number;
   isInternal: boolean | null;
+};
+
+export type GatePublicTrade = SignedPublicTrade & {
+  provider: "gateio";
 };
 
 export type DepthLevel = {
@@ -102,14 +109,19 @@ export function normalizeGatePublicTrade(value: unknown): GatePublicTrade | null
   };
 }
 
-/** Deduplicates normalized exchange trade IDs and preserves deterministic timestamp/id order. */
-export function orderGatePublicTrades(trades: GatePublicTrade[]): GatePublicTrade[] {
-  const unique = new Map<string, GatePublicTrade>();
+/** Deduplicates exchange trade IDs by provider/symbol and preserves deterministic timestamp/id order. */
+export function orderPublicTrades<T extends SignedPublicTrade>(trades: T[]): T[] {
+  const unique = new Map<string, T>();
   for (const trade of trades) {
-    const key = `${trade.symbol}:${trade.id}`;
+    const key = `${trade.provider}:${trade.symbol}:${trade.id}`;
     if (!unique.has(key)) unique.set(key, trade);
   }
   return Array.from(unique.values()).sort((left, right) => left.timestamp - right.timestamp || left.id.localeCompare(right.id));
+}
+
+/** Gate-compatible name retained for the existing verified adapter. */
+export function orderGatePublicTrades(trades: GatePublicTrade[]): GatePublicTrade[] {
+  return orderPublicTrades(trades);
 }
 
 /** Normalizes raw Gate payloads, then deduplicates exchange trade IDs deterministically. */
@@ -123,17 +135,17 @@ export function normalizeGatePublicTrades(values: unknown[]): GatePublicTrade[] 
 }
 
 /** Calculates exchange-reported taker-signed CVD only from normalized public trade events. */
-export function calculateCvd(trades: GatePublicTrade[]): CumulativeVolumeDeltaPoint[] {
+export function calculateCvd(trades: SignedPublicTrade[]): CumulativeVolumeDeltaPoint[] {
   let value = 0;
-  return orderGatePublicTrades(trades).map(trade => {
+  return orderPublicTrades(trades).map(trade => {
     value += trade.signedSize;
     return { timestamp: trade.timestamp, value, tradeId: trade.id };
   });
 }
 
 /** Presents a bounded exchange-reported tape as Time & Sales without inferred trade direction. */
-export function toTimeAndSales(trades: GatePublicTrade[]): TimeAndSalesRow[] {
-  return orderGatePublicTrades(trades).map(trade => ({
+export function toTimeAndSales(trades: SignedPublicTrade[]): TimeAndSalesRow[] {
+  return orderPublicTrades(trades).map(trade => ({
     tradeId: trade.id,
     timestamp: trade.timestamp,
     price: trade.price,
@@ -143,9 +155,9 @@ export function toTimeAndSales(trades: GatePublicTrade[]): TimeAndSalesRow[] {
 }
 
 /** Aggregates only the bounded live tape by exact exchange trade price; it is not candle-based footprint. */
-export function calculateLiveTapeFootprint(trades: GatePublicTrade[]): FootprintLevel[] {
+export function calculateLiveTapeFootprint(trades: SignedPublicTrade[]): FootprintLevel[] {
   const levels = new Map<number, Omit<FootprintLevel, "price" | "delta">>();
-  for (const trade of orderGatePublicTrades(trades)) {
+  for (const trade of orderPublicTrades(trades)) {
     const current = levels.get(trade.price) ?? { buySize: 0, sellSize: 0, tradeCount: 0 };
     if (trade.signedSize > 0) current.buySize += trade.signedSize;
     else current.sellSize += Math.abs(trade.signedSize);

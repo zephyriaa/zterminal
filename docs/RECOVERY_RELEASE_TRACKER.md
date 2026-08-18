@@ -19,10 +19,13 @@
 | S1 | Storage and security | Durable workspace decision, protected mutations, logging, rate limits, docs | **Complete on recovery branch** (`08be716`; not yet production-promoted; durable workspace remains configuration-blocked) | Auth/migration/export/restore/security tests; no durable claim before configuration |
 | Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | **Complete on recovery branch** (`d2b7d28`; not yet production-promoted) | Passing check/test/build/audit-high, release record, local production smoke and rollback review |
 | P1 | Freemium and desktop | Entitlement proposal and Tauri readiness after core trust | **Complete on recovery branch** (`4d77a0e`; non-binding and not production-promoted) | User-approved product policy and separate desktop release design |
+| MEX1 | Product-sprint multi-exchange tape foundation | Gate.io, Bybit Linear, and Binance USDⓈ-M bounded public-tape contracts plus visible connection health | **Complete on product branch** (pending commit; not production-promoted) | Normalization and lifecycle tests, live browser observation, source record; Binance remains `VERIFYING` because no release-environment WebSocket event was observed |
 
 ## First Active Slice
 
-**Next active slice: Final evidence and production approval.** P1 completed on the recovery branch: the project now has a non-binding entitlement boundary and desktop-readiness proposal that preserves open core research, excludes execution, and requires separate approval before commercial or desktop implementation. The recovery branch is not merged or deployed. The remaining work is to assemble the final release evidence, identify remaining environment blockers, and request explicit approval before opening a production promotion pull request.
+The validated recovery baseline is under review in [PR #4](https://github.com/zephyriaa/zterminal/pull/4) from `recovery/final-form-foundation` to `render-hosted-research-terminal`. It is **review-only**: no merge or deployment is authorized until a final explicit approval is received.
+
+**Next active product slice: MEX2 trusted public data state and local workspace persistence.** MEX1 completed on `product/orderflow-research-terminal`. It released an evidence-backed multi-exchange tape foundation and connection-health UI while preserving the Gate.io-only chart-history/DOM boundary. Binance’s adapter and fixtures exist but it remains `VERIFYING`; the UI displays `DEGRADED` rather than claiming a live feed until a release-environment WebSocket event is captured.
 
 ## Change-Control Checkpoints
 
@@ -51,3 +54,4 @@
 - [Q1 controlled release validation](./Q1_CONTROLLED_RELEASE_VALIDATION.md)
 - [P1 freemium and desktop roadmap](./P1_FREEMIUM_DESKTOP_ROADMAP.md)
 - [Final recovery release evidence](./FINAL_RECOVERY_RELEASE_EVIDENCE.md)
+- [MEX1 multi-exchange tape validation](./MEX1_MULTI_EXCHANGE_TAPE_VALIDATION.md)
