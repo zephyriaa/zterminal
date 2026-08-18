@@ -15,14 +15,14 @@
 | R1 | Protocol-led hypothesis workflow | Citation, scope, approval, immutable baseline, one-variable incremental rules | **Complete on recovery branch** (`9647855`; not yet production-promoted) | Domain fixtures, protocol contracts, drawer interaction evidence |
 | R2 | Safe ZS compiler | Closed parser/runtime, diagnostics, discovered inputs, no unsafe execution surface | **Complete on recovery branch** (`a5238e3`; not yet production-promoted) | Compile fixtures, forbidden-capability tests, protected tRPC contract |
 | B1 | Reproducible backtester | Multi-strategy next-bar-open evaluation, costs, provenance, metrics, chart markers | **Complete on recovery branch** (`a400634`; not yet production-promoted) | Determinism, fill/cost/P&L/provenance tests; non-blocking execution evidence |
-| U1 | Command and contextual tools | Focus minimal mode, palette, Markets/Settings/Connections/Risk/Alerts surfaces | **Complete on recovery branch** (pending commit; not yet production-promoted) | Keyboard/accessibility/responsive tests; truthful local/simulated/unavailable states |
-| S1 | Storage and security | Durable workspace decision, protected mutations, logging, rate limits, docs | Blocked by production DB/OAuth configuration | Auth/migration/export/restore/security tests; no durable claim before configuration |
-| Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | Planned | Passing check/test/build/lint, release record, rollback verification |
+| U1 | Command and contextual tools | Focus minimal mode, palette, Markets/Settings/Connections/Risk/Alerts surfaces | **Complete on recovery branch** (`2b19250`; not yet production-promoted) | Keyboard/accessibility/responsive tests; truthful local/simulated/unavailable states |
+| S1 | Storage and security | Durable workspace decision, protected mutations, logging, rate limits, docs | **Complete on recovery branch** (pending commit; not yet production-promoted; durable workspace remains configuration-blocked) | Auth/migration/export/restore/security tests; no durable claim before configuration |
+| Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | In progress | Passing check/test/build/lint, release record, rollback verification |
 | P1 | Freemium and desktop | Entitlement proposal and Tauri readiness after core trust | Deferred post-core | User-approved product policy and separate desktop release design |
 
 ## First Active Slice
 
-**Next active slice: S1 — Security and durable-workspace boundaries.** U1 completed on the recovery branch: the chart-first workstation now includes a dismissible keyboard command palette, strict Focus Mode with a reliable Escape exit, and truthful status messaging for unconfigured secondary tools. It has not been merged or deployed to production. S1 must document the missing production database/OAuth prerequisites, implement only safe dependency or public-surface hardening that does not fabricate durable storage, and defer protected cloud mutations until required configuration exists.
+**Next active slice: Q1 — Quality and controlled release.** S1 completed on the recovery branch: public market and compiler APIs are bounded, session issuance fails closed without a suitable secret, request surfaces are constrained, and the audited dependency graph has no critical or high findings. Durable workspace remains deliberately unavailable until database, OAuth, JWT secret, and storage prerequisites are configured. Q1 may now add continuous quality gates, release evidence, and a controlled production readiness review without promoting the recovery branch.
 
 ## Change-Control Checkpoints
 
@@ -47,3 +47,4 @@
 - [R2 closed compiler validation](./R2_CLOSED_COMPILER_VALIDATION.md)
 - [B1 deterministic backtest evidence validation](./B1_BACKTEST_EVIDENCE_VALIDATION.md)
 - [U1 interaction and accessibility validation](./U1_INTERACTION_ACCESSIBILITY_VALIDATION.md)
+- [S1 security and durable-workspace boundary](./S1_SECURITY_DURABILITY_VALIDATION.md)

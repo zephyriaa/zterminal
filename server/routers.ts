@@ -6,7 +6,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { finiteNumber, normalizePublicBars } from "./marketData";
 import { alignRange, classifyProviderFailure, coverageForBars, MARKET_INTERVALS, normalizeGatePerpetualSymbol } from "./marketContracts";
 import { systemRouter } from "./_core/systemRouter";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, rateLimitedPublicProcedure, router } from "./_core/trpc";
 import { listResearchDrafts, saveResearchDraft } from "./researchStore";
 import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
 import { gateioTradeStream } from "./gateioTradeStream";
@@ -89,7 +89,7 @@ export const appRouter = router({
     }),
   }),
   strategy: router({
-    compile: publicProcedure.input(StrategyCompileInput).mutation(({ input }) => compileZS(input.source)),
+    compile: rateLimitedPublicProcedure.input(StrategyCompileInput).mutation(({ input }) => compileZS(input.source)),
   }),
   research: router({
     listDrafts: protectedProcedure.query(async ({ ctx }) => {
@@ -105,7 +105,7 @@ export const appRouter = router({
   }),
 
   market: router({
-    capabilities: publicProcedure.query(() => ({
+    capabilities: rateLimitedPublicProcedure.query(() => ({
       provider: "gateio" as const,
       environment: "public-read-only" as const,
       state: "CONNECTED" as const,
@@ -115,12 +115,12 @@ export const appRouter = router({
       gex: { state: "UNAVAILABLE" as const, reason: "Options-feed required (Deribit/CME/OPRA); Gate.io perpetual data does not provide options-chain or Greek inputs." },
       providerCatalog: PROVIDER_CATALOG,
     })),
-    providers: publicProcedure.query(() => ({
+    providers: rateLimitedPublicProcedure.query(() => ({
       at: Date.now(),
       activeProvider: "gateio" as const,
       providers: PROVIDER_CATALOG,
     })),
-    contracts: publicProcedure.input(ContractListInput).query(async ({ input }) => {
+    contracts: rateLimitedPublicProcedure.input(ContractListInput).query(async ({ input }) => {
       const fetchedAt = Date.now();
       const requestedSymbol = input?.symbol ? resolveSymbol(input.symbol) : null;
       if (input?.symbol && !requestedSymbol) {
@@ -179,7 +179,7 @@ export const appRouter = router({
         };
       }
     }),
-    tradeTape: publicProcedure.input(TradeTapeInput).query(({ input }) => {
+    tradeTape: rateLimitedPublicProcedure.input(TradeTapeInput).query(({ input }) => {
       const symbol = input?.symbol ? resolveSymbol(input.symbol) : DEFAULT_SYMBOL;
       if (!symbol) return gateioTradeStream.getSnapshot(input?.symbol ?? "");
       const snapshot = gateioTradeStream.getSnapshot(symbol);
@@ -188,7 +188,7 @@ export const appRouter = router({
         trades: snapshot.trades.slice(-(input?.limit ?? 250)),
       };
     }),
-    depth: publicProcedure.input(DepthInput).query(({ input }) => {
+    depth: rateLimitedPublicProcedure.input(DepthInput).query(({ input }) => {
       const symbol = input?.symbol ? resolveSymbol(input.symbol) : DEFAULT_SYMBOL;
       if (!symbol) return gateioDepthStream.getSnapshot(input?.symbol ?? "");
       const snapshot = gateioDepthStream.getSnapshot(symbol);
@@ -198,7 +198,7 @@ export const appRouter = router({
         asks: snapshot.asks.slice(0, input?.limit ?? 20),
       };
     }),
-    snapshot: publicProcedure.input(SnapshotInput).query(async ({ input }) => {
+    snapshot: rateLimitedPublicProcedure.input(SnapshotInput).query(async ({ input }) => {
       const at = Date.now();
       const symbol = resolveSymbol(input?.symbol);
       if (!symbol) return {
@@ -226,7 +226,7 @@ export const appRouter = router({
         };
       }
     }),
-    bars: publicProcedure.input(CandleInput).query(async ({ input }) => {
+    bars: rateLimitedPublicProcedure.input(CandleInput).query(async ({ input }) => {
       const fetchedAt = Date.now();
       const symbol = resolveSymbol(input.symbol);
       if (!symbol) return {
