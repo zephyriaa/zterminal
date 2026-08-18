@@ -49,6 +49,7 @@ import { CommandPalette } from "@/components/terminal/CommandPalette";
 import { isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeFootprint, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
+import { DEFAULT_LOCAL_WORKSPACE, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
 import zterminalMark from "@/assets/zterminal-mark.png";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
@@ -244,16 +245,23 @@ function ResearchDrawer({ bars, historical, symbol, onFeedback, onClose }: { bar
 }
 
 export default function Home() {
-  const [timeframe, setTimeframe] = useState<Timeframe>("15m");
-  const [rangePreset, setRangePreset] = useState<RangePreset>("1D");
-  const [symbol, setSymbol] = useState("QQQX_USDT");
-  const [symbolDraft, setSymbolDraft] = useState("QQQX_USDT");
-  const [activeTapeProvider, setActiveTapeProvider] = useState<TradeTape["provider"]>("gateio");
+  const [restoredWorkspace] = useState(() => readLocalTerminalWorkspace());
+  const initialSymbol = restoredWorkspace?.symbol ?? DEFAULT_LOCAL_WORKSPACE.symbol;
+  const initialTimeframe = TIMEFRAMES.includes(restoredWorkspace?.timeframe as Timeframe) ? restoredWorkspace!.timeframe as Timeframe : DEFAULT_LOCAL_WORKSPACE.timeframe as Timeframe;
+  const initialRange = RANGE_PRESETS.includes(restoredWorkspace?.rangePreset as RangePreset) ? restoredWorkspace!.rangePreset as RangePreset : DEFAULT_LOCAL_WORKSPACE.rangePreset as RangePreset;
+  const initialLayers = (restoredWorkspace?.activeLayers ?? DEFAULT_LOCAL_WORKSPACE.activeLayers).filter((item): item is ResearchLayerId => LAYER_ORDER.includes(item as ResearchLayerId));
+  const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
+  const [rangePreset, setRangePreset] = useState<RangePreset>(initialRange);
+  const [symbol, setSymbol] = useState(initialSymbol);
+  const [symbolDraft, setSymbolDraft] = useState(initialSymbol);
+  const [activeTapeProvider, setActiveTapeProvider] = useState<TradeTape["provider"]>(restoredWorkspace?.activeTapeProvider ?? DEFAULT_LOCAL_WORKSPACE.activeTapeProvider);
+  const [watchlist, setWatchlist] = useState(restoredWorkspace?.watchlist ?? DEFAULT_LOCAL_WORKSPACE.watchlist);
+  const [workspaceSaved, setWorkspaceSaved] = useState(false);
   const [showStudies, setShowStudies] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState<ResearchLayerId | null>("vwap");
-  const [activeLayers, setActiveLayers] = useState<ResearchLayerId[]>(["vwap", "ema", "profile", "structure"]);
+  const [activeLayers, setActiveLayers] = useState<ResearchLayerId[]>(initialLayers.length ? initialLayers : ["vwap", "ema", "profile", "structure"]);
   const [replay, setReplay] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [backtestMarkers, setBacktestMarkers] = useState<BacktestMarker[]>([]);
@@ -285,6 +293,9 @@ export default function Home() {
   useEffect(() => { if (currentSnapshot) setLastVerifiedSnapshot(currentSnapshot); }, [currentSnapshot]);
   useEffect(() => { if (currentHistorical) setLastVerifiedHistorical(currentHistorical); }, [currentHistorical]);
   useEffect(() => { if (!feedback) return; const timer = window.setTimeout(() => setFeedback(null), 5_500); return () => window.clearTimeout(timer); }, [feedback]);
+  useEffect(() => {
+    setWorkspaceSaved(writeLocalTerminalWorkspace({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist }));
+  }, [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist]);
 
   const displaySnapshot = currentSnapshot ?? lastVerifiedSnapshot;
   const displayHistorical = currentHistorical ?? lastVerifiedHistorical;
@@ -395,7 +406,8 @@ export default function Home() {
 
     <section className="instrument-command-bar">
       <form className="market-command" onSubmit={(event) => { event.preventDefault(); setMarket(symbolDraft); }}><Search size={16} /><input ref={marketInputRef} value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="Search Gate.io perpetual" aria-label="Gate.io perpetual market" spellCheck="false" /><button type="submit">Load market</button></form>
-      <div className="quick-markets" aria-label="Suggested markets">{STARTING_MARKETS.map((item) => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}>{item.replace("_", " / ")}</button>)}</div>
+      <div className="quick-markets" aria-label="Local watchlist">{watchlist.map((item) => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}>{item.replace("_", " / ")}</button>)}</div>
+      <button className="watchlist-add" onClick={() => { setWatchlist((current) => addToLocalWatchlist(current, symbol)); setFeedback({ kind: "success", message: `${symbol.replace("_", " / ")} saved to this browser’s local watchlist. No market data or account credentials are stored.` }); }} aria-label="Add current market to local watchlist">+ Watch</button>
       <ExchangeHealthStrip health={feedHealth} selectedProvider={activeTapeProvider} onSelect={(provider) => { setActiveTapeProvider(provider); setFeedback({ kind: "info", message: provider === "gateio" ? "Gate.io tape selected. CVD, DOM, and chart history share verified Gate.io provenance." : `${FEED_LABEL[provider]} public tape selected. Chart history and DOM remain explicitly Gate.io-only until a cross-venue history/depth contract is released.` }); }} />
       <div className={`market-state ${requestedMarketIsValid ? "live" : isUpdating ? "updating" : "unavailable"}`}><span /><b>{requestedMarketIsValid ? "Verified chart data" : isUpdating ? "Verifying market" : "Market unavailable"}</b><small>{formatAge(displaySnapshot?.at)}</small></div>
     </section>
@@ -405,6 +417,7 @@ export default function Home() {
       <div className="main-price"><strong>{formatQuote(displaySnapshot?.price)}</strong><span className={typeof displaySnapshot?.changePercent === "number" && displaySnapshot.changePercent >= 0 ? "positive" : "negative"}>{typeof displaySnapshot?.changePercent === "number" ? `${displaySnapshot.changePercent >= 0 ? "+" : ""}${displaySnapshot.changePercent.toFixed(2)}% · 24h` : "Awaiting verified quote"}</span></div>
       <div className="summary-metrics"><InstrumentMetric label="24h high" value={formatQuote(displaySnapshot?.dayHigh)} /><InstrumentMetric label="24h low" value={formatQuote(displaySnapshot?.dayLow)} /><InstrumentMetric label="24h volume" value={formatVolume(displaySnapshot?.quoteVolume)} /><InstrumentMetric label="Bid / ask" value={displaySnapshot?.bid && displaySnapshot?.ask ? `${formatQuote(displaySnapshot.bid)} / ${formatQuote(displaySnapshot.ask)}` : "—"} /></div>
       <div className="data-contract-chip"><Radio size={14} /><span><b>{coverage?.complete ? "Verified coverage" : coverage ? "Partial coverage" : "Coverage pending"}</b><small>{coverage ? `${coverage.returnedBars.toLocaleString("en-US")} bars · ${coverage.granularity}` : "No effective historical window"}</small></span></div>
+      <div className={`local-workspace-chip ${workspaceSaved ? "saved" : "unsaved"}`} title="Interface preferences and watchlist are stored only in this browser. No market data, credentials, or orders are persisted."><BookOpen size={13} /><span><b>{workspaceSaved ? "Local workspace saved" : "Local workspace unavailable"}</b><small>This browser only</small></span></div>
     </section>
 
     <section className="terminal-main-layout">

@@ -570,3 +570,16 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .exchange-health-strip > small { display: none; }
 @media (max-width: 1380px) { .exchange-health-strip { order: 4; width: 100%; } .instrument-command-bar { flex-wrap: wrap; } .market-state { margin-left: 0; } }
 @media (max-width: 760px) { .brand-lockup { min-width: 0; } .brand-mark { width: 29px; height: 29px; } .exchange-health-strip { overflow-x: auto; scrollbar-width: none; } .feed-health-label { display: none; } .feed-health-chip { flex: 0 0 auto; } }
+
+/* Product sprint: non-sensitive browser-local workspace status. */
+.watchlist-add { flex: 0 0 auto; height: 27px; padding: 0 8px; border: 1px dashed rgba(149, 115, 234, .34); border-radius: 5px; background: rgba(83, 51, 139, .11); color: #cbb5ff; font: 700 9px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .03em; }
+.watchlist-add:hover { border-color: rgba(56, 220, 198, .48); background: rgba(20, 119, 106, .16); color: #d7fffa; }
+.local-workspace-chip { display: flex; align-items: center; gap: 7px; min-width: 145px; padding: 7px 9px; border: 1px solid rgba(148, 122, 204, .2); border-radius: 7px; background: rgba(38, 28, 69, .18); color: #a891dc; }
+.local-workspace-chip svg { flex: 0 0 auto; }
+.local-workspace-chip span { display: grid; gap: 2px; }
+.local-workspace-chip b { color: #d5c6f8; font-size: 8px; font-weight: 760; letter-spacing: .055em; text-transform: uppercase; }
+.local-workspace-chip small { color: #827da0; font-size: 9px; }
+.local-workspace-chip.saved { border-color: rgba(45, 207, 187, .23); background: rgba(13, 98, 87, .11); color: #5ddecd; }
+.local-workspace-chip.saved b { color: #c3eee8; }
+.local-workspace-chip.unsaved { border-color: rgba(227, 168, 84, .28); background: rgba(100, 67, 25, .14); color: #e7bb75; }
+@media (max-width: 1120px) { .local-workspace-chip { display: none; } }
