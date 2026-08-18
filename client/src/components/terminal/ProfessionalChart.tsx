@@ -16,6 +16,7 @@ import { Activity, AlertTriangle, Crosshair, LoaderCircle, RefreshCw } from "luc
 import type { ResearchLayerId, TerminalBar } from "@/lib/terminalWorkspace";
 import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries } from "@shared/features/registry";
 import { calculateCvd, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
+import { evaluateIndicator, type CompiledIndicator } from "@shared/indicators/indicatorRuntime";
 import type { BacktestMarker } from "@shared/backtest/engine";
 
 type HoveredBar = {
@@ -41,6 +42,7 @@ type ProfessionalChartProps = {
   cvdTrades?: SignedPublicTrade[];
   cvdState?: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE";
   tradeMarkers?: BacktestMarker[];
+  customIndicators?: CompiledIndicator[];
 };
 
 const chartColors = {
@@ -128,6 +130,7 @@ export function ProfessionalChart({
   cvdTrades = [],
   cvdState = "UNAVAILABLE",
   tradeMarkers = [],
+  customIndicators = [],
 }: ProfessionalChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [hoveredBar, setHoveredBar] = useState<HoveredBar>(null);
@@ -138,6 +141,10 @@ export function ProfessionalChart({
   const barChange = lastBar && previousBar && previousBar.c !== 0 ? ((lastBar.c - previousBar.c) / previousBar.c) * 100 : null;
 
   const cvdSeriesData = useMemo(() => toCvdSeries(cvdTrades), [cvdTrades]);
+  const customIndicatorSeries = useMemo(() => customIndicators.flatMap((indicator) => {
+    const evaluation = evaluateIndicator(indicator, visibleBars);
+    return evaluation.status === "COMPLETED" ? [{ indicator, points: evaluation.points.map(point => ({ time: Math.floor(point.t / 1_000) as UTCTimestamp, value: point.value })) }] : [];
+  }), [customIndicators, visibleBars]);
 
   const studies = useMemo(() => {
     const ema20 = calculateEmaSeries(visibleBars, 20);
@@ -271,6 +278,21 @@ export function ProfessionalChart({
         cvdSeries.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.18 }, borderColor: "rgba(255,180,84,0.18)" });
       }
 
+      for (const custom of customIndicatorSeries) {
+        const customSeries = chart.addSeries(LineSeries, {
+          color: custom.indicator.definition.output.color,
+          lineWidth: custom.indicator.definition.output.lineWidth as 1 | 2 | 3 | 4,
+          lastValueVisible: false,
+          priceLineVisible: false,
+          crosshairMarkerVisible: false,
+        });
+        if (custom.indicator.definition.output.pane === "pane") {
+          customSeries.moveToPane(chart.panes().length);
+          customSeries.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.18 }, borderColor: "rgba(129,118,157,0.18)" });
+        }
+        customSeries.setData(custom.points);
+      }
+
       if (has("structure") && studies.high !== null && studies.low !== null && studies.midpoint !== null) {
         candleSeries.createPriceLine({ price: studies.high, color: "rgba(29,207,195,0.52)", lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: "Window high" });
         candleSeries.createPriceLine({ price: studies.midpoint, color: chartColors.structure, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: "Mid" });
@@ -312,7 +334,7 @@ export function ProfessionalChart({
       resizeObserver?.disconnect();
       chart?.remove();
     };
-  }, [visibleBars, activeLayers, has, showMomentum, studies, cvdSeriesData, tradeMarkers]);
+  }, [visibleBars, activeLayers, has, showMomentum, studies, cvdSeriesData, customIndicatorSeries, tradeMarkers]);
 
   const quote = hoveredBar ?? (lastBar ? { time: lastBar.t, open: lastBar.o, high: lastBar.h, low: lastBar.l, close: lastBar.c, volume: lastBar.v } : null);
   const showingPrevious = !bars.length && visibleBars.length > 0;

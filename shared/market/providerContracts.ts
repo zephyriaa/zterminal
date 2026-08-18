@@ -1,4 +1,4 @@
-export const PROVIDER_IDS = ["gateio", "binance_usdm", "bybit_linear", "mock", "deribit_options", "rithmic"] as const;
+export const PROVIDER_IDS = ["gateio", "binance_usdm", "bybit_linear", "coinbase_exchange", "mock", "deribit_options", "rithmic"] as const;
 
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 export type ProviderLifecycle = "ACTIVE" | "CATALOGUED" | "BLOCKED";
@@ -92,6 +92,26 @@ export const PROVIDER_CATALOG: readonly ProviderCatalogEntry[] = [
       { capability: "OPEN_INTEREST_BY_STRIKE", state: "UNAVAILABLE", reason: "Linear perpetuals do not provide options open interest by strike." },
     ],
     notice: "Active public read-only trade-tape provider. It does not yet provide a released depth, candle, or durable-history contract in ZTerminal.",
+  },
+  {
+    id: "coinbase_exchange",
+    label: "Coinbase Exchange USD Spot",
+    lifecycle: "ACTIVE",
+    access: "PUBLIC_READ_ONLY",
+    environments: ["PRODUCTION", "TESTNET"],
+    capabilities: [
+      { capability: "SNAPSHOT", state: "UNAVAILABLE", reason: "No canonical Coinbase ticker adapter is released; the primary chart remains Gate.io perpetual data." },
+      { capability: "HISTORICAL_CANDLES", state: "UNAVAILABLE", reason: "No canonical Coinbase candle-history adapter is released." },
+      { capability: "CONTRACT_METADATA", state: "UNAVAILABLE", reason: "No canonical Coinbase product-metadata adapter is released." },
+      { capability: "PUBLIC_TRADES", state: "AVAILABLE", reason: "Bounded public USD-spot matches use the exchange-reported maker side to derive the opposite taker side. Any heartbeat or match-ID gap resets and withholds the tape until a fresh contiguous window is observed." },
+      { capability: "BEST_BID_OFFER", state: "UNAVAILABLE", reason: "No canonical Coinbase BBO adapter is released." },
+      { capability: "ORDER_BOOK_DEPTH", state: "UNAVAILABLE", reason: "Coinbase public Level 2 batch is documented, but no released snapshot, checksum, and gap-recovery depth adapter exists yet." },
+      { capability: "CANDLE_STREAM", state: "UNAVAILABLE", reason: "No canonical Coinbase candle-stream adapter is released." },
+      { capability: "OPTIONS_CHAIN", state: "UNAVAILABLE", reason: "Coinbase USD spot public data is not an options-chain source." },
+      { capability: "GREEKS", state: "UNAVAILABLE", reason: "Coinbase USD spot public data does not provide options Greeks." },
+      { capability: "OPEN_INTEREST_BY_STRIKE", state: "UNAVAILABLE", reason: "Coinbase USD spot public data does not provide options open interest by strike." },
+    ],
+    notice: "Active public read-only USD-spot trade tape. It is venue-specific, live-only, bounded in memory, and never consolidated with perpetual or other exchange data.",
   },
   {
     id: "mock",

@@ -6,32 +6,30 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
-const Home = lazy(() => import("./pages/Home"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const AccountPage = lazy(() => import("./pages/AccountPage"));
+const TerminalPage = lazy(() => import("./pages/Home"));
+
+function RouteLoading({ label }: { label: string }) {
+  return <div className="app-loading">{label}</div>;
+}
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"}>{() => <Suspense fallback={<div className="app-loading">Loading research canvas…</div>}><Home /></Suspense>}</Route>
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      <Route path="/">{() => <Suspense fallback={<RouteLoading label="Loading ZTerminal…" />}><LandingPage /></Suspense>}</Route>
+      <Route path="/terminal">{() => <Suspense fallback={<RouteLoading label="Loading research terminal…" />}><TerminalPage /></Suspense>}</Route>
+      <Route path="/account">{() => <Suspense fallback={<RouteLoading label="Loading account…" />}><AccountPage /></Suspense>}</Route>
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="dark"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeBinanceUsdmAggregateTrade, normalizeBybitLinearPublicTrade, normalizeBybitLinearPublicTrades, normalizeUsdtPerpetualSymbol } from "./multiExchangeContracts";
+import { normalizeBinanceUsdmAggregateTrade, normalizeBybitLinearPublicTrade, normalizeBybitLinearPublicTrades, normalizeCoinbaseExchangeMatch, normalizeUsdtPerpetualSymbol } from "./multiExchangeContracts";
 
 describe("multi-exchange public trade contracts", () => {
   it("normalizes linear symbols without accepting non-USDT contracts", () => {
@@ -23,5 +23,13 @@ describe("multi-exchange public trade contracts", () => {
     ] };
     expect(normalizeBybitLinearPublicTrade(message.data[0])).toMatchObject({ provider: "bybit_linear", signedSize: 0.1 });
     expect(normalizeBybitLinearPublicTrades(message).map(item => item.signedSize)).toEqual([0.1, -0.2]);
+  });
+
+  it("inverts Coinbase match maker side into explicitly derived taker-side spot evidence", () => {
+    const makerSell = normalizeCoinbaseExchangeMatch({ type: "match", trade_id: 41, product_id: "BTC-USD", time: "2026-08-19T20:00:00.000Z", size: "0.25", price: "104000", side: "sell" });
+    const makerBuy = normalizeCoinbaseExchangeMatch({ type: "match", trade_id: 42, product_id: "BTC-USD", time: "2026-08-19T20:00:01.000Z", size: "0.40", price: "104001", side: "buy" });
+    expect(makerSell).toMatchObject({ provider: "coinbase_exchange", symbol: "BTC_USD", signedSize: 0.25 });
+    expect(makerBuy).toMatchObject({ provider: "coinbase_exchange", symbol: "BTC_USD", signedSize: -0.4 });
+    expect(normalizeCoinbaseExchangeMatch({ type: "match", trade_id: 43, product_id: "BTC-USDT", size: "0.1", price: "1", side: "sell" })).toBeNull();
   });
 });

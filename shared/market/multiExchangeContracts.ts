@@ -1,6 +1,6 @@
 import type { SignedPublicTrade } from "./orderFlowContracts";
 
-export type MultiExchangeProvider = "binance_usdm" | "bybit_linear";
+export type MultiExchangeProvider = "binance_usdm" | "bybit_linear" | "coinbase_exchange";
 export type MultiExchangeTrade = SignedPublicTrade & { provider: MultiExchangeProvider };
 
 function finite(value: unknown) {
@@ -45,6 +45,32 @@ export function normalizeBinanceUsdmAggregateTrade(value: unknown): MultiExchang
     id,
     price,
     signedSize: payload.m ? -size : size,
+    timestamp,
+    isInternal: null,
+  };
+}
+
+/** Coinbase Exchange `match` supplies the maker side; the taker side is therefore the opposite direction. Only USD spot products are admitted to this public adapter. */
+export function normalizeCoinbaseExchangeMatch(value: unknown): MultiExchangeTrade | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  if (record.type !== "match" && record.type !== "last_match") return null;
+  const nativeSymbol = text(record.product_id)?.toUpperCase() ?? null;
+  const match = nativeSymbol?.match(/^([A-Z0-9]+)-USD$/);
+  const symbol = match ? `${match[1]}_USD` : null;
+  const id = text(record.trade_id);
+  const price = finite(record.price);
+  const size = finite(record.size);
+  const timestampText = text(record.time);
+  const timestamp = timestampText ? Date.parse(timestampText) : null;
+  const makerSide = text(record.side)?.toUpperCase();
+  if (!symbol || !id || price === null || price <= 0 || size === null || size <= 0 || timestamp === null || !Number.isFinite(timestamp) || (makerSide !== "BUY" && makerSide !== "SELL")) return null;
+  return {
+    provider: "coinbase_exchange",
+    symbol,
+    id,
+    price,
+    signedSize: makerSide === "SELL" ? size : -size,
     timestamp,
     isInternal: null,
   };
