@@ -23,23 +23,23 @@ import { trpc } from "@/lib/trpc";
 import {
   deriveChartMetrics,
   getResearchLayerCapability,
-  rangeToTimeframe,
-  RESEARCH_LAYER_CAPABILITIES,
   summarizeDataset,
   toProviderInterval,
   type ResearchLayerId,
   type TerminalBar,
   type Timeframe,
 } from "@/lib/terminalWorkspace";
+import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
 
 const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663159529167/hrJwjiFAGWcrxDpw.png";
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
-const RANGE_OPTIONS = ["1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "All"];
 const MODES = ["Focus", "Canvas", "Research"] as const;
 const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessions", "structure", "cvd", "gex"];
 type Mode = (typeof MODES)[number];
-type Snapshot = { price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; reason?: string };
-type Historical = { interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; reason?: string };
+type MarketState = "CONNECTED" | "DEGRADED" | "UNAVAILABLE";
+type Coverage = { requestedFrom: number | null; requestedTo: number | null; effectiveFrom: number | null; effectiveTo: number | null; returnedBars: number; complete: boolean; granularity: string };
+type Snapshot = { symbol: string | null; price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; state: MarketState; reason?: string; retryable?: boolean };
+type Historical = { symbol: string; interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; state: MarketState; coverage: Coverage; reason?: string; retryable?: boolean };
 
 function formatQuote(value: number | null | undefined) {
   return typeof value === "number" && Number.isFinite(value)
@@ -208,24 +208,42 @@ function ResearchCanvas({ bars, historical, onNotice }: { bars: TerminalBar[]; h
 export default function Home() {
   const [mode, setMode] = useState<Mode>("Canvas");
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
+  const [rangePreset, setRangePreset] = useState<RangePreset>("1D");
+  const [symbol, setSymbol] = useState("QQQX_USDT");
+  const [symbolDraft, setSymbolDraft] = useState("QQQX_USDT");
   const [showPalette, setShowPalette] = useState(true);
   const [selectedLayer, setSelectedLayer] = useState<ResearchLayerId | null>("vwap");
   const [activeLayers, setActiveLayers] = useState<ResearchLayerId[]>(["vwap", "ema", "profile", "sessions", "structure"]);
   const [replay, setReplay] = useState(false);
   const [notice, setNotice] = useState("Canvas mode is active. Select a layer to inspect its source and method.");
   const providerInterval = toProviderInterval(timeframe);
-  const snapshotQuery = trpc.market.snapshot.useQuery(undefined, { refetchInterval: 15_000, staleTime: 10_000, retry: 1 });
-  const historicalQuery = trpc.market.bars.useQuery({ interval: providerInterval }, { refetchInterval: 45_000, staleTime: 30_000, retry: 1 });
+  const historicalWindow = useMemo(() => resolveHistoricalWindow(rangePreset, providerInterval), [rangePreset, providerInterval]);
+  const snapshotQuery = trpc.market.snapshot.useQuery({ symbol }, { refetchInterval: 15_000, staleTime: 10_000, retry: 1 });
+  const historicalQuery = trpc.market.bars.useQuery({ interval: providerInterval, symbol, from: historicalWindow.from, to: historicalWindow.to, limit: historicalWindow.requestedBars }, { refetchInterval: 45_000, staleTime: 30_000, retry: 1 });
   const snapshot = snapshotQuery.data as Snapshot | undefined;
   const historical = historicalQuery.data as Historical | undefined;
   const verifiedBars = historical?.dataStatus === "HISTORICAL" ? historical : null;
   const liveSnapshot = snapshot?.dataStatus === "LIVE" ? snapshot : null;
   const statusLabel = liveSnapshot ? "Public snapshot live" : snapshot ? "Public snapshot unavailable" : "Connecting public data";
   const selectedCapability = selectedLayer ? getResearchLayerCapability(selectedLayer) : null;
+  const coverageLabel = verifiedBars?.coverage.effectiveFrom && verifiedBars.coverage.effectiveTo
+    ? `${formatUtc(verifiedBars.coverage.effectiveFrom)} → ${formatUtc(verifiedBars.coverage.effectiveTo)} · ${verifiedBars.coverage.returnedBars} bars${verifiedBars.coverage.complete ? "" : " · partial coverage"}`
+    : `Requested ${rangePreset} window · awaiting verified coverage`;
 
   const selectTimeframe = (next: Timeframe, source = "Canvas") => {
     setTimeframe(next);
-    setNotice(`${source}: loading verified Gate.io ${toProviderInterval(next)} bars.`);
+    setNotice(`${source}: loading a verified ${rangePreset} Gate.io window at ${toProviderInterval(next)} granularity.`);
+  };
+  const selectRange = (next: RangePreset) => {
+    setRangePreset(next);
+    setNotice(`Loading the requested ${next} historical window. MAX is bounded to the provider request limit; coverage will be shown after validation.`);
+  };
+  const submitSymbol = (event: FormEvent) => {
+    event.preventDefault();
+    const next = symbolDraft.trim().toUpperCase();
+    if (!next) return;
+    setSymbol(next);
+    setNotice(`Loading verified Gate.io public-market data for ${next}. Unsupported symbols remain unavailable and are not substituted.`);
   };
   const toggleLayer = (id: ResearchLayerId) => {
     const layer = getResearchLayerCapability(id)!;
@@ -254,7 +272,7 @@ export default function Home() {
       <div className="top-actions"><button className="icon-button" aria-label="Open research canvas" onClick={() => setWorkspaceMode("Research")}><Search size={17} /></button><button className="icon-button" aria-label="Show layer palette" onClick={() => setShowPalette((visible) => !visible)}><SlidersHorizontal size={17} /></button><span className="user-token"><img src={LOGO_URL} alt="" /></span></div>
     </header>
     <section className="instrument-strip">
-      <div className="symbol-block"><div><h1>QQQX / USDT <span>★</span></h1><p>Public-market research canvas</p></div><div className="price-readout"><strong>{formatQuote(liveSnapshot?.price)}</strong><span>{liveSnapshot?.changePercent === null || liveSnapshot?.changePercent === undefined ? "Waiting for verified snapshot" : `${liveSnapshot.changePercent >= 0 ? "+" : ""}${liveSnapshot.changePercent.toFixed(2)}% · 24h`}</span></div></div>
+      <div className="symbol-block"><div><h1>{(liveSnapshot?.symbol ?? symbol).replace("_", " / ")} <span>★</span></h1><p>Public-market research canvas</p><form className="symbol-search" onSubmit={submitSymbol}><label className="sr-only" htmlFor="market-symbol">Gate.io USDT perpetual symbol</label><input id="market-symbol" value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="BTC_USDT" spellCheck="false" /><button type="submit">Load</button></form></div><div className="price-readout"><strong>{formatQuote(liveSnapshot?.price)}</strong><span>{liveSnapshot?.changePercent === null || liveSnapshot?.changePercent === undefined ? "Waiting for verified snapshot" : `${liveSnapshot.changePercent >= 0 ? "+" : ""}${liveSnapshot.changePercent.toFixed(2)}% · 24h`}</span></div></div>
       <div className="instrument-metrics"><InstrumentMetric label="24h high" value={formatQuote(liveSnapshot?.dayHigh)} /><InstrumentMetric label="24h low" value={formatQuote(liveSnapshot?.dayLow)} /><InstrumentMetric label="24h volume" value={formatVolume(liveSnapshot?.quoteVolume)} /></div>
       <div className="instrument-status"><span className={`status-dot ${liveSnapshot ? "live" : ""}`} /> {statusLabel}</div>
       <button className="venue-button" onClick={() => setNotice("Gate.io is the connected public-data venue for this research terminal.")}>Gate.io <ChevronDown size={14} /></button>
@@ -273,6 +291,7 @@ export default function Home() {
           <button className="tool-icon" aria-label="Toggle focus mode" onClick={() => setWorkspaceMode(mode === "Focus" ? "Canvas" : "Focus")}><Maximize2 size={16} /></button>
         </div>
         <div className="terminal-notice" role="status">{notice}</div>
+        <div className={`coverage-indicator ${verifiedBars?.state === "DEGRADED" ? "degraded" : ""}`}><Radio size={12} /><span><b>{verifiedBars ? "Verified coverage" : "Requested coverage"}</b><small>{coverageLabel}</small></span></div>
         <div className="analysis-canvas">
           <CanvasChart bars={verifiedBars?.bars ?? []} interval={providerInterval} activeLayers={activeLayers} replay={replay} />
           {mode === "Research" ? <ResearchCanvas bars={verifiedBars?.bars ?? []} historical={verifiedBars} onNotice={setNotice} /> : mode !== "Focus" && <LayerInspector id={selectedLayer} bars={verifiedBars?.bars ?? []} />}
@@ -281,8 +300,8 @@ export default function Home() {
       </section>
     </section>
     <footer className="terminal-dock">
-      <div className="dock-ranges">{RANGE_OPTIONS.map((range) => <button key={range} onClick={() => selectTimeframe(rangeToTimeframe(range), range)}>{range}</button>)}</div>
-      <div className="dock-provenance"><Radio size={16} /><span><b>Public data contract</b><small>{liveSnapshot ? "Gate.io snapshot · verified historical bars" : "Public source reconnecting"}</small></span></div>
+      <div className="dock-ranges">{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}</div>
+      <div className="dock-provenance"><Radio size={16} /><span><b>Public data contract</b><small>{liveSnapshot ? `Gate.io · ${(liveSnapshot.symbol ?? symbol).replace("_", " / ")} · ${rangePreset} requested` : "Public source reconnecting"}</small></span></div>
       <div className="dock-provenance"><Microscope size={16} /><span><b>Research boundary</b><small>Execution disabled · no broker route</small></span></div>
       <div className="dock-time">UTC · {new Date().toISOString().slice(11, 16)}</div>
     </footer>
