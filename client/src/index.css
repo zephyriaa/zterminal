@@ -464,3 +464,21 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .protocol-gated-tab p { margin: 0; color: #9a98a7; font-size: 10px; line-height: 1.55; }
 @media (max-width: 900px) { .protocol-research-drawer { width: min(380px, 42vw); flex-basis: min(380px, 42vw); } }
 @media (max-width: 760px) { .protocol-research-drawer { width: auto; flex-basis: auto; } }
+
+/* Closed compiler presentation: source is parsed for metadata and diagnostics,
+   never treated as executable browser or server code. */
+.strategy-source-editor { min-height: 220px !important; color: #d9d4e6 !important; tab-size: 2; }
+.strategy-compile-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.strategy-compile-actions small { color: #868694; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.compile-result-section { border-color: rgba(61,204,188,.26); }
+.compile-inputs { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 8px; border: 1px solid rgba(98,129,202,.2); border-radius: 6px; background: rgba(25,31,59,.17); }
+.compile-inputs b { color: #becaf1; font-size: 9px; }
+.compile-inputs span { padding: 3px 5px; border: 1px solid rgba(116,139,205,.25); border-radius: 3px; color: #bac4df; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.compile-diagnostics { display: grid; gap: 4px; }
+.compile-diagnostics > div { display: grid; grid-template-columns: 48px 1fr; gap: 6px; padding: 6px 7px; border-left: 2px solid #8a8497; background: rgba(255,255,255,.02); color: #aaa9b6; font-size: 8px; line-height: 1.35; }
+.compile-diagnostics > div b { font: 760 8px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
+.compile-diagnostics > div.error { border-left-color: #dc8cbf; color: #ebb1d3; background: rgba(127,46,93,.11); }
+.compile-diagnostics > div.warning { border-left-color: #dfb26d; color: #e9c380; background: rgba(110,75,27,.11); }
+.compile-diagnostics > div.info { border-left-color: #85a0de; color: #b6c5ec; background: rgba(48,66,115,.11); }
+.compiler-boundary { display: flex; align-items: flex-start; gap: 6px; padding: 8px; border: 1px solid rgba(63,213,192,.2); border-radius: 6px; background: rgba(15,105,93,.11); color: #9fd5cd; font-size: 8px; line-height: 1.42; }
+.compiler-boundary svg { flex: 0 0 auto; margin-top: 1px; color: #75e3d4; }

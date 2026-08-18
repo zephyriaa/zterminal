@@ -12,9 +12,9 @@
 | M1 | Market/provider contracts | Provider catalog, contract metadata, data status, readiness semantics, contract documentation | **Complete on recovery branch** (`5ad2def`; not yet production-promoted) | Schema tests, invalid/partial coverage fixtures, readiness behavior, no fabricated active capability |
 | O1 | Trade-tape verification | Gate.io trade-side semantics and real-time transport evidence spike | **Complete on recovery branch** (`11d0b7b`; not yet production-promoted) | Official-source record, captured fixtures, ordering/reconnect/stale tests; no CVD enablement before pass |
 | O2 | Honest order-flow foundation | CVD, DOM, footprint, and Time & Sales only after O1 proof | **Complete on recovery branch** (`cdcdf24`; not yet production-promoted) | Real event fixtures, depth reconciliation/gap tests, visible stale/unavailable state |
-| R1 | Protocol-led hypothesis workflow | Citation, scope, approval, immutable baseline, one-variable incremental rules | **Complete on recovery branch** (pending commit; not yet production-promoted) | Domain fixtures, protocol contracts, drawer interaction evidence |
-| R2 | Safe ZS compiler | Closed parser/runtime, diagnostics, discovered inputs, no unsafe execution surface | In progress | Compile fixtures, forbidden-capability tests, protected tRPC contract |
-| B1 | Reproducible backtester | Multi-strategy next-bar-open evaluation, costs, provenance, metrics, chart markers | Planned | Determinism, fill/cost/P&L/provenance tests; non-blocking execution evidence |
+| R1 | Protocol-led hypothesis workflow | Citation, scope, approval, immutable baseline, one-variable incremental rules | **Complete on recovery branch** (`9647855`; not yet production-promoted) | Domain fixtures, protocol contracts, drawer interaction evidence |
+| R2 | Safe ZS compiler | Closed parser/runtime, diagnostics, discovered inputs, no unsafe execution surface | **Complete on recovery branch** (pending commit; not yet production-promoted) | Compile fixtures, forbidden-capability tests, protected tRPC contract |
+| B1 | Reproducible backtester | Multi-strategy next-bar-open evaluation, costs, provenance, metrics, chart markers | In progress | Determinism, fill/cost/P&L/provenance tests; non-blocking execution evidence |
 | U1 | Command and contextual tools | Focus minimal mode, palette, Markets/Settings/Connections/Risk/Alerts surfaces | Planned | Keyboard/accessibility/responsive tests; truthful local/simulated/unavailable states |
 | S1 | Storage and security | Durable workspace decision, protected mutations, logging, rate limits, docs | Blocked by production DB/OAuth configuration | Auth/migration/export/restore/security tests; no durable claim before configuration |
 | Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | Planned | Passing check/test/build/lint, release record, rollback verification |
@@ -22,7 +22,7 @@
 
 ## First Active Slice
 
-**Next active slice: R2 — Safe ZS compiler.** R1 completed on the recovery branch: the chart-context Evidence Lab now validates retained citations, rule scope, selected dataset requirements, explicit human approval, immutable browser-local baseline snapshots, and declared one-variable increments. It has not been merged or deployed to production. R2 may now port only a closed tokenizer/parser/AST/diagnostic contract, with explicit no-eval, no-import, no-network, no-file, no-shell, no-broker, and no-autonomous-action tests.
+**Next active slice: B1 — Reproducible backtester.** R2 completed on the recovery branch: a chart-context, closed ZS compiler now returns parser diagnostics and typed inputs without executing, importing, fetching, persisting, or routing user source. It has not been merged or deployed to production. B1 may now extend the tested deterministic next-bar-open engine behind provenance, cost, anti-look-ahead, baseline/increment classification, and chart-marker contracts.
 
 ## Change-Control Checkpoints
 
@@ -44,3 +44,4 @@
 - [O1 trade-tape validation](./O1_TRADE_TAPE_VALIDATION.md)
 - [O2 honest order-flow validation](./O2_DEPTH_DOM_VALIDATION.md)
 - [R1 protocol-led research validation](./R1_PROTOCOL_RESEARCH_VALIDATION.md)
+- [R2 closed compiler validation](./R2_CLOSED_COMPILER_VALIDATION.md)

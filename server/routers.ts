@@ -11,6 +11,7 @@ import { listResearchDrafts, saveResearchDraft } from "./researchStore";
 import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
 import { gateioTradeStream } from "./gateioTradeStream";
 import { gateioDepthStream } from "./gateioDepthStream";
+import { compileZS } from "@shared/strategy/zsCompiler";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
 const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks";
@@ -64,6 +65,10 @@ const ResearchDatasetInput = z.object({
   sourceTimestamp: z.number().int().nullable(),
   fetchedAt: z.number().int().positive(),
 });
+const StrategyCompileInput = z.object({
+  source: z.string().max(16_000),
+});
+
 const SaveResearchDraftInput = z.object({
   id: z.string().uuid().optional(),
   workspaceName: z.string().trim().max(160).optional(),
@@ -82,6 +87,9 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+  }),
+  strategy: router({
+    compile: publicProcedure.input(StrategyCompileInput).mutation(({ input }) => compileZS(input.source)),
   }),
   research: router({
     listDrafts: protectedProcedure.query(async ({ ctx }) => {
