@@ -18,7 +18,7 @@
 | U1 | Command and contextual tools | Focus minimal mode, palette, Markets/Settings/Connections/Risk/Alerts surfaces | **Complete on recovery branch** (`2b19250`; not yet production-promoted) | Keyboard/accessibility/responsive tests; truthful local/simulated/unavailable states |
 | S1 | Storage and security | Durable workspace decision, protected mutations, logging, rate limits, docs | **Complete on recovery branch** (`08be716`; not yet production-promoted; durable workspace remains configuration-blocked) | Auth/migration/export/restore/security tests; no durable claim before configuration |
 | Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | **Complete on recovery branch** (`d2b7d28`; not yet production-promoted) | Passing check/test/build/audit-high, release record, local production smoke and rollback review |
-| P1 | Freemium and desktop | Entitlement proposal and Tauri readiness after core trust | **Complete on recovery branch** (pending commit; non-binding and not production-promoted) | User-approved product policy and separate desktop release design |
+| P1 | Freemium and desktop | Entitlement proposal and Tauri readiness after core trust | **Complete on recovery branch** (`4d77a0e`; non-binding and not production-promoted) | User-approved product policy and separate desktop release design |
 
 ## First Active Slice
 
@@ -50,3 +50,4 @@
 - [S1 security and durable-workspace boundary](./S1_SECURITY_DURABILITY_VALIDATION.md)
 - [Q1 controlled release validation](./Q1_CONTROLLED_RELEASE_VALIDATION.md)
 - [P1 freemium and desktop roadmap](./P1_FREEMIUM_DESKTOP_ROADMAP.md)
+- [Final recovery release evidence](./FINAL_RECOVERY_RELEASE_EVIDENCE.md)
