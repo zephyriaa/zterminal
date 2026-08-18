@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateCvd,
+  calculateLiveTapeBuckets,
   calculateLiveTapeFootprint,
   normalizeGateOrderBookSnapshot,
   normalizeGateOrderBookUpdate,
   normalizeGatePublicTrades,
   reconcileGateOrderBook,
+  summarizeDepthImbalance,
   toTimeAndSales,
 } from "./orderFlowContracts";
 
@@ -40,6 +42,20 @@ describe("Gate.io order-flow contracts", () => {
       { price: 100, buySize: 2, sellSize: 1.5, delta: 0.5, tradeCount: 2 },
       { price: 99, buySize: 4, sellSize: 0, delta: 4, tradeCount: 1 },
     ]);
+  });
+
+  it("buckets live signed tape and summarizes depth without manufacturing a directional prediction", () => {
+    const trades = normalizeGatePublicTrades([
+      { id: 1, contract: "BTC_USDT", price: "100", size: "3", create_time_ms: 31_000 },
+      { id: 2, contract: "BTC_USDT", price: "101", size: "-1", create_time_ms: 45_000 },
+      { id: 3, contract: "BTC_USDT", price: "102", size: "-2", create_time_ms: 62_000 },
+    ]);
+    expect(calculateLiveTapeBuckets(trades, 30_000)).toEqual([
+      { start: 30_000, end: 60_000, buySize: 3, sellSize: 1, delta: 2, tradeCount: 2 },
+      { start: 60_000, end: 90_000, buySize: 0, sellSize: 2, delta: -2, tradeCount: 1 },
+    ]);
+    expect(summarizeDepthImbalance([{ price: 99, size: 8 }], [{ price: 101, size: 2 }])).toEqual({ bidSize: 8, askSize: 2, net: 6, ratio: 0.6, state: "BID_HEAVY" });
+    expect(summarizeDepthImbalance([], [])).toEqual({ bidSize: 0, askSize: 0, net: 0, ratio: null, state: "EMPTY" });
   });
 
   it("reconciles a snapshot with absolute price-level deltas only when update IDs cover the snapshot successor", () => {

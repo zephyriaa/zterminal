@@ -20,13 +20,14 @@
 | Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | **Complete on recovery branch** (`d2b7d28`; not yet production-promoted) | Passing check/test/build/audit-high, release record, local production smoke and rollback review |
 | P1 | Freemium and desktop | Entitlement proposal and Tauri readiness after core trust | **Complete on recovery branch** (`4d77a0e`; non-binding and not production-promoted) | User-approved product policy and separate desktop release design |
 | MEX1 | Product-sprint multi-exchange tape foundation | Gate.io, Bybit Linear, and Binance USDⓈ-M bounded public-tape contracts plus visible connection health | **Complete on product branch** (`f128572`; not production-promoted) | Normalization and lifecycle tests, live browser observation, source record; Binance remains `VERIFYING` because no release-environment WebSocket event was observed |
-| MEX2 | Product-sprint local workspace and fail-closed states | Versioned browser-local preferences/watchlist and explicit fresh-source-only market data state | **Complete on product branch** (pending commit; not production-promoted) | Local-store contracts, browser reload evidence, no snapshot/credential persistence, full regression and build |
+| MEX2 | Product-sprint local workspace and fail-closed states | Versioned browser-local preferences/watchlist and explicit fresh-source-only market data state | **Complete on product branch** (`c098cd7`; not production-promoted) | Local-store contracts, browser reload evidence, no snapshot/credential persistence, full regression and build |
+| OF1 | Product-sprint professional order-flow studies | Optional Flow Pulse: 30-second selected-tape delta plus separately labelled Gate.io current-depth imbalance evidence | **Complete on product branch** (pending commit; not production-promoted) | Pure contract fixtures, workspace-boundary test, browser evidence of live tape plus withheld depth, full regression and build |
 
 ## First Active Slice
 
 The validated recovery baseline is under review in [PR #4](https://github.com/zephyriaa/zterminal/pull/4) from `recovery/final-form-foundation` to `render-hosted-research-terminal`. It is **review-only**: no merge or deployment is authorized until a final explicit approval is received.
 
-**Next active product slice: OF1 professional crypto order-flow studies.** MEX1 and MEX2 completed on `product/orderflow-research-terminal`. The product now exposes evidence-backed public-feed health, a bounded multi-exchange tape foundation, and browser-local interface persistence while keeping all quotes, history, tape, and depth fresh-source-only. Binance’s adapter and fixtures exist but it remains `VERIFYING`; the UI displays `DEGRADED` rather than claiming a live feed until a release-environment WebSocket event is captured.
+**Next active product slice: Phase 14 safe JavaScript strategy and historical evaluation workflow, or Phase 15 premium one-screen product design following a deliberate product-priority decision.** MEX1, MEX2, and OF1 are complete on `product/orderflow-research-terminal`. The product now exposes evidence-backed public-feed health, a bounded multi-exchange tape foundation, browser-local interface persistence, and opt-in Flow Pulse evidence while keeping all quotes, history, tape, and depth fresh-source-only. Flow Pulse remains descriptive rather than automated: selected-venue tape and Gate.io depth remain separately labelled, with no cross-venue consolidation, prediction, or execution claim. Binance’s adapter and fixtures exist but it remains `VERIFYING`; the UI displays `DEGRADED` rather than claiming a live feed until a release-environment WebSocket event is captured.
 
 ## Change-Control Checkpoints
 
@@ -57,3 +58,4 @@ The validated recovery baseline is under review in [PR #4](https://github.com/ze
 - [Final recovery release evidence](./FINAL_RECOVERY_RELEASE_EVIDENCE.md)
 - [MEX1 multi-exchange tape validation](./MEX1_MULTI_EXCHANGE_TAPE_VALIDATION.md)
 - [MEX2 local workspace validation](./MEX2_LOCAL_WORKSPACE_VALIDATION.md)
+- [OF1 Flow Pulse validation](./OF1_FLOW_PULSE_VALIDATION.md)

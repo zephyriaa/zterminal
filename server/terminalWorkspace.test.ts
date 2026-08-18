@@ -28,7 +28,8 @@ describe("terminal workspace helpers", () => {
     expect(getResearchLayerCapability("cvd")).toMatchObject({ availability: "available", source: "Gate.io public taker-signed trade tape" });
     expect(getResearchLayerCapability("dom")).toMatchObject({ availability: "available", source: "Gate.io public depth snapshot + sequenced deltas" });
     expect(getResearchLayerCapability("tape")).toMatchObject({ availability: "available", source: "Gate.io public taker-signed trade tape" });
-    expect(getResearchLayerCapability("footprint")).toMatchObject({ availability: "available", source: "Gate.io public taker-signed trade tape" });
+    expect(getResearchLayerCapability("footprint")).toMatchObject({ availability: "available", source: "Selected public taker-signed trade tape" });
+    expect(getResearchLayerCapability("flowPulse")).toMatchObject({ availability: "available", source: "Live public tape + Gate.io reconciled depth when available", detail: expect.stringContaining("no automated alert") });
     expect(getResearchLayerCapability("gex")).toMatchObject({ availability: "unavailable", source: "Options-feed required (Deribit/CME/OPRA)" });
   });
 });

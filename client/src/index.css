@@ -583,3 +583,21 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .local-workspace-chip.saved b { color: #c3eee8; }
 .local-workspace-chip.unsaved { border-color: rgba(227, 168, 84, .28); background: rgba(100, 67, 25, .14); color: #e7bb75; }
 @media (max-width: 1120px) { .local-workspace-chip { display: none; } }
+
+/* Flow Pulse intentionally visualizes current venue-labelled evidence, not a trade signal. */
+.flow-pulse-panel { display: grid; overflow: hidden; border: 1px solid rgba(124, 115, 214, .42); border-radius: 9px; background: linear-gradient(145deg, rgba(15, 18, 35, .97), rgba(8, 13, 21, .98)); box-shadow: 0 16px 38px rgba(0, 0, 0, .38), inset 0 1px rgba(255,255,255,.06); backdrop-filter: blur(13px); }
+.flow-pulse-panel.is-live { border-color: rgba(103, 197, 201, .5); }
+.flow-pulse-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: rgba(146, 133, 214, .12); }
+.pulse-evidence { display: grid; align-content: start; min-height: 132px; gap: 6px; padding: 11px; background: rgba(9, 13, 23, .8); }
+.pulse-evidence > span { color: #858b9d; font: 700 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .07em; text-transform: uppercase; }
+.pulse-evidence > b { font: 760 18px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -.06em; }
+.pulse-evidence > small { min-height: 19px; color: #8c91a2; font: 8px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pulse-evidence > em { color: #aeb2bf; font: 8px/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; font-style: normal; }
+.pulse-evidence:not(.live) { opacity: .58; }
+.pulse-meter, .depth-balance { display: flex; min-height: 5px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.05); }
+.pulse-meter i, .depth-balance i { display: block; min-width: 0; height: 5px; }
+.pulse-meter .buy, .depth-balance .bid { background: linear-gradient(90deg, #1f907f, #56ddcb); }
+.pulse-meter .sell, .depth-balance .ask { background: linear-gradient(90deg, #bc619d, #e4a3cc); }
+.flow-pulse-panel .positive { color: #66ded0; }
+.flow-pulse-panel .negative { color: #e7a0c8; }
+@media (max-width: 760px) { .flow-pulse-grid { grid-template-columns: 1fr; } .pulse-evidence { min-height: 108px; } }

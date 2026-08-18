@@ -61,6 +61,23 @@ export type FootprintLevel = {
   tradeCount: number;
 };
 
+export type LiveTapeBucket = {
+  start: number;
+  end: number;
+  buySize: number;
+  sellSize: number;
+  delta: number;
+  tradeCount: number;
+};
+
+export type DepthImbalanceSummary = {
+  bidSize: number;
+  askSize: number;
+  net: number;
+  ratio: number | null;
+  state: "BID_HEAVY" | "ASK_HEAVY" | "BALANCED" | "EMPTY";
+};
+
 function finiteNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim() !== "") {
@@ -167,6 +184,31 @@ export function calculateLiveTapeFootprint(trades: SignedPublicTrade[]): Footpri
   return Array.from(levels.entries())
     .map(([price, level]) => ({ price, ...level, delta: level.buySize - level.sellSize }))
     .sort((left, right) => right.price - left.price);
+}
+
+/** Buckets only the current bounded public tape; bucket signs preserve exchange-reported taker direction. */
+export function calculateLiveTapeBuckets(trades: SignedPublicTrade[], bucketMs = 30_000): LiveTapeBucket[] {
+  if (!Number.isInteger(bucketMs) || bucketMs <= 0) return [];
+  const buckets = new Map<number, Omit<LiveTapeBucket, "start" | "end" | "delta">>();
+  for (const trade of orderPublicTrades(trades)) {
+    const start = Math.floor(trade.timestamp / bucketMs) * bucketMs;
+    const current = buckets.get(start) ?? { buySize: 0, sellSize: 0, tradeCount: 0 };
+    if (trade.signedSize > 0) current.buySize += trade.signedSize;
+    else current.sellSize += Math.abs(trade.signedSize);
+    current.tradeCount += 1;
+    buckets.set(start, current);
+  }
+  return Array.from(buckets.entries()).map(([start, bucket]) => ({ start, end: start + bucketMs, ...bucket, delta: bucket.buySize - bucket.sellSize })).sort((left, right) => left.start - right.start);
+}
+
+/** Summarizes currently reconciled top-of-book depth without implying executable liquidity or a future price direction. */
+export function summarizeDepthImbalance(bids: DepthLevel[], asks: DepthLevel[]): DepthImbalanceSummary {
+  const bidSize = bids.reduce((sum, level) => sum + (Number.isFinite(level.size) && level.size > 0 ? level.size : 0), 0);
+  const askSize = asks.reduce((sum, level) => sum + (Number.isFinite(level.size) && level.size > 0 ? level.size : 0), 0);
+  const total = bidSize + askSize;
+  if (!total) return { bidSize, askSize, net: 0, ratio: null, state: "EMPTY" };
+  const ratio = (bidSize - askSize) / total;
+  return { bidSize, askSize, net: bidSize - askSize, ratio, state: ratio >= 0.15 ? "BID_HEAVY" : ratio <= -0.15 ? "ASK_HEAVY" : "BALANCED" };
 }
 
 function normalizeDepthLevels(value: unknown): DepthLevel[] | null {
