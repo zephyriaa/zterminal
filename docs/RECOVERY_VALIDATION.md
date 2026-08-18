@@ -14,3 +14,18 @@ Direct provider diagnosis established that Gate.io accepts `from`/`to` range bou
 After the hot reload, the local Canvas successfully displayed a verified one-day QQQX/USDT data window from `2026-08-17 00:00:00 UTC` through `2026-08-18 00:00:00 UTC` with **97 bars**. The chart rendered data-backed VWAP, EMA 20/50, profile, and loaded range values. The browser-visible provenance indicator reported the exact effective coverage, and the public snapshot remained live.
 
 This validates the P0/P1 range integrity slice for the default one-day, 15-minute path. Longer-window paging and degradation behavior remain separate follow-up checks.
+
+
+## 2026-08-18 — Workspace-aware Research canvas preflight
+
+After adding workspace schema, protected research procedures, and local-draft migration code, the local Canvas again loaded a live QQQX/USDT snapshot and a verified one-day 15-minute window. The browser displayed 97 effective bars and an exact UTC coverage interval before Research mode was opened. This confirms that the persistence additions did not regress the verified chart range path.
+
+
+### Local research-draft preservation
+
+In local browser verification, Research mode displayed the exact Gate.io symbol, interval, effective UTC coverage, and returned bar count next to the hypothesis and validation condition. With no authenticated workspace session, selecting **Save local research draft** persisted the artifact through the explicit browser-local path and displayed: “Local-only draft · sign in to migrate.” The notice made clear that the record was not synchronized or durable across browsers until authenticated migration succeeds.
+
+
+### Protected workspace boundary and safe errors
+
+An unauthenticated browser request to `research.listDrafts` returned HTTP 401 and the established `UNAUTHORIZED` code. Initial local inspection revealed that the default TRPC response exposed a server stack trace and local file paths. The shared TRPC error formatter was hardened to remove the stack from every browser response. Re-testing preserved the HTTP 401 and typed error while returning no stack or local path.

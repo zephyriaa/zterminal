@@ -1,11 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
 import axios from "axios";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { finiteNumber, normalizePublicBars } from "./marketData";
 import { alignRange, classifyProviderFailure, coverageForBars, MARKET_INTERVALS, normalizeGatePerpetualSymbol } from "./marketContracts";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { listResearchDrafts, saveResearchDraft } from "./researchStore";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
 const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks";
@@ -30,6 +32,28 @@ function resolveSymbol(requested: string | undefined) {
   return normalizeGatePerpetualSymbol(requested ?? DEFAULT_SYMBOL);
 }
 
+const ResearchDatasetInput = z.object({
+  provider: z.literal("gateio"),
+  symbol: z.string().trim().min(1).max(40),
+  interval: z.string().trim().min(1).max(12),
+  requestedFrom: z.number().int().nullable(),
+  requestedTo: z.number().int().nullable(),
+  effectiveFrom: z.number().int().nullable(),
+  effectiveTo: z.number().int().nullable(),
+  returnedBars: z.number().int().nonnegative(),
+  complete: z.boolean(),
+  sourceTimestamp: z.number().int().nullable(),
+  fetchedAt: z.number().int().positive(),
+});
+const SaveResearchDraftInput = z.object({
+  id: z.string().uuid().optional(),
+  workspaceName: z.string().trim().max(160).optional(),
+  title: z.string().trim().max(180).optional(),
+  hypothesis: z.string().trim().min(1).max(2_000),
+  condition: z.string().trim().min(1).max(2_000),
+  dataset: ResearchDatasetInput,
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -40,6 +64,19 @@ export const appRouter = router({
       return { success: true } as const;
     }),
   }),
+  research: router({
+    listDrafts: protectedProcedure.query(async ({ ctx }) => {
+      const drafts = await listResearchDrafts(ctx.user.id);
+      if (!drafts) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Durable workspace storage is not configured for this environment." });
+      return drafts;
+    }),
+    saveDraft: protectedProcedure.input(SaveResearchDraftInput).mutation(async ({ ctx, input }) => {
+      const draft = await saveResearchDraft(ctx.user.id, input);
+      if (!draft) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Durable workspace storage is not configured for this environment." });
+      return draft;
+    }),
+  }),
+
   market: router({
     capabilities: publicProcedure.query(() => ({
       provider: "gateio" as const,

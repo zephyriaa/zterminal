@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   CandlestickChart,
@@ -20,6 +20,8 @@ import {
   Waves,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { startLogin } from "@/const";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   deriveChartMetrics,
   getResearchLayerCapability,
@@ -30,6 +32,7 @@ import {
   type Timeframe,
 } from "@/lib/terminalWorkspace";
 import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
+import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft, writeLocalResearchDraft } from "@/lib/researchDraft";
 
 const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663159529167/hrJwjiFAGWcrxDpw.png";
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
@@ -182,26 +185,98 @@ function LayerInspector({ id, bars }: { id: ResearchLayerId | null; bars: Termin
   </aside>;
 }
 
-function ResearchCanvas({ bars, historical, onNotice }: { bars: TerminalBar[]; historical: Historical | null; onNotice: (message: string) => void }) {
+function ResearchCanvas({ bars, historical, symbol, onNotice }: { bars: TerminalBar[]; historical: Historical | null; symbol: string; onNotice: (message: string) => void }) {
   const [hypothesis, setHypothesis] = useState("VWAP acceptance after opening-range expansion");
   const [condition, setCondition] = useState("Price remains above loaded-window VWAP");
-  const [saved, setSaved] = useState(false);
+  const [draftState, setDraftState] = useState<"idle" | "local" | "syncing" | "synced" | "sync-failed">("idle");
+  const { user, loading: authLoading } = useAuth();
+  const migratedUserId = useRef<number | null>(null);
   const dataset = summarizeDataset(bars);
+  const saveDraft = trpc.research.saveDraft.useMutation();
+
+  const toDraft = () => {
+    if (!historical) return null;
+    return {
+      id: createResearchDraftId(),
+      workspaceName: `${symbol.replace("_", " / ")} research workspace`,
+      title: hypothesis.slice(0, 180),
+      hypothesis,
+      condition,
+      dataset: {
+        provider: "gateio" as const,
+        symbol,
+        interval: historical.interval,
+        requestedFrom: historical.coverage.requestedFrom,
+        requestedTo: historical.coverage.requestedTo,
+        effectiveFrom: historical.coverage.effectiveFrom,
+        effectiveTo: historical.coverage.effectiveTo,
+        returnedBars: historical.coverage.returnedBars,
+        complete: historical.coverage.complete,
+        sourceTimestamp: historical.sourceTimestamp,
+        fetchedAt: historical.fetchedAt,
+      },
+      savedAt: Date.now(),
+    };
+  };
+
+  useEffect(() => {
+    if (!user || migratedUserId.current === user.id) return;
+    migratedUserId.current = user.id;
+    const pending = readLocalResearchDraft();
+    if (!pending) return;
+    setDraftState("syncing");
+    saveDraft.mutate(pending, {
+      onSuccess: () => {
+        clearLocalResearchDraft();
+        setDraftState("synced");
+        onNotice("Your browser-local research draft was migrated to your authenticated workspace.");
+      },
+      onError: () => {
+        setDraftState("sync-failed");
+        onNotice("Workspace synchronization is unavailable. Your browser-local draft remains preserved for retry.");
+      },
+    });
+  }, [user, saveDraft, onNotice]);
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    setSaved(true);
-    onNotice("Research definition staged for this browser session. It contains no execution route or automated alert.");
+    const draft = toDraft();
+    if (!draft) {
+      onNotice("Research drafts require a verified historical dataset. Load a valid range before saving.");
+      return;
+    }
+    if (!user) {
+      const saved = writeLocalResearchDraft(draft);
+      setDraftState(saved ? "local" : "sync-failed");
+      onNotice(saved ? "Research draft saved locally in this browser. Sign in to migrate it to a durable workspace." : "This browser could not retain the draft. Copy your research text before leaving this page.");
+      return;
+    }
+    setDraftState("syncing");
+    saveDraft.mutate(draft, {
+      onSuccess: () => {
+        clearLocalResearchDraft();
+        setDraftState("synced");
+        onNotice("Research draft synchronized to your authenticated workspace with its verified dataset reference.");
+      },
+      onError: () => {
+        writeLocalResearchDraft(draft);
+        setDraftState("sync-failed");
+        onNotice("Workspace storage is unavailable. The draft remains preserved locally and is not presented as synchronized.");
+      },
+    });
   };
+
+  const statusLabel = authLoading ? "Checking workspace" : user ? draftState === "synced" ? "Workspace synced" : draftState === "syncing" ? "Syncing" : "Workspace draft" : "Local draft";
   return <aside className="research-canvas" aria-label="Research canvas">
-    <div className="research-canvas-title"><span>Research canvas</span><b>Draft only</b></div>
+    <div className="research-canvas-title"><span>Research canvas</span><b>{statusLabel}</b></div>
     <div className="research-flow"><span className="flow-active">1</span><span /> <span>2</span><span /> <span>3</span><span /> <span>4</span></div>
     <form onSubmit={submit} className="research-form">
       <label>Hypothesis<textarea value={hypothesis} onChange={(event) => setHypothesis(event.target.value)} maxLength={180} /></label>
       <label>Validation condition<textarea value={condition} onChange={(event) => setCondition(event.target.value)} maxLength={180} /></label>
-      <div className="data-contract"><span>Data contract</span><b>{historical ? `Gate.io · ${historical.interval}` : "Awaiting verified bars"}</b><small>{dataset.barCount ? `${dataset.barCount} bars · source ${formatUtc(historical?.sourceTimestamp)}` : "No dataset available"}</small></div>
-      <button className="primary-action" type="submit"><FlaskConical size={15} /> Stage research definition</button>
+      <div className="data-contract"><span>Data contract</span><b>{historical ? `Gate.io · ${historical.symbol} · ${historical.interval}` : "Awaiting verified bars"}</b><small>{dataset.barCount ? `${dataset.barCount} bars · ${formatUtc(historical?.coverage.effectiveFrom)} → ${formatUtc(historical?.coverage.effectiveTo)}` : "No dataset available"}</small></div>
+      <button className="primary-action" type="submit" disabled={saveDraft.isPending}><FlaskConical size={15} /> {user ? "Sync research definition" : "Save local research draft"}</button>
     </form>
-    <div className="evidence-stack"><span>Evidence requirements</span><p>Configuration fingerprint, data interval, source timestamp, and limitations are captured before any backtest is considered.</p>{saved && <div className="research-saved">Draft staged · user review required</div>}</div>
+    <div className="evidence-stack"><span>Evidence requirements</span><p>Configuration fingerprint, effective coverage, source timestamp, and limitations are captured before any backtest is considered.</p>{!user && <button className="secondary-action" type="button" onClick={() => startLogin()}>Sign in to sync this draft</button>}{draftState === "local" && <div className="research-saved">Local-only draft · sign in to migrate</div>}{draftState === "synced" && <div className="research-saved">Workspace draft synced · user review required</div>}{draftState === "sync-failed" && <div className="research-saved warning">Workspace sync failed · local draft retained</div>}</div>
   </aside>;
 }
 
@@ -294,7 +369,7 @@ export default function Home() {
         <div className={`coverage-indicator ${verifiedBars?.state === "DEGRADED" ? "degraded" : ""}`}><Radio size={12} /><span><b>{verifiedBars ? "Verified coverage" : "Requested coverage"}</b><small>{coverageLabel}</small></span></div>
         <div className="analysis-canvas">
           <CanvasChart bars={verifiedBars?.bars ?? []} interval={providerInterval} activeLayers={activeLayers} replay={replay} />
-          {mode === "Research" ? <ResearchCanvas bars={verifiedBars?.bars ?? []} historical={verifiedBars} onNotice={setNotice} /> : mode !== "Focus" && <LayerInspector id={selectedLayer} bars={verifiedBars?.bars ?? []} />}
+          {mode === "Research" ? <ResearchCanvas bars={verifiedBars?.bars ?? []} historical={verifiedBars} symbol={verifiedBars?.symbol ?? symbol} onNotice={setNotice} /> : mode !== "Focus" && <LayerInspector id={selectedLayer} bars={verifiedBars?.bars ?? []} />}
         </div>
         {mode !== "Focus" && selectedCapability?.availability === "unavailable" && <div className="capability-note"><CircleHelp size={14} /><span><b>{selectedCapability.label} is not displayed.</b> {selectedCapability.detail}</span></div>}
       </section>
