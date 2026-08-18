@@ -1,3 +1,5 @@
+import { evaluateFeatures } from "@shared/features/registry";
+
 export type Timeframe = "1m" | "3m" | "5m" | "15m" | "30m" | "1h" | "4h" | "D";
 export type ProviderInterval = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d";
 export type TerminalBar = { t: number; o: number; h: number; l: number; c: number; v: number };
@@ -38,29 +40,13 @@ export function rangeToTimeframe(range: string): Timeframe {
   return "D";
 }
 
-function calculateEma(bars: TerminalBar[], period: number): number | null {
-  if (!bars.length) return null;
-  const multiplier = 2 / (period + 1);
-  return bars.reduce((ema, bar, index) => index === 0 ? bar.c : (bar.c - ema) * multiplier + ema, bars[0].c);
-}
-
 export function deriveChartMetrics(bars: TerminalBar[]) {
-  if (!bars.length) return { windowVwap: null, ema20: null, ema50: null, range: null };
-  const cumulative = bars.reduce(
-    (accumulator, bar) => {
-      const typicalPrice = (bar.h + bar.l + bar.c) / 3;
-      return {
-        priceVolume: accumulator.priceVolume + typicalPrice * bar.v,
-        volume: accumulator.volume + bar.v,
-      };
-    },
-    { priceVolume: 0, volume: 0 },
-  );
+  const features = evaluateFeatures(bars);
   return {
-    windowVwap: cumulative.volume > 0 ? cumulative.priceVolume / cumulative.volume : null,
-    ema20: calculateEma(bars, 20),
-    ema50: calculateEma(bars, 50),
-    range: { high: Math.max(...bars.map((bar) => bar.h)), low: Math.min(...bars.map((bar) => bar.l)) },
+    windowVwap: features.vwap,
+    ema20: features.ema20,
+    ema50: features.ema50,
+    range: features.high === null || features.low === null ? null : { high: features.high, low: features.low },
   };
 }
 

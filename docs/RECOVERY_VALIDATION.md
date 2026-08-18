@@ -29,3 +29,11 @@ In local browser verification, Research mode displayed the exact Gate.io symbol,
 ### Protected workspace boundary and safe errors
 
 An unauthenticated browser request to `research.listDrafts` returned HTTP 401 and the established `UNAUTHORIZED` code. Initial local inspection revealed that the default TRPC response exposed a server stack trace and local file paths. The shared TRPC error formatter was hardened to remove the stack from every browser response. Re-testing preserved the HTTP 401 and typed error while returning no stack or local path.
+
+
+## 2026-08-18 — Shared feature-registry validation
+
+The local Canvas continued to show the verified one-day Gate.io coverage after chart calculations were moved to the shared registry. The VWAP layer inspector displayed the feature identity `vwap · v1.0.0` and a deterministic dataset fingerprint (`fnv1a-24267964` for the observed window), alongside the provider source and 97 loaded bars. This makes the visual study’s version and exact normalized input identity available to the adjacent research workflow rather than leaving calculations solely inside the presentation component.
+
+
+The volume-profile inspector was also verified locally. It disclosed that the feature is a candle-volume distribution rather than tick-level volume-at-price, then showed `volumeProfile · v1.0.0`, the same dataset fingerprint, a derived POC of `732.7631`, and a 70% value area of `732.6225 — 735.9975` for the loaded window. This establishes visible provenance for the shared calculation without misrepresenting it as order-flow data.

@@ -33,6 +33,7 @@ import {
 } from "@/lib/terminalWorkspace";
 import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
 import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft, writeLocalResearchDraft } from "@/lib/researchDraft";
+import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries, evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 
 const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663159529167/hrJwjiFAGWcrxDpw.png";
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
@@ -82,26 +83,11 @@ function CanvasChart({ bars, interval, activeLayers, replay }: { bars: TerminalB
     const step = (right - left) / Math.max(renderedBars.length - 1, 1);
     const width = Math.max(1.2, Math.min(7, step * 0.58));
     const y = (value: number) => chartTop + ((high - value) / range) * chartHeight;
-    const emaSeries = (period: number) => {
-      const multiplier = 2 / (period + 1);
-      return renderedBars.reduce<number[]>((series, bar, index) => {
-        series.push(index === 0 ? bar.c : (bar.c - series[index - 1]) * multiplier + series[index - 1]);
-        return series;
-      }, []);
-    };
-    let priceVolume = 0;
-    let volume = 0;
-    const vwap = renderedBars.map((bar) => {
-      priceVolume += ((bar.h + bar.l + bar.c) / 3) * bar.v;
-      volume += bar.v;
-      return volume ? priceVolume / volume : bar.c;
-    });
-    const bins = 12;
-    const profile = Array.from({ length: bins }, (_, index) => ({ price: low + ((index + 0.5) / bins) * range, volume: 0 }));
-    renderedBars.forEach((bar) => {
-      const index = Math.max(0, Math.min(bins - 1, Math.floor(((bar.c - low) / range) * bins)));
-      profile[index].volume += bar.v;
-    });
+    const ema20Series = calculateEmaSeries(renderedBars, 20);
+    const ema50Series = calculateEmaSeries(renderedBars, 50);
+    const vwapSeries = calculateVwapSeries(renderedBars);
+    const evaluatedProfile = calculateVolumeProfile(renderedBars, 12);
+    const profile = evaluatedProfile?.bins ?? [];
     const profileMax = Math.max(...profile.map((bin) => bin.volume), 1);
     return {
       high,
@@ -113,10 +99,10 @@ function CanvasChart({ bars, interval, activeLayers, replay }: { bars: TerminalB
       width,
       volumeBase,
       candles: renderedBars.map((bar, index) => ({ x: left + index * step, open: y(bar.o), close: y(bar.c), high: y(bar.h), low: y(bar.l), volume: (bar.v / maxVolume) * 38, up: bar.c >= bar.o })),
-      ema20: linePath(emaSeries(20), left, step, y),
-      ema50: linePath(emaSeries(50), left, step, y),
-      vwap: linePath(vwap, left, step, y),
-      profile: profile.map((bin) => ({ y: y(bin.price) - 10, width: (bin.volume / profileMax) * 78 })),
+      ema20: linePath(ema20Series, left, step, y),
+      ema50: linePath(ema50Series, left, step, y),
+      vwap: linePath(vwapSeries, left, step, y),
+      profile: profile.map((bin) => ({ y: y(bin.midpoint) - 10, width: (bin.volume / profileMax) * 78 })),
     };
   }, [renderedBars]);
   const metrics = useMemo(() => deriveChartMetrics(renderedBars), [renderedBars]);
@@ -174,14 +160,18 @@ function LayersMark() {
 }
 
 function LayerInspector({ id, bars }: { id: ResearchLayerId | null; bars: TerminalBar[] }) {
+  const features = useMemo(() => evaluateFeatures(bars), [bars]);
   const layer = id ? getResearchLayerCapability(id) : null;
   if (!layer) return null;
   const summary = summarizeDataset(bars);
+  const featureId = id === "vwap" ? "vwap" : id === "ema" ? "ema20" : id === "profile" ? "volumeProfile" : id === "structure" ? "structure" : null;
+  const definition = featureId ? FEATURE_REGISTRY[featureId] : null;
+  const profile = id === "profile" ? features.volumeProfile : null;
   return <aside className="layer-inspector" aria-live="polite">
     <div className="inspector-kicker"><span className={`capability-dot ${layer.availability}`} /> {layer.availability === "available" ? "Verified study" : "Capability gate"}</div>
     <h2>{layer.label}</h2>
     <p>{layer.detail}</p>
-    <dl><div><dt>Source</dt><dd>{layer.source}</dd></div><div><dt>Coverage</dt><dd>{summary.barCount ? `${summary.barCount} loaded bars` : "Awaiting bars"}</dd></div><div><dt>Mode</dt><dd>{layer.availability === "available" ? "Chart layer" : "Unavailable"}</dd></div></dl>
+    <dl><div><dt>Source</dt><dd>{layer.source}</dd></div><div><dt>Coverage</dt><dd>{summary.barCount ? `${summary.barCount} loaded bars` : "Awaiting bars"}</dd></div>{definition && <><div><dt>Feature version</dt><dd>{definition.id} · v{definition.version}</dd></div><div><dt>Dataset fingerprint</dt><dd>{features.fingerprint ?? "Awaiting bars"}</dd></div></>}{profile && <><div><dt>Profile POC</dt><dd>{formatQuote(profile.pointOfControl)}</dd></div><div><dt>Value area</dt><dd>{formatQuote(profile.valueAreaLow)} — {formatQuote(profile.valueAreaHigh)} · {(profile.valueAreaVolumePct * 100).toFixed(0)}%</dd></div></>}<div><dt>Mode</dt><dd>{layer.availability === "available" ? "Chart layer" : "Unavailable"}</dd></div></dl>
   </aside>;
 }
 
