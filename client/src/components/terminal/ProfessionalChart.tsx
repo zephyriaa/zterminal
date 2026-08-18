@@ -149,7 +149,7 @@ export function ProfessionalChart({
           textColor: chartColors.text,
           fontSize: 11,
           fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-          attributionLogo: true,
+          attributionLogo: false,
           panes: { enableResize: true, separatorColor: "rgba(129,118,157,0.2)", separatorHoverColor: "rgba(150,103,238,0.38)" },
         },
         grid: {
