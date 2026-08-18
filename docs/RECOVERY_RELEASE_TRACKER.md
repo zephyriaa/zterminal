@@ -24,7 +24,7 @@
 | OF1 | Product-sprint professional order-flow studies | Optional Flow Pulse: 30-second selected-tape delta plus separately labelled Gate.io current-depth imbalance evidence | **Complete on product branch** (`65dbb5c`; not production-promoted) | Pure contract fixtures, workspace-boundary test, browser evidence of live tape plus withheld depth, full regression and build |
 | P15 | Product-sprint premium one-screen design | Dark teal/violet workstation hierarchy, command/context clustering, chart-canvas emphasis, and responsive terminal chrome | **Complete on product branch** (`28336bb`; not production-promoted) | Current and fail-closed browser evidence, full regression and build, visual-boundary record |
 | P14 | Product-sprint safe coded strategy evaluation | Closed ZS AST interpretation drives deterministic historical-candle signals and next-open evidence in the browser worker | **Complete on product branch** (`90cde49`; not production-promoted) | Runtime/engine fixtures, no-escape and unavailable-series tests, protocol-gate browser evidence, full regression and build |
-| OF2 | Product-sprint professional order-flow context | Opt-in UTC session candle-volume context and selected-venue live reported-size large-print evidence | **Complete on product branch** (pending commit; not production-promoted) | Pure source-contract fixtures, live and degraded browser states, full regression and build |
+| OF2 | Product-sprint professional order-flow context | Opt-in UTC session candle-volume context and selected-venue live reported-size large-print evidence | **Complete on product branch** (`c7f951e`; not production-promoted) | Pure source-contract fixtures, live and degraded browser states, full regression and build |
 
 ## First Active Slice
 
