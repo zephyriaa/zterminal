@@ -44,6 +44,7 @@ import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft,
 import { evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
+import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeFootprint, toTimeAndSales, type DepthLevel, type GatePublicTrade } from "@shared/market/orderFlowContracts";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
@@ -264,6 +265,18 @@ export default function Home() {
   const cvdTrades = cvdState === "LIVE" ? tapeForVerifiedSymbol?.trades ?? [] : [];
   const domState = depthBook?.symbol === verifiedSymbol ? depthBook.dataStatus : "UNAVAILABLE";
   const orderFlowDockOpen = domEnabled || activeLayers.includes("tape") || activeLayers.includes("footprint");
+  const researchDataset = useMemo(() => {
+    if (!displayHistorical) return null;
+    return {
+      provider: "gateio",
+      symbol: displayHistorical.symbol,
+      interval: displayHistorical.interval,
+      coverageComplete: displayHistorical.coverage.complete,
+      returnedBars: displayHistorical.coverage.returnedBars,
+      sourceTimestamp: displayHistorical.sourceTimestamp,
+      fingerprint: evaluateFeatures(displayHistorical.bars).fingerprint,
+    };
+  }, [displayHistorical]);
 
   const setMarket = (next: string) => {
     const normalized = next.trim().toUpperCase();
@@ -322,7 +335,7 @@ export default function Home() {
         <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
       {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={() => setShowStudies(false)} />}
-      {showResearch && !focusMode && <ResearchDrawer bars={displayHistorical?.bars ?? []} historical={displayHistorical} symbol={displayHistorical?.symbol ?? symbol} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
+      {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
     </section>
 
     <footer className="premium-terminal-footer"><span><Radio size={13} /> Public-market research only</span><span><Target size={13} /> Execution disabled · no broker route</span><a className="chart-engine-attribution" href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc.</a><span><Clock3 size={13} /> UTC · {new Date().toISOString().slice(11, 16)}</span></footer>
