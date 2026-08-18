@@ -44,10 +44,10 @@ import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft,
 import { evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
-import type { GatePublicTrade } from "@shared/market/orderFlowContracts";
+import { calculateLiveTapeFootprint, toTimeAndSales, type DepthLevel, type GatePublicTrade } from "@shared/market/orderFlowContracts";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
-const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessions", "structure", "cvd", "gex"];
+const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessions", "structure", "cvd", "dom", "tape", "footprint", "gex"];
 const STARTING_MARKETS = ["BTC_USDT", "ETH_USDT", "SOL_USDT", "QQQX_USDT"];
 
 type MarketState = "CONNECTED" | "DEGRADED" | "UNAVAILABLE";
@@ -55,6 +55,7 @@ type Coverage = { requestedFrom: number | null; requestedTo: number | null; effe
 type Snapshot = { symbol: string | null; price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; state: MarketState; reason?: string; retryable?: boolean };
 type Historical = { symbol: string; interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; state: MarketState; coverage: Coverage; reason?: string; retryable?: boolean };
 type TradeTape = { symbol: string; state: "CONNECTING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastTradeAt: number | null; lastMessageAt: number | null; reason: string | null; trades: GatePublicTrade[] };
+type DepthBook = { symbol: string; state: "CONNECTING" | "SYNCING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastDepthAt: number | null; lastUpdateId: number | null; reason: string | null; bids: DepthLevel[]; asks: DepthLevel[] };
 type Feedback = { kind: "info" | "success" | "warning"; message: string } | null;
 
 function formatQuote(value: number | null | undefined) {
@@ -88,6 +89,38 @@ function InstrumentMetric({ label, value, accent }: { label: string; value: stri
   return <div className="instrument-metric"><span>{label}</span><b className={accent}>{value}</b></div>;
 }
 
+function LiveDepthPanel({ depth }: { depth: DepthBook | undefined }) {
+  const isLive = depth?.dataStatus === "LIVE";
+  const maximumSize = Math.max(1, ...(depth?.bids ?? []).map(level => level.size), ...(depth?.asks ?? []).map(level => level.size));
+  const mid = isLive && depth?.bids[0] && depth.asks[0] ? (depth.bids[0].price + depth.asks[0].price) / 2 : null;
+  const renderLevel = (level: DepthLevel, side: "bid" | "ask") => <div className={`depth-row ${side}`} key={`${side}-${level.price}`}><span className="depth-fill"><i style={{ width: `${Math.max(3, (level.size / maximumSize) * 100)}%` }} /></span><b>{formatQuote(level.price)}</b><span>{formatVolume(level.size)}</span></div>;
+  return <section className={`live-depth-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Live depth of market">
+    <header><div><span className="drawer-kicker">Order flow</span><h2>Live DOM</h2></div><span className={`depth-state ${depth?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{depth?.dataStatus ?? "UNAVAILABLE"}</span></header>
+    <p>Gate.io public depth · snapshot + sequenced deltas · live-only</p>
+    {!isLive ? <div className="depth-notice"><b>{depth?.state === "SYNCING" ? "Reconciling public book" : "Depth not rendered"}</b><span>{depth?.reason ?? "Awaiting an exchange snapshot and compatible depth update."}</span></div> : <><div className="depth-columns"><span>Price</span><span>Size</span></div><div className="depth-levels asks">{depth.asks.slice().reverse().map(level => renderLevel(level, "ask"))}</div><div className="depth-mid"><span>Mid</span><b>{formatQuote(mid)}</b><small>{formatAge(depth.lastDepthAt)}</small></div><div className="depth-levels bids">{depth.bids.map(level => renderLevel(level, "bid"))}</div><footer><span>Update ID {depth.lastUpdateId ?? "—"}</span><span>No historical depth</span></footer></>}
+  </section>;
+}
+
+function LiveTapePanel({ tape }: { tape: TradeTape | undefined }) {
+  const isLive = tape?.dataStatus === "LIVE";
+  const rows = isLive ? toTimeAndSales(tape?.trades ?? []).slice(-12).reverse() : [];
+  return <section className={`time-sales-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Live Time and Sales">
+    <header><div><span className="drawer-kicker">Order flow</span><h2>Time &amp; Sales</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
+    <p>Gate.io public taker-signed trades · bounded live tape</p>
+    {!isLive ? <div className="depth-notice"><b>Tape not rendered</b><span>{tape?.reason ?? "Awaiting a current public trade-tape window."}</span></div> : <><div className="tape-columns"><span>Time</span><span>Price</span><span>Size</span></div><div className="tape-rows">{rows.map(row => <div className={`tape-row ${row.side.toLowerCase()}`} key={row.tradeId}><span>{new Date(row.timestamp).toISOString().slice(11, 19)}</span><b>{formatQuote(row.price)}</b><span>{row.side === "BUY" ? "+" : "−"}{formatVolume(row.size)}</span></div>)}</div><footer><span>{rows.length} shown</span><span>No historical ticks</span></footer></>}
+  </section>;
+}
+
+function LiveFootprintPanel({ tape }: { tape: TradeTape | undefined }) {
+  const isLive = tape?.dataStatus === "LIVE";
+  const levels = isLive ? calculateLiveTapeFootprint(tape?.trades ?? []).slice(0, 12) : [];
+  return <section className={`footprint-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Live trade-tape footprint">
+    <header><div><span className="drawer-kicker">Order flow</span><h2>Live footprint</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
+    <p>Exact-price public tape aggregation · current bounded window</p>
+    {!isLive ? <div className="depth-notice"><b>Footprint not rendered</b><span>{tape?.reason ?? "Awaiting a current public trade-tape window."}</span></div> : <><div className="footprint-columns"><span>Price</span><span>Buy</span><span>Sell</span><span>Δ</span></div><div className="footprint-rows">{levels.map(level => <div className="footprint-row" key={level.price}><b>{formatQuote(level.price)}</b><span>{formatVolume(level.buySize)}</span><span>{formatVolume(level.sellSize)}</span><em className={level.delta >= 0 ? "positive" : "negative"}>{level.delta >= 0 ? "+" : "−"}{formatVolume(Math.abs(level.delta))}</em></div>)}</div><footer><span>{levels.length} prices</span><span>Not candle volume</span></footer></>}
+  </section>;
+}
+
 function IconRail({ showLayers, showResearch, focusMode, onLayers, onResearch, onFocus, onReset }: { showLayers: boolean; showResearch: boolean; focusMode: boolean; onLayers: () => void; onResearch: () => void; onFocus: () => void; onReset: () => void }) {
   return <aside className="terminal-icon-rail" aria-label="Terminal tools">
     <button className={showLayers ? "active" : ""} onClick={onLayers} aria-label="Open studies"><Layers3 size={18} /></button>
@@ -98,7 +131,7 @@ function IconRail({ showLayers, showResearch, focusMode, onLayers, onResearch, o
   </aside>;
 }
 
-function StudiesDrawer({ activeLayers, selectedLayer, bars, cvdState, onSelect, onToggle, onClose }: { activeLayers: ResearchLayerId[]; selectedLayer: ResearchLayerId | null; bars: TerminalBar[]; cvdState: TradeTape["dataStatus"]; onSelect: (id: ResearchLayerId) => void; onToggle: (id: ResearchLayerId) => void; onClose: () => void }) {
+function StudiesDrawer({ activeLayers, selectedLayer, bars, cvdState, domState, onSelect, onToggle, onClose }: { activeLayers: ResearchLayerId[]; selectedLayer: ResearchLayerId | null; bars: TerminalBar[]; cvdState: TradeTape["dataStatus"]; domState: DepthBook["dataStatus"] | "UNAVAILABLE"; onSelect: (id: ResearchLayerId) => void; onToggle: (id: ResearchLayerId) => void; onClose: () => void }) {
   const selected = selectedLayer ? getResearchLayerCapability(selectedLayer) : null;
   const features = useMemo(() => evaluateFeatures(bars), [bars]);
   const dataset = summarizeDataset(bars);
@@ -117,7 +150,7 @@ function StudiesDrawer({ activeLayers, selectedLayer, bars, cvdState, onSelect, 
         <button className={`study-toggle ${active ? "enabled" : ""}`} disabled={unavailable} onClick={() => onToggle(id)} aria-label={`${active ? "Hide" : "Show"} ${layer.label}`}><span /></button>
       </div>;
     })}</div>
-    {selected && <section className="study-detail"><span className={`detail-state ${selected.availability === "available" ? "available" : "locked"}`}>{selected.availability === "available" ? "Verified study" : "Capability gate"}</span><h3>{selected.label}</h3><p>{selected.detail}</p><dl><div><dt>Source</dt><dd>{selected.source}</dd></div><div><dt>Loaded window</dt><dd>{selectedLayer === "cvd" ? "Current bounded public tape" : dataset.barCount ? `${dataset.barCount.toLocaleString("en-US")} bars` : "Awaiting verified bars"}</dd></div>{definition && <><div><dt>Feature version</dt><dd>{definition.id} · v{definition.version}</dd></div><div><dt>Dataset fingerprint</dt><dd>{features.fingerprint ?? "Awaiting bars"}</dd></div></>}{profile && <><div><dt>Profile POC</dt><dd>{formatQuote(profile.pointOfControl)}</dd></div><div><dt>Value area</dt><dd>{formatQuote(profile.valueAreaLow)} — {formatQuote(profile.valueAreaHigh)}</dd></div></>}<div><dt>Status</dt><dd>{selectedLayer === "cvd" ? cvdState === "LIVE" ? "Rendered from live public trade tape" : `Not rendered while live tape is ${cvdState.toLowerCase()}` : selected.availability === "available" ? "Rendered from verified candle data" : "Not rendered without its required dataset"}</dd></div></dl></section>}
+    {selected && <section className="study-detail"><span className={`detail-state ${selected.availability === "available" ? "available" : "locked"}`}>{selected.availability === "available" ? "Verified study" : "Capability gate"}</span><h3>{selected.label}</h3><p>{selected.detail}</p><dl><div><dt>Source</dt><dd>{selected.source}</dd></div><div><dt>Loaded window</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "footprint" ? "Current bounded public tape" : selectedLayer === "dom" ? "Current reconciled public book" : dataset.barCount ? `${dataset.barCount.toLocaleString("en-US")} bars` : "Awaiting verified bars"}</dd></div>{definition && <><div><dt>Feature version</dt><dd>{definition.id} · v{definition.version}</dd></div><div><dt>Dataset fingerprint</dt><dd>{features.fingerprint ?? "Awaiting bars"}</dd></div></>}{profile && <><div><dt>Profile POC</dt><dd>{formatQuote(profile.pointOfControl)}</dd></div><div><dt>Value area</dt><dd>{formatQuote(profile.valueAreaLow)} — {formatQuote(profile.valueAreaHigh)}</dd></div></>}<div><dt>Status</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "footprint" ? cvdState === "LIVE" ? "Rendered from live public trade tape" : `Not rendered while live tape is ${cvdState.toLowerCase()}` : selectedLayer === "dom" ? domState === "LIVE" ? "Rendered from reconciled live public depth" : `Not rendered while public depth is ${domState.toLowerCase()}` : selected.availability === "available" ? "Rendered from verified candle data" : "Not rendered without its required dataset"}</dd></div></dl></section>}
   </aside>;
 }
 
@@ -201,12 +234,16 @@ export default function Home() {
   const snapshotQuery = trpc.market.snapshot.useQuery({ symbol }, { refetchInterval: 15_000, staleTime: 10_000, retry: 1, placeholderData: (previous) => previous });
   const historicalQuery = trpc.market.bars.useQuery({ interval: providerInterval, symbol, from: historicalWindow.from, to: historicalWindow.to, limit: historicalWindow.requestedBars }, { refetchInterval: 45_000, staleTime: 30_000, retry: 1, placeholderData: (previous) => previous });
   const cvdEnabled = activeLayers.includes("cvd");
-  const tradeTapeQuery = trpc.market.tradeTape.useQuery({ symbol, limit: 500 }, { enabled: cvdEnabled, refetchInterval: cvdEnabled ? 2_500 : false, staleTime: 1_500, retry: 1, placeholderData: (previous) => previous });
+  const domEnabled = activeLayers.includes("dom");
+  const tapeEnabled = activeLayers.some((layer) => layer === "cvd" || layer === "tape" || layer === "footprint");
+  const tradeTapeQuery = trpc.market.tradeTape.useQuery({ symbol, limit: 500 }, { enabled: tapeEnabled, refetchInterval: tapeEnabled ? 2_500 : false, staleTime: 1_500, retry: 1, placeholderData: (previous) => previous });
+  const depthQuery = trpc.market.depth.useQuery({ symbol, limit: 12 }, { enabled: domEnabled, refetchInterval: domEnabled ? 1_500 : false, staleTime: 750, retry: 1, placeholderData: (previous) => previous });
   const incomingSnapshot = snapshotQuery.data as Snapshot | undefined;
   const incomingHistorical = historicalQuery.data as Historical | undefined;
   const currentSnapshot = incomingSnapshot?.dataStatus === "LIVE" && incomingSnapshot.symbol === symbol ? incomingSnapshot : null;
   const currentHistorical = incomingHistorical?.dataStatus === "HISTORICAL" && incomingHistorical.symbol === symbol ? incomingHistorical : null;
   const tradeTape = tradeTapeQuery.data as TradeTape | undefined;
+  const depthBook = depthQuery.data as DepthBook | undefined;
 
   useEffect(() => { if (currentSnapshot) setLastVerifiedSnapshot(currentSnapshot); }, [currentSnapshot]);
   useEffect(() => { if (currentHistorical) setLastVerifiedHistorical(currentHistorical); }, [currentHistorical]);
@@ -223,7 +260,10 @@ export default function Home() {
   const verifiedSymbol = displayHistorical?.symbol ?? displaySnapshot?.symbol ?? symbol;
   const isShowingLastVerifiedMarket = !requestedMarketIsValid && verifiedSymbol !== symbol;
   const cvdState = tradeTape?.symbol === verifiedSymbol ? tradeTape.dataStatus : "UNAVAILABLE";
-  const cvdTrades = cvdState === "LIVE" ? tradeTape?.trades ?? [] : [];
+  const tapeForVerifiedSymbol = tradeTape?.symbol === verifiedSymbol ? tradeTape : undefined;
+  const cvdTrades = cvdState === "LIVE" ? tapeForVerifiedSymbol?.trades ?? [] : [];
+  const domState = depthBook?.symbol === verifiedSymbol ? depthBook.dataStatus : "UNAVAILABLE";
+  const orderFlowDockOpen = domEnabled || activeLayers.includes("tape") || activeLayers.includes("footprint");
 
   const setMarket = (next: string) => {
     const normalized = next.trim().toUpperCase();
@@ -248,7 +288,7 @@ export default function Home() {
     if (layer.availability === "unavailable") { setFeedback({ kind: "warning", message: `${layer.label} is gated: ${layer.detail}` }); return; }
     setActiveLayers((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   };
-  const retry = () => { void Promise.all([snapshotQuery.refetch(), historicalQuery.refetch(), ...(cvdEnabled ? [tradeTapeQuery.refetch()] : [])]); setFeedback({ kind: "info", message: cvdEnabled ? "Retrying public snapshot, historical, and live trade-tape requests." : "Retrying the public snapshot and historical data requests." }); };
+  const retry = () => { void Promise.all([snapshotQuery.refetch(), historicalQuery.refetch(), ...(tapeEnabled ? [tradeTapeQuery.refetch()] : []), ...(domEnabled ? [depthQuery.refetch()] : [])]); setFeedback({ kind: "info", message: domEnabled ? "Retrying public snapshot, history, live trade tape, and reconciled depth requests." : tapeEnabled ? "Retrying public snapshot, historical, and live trade-tape requests." : "Retrying the public snapshot and historical data requests." }); };
   const resetViewport = () => { setReplay(false); setFeedback({ kind: "info", message: "Chart viewport reset to the latest verified window." }); };
   const shownBars = replay && displayHistorical ? displayHistorical.bars.slice(0, Math.max(60, Math.floor(displayHistorical.bars.length * 0.68))) : displayHistorical?.bars ?? [];
 
@@ -278,9 +318,10 @@ export default function Home() {
         <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={() => { setShowStudies(true); setShowResearch(false); }}><Layers3 size={14} /> Studies</button><button onClick={() => { setShowResearch(true); setShowStudies(false); }}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Maximize2 size={16} /></button></div>
         {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
         <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} />
+        {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in live order-flow panels">{domEnabled && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={tapeForVerifiedSymbol} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={tapeForVerifiedSymbol} />}</aside>}
         <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
-      {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={() => setShowStudies(false)} />}
+      {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={() => setShowStudies(false)} />}
       {showResearch && !focusMode && <ResearchDrawer bars={displayHistorical?.bars ?? []} historical={displayHistorical} symbol={displayHistorical?.symbol ?? symbol} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
     </section>
 

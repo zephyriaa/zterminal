@@ -3,7 +3,7 @@ import { evaluateFeatures } from "@shared/features/registry";
 export type Timeframe = "1m" | "3m" | "5m" | "15m" | "30m" | "1h" | "4h" | "D";
 export type ProviderInterval = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d";
 export type TerminalBar = { t: number; o: number; h: number; l: number; c: number; v: number };
-export type ResearchLayerId = "vwap" | "ema" | "profile" | "sessions" | "structure" | "cvd" | "gex";
+export type ResearchLayerId = "vwap" | "ema" | "profile" | "sessions" | "structure" | "cvd" | "dom" | "tape" | "footprint" | "gex";
 export type ResearchLayerCapability = {
   id: ResearchLayerId;
   label: string;
@@ -20,6 +20,9 @@ export const RESEARCH_LAYER_CAPABILITIES: ResearchLayerCapability[] = [
   { id: "sessions", label: "Sessions", category: "context", availability: "available", source: "Loaded Gate.io public candle timestamps", detail: "Subtle UTC session regions inferred from verified candle timestamps." },
   { id: "structure", label: "Structure", category: "context", availability: "available", source: "Loaded Gate.io public candles", detail: "Loaded-window high, low, and midpoint context; not a predictive signal." },
   { id: "cvd", label: "CVD", category: "flow", availability: "available", source: "Gate.io public taker-signed trade tape", detail: "Cumulative signed size from the current bounded public trade-stream window. Positive size is exchange-reported taker buy; negative size is exchange-reported taker sell. It is not derived from candle bars or a historical tick archive." },
+  { id: "dom", label: "Live DOM", category: "flow", availability: "available", source: "Gate.io public depth snapshot + sequenced deltas", detail: "Top-of-book depth reconciled from a REST snapshot and ordered public deltas. It is live-only, hides on stale or degraded transport, and does not represent historical depth." },
+  { id: "tape", label: "Time & Sales", category: "flow", availability: "available", source: "Gate.io public taker-signed trade tape", detail: "A bounded ordered list of exchange-reported public trades. Buy or sell is shown only from Gate.io’s signed taker size; it is live-only and not a historical tick archive." },
+  { id: "footprint", label: "Live footprint", category: "flow", availability: "available", source: "Gate.io public taker-signed trade tape", detail: "Exact-price buy, sell, and delta aggregation across the current bounded public tape. It is not derived from candle volume and is not historical footprint data." },
   { id: "gex", label: "GEX", category: "positioning", availability: "unavailable", source: "Options-feed required (Deribit/CME/OPRA)", detail: "Gamma exposure is not estimated from public candle or perpetual trade data." },
 ];
 

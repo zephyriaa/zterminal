@@ -38,6 +38,22 @@ export type CumulativeVolumeDeltaPoint = {
   tradeId: string;
 };
 
+export type TimeAndSalesRow = {
+  tradeId: string;
+  timestamp: number;
+  price: number;
+  size: number;
+  side: "BUY" | "SELL";
+};
+
+export type FootprintLevel = {
+  price: number;
+  buySize: number;
+  sellSize: number;
+  delta: number;
+  tradeCount: number;
+};
+
 function finiteNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim() !== "") {
@@ -113,6 +129,32 @@ export function calculateCvd(trades: GatePublicTrade[]): CumulativeVolumeDeltaPo
     value += trade.signedSize;
     return { timestamp: trade.timestamp, value, tradeId: trade.id };
   });
+}
+
+/** Presents a bounded exchange-reported tape as Time & Sales without inferred trade direction. */
+export function toTimeAndSales(trades: GatePublicTrade[]): TimeAndSalesRow[] {
+  return orderGatePublicTrades(trades).map(trade => ({
+    tradeId: trade.id,
+    timestamp: trade.timestamp,
+    price: trade.price,
+    size: Math.abs(trade.signedSize),
+    side: trade.signedSize > 0 ? "BUY" : "SELL",
+  }));
+}
+
+/** Aggregates only the bounded live tape by exact exchange trade price; it is not candle-based footprint. */
+export function calculateLiveTapeFootprint(trades: GatePublicTrade[]): FootprintLevel[] {
+  const levels = new Map<number, Omit<FootprintLevel, "price" | "delta">>();
+  for (const trade of orderGatePublicTrades(trades)) {
+    const current = levels.get(trade.price) ?? { buySize: 0, sellSize: 0, tradeCount: 0 };
+    if (trade.signedSize > 0) current.buySize += trade.signedSize;
+    else current.sellSize += Math.abs(trade.signedSize);
+    current.tradeCount += 1;
+    levels.set(trade.price, current);
+  }
+  return Array.from(levels.entries())
+    .map(([price, level]) => ({ price, ...level, delta: level.buySize - level.sellSize }))
+    .sort((left, right) => right.price - left.price);
 }
 
 function normalizeDepthLevels(value: unknown): DepthLevel[] | null {

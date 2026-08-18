@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateCvd,
+  calculateLiveTapeFootprint,
   normalizeGateOrderBookSnapshot,
   normalizeGateOrderBookUpdate,
   normalizeGatePublicTrades,
   reconcileGateOrderBook,
+  toTimeAndSales,
 } from "./orderFlowContracts";
 
 describe("Gate.io order-flow contracts", () => {
@@ -20,6 +22,23 @@ describe("Gate.io order-flow contracts", () => {
     expect(calculateCvd(trades)).toEqual([
       { timestamp: 1_000, value: 3, tradeId: "1" },
       { timestamp: 2_000, value: 0.5, tradeId: "2" },
+    ]);
+  });
+
+  it("derives bounded Time & Sales and exact-price footprint only from exchange-signed public trades", () => {
+    const trades = normalizeGatePublicTrades([
+      { id: 3, contract: "BTC_USDT", price: "100", size: "2", create_time_ms: 3_000 },
+      { id: 1, contract: "BTC_USDT", price: "100", size: "-1.5", create_time_ms: 1_000 },
+      { id: 2, contract: "BTC_USDT", price: "99", size: "4", create_time_ms: 2_000 },
+    ]);
+    expect(toTimeAndSales(trades)).toEqual([
+      { tradeId: "1", timestamp: 1_000, price: 100, size: 1.5, side: "SELL" },
+      { tradeId: "2", timestamp: 2_000, price: 99, size: 4, side: "BUY" },
+      { tradeId: "3", timestamp: 3_000, price: 100, size: 2, side: "BUY" },
+    ]);
+    expect(calculateLiveTapeFootprint(trades)).toEqual([
+      { price: 100, buySize: 2, sellSize: 1.5, delta: 0.5, tradeCount: 2 },
+      { price: 99, buySize: 4, sellSize: 0, delta: 4, tradeCount: 1 },
     ]);
   });
 

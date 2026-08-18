@@ -10,6 +10,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { listResearchDrafts, saveResearchDraft } from "./researchStore";
 import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
 import { gateioTradeStream } from "./gateioTradeStream";
+import { gateioDepthStream } from "./gateioDepthStream";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
 const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks";
@@ -26,6 +27,11 @@ const ContractListInput = z.object({
 const TradeTapeInput = z.object({
   symbol: z.string().trim().min(1).max(40).optional(),
   limit: z.number().int().min(1).max(500).default(250),
+}).optional();
+
+const DepthInput = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(5).max(50).default(20),
 }).optional();
 
 const CandleInput = z.object({
@@ -97,7 +103,7 @@ export const appRouter = router({
       state: "CONNECTED" as const,
       instruments: { search: "provider-verified-on-request", aliases: true },
       history: { ranges: true, maximumBarsPerRequest: MAX_CANDLE_LIMIT, intervals: MARKET_INTERVALS },
-      orderFlow: { state: "VERIFYING" as const, reason: "Gate.io documents taker-signed public trades; canonical stream ordering, reconnect, and deduplication fixtures are pending." },
+      orderFlow: { state: "PARTIAL" as const, reason: "CVD uses a verified bounded public trade tape; DOM uses a reconciled public depth snapshot plus sequenced deltas. Footprint and Time & Sales remain unavailable." },
       gex: { state: "UNAVAILABLE" as const, reason: "Options-feed required (Deribit/CME/OPRA); Gate.io perpetual data does not provide options-chain or Greek inputs." },
       providerCatalog: PROVIDER_CATALOG,
     })),
@@ -172,6 +178,16 @@ export const appRouter = router({
       return {
         ...snapshot,
         trades: snapshot.trades.slice(-(input?.limit ?? 250)),
+      };
+    }),
+    depth: publicProcedure.input(DepthInput).query(({ input }) => {
+      const symbol = input?.symbol ? resolveSymbol(input.symbol) : DEFAULT_SYMBOL;
+      if (!symbol) return gateioDepthStream.getSnapshot(input?.symbol ?? "");
+      const snapshot = gateioDepthStream.getSnapshot(symbol);
+      return {
+        ...snapshot,
+        bids: snapshot.bids.slice(0, input?.limit ?? 20),
+        asks: snapshot.asks.slice(0, input?.limit ?? 20),
       };
     }),
     snapshot: publicProcedure.input(SnapshotInput).query(async ({ input }) => {
