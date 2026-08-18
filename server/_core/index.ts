@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { getMarketReadiness } from "../marketReadiness";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -36,6 +37,15 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/healthz", (_req, res) => {
     res.status(200).json({ status: "ok", service: "zterminal-research-terminal", execution: "disabled" });
+  });
+  app.get("/readyz", async (_req, res) => {
+    const readiness = await getMarketReadiness();
+    res.status(readiness.status === "READY" ? 200 : 503).json({
+      status: readiness.status === "READY" ? "ready" : "not_ready",
+      service: "zterminal-research-terminal",
+      execution: "disabled",
+      readiness,
+    });
   });
   registerStorageProxy(app);
   registerOAuthRoutes(app);

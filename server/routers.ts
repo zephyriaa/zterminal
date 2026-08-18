@@ -8,13 +8,20 @@ import { alignRange, classifyProviderFailure, coverageForBars, MARKET_INTERVALS,
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { listResearchDrafts, saveResearchDraft } from "./researchStore";
+import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
 const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks";
+const GATE_CONTRACTS_URL = "https://api.gateio.ws/api/v4/futures/usdt/contracts";
 const DEFAULT_SYMBOL = "QQQX_USDT";
 const MAX_CANDLE_LIMIT = 2_000;
 
 const SnapshotInput = z.object({ symbol: z.string().trim().min(1).max(40).optional() }).optional();
+const ContractListInput = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.number().int().min(1).max(250).default(100),
+}).optional();
+
 const CandleInput = z.object({
   interval: z.enum(MARKET_INTERVALS),
   symbol: z.string().trim().min(1).max(40).optional(),
@@ -84,9 +91,74 @@ export const appRouter = router({
       state: "CONNECTED" as const,
       instruments: { search: "provider-verified-on-request", aliases: true },
       history: { ranges: true, maximumBarsPerRequest: MAX_CANDLE_LIMIT, intervals: MARKET_INTERVALS },
-      orderFlow: { state: "UNAVAILABLE" as const, reason: "Verified public trade-tape coverage is required." },
-      gex: { state: "UNAVAILABLE" as const, reason: "Verified options-chain and Greek data are required." },
+      orderFlow: { state: "VERIFYING" as const, reason: "Gate.io documents taker-signed public trades; canonical stream ordering, reconnect, and deduplication fixtures are pending." },
+      gex: { state: "UNAVAILABLE" as const, reason: "Options-feed required (Deribit/CME/OPRA); Gate.io perpetual data does not provide options-chain or Greek inputs." },
+      providerCatalog: PROVIDER_CATALOG,
     })),
+    providers: publicProcedure.query(() => ({
+      at: Date.now(),
+      activeProvider: "gateio" as const,
+      providers: PROVIDER_CATALOG,
+    })),
+    contracts: publicProcedure.input(ContractListInput).query(async ({ input }) => {
+      const fetchedAt = Date.now();
+      const requestedSymbol = input?.symbol ? resolveSymbol(input.symbol) : null;
+      if (input?.symbol && !requestedSymbol) {
+        return {
+          provider: "gateio" as const,
+          state: "UNAVAILABLE" as const,
+          fetchedAt,
+          contracts: [],
+          reasonCode: "UNSUPPORTED_INSTRUMENT" as const,
+          reason: "The requested instrument is not a Gate.io USDT perpetual symbol.",
+          retryable: false,
+        };
+      }
+      try {
+        const response = await axios.get<unknown>(GATE_CONTRACTS_URL, {
+          headers: { Accept: "application/json" },
+          timeout: 12_000,
+          responseType: "json",
+        });
+        if (!Array.isArray(response.data)) throw new Error("Gate.io returned an invalid futures-contract payload");
+        const contracts = response.data
+          .map(contract => gateContractToMarketMetadata(contract, fetchedAt))
+          .filter((contract): contract is NonNullable<typeof contract> => contract !== null)
+          .filter(contract => requestedSymbol === null || contract.nativeSymbol === requestedSymbol)
+          .slice(0, input?.limit ?? 100);
+        if (requestedSymbol && contracts.length === 0) {
+          return {
+            provider: "gateio" as const,
+            state: "UNAVAILABLE" as const,
+            fetchedAt,
+            contracts: [],
+            reasonCode: "UNSUPPORTED_INSTRUMENT" as const,
+            reason: "Gate.io did not return metadata for the requested USDT perpetual symbol.",
+            retryable: false,
+          };
+        }
+        return {
+          provider: "gateio" as const,
+          state: contracts.length ? "CONNECTED" as const : "EMPTY" as const,
+          fetchedAt,
+          contracts,
+          reasonCode: null,
+          reason: null,
+          retryable: false,
+        };
+      } catch (error) {
+        const failure = classifyProviderFailure(error);
+        return {
+          provider: "gateio" as const,
+          state: "UNAVAILABLE" as const,
+          fetchedAt,
+          contracts: [],
+          reasonCode: failure.reasonCode,
+          reason: failure.message,
+          retryable: failure.retryable,
+        };
+      }
+    }),
     snapshot: publicProcedure.input(SnapshotInput).query(async ({ input }) => {
       const at = Date.now();
       const symbol = resolveSymbol(input?.symbol);
