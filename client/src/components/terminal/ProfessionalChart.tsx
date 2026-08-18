@@ -7,6 +7,7 @@ import {
   LineSeries,
   LineStyle,
   createChart,
+  createSeriesMarkers,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
@@ -15,6 +16,7 @@ import { Activity, AlertTriangle, Crosshair, LoaderCircle, RefreshCw } from "luc
 import type { ResearchLayerId, TerminalBar } from "@/lib/terminalWorkspace";
 import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries } from "@shared/features/registry";
 import { calculateCvd, type GatePublicTrade } from "@shared/market/orderFlowContracts";
+import type { BacktestMarker } from "@shared/backtest/engine";
 
 type HoveredBar = {
   time: number;
@@ -38,6 +40,7 @@ type ProfessionalChartProps = {
   showMomentum?: boolean;
   cvdTrades?: GatePublicTrade[];
   cvdState?: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE";
+  tradeMarkers?: BacktestMarker[];
 };
 
 const chartColors = {
@@ -124,6 +127,7 @@ export function ProfessionalChart({
   showMomentum = true,
   cvdTrades = [],
   cvdState = "UNAVAILABLE",
+  tradeMarkers = [],
 }: ProfessionalChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [hoveredBar, setHoveredBar] = useState<HoveredBar>(null);
@@ -197,6 +201,15 @@ export function ProfessionalChart({
         priceFormat: { type: "price", precision: 4, minMove: 0.0001 },
       });
       candleSeries.setData(visibleBars.map((bar) => ({ time: Math.floor(bar.t / 1000) as UTCTimestamp, open: bar.o, high: bar.h, low: bar.l, close: bar.c })));
+      if (tradeMarkers.length) {
+        createSeriesMarkers(candleSeries, tradeMarkers.map(marker => ({
+          time: Math.floor(marker.time / 1000) as UTCTimestamp,
+          position: marker.position,
+          shape: marker.shape,
+          color: marker.color,
+          text: marker.text,
+        })));
+      }
 
       let volumeSeries: ISeriesApi<"Histogram"> | null = null;
       try {
@@ -299,7 +312,7 @@ export function ProfessionalChart({
       resizeObserver?.disconnect();
       chart?.remove();
     };
-  }, [visibleBars, activeLayers, has, showMomentum, studies, cvdSeriesData]);
+  }, [visibleBars, activeLayers, has, showMomentum, studies, cvdSeriesData, tradeMarkers]);
 
   const quote = hoveredBar ?? (lastBar ? { time: lastBar.t, open: lastBar.o, high: lastBar.h, low: lastBar.l, close: lastBar.c, volume: lastBar.v } : null);
   const showingPrevious = !bars.length && visibleBars.length > 0;

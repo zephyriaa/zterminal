@@ -42,7 +42,7 @@ import {
 import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
 import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft, writeLocalResearchDraft } from "@/lib/researchDraft";
 import { evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
-import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES } from "@shared/backtest/engine";
+import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeFootprint, toTimeAndSales, type DepthLevel, type GatePublicTrade } from "@shared/market/orderFlowContracts";
@@ -228,6 +228,7 @@ export default function Home() {
   const [activeLayers, setActiveLayers] = useState<ResearchLayerId[]>(["vwap", "ema", "profile", "structure"]);
   const [replay, setReplay] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [backtestMarkers, setBacktestMarkers] = useState<BacktestMarker[]>([]);
   const [lastVerifiedHistorical, setLastVerifiedHistorical] = useState<Historical | null>(null);
   const [lastVerifiedSnapshot, setLastVerifiedSnapshot] = useState<Snapshot | null>(null);
   const providerInterval = toProviderInterval(timeframe);
@@ -275,6 +276,22 @@ export default function Home() {
       returnedBars: displayHistorical.coverage.returnedBars,
       sourceTimestamp: displayHistorical.sourceTimestamp,
       fingerprint: evaluateFeatures(displayHistorical.bars).fingerprint,
+    };
+  }, [displayHistorical]);
+  const backtestDataContext = useMemo(() => {
+    if (!displayHistorical) return undefined;
+    return {
+      provider: "gateio",
+      symbol: displayHistorical.symbol,
+      interval: displayHistorical.interval,
+      requestedFrom: displayHistorical.coverage.requestedFrom,
+      requestedTo: displayHistorical.coverage.requestedTo,
+      effectiveFrom: displayHistorical.coverage.effectiveFrom,
+      effectiveTo: displayHistorical.coverage.effectiveTo,
+      sourceTimestamp: displayHistorical.sourceTimestamp,
+      fetchedAt: displayHistorical.fetchedAt,
+      coverageComplete: displayHistorical.coverage.complete,
+      dataStatus: "HISTORICAL" as const,
     };
   }, [displayHistorical]);
 
@@ -330,12 +347,12 @@ export default function Home() {
       <section className="chart-workspace">
         <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={() => { setShowStudies(true); setShowResearch(false); }}><Layers3 size={14} /> Studies</button><button onClick={() => { setShowResearch(true); setShowStudies(false); }}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Maximize2 size={16} /></button></div>
         {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
-        <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} />
+        <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} />
         {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in live order-flow panels">{domEnabled && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={tapeForVerifiedSymbol} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={tapeForVerifiedSymbol} />}</aside>}
         <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
       {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={() => setShowStudies(false)} />}
-      {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
+      {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
     </section>
 
     <footer className="premium-terminal-footer"><span><Radio size={13} /> Public-market research only</span><span><Target size={13} /> Execution disabled · no broker route</span><a className="chart-engine-attribution" href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc.</a><span><Clock3 size={13} /> UTC · {new Date().toISOString().slice(11, 16)}</span></footer>

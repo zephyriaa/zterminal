@@ -482,3 +482,39 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .compile-diagnostics > div.info { border-left-color: #85a0de; color: #b6c5ec; background: rgba(48,66,115,.11); }
 .compiler-boundary { display: flex; align-items: flex-start; gap: 6px; padding: 8px; border: 1px solid rgba(63,213,192,.2); border-radius: 6px; background: rgba(15,105,93,.11); color: #9fd5cd; font-size: 8px; line-height: 1.42; }
 .compiler-boundary svg { flex: 0 0 auto; margin-top: 1px; color: #75e3d4; }
+
+/* B1 deterministic evidence panel: every outcome keeps its execution assumptions,
+   immutable protocol classification, and source provenance within the drawer. */
+.backtest-evidence-panel .protocol-banner small { white-space: normal; }
+.backtest-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.backtest-config-grid label:last-child { grid-column: span 2; }
+.backtest-run-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.backtest-run-actions .terminal-primary-button svg { animation: none; }
+.backtest-run-actions .terminal-primary-button:disabled svg { animation: protocol-spin 1s linear infinite; }
+@keyframes protocol-spin { to { transform: rotate(360deg); } }
+.backtest-run-actions small { flex: 1 1 100%; color: #878795; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.marker-toggle { display: inline-flex !important; grid-template-columns: 14px 1fr; align-items: center; gap: 5px !important; width: auto; color: #bebbc9 !important; white-space: nowrap; }
+.marker-toggle input { width: 13px !important; height: 13px; margin: 0; accent-color: #53dbc9; }
+.backtest-result-section { border-color: rgba(93, 188, 237, .25); }
+.backtest-classification { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 7px; border: 1px solid rgba(132, 109, 225, .2); border-radius: 6px; background: rgba(64, 42, 109, .11); }
+.backtest-classification > span { overflow-wrap: anywhere; color: #bab0d0; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.backtest-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.backtest-metrics > div { display: grid; gap: 3px; padding: 8px; border: 1px solid rgba(132, 135, 172, .16); border-radius: 5px; background: rgba(15, 17, 29, .52); }
+.backtest-metrics span { color: #9292a3; font-size: 8px; text-transform: uppercase; letter-spacing: .04em; }
+.backtest-metrics b { color: #e1deea; font: 650 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.backtest-provenance { display: grid; gap: 4px; padding: 9px; border: 1px solid rgba(46, 202, 184, .2); border-radius: 6px; background: rgba(13, 97, 86, .1); }
+.backtest-provenance b { color: #88e4d6; font-size: 9px; }
+.backtest-provenance span { color: #d0ede8; font: 650 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.backtest-provenance small { color: #8fabaa; font: 8px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.monthly-outcomes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+.monthly-outcomes > div { display: grid; grid-template-columns: 1fr auto; gap: 2px 5px; padding: 7px; border: 1px solid rgba(132, 135, 172, .14); border-radius: 5px; background: rgba(12, 13, 22, .48); }
+.monthly-outcomes span { color: #aaa8b7; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.monthly-outcomes b { font: 700 9px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+.monthly-outcomes small { grid-column: 1 / -1; color: #858492; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.backtest-trades { display: grid; max-height: 250px; overflow: auto; border-top: 1px solid rgba(145, 133, 187, .13); }
+.backtest-trades > div { display: grid; grid-template-columns: 27px 1fr auto; gap: 4px 6px; padding: 7px 2px; border-bottom: 1px solid rgba(145, 133, 187, .12); font-size: 8px; }
+.backtest-trades b { color: #d3cee0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.backtest-trades span { overflow: hidden; color: #a6a4b2; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.backtest-trades em { font: 700 8px ui-monospace, SFMono-Regular, Menlo, monospace; font-style: normal; }
+.backtest-trades small { grid-column: 2 / -1; color: #7f7f8c; font-size: 8px; }
+@media (max-width: 760px) { .backtest-config-grid { grid-template-columns: 1fr; } .backtest-config-grid label:last-child { grid-column: auto; } .monthly-outcomes { grid-template-columns: 1fr; } }
