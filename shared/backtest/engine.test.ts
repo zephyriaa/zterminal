@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runBacktest } from "./engine";
+import { runBacktest, runSignalBacktest, type StrategyDefinition } from "./engine";
 
 function makeBars() {
   const closes = [...Array.from({ length: 30 }, (_, index) => 130 - index), ...Array.from({ length: 40 }, (_, index) => 101 + index * 1.8)];
@@ -64,6 +64,26 @@ describe("deterministic research backtest", () => {
     expect(changedParameter.hash).not.toBe(baseline.hash);
     expect(incremental.hash).not.toBe(baseline.hash);
     expect(incremental.classification.label).toBe("INCREMENTAL · ONE VARIABLE");
+  });
+
+  it("evaluates prevalidated closed-runtime signals with next-open fills rather than silently substituting the fixed template", () => {
+    const bars = makeBars().slice(0, 6);
+    const strategy: StrategyDefinition = { id: "zs-closed-fixture", version: "zs-historical-runtime-v1", label: "Closed fixture", description: "Fixture only", signalTiming: "bar_close", entryRule: "Declared entry", exitRule: "Declared close", limitations: ["Closed runtime fixture."] };
+    const signals = [
+      { kind: "entry" as const, time: bars[1]!.t, barIndex: 1, id: "long", quantity: 2.5 },
+      { kind: "exit" as const, time: bars[3]!.t, barIndex: 3, id: "long" },
+    ];
+    const first = runSignalBacktest(strategy, signals, bars, { tickSize: 0.1 }, verifiedContext);
+    const second = runSignalBacktest(strategy, signals, bars, { tickSize: 0.1 }, verifiedContext);
+    expect(first.status).toBe("COMPLETED");
+    expect(first.hash).toBe(second.hash);
+    expect(first.strategy.id).toBe("zs-closed-fixture");
+    expect(first.trades).toHaveLength(1);
+    expect(first.trades[0]).toMatchObject({ signalTime: bars[1]!.t, entryTime: bars[2]!.t, exitTime: bars[4]!.t, quantity: 2.5, reason: "signal_exit" });
+    expect(first.limitations.some(item => item.includes("closed historical runtime"))).toBe(true);
+    const invalid = runSignalBacktest(strategy, [{ kind: "entry", time: 123, barIndex: 1, id: "long", quantity: 1 }], bars, {}, verifiedContext);
+    expect(invalid.status).toBe("INVALID_INPUT");
+    expect(invalid.trades).toEqual([]);
   });
 
   it("normalizes duplicates, rejects malformed bars, and distinguishes terminal marks from next-bar market fills", () => {

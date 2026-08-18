@@ -6,7 +6,7 @@ export type BacktestBar = MarketBar;
 export type ScalarParameter = string | number | boolean;
 
 export type StrategyDefinition = {
-  id: StrategyTemplateId;
+  id: string;
   version: string;
   label: string;
   description: string;
@@ -28,6 +28,10 @@ export const STRATEGY_TEMPLATES: Record<StrategyTemplateId, StrategyDefinition> 
     limitations: ["Long-only research template.", "Signals use the loaded verified window only.", "Signals are observed at bar close and market fills are modeled at the next bar open.", "No order routing, broker connectivity, optimization, or forecast is provided."],
   },
 };
+
+export type HistoricalSignal =
+  | { kind: "entry"; time: number; barIndex: number; id: string; quantity: number }
+  | { kind: "exit"; time: number; barIndex: number; id: string };
 
 export type BacktestConfig = {
   initialCapital: number;
@@ -162,8 +166,8 @@ export type BacktestResult = {
   limitations: string[];
 };
 
-type PendingOrder = { kind: "entry" | "exit"; signalTime: number };
-type OpenPosition = { signalTime: number; entryTime: number; entryPrice: number; entryIndex: number };
+type PendingOrder = { kind: "entry" | "exit"; signalTime: number; quantity?: number };
+type OpenPosition = { signalTime: number; entryTime: number; entryPrice: number; entryIndex: number; quantity: number };
 type NormalizedBars = { bars: BacktestBar[]; rejectedBars: number; duplicateBars: number };
 
 function isFinitePositive(value: number) { return Number.isFinite(value) && value > 0; }
@@ -295,31 +299,31 @@ export function runBacktest(strategyId: StrategyTemplateId, inputBars: BacktestB
   const closePosition = (bar: BacktestBar, index: number, reason: Trade["reason"], terminalMark = false) => {
     if (!position) return;
     const exitPrice = (terminalMark ? bar.c : bar.o) - spreadPerFill - slippagePerFill;
-    const grossPnl = (exitPrice - position.entryPrice) * config.positionSize * config.multiplier;
-    const commissionCosts = config.commissionPerUnit * config.positionSize * 2;
-    const spreadCosts = config.spreadTicks * config.tickSize * config.positionSize * config.multiplier;
-    const slippageCosts = config.slippageTicks * config.tickSize * config.positionSize * config.multiplier * 2;
+    const grossPnl = (exitPrice - position.entryPrice) * position.quantity * config.multiplier;
+    const commissionCosts = config.commissionPerUnit * position.quantity * 2;
+    const spreadCosts = config.spreadTicks * config.tickSize * position.quantity * config.multiplier;
+    const slippageCosts = config.slippageTicks * config.tickSize * position.quantity * config.multiplier * 2;
     const costs = commissionCosts + spreadCosts + slippageCosts;
     const netPnl = grossPnl - commissionCosts;
     cash += netPnl;
-    trades.push({ id: trades.length + 1, side: "long", signalTime: position.signalTime, entryTime: position.entryTime, entryPrice: position.entryPrice, exitTime: bar.t, exitPrice, quantity: config.positionSize, grossPnl, commissionCosts, spreadCosts, slippageCosts, costs, netPnl, returnPct: ((exitPrice - position.entryPrice) / position.entryPrice) * 100, barsHeld: index - position.entryIndex, reason });
+    trades.push({ id: trades.length + 1, side: "long", signalTime: position.signalTime, entryTime: position.entryTime, entryPrice: position.entryPrice, exitTime: bar.t, exitPrice, quantity: position.quantity, grossPnl, commissionCosts, spreadCosts, slippageCosts, costs, netPnl, returnPct: ((exitPrice - position.entryPrice) / position.entryPrice) * 100, barsHeld: index - position.entryIndex, reason });
     position = null;
   };
 
   for (let index = 0; index < bars.length; index += 1) {
     const bar = bars[index];
-    if (pending?.kind === "entry") { position = { signalTime: pending.signalTime, entryTime: bar.t, entryPrice: bar.o + spreadPerFill + slippagePerFill, entryIndex: index }; pending = null; }
+    if (pending?.kind === "entry") { position = { signalTime: pending.signalTime, entryTime: bar.t, entryPrice: bar.o + spreadPerFill + slippagePerFill, entryIndex: index, quantity: pending.quantity ?? config.positionSize }; pending = null; }
     else if (pending?.kind === "exit") { closePosition(bar, index, "signal_exit"); pending = null; }
     const hasNextOpen = index < bars.length - 1;
     const hasIndicators = index > 0 && Number.isFinite(ema20[index]) && Number.isFinite(ema50[index]) && Number.isFinite(vwap[index]);
     if (hasIndicators && !pending && hasNextOpen) {
       const crossedUp = ema20[index - 1] <= ema50[index - 1] && ema20[index] > ema50[index];
       const crossedDown = ema20[index - 1] >= ema50[index - 1] && ema20[index] < ema50[index];
-      if (!position && crossedUp && bar.c > vwap[index]) pending = { kind: "entry", signalTime: bar.t };
+      if (!position && crossedUp && bar.c > vwap[index]) pending = { kind: "entry", signalTime: bar.t, quantity: config.positionSize };
       if (position && (crossedDown || bar.c < vwap[index])) pending = { kind: "exit", signalTime: bar.t };
     }
     const unrealizedExit = position ? bar.c - spreadPerFill - slippagePerFill : 0;
-    const unrealized = position ? (unrealizedExit - position.entryPrice) * config.positionSize * config.multiplier : 0;
+    const unrealized = position ? (unrealizedExit - position.entryPrice) * position.quantity * config.multiplier : 0;
     equity.push({ t: bar.t, value: cash + unrealized });
   }
 
@@ -330,4 +334,68 @@ export function runBacktest(strategyId: StrategyTemplateId, inputBars: BacktestB
   }
   const drawdown = drawdownSeries(equity);
   return { engineVersion: BACKTEST_ENGINE_VERSION, strategy, config, classification, provenance, data: { barCount: provenance.normalizedBars, from: provenance.effectiveFrom, to: provenance.effectiveTo, fingerprint: provenance.fingerprint }, trades, markers: tradeMarkers(trades), equity, drawdown, monthlyOutcomes: monthlyOutcomes(equity), metrics: metricsFor(trades, equity, drawdown, config), runId: `bt_${hash.slice(-10)}`, hash, status: "COMPLETED", limitations: [...strategy.limitations, "Terminal open positions are marked at the final close only for end-of-data accounting; this is not a next-bar market fill.", "Historical results are research evidence only and do not establish future performance."] };
+}
+
+/** Runs prevalidated closed-runtime signal declarations against verified historical bars. Source text is never executed here. */
+export function runSignalBacktest(strategy: StrategyDefinition, suppliedSignals: HistoricalSignal[], inputBars: BacktestBar[], suppliedConfig: Partial<BacktestConfig> = {}, context: BacktestRunContext = {}): BacktestResult {
+  const config = { ...DEFAULT_BACKTEST_CONFIG, ...suppliedConfig };
+  if (!validateConfig(config)) return emptyResult(strategy, config, inputBars, context, "INVALID_INPUT", "The configuration has invalid capital, size, multiplier, commission, spread, slippage, or tick inputs; no evaluation was run.");
+  const normalized = normalizeBars(inputBars);
+  const bars = normalized.bars;
+  if (bars.length < 2) return emptyResult(strategy, config, inputBars, context, "INSUFFICIENT_DATA", "At least two verified bars are required for a close signal and a later next-open fill.");
+  const provenance = provenanceFor(inputBars, normalized, context.data);
+  if (provenance.dataStatus !== "HISTORICAL") return emptyResult(strategy, config, inputBars, context, "INVALID_INPUT", "Historical evaluation requires an explicitly historical, verified dataset.");
+  const signalMap = new Map<number, HistoricalSignal[]>();
+  for (const signal of suppliedSignals) {
+    const bar = bars[signal.barIndex];
+    const valid = bar && bar.t === signal.time && typeof signal.id === "string" && signal.id.trim() && (signal.kind === "exit" || (Number.isFinite(signal.quantity) && signal.quantity > 0));
+    if (!valid) return emptyResult(strategy, config, inputBars, context, "INVALID_INPUT", "Closed-runtime signals must reference an exact normalized bar timestamp and a positive entry quantity.");
+    const atTime = signalMap.get(signal.time) ?? [];
+    atTime.push(signal);
+    signalMap.set(signal.time, atTime);
+  }
+  const classification = classificationFor(context.protocol);
+  const hash = hashString(JSON.stringify({ engine: BACKTEST_ENGINE_VERSION, strategy: { id: strategy.id, version: strategy.version }, signals: suppliedSignals, config, classification, provenance, sourceFingerprint: context.sourceFingerprint ?? null, parameters: stableObject(context.parameters) }));
+  const trades: Trade[] = [];
+  const equity: EquityPoint[] = [];
+  const spreadPerFill = (config.spreadTicks * config.tickSize) / 2;
+  const slippagePerFill = config.slippageTicks * config.tickSize;
+  let cash = config.initialCapital;
+  let position: OpenPosition | null = null;
+  let pending: PendingOrder | null = null;
+  const closePosition = (bar: BacktestBar, index: number, reason: Trade["reason"], terminalMark = false) => {
+    if (!position) return;
+    const exitPrice = (terminalMark ? bar.c : bar.o) - spreadPerFill - slippagePerFill;
+    const grossPnl = (exitPrice - position.entryPrice) * position.quantity * config.multiplier;
+    const commissionCosts = config.commissionPerUnit * position.quantity * 2;
+    const spreadCosts = config.spreadTicks * config.tickSize * position.quantity * config.multiplier;
+    const slippageCosts = config.slippageTicks * config.tickSize * position.quantity * config.multiplier * 2;
+    const costs = commissionCosts + spreadCosts + slippageCosts;
+    const netPnl = grossPnl - commissionCosts;
+    cash += netPnl;
+    trades.push({ id: trades.length + 1, side: "long", signalTime: position.signalTime, entryTime: position.entryTime, entryPrice: position.entryPrice, exitTime: bar.t, exitPrice, quantity: position.quantity, grossPnl, commissionCosts, spreadCosts, slippageCosts, costs, netPnl, returnPct: ((exitPrice - position.entryPrice) / position.entryPrice) * 100, barsHeld: index - position.entryIndex, reason });
+    position = null;
+  };
+  for (let index = 0; index < bars.length; index += 1) {
+    const bar = bars[index]!;
+    if (pending?.kind === "entry") { position = { signalTime: pending.signalTime, entryTime: bar.t, entryPrice: bar.o + spreadPerFill + slippagePerFill, entryIndex: index, quantity: pending.quantity ?? config.positionSize }; pending = null; }
+    else if (pending?.kind === "exit") { closePosition(bar, index, "signal_exit"); pending = null; }
+    if (index < bars.length - 1 && !pending) {
+      const signals = signalMap.get(bar.t) ?? [];
+      const entry = signals.find(signal => signal.kind === "entry");
+      const exit = signals.find(signal => signal.kind === "exit");
+      if (!position && entry?.kind === "entry") pending = { kind: "entry", signalTime: bar.t, quantity: entry.quantity };
+      else if (position && exit?.kind === "exit") pending = { kind: "exit", signalTime: bar.t };
+    }
+    const unrealizedExit = position ? bar.c - spreadPerFill - slippagePerFill : 0;
+    const unrealized = position ? (unrealizedExit - position.entryPrice) * position.quantity * config.multiplier : 0;
+    equity.push({ t: bar.t, value: cash + unrealized });
+  }
+  if (position) {
+    const last = bars.at(-1)!;
+    closePosition(last, bars.length - 1, "end_of_data_mark", true);
+    equity[equity.length - 1] = { t: last.t, value: cash };
+  }
+  const drawdown = drawdownSeries(equity);
+  return { engineVersion: BACKTEST_ENGINE_VERSION, strategy, config, classification, provenance, data: { barCount: provenance.normalizedBars, from: provenance.effectiveFrom, to: provenance.effectiveTo, fingerprint: provenance.fingerprint }, trades, markers: tradeMarkers(trades), equity, drawdown, monthlyOutcomes: monthlyOutcomes(equity), metrics: metricsFor(trades, equity, drawdown, config), runId: `bt_${hash.slice(-10)}`, hash, status: "COMPLETED", limitations: [...strategy.limitations, "Signals were declared by the closed historical runtime; source text was not executed as JavaScript or connected to any broker.", "Terminal open positions are marked at the final close only for end-of-data accounting; this is not a next-bar market fill.", "Historical results are research evidence only and do not establish future performance."] };
 }
