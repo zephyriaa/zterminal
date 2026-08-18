@@ -5,6 +5,16 @@ import type { TrpcContext } from "./context";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
+  // Error messages may be user-facing; server stack traces and local paths never are.
+  errorFormatter({ shape }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        stack: undefined,
+      },
+    };
+  },
 });
 
 export const router = t.router;

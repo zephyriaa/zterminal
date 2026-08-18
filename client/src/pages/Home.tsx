@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   CandlestickChart,
@@ -20,26 +20,31 @@ import {
   Waves,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { startLogin } from "@/const";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   deriveChartMetrics,
   getResearchLayerCapability,
-  rangeToTimeframe,
-  RESEARCH_LAYER_CAPABILITIES,
   summarizeDataset,
   toProviderInterval,
   type ResearchLayerId,
   type TerminalBar,
   type Timeframe,
 } from "@/lib/terminalWorkspace";
+import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
+import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft, writeLocalResearchDraft } from "@/lib/researchDraft";
+import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries, evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
+import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES } from "@shared/backtest/engine";
 
 const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663159529167/hrJwjiFAGWcrxDpw.png";
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
-const RANGE_OPTIONS = ["1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "All"];
 const MODES = ["Focus", "Canvas", "Research"] as const;
 const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessions", "structure", "cvd", "gex"];
 type Mode = (typeof MODES)[number];
-type Snapshot = { price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; reason?: string };
-type Historical = { interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; reason?: string };
+type MarketState = "CONNECTED" | "DEGRADED" | "UNAVAILABLE";
+type Coverage = { requestedFrom: number | null; requestedTo: number | null; effectiveFrom: number | null; effectiveTo: number | null; returnedBars: number; complete: boolean; granularity: string };
+type Snapshot = { symbol: string | null; price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; state: MarketState; reason?: string; retryable?: boolean };
+type Historical = { symbol: string; interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; state: MarketState; coverage: Coverage; reason?: string; retryable?: boolean };
 
 function formatQuote(value: number | null | undefined) {
   return typeof value === "number" && Number.isFinite(value)
@@ -79,26 +84,11 @@ function CanvasChart({ bars, interval, activeLayers, replay }: { bars: TerminalB
     const step = (right - left) / Math.max(renderedBars.length - 1, 1);
     const width = Math.max(1.2, Math.min(7, step * 0.58));
     const y = (value: number) => chartTop + ((high - value) / range) * chartHeight;
-    const emaSeries = (period: number) => {
-      const multiplier = 2 / (period + 1);
-      return renderedBars.reduce<number[]>((series, bar, index) => {
-        series.push(index === 0 ? bar.c : (bar.c - series[index - 1]) * multiplier + series[index - 1]);
-        return series;
-      }, []);
-    };
-    let priceVolume = 0;
-    let volume = 0;
-    const vwap = renderedBars.map((bar) => {
-      priceVolume += ((bar.h + bar.l + bar.c) / 3) * bar.v;
-      volume += bar.v;
-      return volume ? priceVolume / volume : bar.c;
-    });
-    const bins = 12;
-    const profile = Array.from({ length: bins }, (_, index) => ({ price: low + ((index + 0.5) / bins) * range, volume: 0 }));
-    renderedBars.forEach((bar) => {
-      const index = Math.max(0, Math.min(bins - 1, Math.floor(((bar.c - low) / range) * bins)));
-      profile[index].volume += bar.v;
-    });
+    const ema20Series = calculateEmaSeries(renderedBars, 20);
+    const ema50Series = calculateEmaSeries(renderedBars, 50);
+    const vwapSeries = calculateVwapSeries(renderedBars);
+    const evaluatedProfile = calculateVolumeProfile(renderedBars, 12);
+    const profile = evaluatedProfile?.bins ?? [];
     const profileMax = Math.max(...profile.map((bin) => bin.volume), 1);
     return {
       high,
@@ -110,10 +100,10 @@ function CanvasChart({ bars, interval, activeLayers, replay }: { bars: TerminalB
       width,
       volumeBase,
       candles: renderedBars.map((bar, index) => ({ x: left + index * step, open: y(bar.o), close: y(bar.c), high: y(bar.h), low: y(bar.l), volume: (bar.v / maxVolume) * 38, up: bar.c >= bar.o })),
-      ema20: linePath(emaSeries(20), left, step, y),
-      ema50: linePath(emaSeries(50), left, step, y),
-      vwap: linePath(vwap, left, step, y),
-      profile: profile.map((bin) => ({ y: y(bin.price) - 10, width: (bin.volume / profileMax) * 78 })),
+      ema20: linePath(ema20Series, left, step, y),
+      ema50: linePath(ema50Series, left, step, y),
+      vwap: linePath(vwapSeries, left, step, y),
+      profile: profile.map((bin) => ({ y: y(bin.midpoint) - 10, width: (bin.volume / profileMax) * 78 })),
     };
   }, [renderedBars]);
   const metrics = useMemo(() => deriveChartMetrics(renderedBars), [renderedBars]);
@@ -171,61 +161,167 @@ function LayersMark() {
 }
 
 function LayerInspector({ id, bars }: { id: ResearchLayerId | null; bars: TerminalBar[] }) {
+  const features = useMemo(() => evaluateFeatures(bars), [bars]);
   const layer = id ? getResearchLayerCapability(id) : null;
   if (!layer) return null;
   const summary = summarizeDataset(bars);
+  const featureId = id === "vwap" ? "vwap" : id === "ema" ? "ema20" : id === "profile" ? "volumeProfile" : id === "structure" ? "structure" : null;
+  const definition = featureId ? FEATURE_REGISTRY[featureId] : null;
+  const profile = id === "profile" ? features.volumeProfile : null;
   return <aside className="layer-inspector" aria-live="polite">
     <div className="inspector-kicker"><span className={`capability-dot ${layer.availability}`} /> {layer.availability === "available" ? "Verified study" : "Capability gate"}</div>
     <h2>{layer.label}</h2>
     <p>{layer.detail}</p>
-    <dl><div><dt>Source</dt><dd>{layer.source}</dd></div><div><dt>Coverage</dt><dd>{summary.barCount ? `${summary.barCount} loaded bars` : "Awaiting bars"}</dd></div><div><dt>Mode</dt><dd>{layer.availability === "available" ? "Chart layer" : "Unavailable"}</dd></div></dl>
+    <dl><div><dt>Source</dt><dd>{layer.source}</dd></div><div><dt>Coverage</dt><dd>{summary.barCount ? `${summary.barCount} loaded bars` : "Awaiting bars"}</dd></div>{definition && <><div><dt>Feature version</dt><dd>{definition.id} · v{definition.version}</dd></div><div><dt>Dataset fingerprint</dt><dd>{features.fingerprint ?? "Awaiting bars"}</dd></div></>}{profile && <><div><dt>Profile POC</dt><dd>{formatQuote(profile.pointOfControl)}</dd></div><div><dt>Value area</dt><dd>{formatQuote(profile.valueAreaLow)} — {formatQuote(profile.valueAreaHigh)} · {(profile.valueAreaVolumePct * 100).toFixed(0)}%</dd></div></>}<div><dt>Mode</dt><dd>{layer.availability === "available" ? "Chart layer" : "Unavailable"}</dd></div></dl>
   </aside>;
 }
 
-function ResearchCanvas({ bars, historical, onNotice }: { bars: TerminalBar[]; historical: Historical | null; onNotice: (message: string) => void }) {
+function ResearchCanvas({ bars, historical, symbol, onNotice }: { bars: TerminalBar[]; historical: Historical | null; symbol: string; onNotice: (message: string) => void }) {
   const [hypothesis, setHypothesis] = useState("VWAP acceptance after opening-range expansion");
   const [condition, setCondition] = useState("Price remains above loaded-window VWAP");
-  const [saved, setSaved] = useState(false);
+  const [draftState, setDraftState] = useState<"idle" | "local" | "syncing" | "synced" | "sync-failed">("idle");
+  const [backtest, setBacktest] = useState<ReturnType<typeof runBacktest> | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const migratedUserId = useRef<number | null>(null);
   const dataset = summarizeDataset(bars);
+  const saveDraft = trpc.research.saveDraft.useMutation();
+
+  const toDraft = () => {
+    if (!historical) return null;
+    return {
+      id: createResearchDraftId(),
+      workspaceName: `${symbol.replace("_", " / ")} research workspace`,
+      title: hypothesis.slice(0, 180),
+      hypothesis,
+      condition,
+      dataset: {
+        provider: "gateio" as const,
+        symbol,
+        interval: historical.interval,
+        requestedFrom: historical.coverage.requestedFrom,
+        requestedTo: historical.coverage.requestedTo,
+        effectiveFrom: historical.coverage.effectiveFrom,
+        effectiveTo: historical.coverage.effectiveTo,
+        returnedBars: historical.coverage.returnedBars,
+        complete: historical.coverage.complete,
+        sourceTimestamp: historical.sourceTimestamp,
+        fetchedAt: historical.fetchedAt,
+      },
+      savedAt: Date.now(),
+    };
+  };
+
+  useEffect(() => {
+    if (!user || migratedUserId.current === user.id) return;
+    migratedUserId.current = user.id;
+    const pending = readLocalResearchDraft();
+    if (!pending) return;
+    setDraftState("syncing");
+    saveDraft.mutate(pending, {
+      onSuccess: () => {
+        clearLocalResearchDraft();
+        setDraftState("synced");
+        onNotice("Your browser-local research draft was migrated to your authenticated workspace.");
+      },
+      onError: () => {
+        setDraftState("sync-failed");
+        onNotice("Workspace synchronization is unavailable. Your browser-local draft remains preserved for retry.");
+      },
+    });
+  }, [user, saveDraft, onNotice]);
+
+  const runLoadedBacktest = () => {
+    if (!historical) {
+      onNotice("A reproducible evaluation requires the same verified historical dataset shown on the chart.");
+      return;
+    }
+    const result = runBacktest("ema20_50_vwap_long", bars, DEFAULT_BACKTEST_CONFIG);
+    setBacktest(result);
+    onNotice(result.status === "COMPLETED" ? `Reproducible evaluation ${result.runId} completed with next-bar-open fills and explicit zero-cost defaults.` : "The loaded range does not contain enough verified bars for an EMA 50 evaluation.");
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    setSaved(true);
-    onNotice("Research definition staged for this browser session. It contains no execution route or automated alert.");
+    const draft = toDraft();
+    if (!draft) {
+      onNotice("Research drafts require a verified historical dataset. Load a valid range before saving.");
+      return;
+    }
+    if (!user) {
+      const saved = writeLocalResearchDraft(draft);
+      setDraftState(saved ? "local" : "sync-failed");
+      onNotice(saved ? "Research draft saved locally in this browser. Sign in to migrate it to a durable workspace." : "This browser could not retain the draft. Copy your research text before leaving this page.");
+      return;
+    }
+    setDraftState("syncing");
+    saveDraft.mutate(draft, {
+      onSuccess: () => {
+        clearLocalResearchDraft();
+        setDraftState("synced");
+        onNotice("Research draft synchronized to your authenticated workspace with its verified dataset reference.");
+      },
+      onError: () => {
+        writeLocalResearchDraft(draft);
+        setDraftState("sync-failed");
+        onNotice("Workspace storage is unavailable. The draft remains preserved locally and is not presented as synchronized.");
+      },
+    });
   };
+
+  const statusLabel = authLoading ? "Checking workspace" : user ? draftState === "synced" ? "Workspace synced" : draftState === "syncing" ? "Syncing" : "Workspace draft" : "Local draft";
   return <aside className="research-canvas" aria-label="Research canvas">
-    <div className="research-canvas-title"><span>Research canvas</span><b>Draft only</b></div>
+    <div className="research-canvas-title"><span>Research canvas</span><b>{statusLabel}</b></div>
     <div className="research-flow"><span className="flow-active">1</span><span /> <span>2</span><span /> <span>3</span><span /> <span>4</span></div>
     <form onSubmit={submit} className="research-form">
       <label>Hypothesis<textarea value={hypothesis} onChange={(event) => setHypothesis(event.target.value)} maxLength={180} /></label>
       <label>Validation condition<textarea value={condition} onChange={(event) => setCondition(event.target.value)} maxLength={180} /></label>
-      <div className="data-contract"><span>Data contract</span><b>{historical ? `Gate.io · ${historical.interval}` : "Awaiting verified bars"}</b><small>{dataset.barCount ? `${dataset.barCount} bars · source ${formatUtc(historical?.sourceTimestamp)}` : "No dataset available"}</small></div>
-      <button className="primary-action" type="submit"><FlaskConical size={15} /> Stage research definition</button>
+      <div className="data-contract"><span>Data contract</span><b>{historical ? `Gate.io · ${historical.symbol} · ${historical.interval}` : "Awaiting verified bars"}</b><small>{dataset.barCount ? `${dataset.barCount} bars · ${formatUtc(historical?.coverage.effectiveFrom)} → ${formatUtc(historical?.coverage.effectiveTo)}` : "No dataset available"}</small></div>
+      <button className="primary-action" type="submit" disabled={saveDraft.isPending}><FlaskConical size={15} /> {user ? "Sync research definition" : "Save local research draft"}</button>
     </form>
-    <div className="evidence-stack"><span>Evidence requirements</span><p>Configuration fingerprint, data interval, source timestamp, and limitations are captured before any backtest is considered.</p>{saved && <div className="research-saved">Draft staged · user review required</div>}</div>
+    <section className="backtest-panel" aria-label="Reproducible research evaluation"><div className="backtest-heading"><span>Reproducible evaluation</span><b>Research only</b></div><p>{STRATEGY_TEMPLATES.ema20_50_vwap_long.label} · signals at bar close, fills at next bar open.</p><div className="backtest-config"><span>Capital ${DEFAULT_BACKTEST_CONFIG.initialCapital.toLocaleString("en-US")}</span><span>Size {DEFAULT_BACKTEST_CONFIG.positionSize}</span><span>Costs explicit</span></div><button className="secondary-action" type="button" onClick={runLoadedBacktest}>Run loaded window</button>{backtest && <div className="backtest-result"><b>{backtest.status === "COMPLETED" ? `Run ${backtest.runId}` : "Evaluation unavailable"}</b>{backtest.metrics ? <><small>{backtest.data.barCount} bars · {backtest.hash}</small><dl><div><dt>Net P&amp;L</dt><dd>{backtest.metrics.netPnl >= 0 ? "+" : ""}{backtest.metrics.netPnl.toFixed(2)}</dd></div><div><dt>Return</dt><dd>{backtest.metrics.returnPct >= 0 ? "+" : ""}{backtest.metrics.returnPct.toFixed(2)}%</dd></div><div><dt>Trades</dt><dd>{backtest.metrics.tradeCount}</dd></div><div><dt>Max drawdown</dt><dd>{backtest.metrics.maxDrawdown.toFixed(2)}</dd></div></dl></> : <small>{backtest.limitations.at(-1)}</small>}<em>Not investment advice. No broker route, forecast, optimization, or intrabar-fill claim.</em></div>}</section>
+    <div className="evidence-stack"><span>Evidence requirements</span><p>Configuration fingerprint, effective coverage, source timestamp, and limitations are captured before any backtest is considered.</p>{!user && <button className="secondary-action" type="button" onClick={() => startLogin()}>Sign in to sync this draft</button>}{draftState === "local" && <div className="research-saved">Local-only draft · sign in to migrate</div>}{draftState === "synced" && <div className="research-saved">Workspace draft synced · user review required</div>}{draftState === "sync-failed" && <div className="research-saved warning">Workspace sync failed · local draft retained</div>}</div>
   </aside>;
 }
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("Canvas");
   const [timeframe, setTimeframe] = useState<Timeframe>("15m");
+  const [rangePreset, setRangePreset] = useState<RangePreset>("1D");
+  const [symbol, setSymbol] = useState("QQQX_USDT");
+  const [symbolDraft, setSymbolDraft] = useState("QQQX_USDT");
   const [showPalette, setShowPalette] = useState(true);
   const [selectedLayer, setSelectedLayer] = useState<ResearchLayerId | null>("vwap");
   const [activeLayers, setActiveLayers] = useState<ResearchLayerId[]>(["vwap", "ema", "profile", "sessions", "structure"]);
   const [replay, setReplay] = useState(false);
   const [notice, setNotice] = useState("Canvas mode is active. Select a layer to inspect its source and method.");
   const providerInterval = toProviderInterval(timeframe);
-  const snapshotQuery = trpc.market.snapshot.useQuery(undefined, { refetchInterval: 15_000, staleTime: 10_000, retry: 1 });
-  const historicalQuery = trpc.market.bars.useQuery({ interval: providerInterval }, { refetchInterval: 45_000, staleTime: 30_000, retry: 1 });
+  const historicalWindow = useMemo(() => resolveHistoricalWindow(rangePreset, providerInterval), [rangePreset, providerInterval]);
+  const snapshotQuery = trpc.market.snapshot.useQuery({ symbol }, { refetchInterval: 15_000, staleTime: 10_000, retry: 1 });
+  const historicalQuery = trpc.market.bars.useQuery({ interval: providerInterval, symbol, from: historicalWindow.from, to: historicalWindow.to, limit: historicalWindow.requestedBars }, { refetchInterval: 45_000, staleTime: 30_000, retry: 1 });
   const snapshot = snapshotQuery.data as Snapshot | undefined;
   const historical = historicalQuery.data as Historical | undefined;
   const verifiedBars = historical?.dataStatus === "HISTORICAL" ? historical : null;
   const liveSnapshot = snapshot?.dataStatus === "LIVE" ? snapshot : null;
   const statusLabel = liveSnapshot ? "Public snapshot live" : snapshot ? "Public snapshot unavailable" : "Connecting public data";
   const selectedCapability = selectedLayer ? getResearchLayerCapability(selectedLayer) : null;
+  const coverageLabel = verifiedBars?.coverage.effectiveFrom && verifiedBars.coverage.effectiveTo
+    ? `${formatUtc(verifiedBars.coverage.effectiveFrom)} → ${formatUtc(verifiedBars.coverage.effectiveTo)} · ${verifiedBars.coverage.returnedBars} bars${verifiedBars.coverage.complete ? "" : " · partial coverage"}`
+    : `Requested ${rangePreset} window · awaiting verified coverage`;
 
   const selectTimeframe = (next: Timeframe, source = "Canvas") => {
     setTimeframe(next);
-    setNotice(`${source}: loading verified Gate.io ${toProviderInterval(next)} bars.`);
+    setNotice(`${source}: loading a verified ${rangePreset} Gate.io window at ${toProviderInterval(next)} granularity.`);
+  };
+  const selectRange = (next: RangePreset) => {
+    setRangePreset(next);
+    setNotice(`Loading the requested ${next} historical window. MAX is bounded to the provider request limit; coverage will be shown after validation.`);
+  };
+  const submitSymbol = (event: FormEvent) => {
+    event.preventDefault();
+    const next = symbolDraft.trim().toUpperCase();
+    if (!next) return;
+    setSymbol(next);
+    setNotice(`Loading verified Gate.io public-market data for ${next}. Unsupported symbols remain unavailable and are not substituted.`);
   };
   const toggleLayer = (id: ResearchLayerId) => {
     const layer = getResearchLayerCapability(id)!;
@@ -254,7 +350,7 @@ export default function Home() {
       <div className="top-actions"><button className="icon-button" aria-label="Open research canvas" onClick={() => setWorkspaceMode("Research")}><Search size={17} /></button><button className="icon-button" aria-label="Show layer palette" onClick={() => setShowPalette((visible) => !visible)}><SlidersHorizontal size={17} /></button><span className="user-token"><img src={LOGO_URL} alt="" /></span></div>
     </header>
     <section className="instrument-strip">
-      <div className="symbol-block"><div><h1>QQQX / USDT <span>★</span></h1><p>Public-market research canvas</p></div><div className="price-readout"><strong>{formatQuote(liveSnapshot?.price)}</strong><span>{liveSnapshot?.changePercent === null || liveSnapshot?.changePercent === undefined ? "Waiting for verified snapshot" : `${liveSnapshot.changePercent >= 0 ? "+" : ""}${liveSnapshot.changePercent.toFixed(2)}% · 24h`}</span></div></div>
+      <div className="symbol-block"><div><h1>{(liveSnapshot?.symbol ?? symbol).replace("_", " / ")} <span>★</span></h1><p>Public-market research canvas</p><form className="symbol-search" onSubmit={submitSymbol}><label className="sr-only" htmlFor="market-symbol">Gate.io USDT perpetual symbol</label><input id="market-symbol" value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="BTC_USDT" spellCheck="false" /><button type="submit">Load</button></form></div><div className="price-readout"><strong>{formatQuote(liveSnapshot?.price)}</strong><span>{liveSnapshot?.changePercent === null || liveSnapshot?.changePercent === undefined ? "Waiting for verified snapshot" : `${liveSnapshot.changePercent >= 0 ? "+" : ""}${liveSnapshot.changePercent.toFixed(2)}% · 24h`}</span></div></div>
       <div className="instrument-metrics"><InstrumentMetric label="24h high" value={formatQuote(liveSnapshot?.dayHigh)} /><InstrumentMetric label="24h low" value={formatQuote(liveSnapshot?.dayLow)} /><InstrumentMetric label="24h volume" value={formatVolume(liveSnapshot?.quoteVolume)} /></div>
       <div className="instrument-status"><span className={`status-dot ${liveSnapshot ? "live" : ""}`} /> {statusLabel}</div>
       <button className="venue-button" onClick={() => setNotice("Gate.io is the connected public-data venue for this research terminal.")}>Gate.io <ChevronDown size={14} /></button>
@@ -273,16 +369,17 @@ export default function Home() {
           <button className="tool-icon" aria-label="Toggle focus mode" onClick={() => setWorkspaceMode(mode === "Focus" ? "Canvas" : "Focus")}><Maximize2 size={16} /></button>
         </div>
         <div className="terminal-notice" role="status">{notice}</div>
+        <div className={`coverage-indicator ${verifiedBars?.state === "DEGRADED" ? "degraded" : ""}`}><Radio size={12} /><span><b>{verifiedBars ? "Verified coverage" : "Requested coverage"}</b><small>{coverageLabel}</small></span></div>
         <div className="analysis-canvas">
           <CanvasChart bars={verifiedBars?.bars ?? []} interval={providerInterval} activeLayers={activeLayers} replay={replay} />
-          {mode === "Research" ? <ResearchCanvas bars={verifiedBars?.bars ?? []} historical={verifiedBars} onNotice={setNotice} /> : mode !== "Focus" && <LayerInspector id={selectedLayer} bars={verifiedBars?.bars ?? []} />}
+          {mode === "Research" ? <ResearchCanvas bars={verifiedBars?.bars ?? []} historical={verifiedBars} symbol={verifiedBars?.symbol ?? symbol} onNotice={setNotice} /> : mode !== "Focus" && <LayerInspector id={selectedLayer} bars={verifiedBars?.bars ?? []} />}
         </div>
         {mode !== "Focus" && selectedCapability?.availability === "unavailable" && <div className="capability-note"><CircleHelp size={14} /><span><b>{selectedCapability.label} is not displayed.</b> {selectedCapability.detail}</span></div>}
       </section>
     </section>
     <footer className="terminal-dock">
-      <div className="dock-ranges">{RANGE_OPTIONS.map((range) => <button key={range} onClick={() => selectTimeframe(rangeToTimeframe(range), range)}>{range}</button>)}</div>
-      <div className="dock-provenance"><Radio size={16} /><span><b>Public data contract</b><small>{liveSnapshot ? "Gate.io snapshot · verified historical bars" : "Public source reconnecting"}</small></span></div>
+      <div className="dock-ranges">{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}</div>
+      <div className="dock-provenance"><Radio size={16} /><span><b>Public data contract</b><small>{liveSnapshot ? `Gate.io · ${(liveSnapshot.symbol ?? symbol).replace("_", " / ")} · ${rangePreset} requested` : "Public source reconnecting"}</small></span></div>
       <div className="dock-provenance"><Microscope size={16} /><span><b>Research boundary</b><small>Execution disabled · no broker route</small></span></div>
       <div className="dock-time">UTC · {new Date().toISOString().slice(11, 16)}</div>
     </footer>
