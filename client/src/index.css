@@ -261,6 +261,8 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .premium-terminal-footer svg { color: #7d67ba; }
 .premium-terminal-footer span:first-child svg { color: #50d4c2; }
 .premium-terminal-footer span:last-child { margin-left: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.chart-engine-attribution { color: #8c829e; font: 8px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .01em; text-decoration: none; }
+.chart-engine-attribution:hover, .chart-engine-attribution:focus-visible { color: #c1afdf; text-decoration: underline; text-underline-offset: 3px; }
 .is-focus .terminal-icon-rail, .is-focus .studies-drawer, .is-focus .research-drawer, .is-focus .summary-metrics, .is-focus .data-contract-chip, .is-focus .premium-terminal-footer span:not(:last-child) { display: none; }
 .is-focus .terminal-main-layout { padding-left: 12px; }
 .is-focus .chart-workspace { border-left-color: rgba(145,133,187,.2); }
@@ -328,6 +330,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .premium-terminal-footer { min-height: 28px; margin: 0 5px 5px; padding: 0 8px; }
   .premium-terminal-footer span:not(:last-child) { display: none; }
   .premium-terminal-footer span:last-child { margin-left: auto; }
+  .chart-engine-attribution { max-width: calc(100vw - 70px); overflow: hidden; color: #898094; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
   .chart-loading-state { right: 10px; top: 10px; }
   .chart-watermark { right: 70px; }
 }

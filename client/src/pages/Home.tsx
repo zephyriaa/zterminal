@@ -277,6 +277,6 @@ export default function Home() {
       {showResearch && !focusMode && <ResearchDrawer bars={displayHistorical?.bars ?? []} historical={displayHistorical} symbol={displayHistorical?.symbol ?? symbol} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
     </section>
 
-    <footer className="premium-terminal-footer"><span><Radio size={13} /> Public-market research only</span><span><Target size={13} /> Execution disabled · no broker route</span><span><Clock3 size={13} /> UTC · {new Date().toISOString().slice(11, 16)}</span></footer>
+    <footer className="premium-terminal-footer"><span><Radio size={13} /> Public-market research only</span><span><Target size={13} /> Execution disabled · no broker route</span><a className="chart-engine-attribution" href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc.</a><span><Clock3 size={13} /> UTC · {new Date().toISOString().slice(11, 16)}</span></footer>
   </main>;
 }
