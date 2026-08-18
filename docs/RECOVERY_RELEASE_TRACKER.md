@@ -9,7 +9,7 @@
 | Slice | Scope | Source behavior / contract | Status | Required release evidence |
 |---|---|---|---|---|
 | G0 | Governance and canonicalization | Freeze Render baseline, prohibit direct merge, create approved plan and port ledger | **Complete** (`f7bc056`) | Git tag, ledger, recovery plan, clean branch state |
-| M1 | Market/provider contracts | Provider catalog, contract metadata, data status, readiness semantics, contract documentation | Planned | Schema tests, invalid/partial coverage fixtures, readiness behavior, no fabricated active capability |
+| M1 | Market/provider contracts | Provider catalog, contract metadata, data status, readiness semantics, contract documentation | **Complete on recovery branch** (`5ad2def`; not yet production-promoted) | Schema tests, invalid/partial coverage fixtures, readiness behavior, no fabricated active capability |
 | O1 | Trade-tape verification | Gate.io trade-side semantics and real-time transport evidence spike | Planned | Official-source record, captured fixtures, ordering/reconnect/stale tests; no CVD enablement before pass |
 | O2 | Honest order-flow foundation | CVD, DOM, footprint, and Time & Sales only after O1 proof | Blocked by O1 | Real event fixtures, depth reconciliation/gap tests, visible stale/unavailable state |
 | R1 | Protocol-led hypothesis workflow | Citation, scope, approval, immutable baseline, one-variable incremental rules | Planned | Domain fixtures, protocol contracts, drawer interaction evidence |
@@ -22,7 +22,7 @@
 
 ## First Active Slice
 
-**M1 — Market/provider contracts** begins only after reviewing the existing canonical market router, `marketContracts`, current data-status behavior, and the legacy market contracts/capability modules. Its first deliverable is a proposed, fully typed provider contract with explicit state semantics, followed by fixtures and tests before any UI expansion.
+**Next active slice: O1 — Trade-tape verification.** The M1 market/provider contract slice is complete on the recovery branch: it introduced the provider catalog, normalized Gate.io contract metadata, and dependency-aware readiness semantics, with focused and full-suite validation. It has not been merged or deployed to production. O1 may now capture and validate Gate.io public trade/depth transport behavior before any CVD, DOM, footprint, or Time & Sales surface is enabled.
 
 ## Change-Control Checkpoints
 
