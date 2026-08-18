@@ -37,7 +37,7 @@ const DepthInput = z.object({
 }).optional();
 
 const MultiExchangeTradeTapeInput = z.object({
-  provider: z.enum(["binance_usdm", "bybit_linear"]),
+  provider: z.enum(["binance_usdm", "bybit_linear", "coinbase_exchange"]),
   symbol: z.string().trim().min(1).max(40).optional(),
   limit: z.number().int().min(1).max(500).default(250),
 });
@@ -58,6 +58,12 @@ const CandleInput = z.object({
 
 function resolveSymbol(requested: string | undefined) {
   return normalizeGatePerpetualSymbol(requested ?? DEFAULT_SYMBOL);
+}
+
+function toCoinbaseUsdSpotSymbol(requested: string | undefined) {
+  const canonical = (requested ?? "BTC_USDT").trim().toUpperCase().replace("-", "_");
+  const match = canonical.match(/^([A-Z0-9]+)_(?:USDT|USD)$/);
+  return match ? `${match[1]}_USD` : canonical;
 }
 
 const ResearchDatasetInput = z.object({
@@ -119,7 +125,7 @@ export const appRouter = router({
       state: "CONNECTED" as const,
       instruments: { search: "provider-verified-on-request", aliases: true },
       history: { ranges: true, maximumBarsPerRequest: MAX_CANDLE_LIMIT, intervals: MARKET_INTERVALS },
-      orderFlow: { state: "PARTIAL" as const, reason: "Gate.io DOM uses a reconciled public depth snapshot plus sequenced deltas. Gate.io, Binance USDⓈ-M, and Bybit linear expose bounded public trade tapes with explicit live/stale/degraded states; cross-venue depth and historical tick replay are unavailable." },
+      orderFlow: { state: "PARTIAL" as const, reason: "Gate.io DOM uses a reconciled public depth snapshot plus sequenced deltas. Gate.io, Binance USDⓈ-M, Bybit linear, and Coinbase Exchange USD spot expose separately labelled bounded public trade tapes with explicit live/stale/degraded states; cross-venue depth and historical tick replay are unavailable." },
       gex: { state: "UNAVAILABLE" as const, reason: "Options-feed required (Deribit/CME/OPRA); Gate.io perpetual data does not provide options-chain or Greek inputs." },
       providerCatalog: PROVIDER_CATALOG,
     })),
@@ -207,7 +213,8 @@ export const appRouter = router({
       };
     }),
     multiTradeTape: rateLimitedPublicProcedure.input(MultiExchangeTradeTapeInput).query(({ input }) => {
-      const snapshot = multiExchangeTradeStream.getSnapshot(input.provider, input.symbol ?? "BTC_USDT");
+      const requestedSymbol = input.provider === "coinbase_exchange" ? toCoinbaseUsdSpotSymbol(input.symbol) : input.symbol ?? "BTC_USDT";
+      const snapshot = multiExchangeTradeStream.getSnapshot(input.provider, requestedSymbol);
       return { ...snapshot, trades: snapshot.trades.slice(-(input.limit ?? 250)) };
     }),
     feedHealth: rateLimitedPublicProcedure.input(FeedHealthInput).query(({ input }) => {
@@ -216,7 +223,8 @@ export const appRouter = router({
       const gate = gateSymbol ? gateioTradeStream.getSnapshot(gateSymbol) : gateioTradeStream.getSnapshot(requested);
       const binance = multiExchangeTradeStream.getSnapshot("binance_usdm", requested);
       const bybit = multiExchangeTradeStream.getSnapshot("bybit_linear", requested);
-      return { symbol: requested, checkedAt: Date.now(), feeds: [gate, binance, bybit] };
+      const coinbase = multiExchangeTradeStream.getSnapshot("coinbase_exchange", toCoinbaseUsdSpotSymbol(requested));
+      return { symbol: requested, checkedAt: Date.now(), feeds: [gate, binance, bybit, coinbase] };
     }),
     snapshot: rateLimitedPublicProcedure.input(SnapshotInput).query(async ({ input }) => {
       const at = Date.now();

@@ -1,9 +1,10 @@
 import WebSocket from "ws";
-import { normalizeBinanceUsdmAggregateTrade, normalizeBybitLinearPublicTrades, normalizeUsdtPerpetualSymbol, type MultiExchangeProvider, type MultiExchangeTrade } from "@shared/market/multiExchangeContracts";
+import { normalizeBinanceUsdmAggregateTrade, normalizeBybitLinearPublicTrades, normalizeCoinbaseExchangeMatch, normalizeUsdtPerpetualSymbol, type MultiExchangeProvider, type MultiExchangeTrade } from "@shared/market/multiExchangeContracts";
 import { orderPublicTrades } from "@shared/market/orderFlowContracts";
 
 const BINANCE_USDM_WS = "wss://fstream.binance.com/ws";
 const BYBIT_LINEAR_WS = "wss://stream.bybit.com/v5/public/linear";
+const COINBASE_EXCHANGE_WS = "wss://ws-feed.exchange.coinbase.com";
 const STALE_AFTER_MS = 15_000;
 const IDLE_CLOSE_AFTER_MS = 90_000;
 const MAX_TRADES_PER_SYMBOL = 2_000;
@@ -37,6 +38,7 @@ type Stream = {
   reconnectAttempts: number;
   state: MultiExchangeStreamState;
   reason: string | null;
+  lastCoinbaseTradeId: number | null;
 };
 
 function dataStatus(state: MultiExchangeStreamState): MultiExchangeTradeSnapshot["dataStatus"] {
@@ -53,7 +55,17 @@ function payloadText(data: WebSocket.RawData) {
 }
 
 function nativeSymbol(provider: MultiExchangeProvider, symbol: string) {
-  return provider === "binance_usdm" ? symbol.replace("_", "").toLowerCase() : symbol.replace("_", "");
+  if (provider === "binance_usdm") return symbol.replace("_", "").toLowerCase();
+  if (provider === "coinbase_exchange") return symbol.replace("_", "-");
+  return symbol.replace("_", "");
+}
+
+function canonicalSymbol(provider: MultiExchangeProvider, requested: string) {
+  if (provider === "coinbase_exchange") {
+    const candidate = requested.trim().toUpperCase().replace("-", "_");
+    return /^([A-Z0-9]+)_USD$/.test(candidate) ? candidate : null;
+  }
+  return normalizeUsdtPerpetualSymbol(requested.replace("_", ""));
 }
 
 /**
@@ -67,11 +79,11 @@ export class MultiExchangeTradeStreamManager {
   constructor(private readonly socketFactory: MultiExchangeSocketFactory = (address, options) => new WebSocket(address, options)) {}
 
   getSnapshot(provider: MultiExchangeProvider, requestedSymbol: string, now = Date.now()): MultiExchangeTradeSnapshot {
-    const symbol = normalizeUsdtPerpetualSymbol(requestedSymbol.replace("_", ""));
+    const symbol = canonicalSymbol(provider, requestedSymbol);
     if (!symbol) return {
       provider, symbol: requestedSymbol, state: "UNAVAILABLE", dataStatus: "UNAVAILABLE", fetchedAt: now,
       lastTradeAt: null, lastMessageAt: null, reconnectAttempts: 0,
-      reason: "The requested instrument is not a supported USDT perpetual symbol for this public provider.", trades: [],
+      reason: provider === "coinbase_exchange" ? "The requested instrument is not a supported Coinbase Exchange USD spot symbol for this public provider." : "The requested instrument is not a supported USDT perpetual symbol for this public provider.", trades: [],
     };
     const stream = this.ensure(provider, symbol, now);
     this.touch(stream, now);
@@ -88,7 +100,7 @@ export class MultiExchangeTradeStreamManager {
     const key = `${provider}:${symbol}`;
     const existing = this.streams.get(key);
     if (existing) return existing;
-    const stream: Stream = { provider, symbol, socket: null, reconnect: null, idleExpiry: null, trades: [], lastTradeAt: null, lastMessageAt: null, lastRequestedAt: now, reconnectAttempts: 0, state: "CONNECTING", reason: null };
+    const stream: Stream = { provider, symbol, socket: null, reconnect: null, idleExpiry: null, trades: [], lastTradeAt: null, lastMessageAt: null, lastRequestedAt: now, reconnectAttempts: 0, state: "CONNECTING", reason: null, lastCoinbaseTradeId: null };
     this.streams.set(key, stream);
     this.connect(stream);
     return stream;
@@ -98,12 +110,13 @@ export class MultiExchangeTradeStreamManager {
     this.stopSocket(stream);
     stream.state = "CONNECTING";
     stream.reason = null;
-    const socket = this.socketFactory(stream.provider === "binance_usdm" ? `${BINANCE_USDM_WS}/${nativeSymbol(stream.provider, stream.symbol)}@aggTrade` : BYBIT_LINEAR_WS);
+    const socket = this.socketFactory(stream.provider === "binance_usdm" ? `${BINANCE_USDM_WS}/${nativeSymbol(stream.provider, stream.symbol)}@aggTrade` : stream.provider === "bybit_linear" ? BYBIT_LINEAR_WS : COINBASE_EXCHANGE_WS);
     stream.socket = socket;
     socket.on("open", () => {
       stream.reconnectAttempts = 0;
       stream.lastMessageAt = Date.now();
       if (stream.provider === "bybit_linear") socket.send(JSON.stringify({ op: "subscribe", args: [`publicTrade.${nativeSymbol(stream.provider, stream.symbol)}`] }));
+      if (stream.provider === "coinbase_exchange") socket.send(JSON.stringify({ type: "subscribe", product_ids: [nativeSymbol(stream.provider, stream.symbol)], channels: ["matches", "heartbeat"] }));
     });
     socket.on("message", (data: WebSocket.RawData) => this.consume(stream, payloadText(data)));
     socket.on("error", () => {
@@ -127,11 +140,33 @@ export class MultiExchangeTradeStreamManager {
   private consume(stream: Stream, payload: string) {
     let message: unknown;
     try { message = JSON.parse(payload); } catch { return; }
+    if (stream.provider === "coinbase_exchange" && message && typeof message === "object") {
+      const record = message as Record<string, unknown>;
+      if (record.type === "heartbeat") {
+        const heartbeatId = typeof record.last_trade_id === "number" ? record.last_trade_id : Number(record.last_trade_id);
+        stream.lastMessageAt = Date.now();
+        if (Number.isFinite(heartbeatId) && stream.lastCoinbaseTradeId !== null && heartbeatId > stream.lastCoinbaseTradeId) this.resetCoinbaseTape(stream, "Coinbase heartbeat detected a public match gap; the bounded live tape was reset and is withheld until a fresh contiguous window is observed.");
+        return;
+      }
+    }
     let normalized: MultiExchangeTrade[] = [];
     if (stream.provider === "binance_usdm") {
       const trade = normalizeBinanceUsdmAggregateTrade(message);
       if (trade) normalized = [trade];
-    } else normalized = normalizeBybitLinearPublicTrades(message);
+    } else if (stream.provider === "bybit_linear") normalized = normalizeBybitLinearPublicTrades(message);
+    else {
+      const trade = normalizeCoinbaseExchangeMatch(message);
+      if (trade) {
+        const numericId = Number(trade.id);
+        if (Number.isFinite(numericId) && stream.lastCoinbaseTradeId !== null && numericId !== stream.lastCoinbaseTradeId + 1) {
+          stream.lastCoinbaseTradeId = numericId;
+          this.resetCoinbaseTape(stream, "Coinbase public match sequence was not contiguous; the bounded live tape was reset and is withheld until a fresh contiguous window is observed.");
+          return;
+        }
+        if (Number.isFinite(numericId)) stream.lastCoinbaseTradeId = numericId;
+        normalized = [trade];
+      }
+    }
     const relevant = normalized.filter(trade => trade.symbol === stream.symbol);
     if (!relevant.length) return;
     stream.trades = orderPublicTrades([...stream.trades, ...relevant]).slice(-MAX_TRADES_PER_SYMBOL);
@@ -139,6 +174,13 @@ export class MultiExchangeTradeStreamManager {
     stream.lastMessageAt = Date.now();
     stream.state = "LIVE";
     stream.reason = null;
+  }
+
+  private resetCoinbaseTape(stream: Stream, reason: string) {
+    stream.trades = [];
+    stream.lastTradeAt = null;
+    stream.state = "DEGRADED";
+    stream.reason = reason;
   }
 
   private refreshState(stream: Stream, now: number) {
@@ -184,7 +226,9 @@ export class MultiExchangeTradeStreamManager {
   }
 
   private label(provider: MultiExchangeProvider) {
-    return provider === "binance_usdm" ? "Binance USDⓈ-M" : "Bybit linear";
+    if (provider === "binance_usdm") return "Binance USDⓈ-M";
+    if (provider === "coinbase_exchange") return "Coinbase Exchange";
+    return "Bybit linear";
   }
 }
 

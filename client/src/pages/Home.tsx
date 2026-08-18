@@ -10,6 +10,7 @@ import {
   ChevronRight,
   CircleHelp,
   Clock3,
+  Code2,
   Crosshair,
   FlaskConical,
   Focus,
@@ -45,11 +46,13 @@ import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft,
 import { calculateUtcSessionVolumeProfile, evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
+import { IndicatorLabDrawer } from "@/components/terminal/IndicatorLabDrawer";
 import { CommandPalette } from "@/components/terminal/CommandPalette";
 import { isHelpShortcut, isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, findLargeTapePrints, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { DEFAULT_LOCAL_WORKSPACE, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
+import type { CompiledIndicator } from "@shared/indicators/indicatorRuntime";
 import zterminalMark from "@/assets/zterminal-mark.png";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
@@ -60,7 +63,7 @@ type MarketState = "CONNECTED" | "DEGRADED" | "UNAVAILABLE";
 type Coverage = { requestedFrom: number | null; requestedTo: number | null; effectiveFrom: number | null; effectiveTo: number | null; returnedBars: number; complete: boolean; granularity: string };
 type Snapshot = { symbol: string | null; price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; state: MarketState; reason?: string; retryable?: boolean };
 type Historical = { symbol: string; interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; state: MarketState; coverage: Coverage; reason?: string; retryable?: boolean };
-type TradeTape = { provider: "gateio" | "binance_usdm" | "bybit_linear"; symbol: string; state: "CONNECTING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastTradeAt: number | null; lastMessageAt: number | null; reason: string | null; trades: SignedPublicTrade[] };
+type TradeTape = { provider: "gateio" | "binance_usdm" | "bybit_linear" | "coinbase_exchange"; symbol: string; state: "CONNECTING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastTradeAt: number | null; lastMessageAt: number | null; reason: string | null; trades: SignedPublicTrade[] };
 type FeedHealth = { symbol: string; checkedAt: number; feeds: TradeTape[] };
 type DepthBook = { symbol: string; state: "CONNECTING" | "SYNCING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastDepthAt: number | null; lastUpdateId: number | null; reason: string | null; bids: DepthLevel[]; asks: DepthLevel[] };
 type Feedback = { kind: "info" | "success" | "warning"; message: string } | null;
@@ -100,13 +103,14 @@ const FEED_LABEL: Record<TradeTape["provider"], string> = {
   gateio: "Gate.io",
   binance_usdm: "Binance USDⓈ-M",
   bybit_linear: "Bybit Linear",
+  coinbase_exchange: "Coinbase Exchange USD Spot",
 };
 
 function ExchangeHealthStrip({ health, selectedProvider, onSelect }: { health: FeedHealth | undefined; selectedProvider: TradeTape["provider"]; onSelect: (provider: TradeTape["provider"]) => void }) {
   const feeds = health?.feeds ?? [];
   return <section className="exchange-health-strip" aria-label="Public market connection health">
     <span className="feed-health-label"><Radio size={13} /> Public feeds</span>
-    {(["gateio", "binance_usdm", "bybit_linear"] as const).map((provider) => {
+    {(["gateio", "binance_usdm", "bybit_linear", "coinbase_exchange"] as const).map((provider) => {
       const feed = feeds.find((item) => item.provider === provider);
       const state = feed?.dataStatus ?? "UNAVAILABLE";
       const selected = selectedProvider === provider;
@@ -135,7 +139,7 @@ function LiveTapePanel({ tape }: { tape: TradeTape | undefined }) {
   const rows = isLive ? toTimeAndSales(tape?.trades ?? []).slice(-12).reverse() : [];
   return <section className={`time-sales-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Live Time and Sales">
     <header><div><span className="drawer-kicker">Order flow</span><h2>Time &amp; Sales</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
-    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} public taker-signed trades · bounded live tape</p>
+    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} {tape?.provider === "coinbase_exchange" ? "public matches · maker side inverted to derived taker side" : "public taker-signed trades"} · bounded live tape</p>
     {!isLive ? <div className="depth-notice"><b>Tape not rendered</b><span>{tape?.reason ?? "Awaiting a current public trade-tape window."}</span></div> : <><div className="tape-columns"><span>Time</span><span>Price</span><span>Size</span></div><div className="tape-rows">{rows.map(row => <div className={`tape-row ${row.side.toLowerCase()}`} key={row.tradeId}><span>{new Date(row.timestamp).toISOString().slice(11, 19)}</span><b>{formatQuote(row.price)}</b><span>{row.side === "BUY" ? "+" : "−"}{formatVolume(row.size)}</span></div>)}</div><footer><span>{rows.length} shown</span><span>No historical ticks</span></footer></>}
   </section>;
 }
@@ -145,23 +149,24 @@ function LiveFootprintPanel({ tape }: { tape: TradeTape | undefined }) {
   const levels = isLive ? calculateLiveTapeFootprint(tape?.trades ?? []).slice(0, 12) : [];
   return <section className={`footprint-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Live trade-tape footprint">
     <header><div><span className="drawer-kicker">Order flow</span><h2>Live footprint</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
-    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} exact-price public tape aggregation · current bounded window</p>
+    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} exact-price public tape aggregation · current bounded window{tape?.provider === "coinbase_exchange" ? " · derived taker side" : ""}</p>
     {!isLive ? <div className="depth-notice"><b>Footprint not rendered</b><span>{tape?.reason ?? "Awaiting a current public trade-tape window."}</span></div> : <><div className="footprint-columns"><span>Price</span><span>Buy</span><span>Sell</span><span>Δ</span></div><div className="footprint-rows">{levels.map(level => <div className="footprint-row" key={level.price}><b>{formatQuote(level.price)}</b><span>{formatVolume(level.buySize)}</span><span>{formatVolume(level.sellSize)}</span><em className={level.delta >= 0 ? "positive" : "negative"}>{level.delta >= 0 ? "+" : "−"}{formatVolume(Math.abs(level.delta))}</em></div>)}</div><footer><span>{levels.length} prices</span><span>Not candle volume</span></footer></>}
   </section>;
 }
 
-function LiveFlowPulsePanel({ tape, depth }: { tape: TradeTape | undefined; depth: DepthBook | undefined }) {
+function LiveFlowPulsePanel({ tape, depth, tapeWithheldReason }: { tape: TradeTape | undefined; depth: DepthBook | undefined; tapeWithheldReason?: string }) {
   const tapeLive = tape?.dataStatus === "LIVE";
   const depthLive = depth?.dataStatus === "LIVE";
+  const pulseStatus = tapeLive && depthLive ? "CURRENT" : tapeLive ? "TAPE ONLY" : depthLive ? "DEPTH ONLY" : "WITHHELD";
   const bucket = tapeLive ? calculateLiveTapeBuckets(tape.trades).at(-1) ?? null : null;
   const depthSummary = depthLive ? summarizeDepthImbalance(depth.bids, depth.asks) : null;
   const tapeMagnitude = bucket ? Math.max(bucket.buySize, bucket.sellSize, 1) : 1;
   const tapeLabel = !bucket ? "Tape pending" : bucket.delta > 0 ? "Taker buys heavier" : bucket.delta < 0 ? "Taker sells heavier" : "Taker flow balanced";
   return <section className={`flow-pulse-panel order-flow-panel ${tapeLive || depthLive ? "is-live" : "is-pending"}`} aria-label="Current flow evidence">
-    <header><div><span className="drawer-kicker">Order flow</span><h2>Flow pulse</h2></div><span className={`depth-state ${tapeLive || depthLive ? "live" : "unavailable"}`}>{tapeLive || depthLive ? "CURRENT" : "WITHHELD"}</span></header>
-    <p>Current evidence only · no automated alert, prediction, or execution action</p>
-    {!tapeLive && !depthLive ? <div className="depth-notice"><b>Flow pulse withheld</b><span>{tape?.reason ?? depth?.reason ?? "Awaiting a current public tape or reconciled Gate.io depth book."}</span></div> : <div className="flow-pulse-grid">
-      <article className={tapeLive ? "pulse-evidence live" : "pulse-evidence"}><span>30s tape delta</span>{bucket ? <><b className={bucket.delta >= 0 ? "positive" : "negative"}>{bucket.delta >= 0 ? "+" : "−"}{formatVolume(Math.abs(bucket.delta))}</b><small>{FEED_LABEL[tape!.provider]} · {bucket.tradeCount} reported trades</small><div className="pulse-meter"><i className="buy" style={{ width: `${Math.max(4, (bucket.buySize / tapeMagnitude) * 100)}%` }} /><i className="sell" style={{ width: `${Math.max(4, (bucket.sellSize / tapeMagnitude) * 100)}%` }} /></div><em>{tapeLabel}</em></> : <small>{tape?.reason ?? "Selected public tape is not current."}</small>}</article>
+    <header><div><span className="drawer-kicker">Order flow</span><h2>Flow pulse</h2></div><span className={`depth-state ${tapeLive || depthLive ? "live" : "unavailable"}`}>{pulseStatus}</span></header>
+    <p>{tapeWithheldReason ?? "Current evidence only · no automated alert, prediction, or execution action"}</p>
+    {!tapeLive && !depthLive ? <div className="depth-notice"><b>Flow pulse withheld</b><span>{tapeWithheldReason ?? tape?.reason ?? depth?.reason ?? "Awaiting a current public tape or reconciled Gate.io depth book."}</span></div> : <div className="flow-pulse-grid">
+      <article className={tapeLive ? "pulse-evidence live" : "pulse-evidence"}><span>30s tape delta</span>{bucket ? <><b className={bucket.delta >= 0 ? "positive" : "negative"}>{bucket.delta >= 0 ? "+" : "−"}{formatVolume(Math.abs(bucket.delta))}</b><small>{FEED_LABEL[tape!.provider]} · {bucket.tradeCount} reported trades</small><div className="pulse-meter"><i className="buy" style={{ width: `${Math.max(4, (bucket.buySize / tapeMagnitude) * 100)}%` }} /><i className="sell" style={{ width: `${Math.max(4, (bucket.sellSize / tapeMagnitude) * 100)}%` }} /></div><em>{tapeLabel}</em></> : <small>{tapeWithheldReason ?? tape?.reason ?? "Selected public tape is not current."}</small>}</article>
       <article className={depthLive ? "pulse-evidence live" : "pulse-evidence"}><span>Depth imbalance</span>{depthSummary ? <><b className={depthSummary.net >= 0 ? "positive" : "negative"}>{depthSummary.ratio === null ? "—" : `${depthSummary.net >= 0 ? "+" : "−"}${Math.round(Math.abs(depthSummary.ratio) * 100)}%`}</b><small>Gate.io top levels · {depthSummary.state.replace("_", " ").toLowerCase()}</small><div className="depth-balance"><i className="bid" style={{ width: `${Math.max(4, (((depthSummary.ratio ?? 0) + 1) / 2) * 100)}%` }} /><i className="ask" style={{ width: `${Math.max(4, ((1 - (depthSummary.ratio ?? 0)) / 2) * 100)}%` }} /></div><em>Not executable liquidity</em></> : <small>{depth?.reason ?? "Gate.io depth is not current."}</small>}</article>
     </div>}
     <footer><span>Venue-labelled evidence</span><span>Not a trade recommendation</span></footer>
@@ -183,7 +188,7 @@ function LiveLargePrintsPanel({ tape }: { tape: TradeTape | undefined }) {
   const prints = isLive ? findLargeTapePrints(tape?.trades ?? [], minimumReportedSize).slice(-8).reverse() : [];
   return <section className={`large-prints-panel order-flow-panel ${isLive ? "is-live" : "is-pending"}`} aria-label="Selected venue large tape prints">
     <header><div><span className="drawer-kicker">Order flow</span><h2>Large tape prints</h2></div><span className={`depth-state ${tape?.dataStatus?.toLowerCase() ?? "unavailable"}`}>{tape?.dataStatus ?? "UNAVAILABLE"}</span></header>
-    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} current bounded tape · reported size, not USD notional</p>
+    <p>{FEED_LABEL[tape?.provider ?? "gateio"]} current bounded tape · reported size, not USD notional{tape?.provider === "coinbase_exchange" ? " · derived taker side" : ""}</p>
     <label className="large-print-threshold"><span>Minimum reported size</span><input type="number" min="0.000001" step="any" value={minimumReportedSize} onChange={(event) => setMinimumReportedSize(Math.max(0.000001, Number(event.target.value) || 0.000001))} /><small>Selected venue contract units</small></label>
     {!isLive ? <div className="depth-notice"><b>Large prints withheld</b><span>{tape?.reason ?? "Awaiting a current selected public trade-tape window."}</span></div> : <>{prints.length ? <div className="large-print-rows">{prints.map((print) => <div className={`large-print-row ${print.side.toLowerCase()}`} key={print.tradeId}><span>{new Date(print.timestamp).toISOString().slice(11, 19)}</span><b>{formatQuote(print.price)}</b><em>{print.side === "BUY" ? "+" : "−"}{formatVolume(print.size)}</em></div>)}</div> : <div className="depth-notice"><b>No current print meets the threshold</b><span>Threshold applies only to the retained live tape window; it does not query historical ticks.</span></div>}<footer><span>{prints.length} current rows · threshold {formatVolume(minimumReportedSize)}</span><span>Not a trade signal</span></footer></>}
   </section>;
@@ -298,6 +303,8 @@ export default function Home() {
   const [workspaceSaved, setWorkspaceSaved] = useState(false);
   const [showStudies, setShowStudies] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
+  const [showIndicatorLab, setShowIndicatorLab] = useState(false);
+  const [customIndicators, setCustomIndicators] = useState<CompiledIndicator[]>([]);
   const [focusMode, setFocusMode] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState<ResearchLayerId | null>("vwap");
   const [activeLayers, setActiveLayers] = useState<ResearchLayerId[]>(initialLayers.length ? initialLayers : ["vwap", "ema", "profile", "structure"]);
@@ -352,7 +359,8 @@ export default function Home() {
   const isShowingLastVerifiedMarket = !requestedMarketIsValid && verifiedSymbol !== symbol;
   const cvdState = gateTradeTape?.symbol === verifiedSymbol ? gateTradeTape.dataStatus : "UNAVAILABLE";
   const gateTapeForVerifiedSymbol = gateTradeTape?.symbol === verifiedSymbol ? gateTradeTape : undefined;
-  const selectedTape = activeTapeProvider === "gateio" ? gateTapeForVerifiedSymbol : multiTradeTape?.symbol === verifiedSymbol ? multiTradeTape : undefined;
+  const selectedTape = activeTapeProvider === "gateio" ? gateTapeForVerifiedSymbol : multiTradeTape;
+  const flowPulseTape = activeTapeProvider === "gateio" ? selectedTape : undefined;
   const cvdTrades = cvdState === "LIVE" ? gateTapeForVerifiedSymbol?.trades ?? [] : [];
   const domState = depthBook?.symbol === verifiedSymbol ? depthBook.dataStatus : "UNAVAILABLE";
   const orderFlowDockOpen = activeLayers.includes("sessionProfile") || domEnabled || activeLayers.includes("tape") || activeLayers.includes("largePrints") || activeLayers.includes("footprint") || flowPulseEnabled;
@@ -391,10 +399,17 @@ export default function Home() {
   const closeCommandPalette = () => { setCommandPaletteOpen(false); restoreFocus(); };
   const openShortcutHelp = () => { captureFocusReturn(); setCommandPaletteOpen(false); setShortcutHelpOpen(true); };
   const closeShortcutHelp = () => { setShortcutHelpOpen(false); restoreFocus(); };
-  const openStudiesDrawer = () => { captureFocusReturn(); setShowStudies(true); setShowResearch(false); };
+  const openStudiesDrawer = () => { captureFocusReturn(); setShowStudies(true); setShowResearch(false); setShowIndicatorLab(false); };
   const closeStudiesDrawer = () => { setShowStudies(false); restoreFocus(); };
-  const openResearchDrawer = () => { captureFocusReturn(); setShowResearch(true); setShowStudies(false); };
+  const openResearchDrawer = () => { captureFocusReturn(); setShowResearch(true); setShowStudies(false); setShowIndicatorLab(false); };
   const closeResearchDrawer = () => { setShowResearch(false); restoreFocus(); };
+  const openIndicatorLab = () => { captureFocusReturn(); setShowIndicatorLab(true); setShowStudies(false); setShowResearch(false); };
+  const closeIndicatorLab = () => { setShowIndicatorLab(false); restoreFocus(); };
+  const addCustomIndicator = (indicator: CompiledIndicator) => {
+    setCustomIndicators(current => current.some(item => item.definition.name.toLowerCase() === indicator.definition.name.toLowerCase()) ? [...current.filter(item => item.definition.name.toLowerCase() !== indicator.definition.name.toLowerCase()), indicator] : [...current, indicator]);
+    setFeedback({ kind: "success", message: `${indicator.definition.name} is validated on the current loaded candle window and added locally to this chart. No source code or market data is uploaded.` });
+    closeIndicatorLab();
+  };
   const setFocusWorkspace = (next: boolean) => { setFocusMode(next); setAccessibilityStatus(next ? "Focus mode enabled. Chart workspace only. Press Escape to exit." : "Focus mode exited. Full research workstation restored."); };
   const toggleFocusWorkspace = () => setFocusWorkspace(!focusMode);
 
@@ -458,7 +473,7 @@ export default function Home() {
   return <main className={`premium-terminal ${focusMode ? "is-focus" : ""}`}><span className="sr-only" role="status" aria-live="polite">{accessibilityStatus}</span>
     <header className="premium-topbar">
       <button className="brand-lockup" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><img src={zterminalMark} className="brand-mark" alt="" /><span><b>ZTERMINAL</b><small>crypto order-flow research</small></span></button>
-      <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={openResearchDrawer} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={openStudiesDrawer} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button></nav>
+      <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={openResearchDrawer} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={openStudiesDrawer} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button><button onClick={openIndicatorLab} className={showIndicatorLab ? "active" : ""}><Code2 size={16} /><span>Indicators</span></button></nav>
       <div className="topbar-actions"><button onClick={openCommandPalette} aria-label="Open command palette"><Command size={16} /></button><button onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><span className="account-orb"><Sparkles size={13} /></span></div>
     </header>
 
@@ -476,14 +491,15 @@ export default function Home() {
     <section className="terminal-main-layout">
       <IconRail showLayers={showStudies} showResearch={showResearch} focusMode={focusMode} onLayers={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()} onResearch={() => showResearch ? closeResearchDrawer() : openResearchDrawer()} onFocus={toggleFocusWorkspace} onReset={resetViewport} />
       <section className="chart-workspace">
-        <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={openStudiesDrawer}><Layers3 size={14} /> Studies</button><button onClick={openResearchDrawer}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Maximize2 size={16} /></button></div>
+        <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={openStudiesDrawer}><Layers3 size={14} /> Studies</button><button onClick={openIndicatorLab}><Code2 size={14} /> Indicators</button><button onClick={openResearchDrawer}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Maximize2 size={16} /></button></div>
         {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
-        <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} />
-        {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in order-flow and candle-context panels">{activeLayers.includes("sessionProfile") && <SessionVolumePanel bars={displayHistorical?.bars ?? []} />}{activeLayers.includes("dom") && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={selectedTape} />}{activeLayers.includes("largePrints") && <LiveLargePrintsPanel tape={selectedTape} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={selectedTape} />}{flowPulseEnabled && <LiveFlowPulsePanel tape={selectedTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}</aside>}
+        <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} customIndicators={customIndicators} />
+        {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in order-flow and candle-context panels">{activeLayers.includes("sessionProfile") && <SessionVolumePanel bars={displayHistorical?.bars ?? []} />}{activeLayers.includes("dom") && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={selectedTape} />}{activeLayers.includes("largePrints") && <LiveLargePrintsPanel tape={selectedTape} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={selectedTape} />}{flowPulseEnabled && <LiveFlowPulsePanel tape={flowPulseTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} tapeWithheldReason={activeTapeProvider !== "gateio" ? "Selected external tape is intentionally excluded: Flow Pulse never combines it with Gate.io perpetual depth." : undefined} />}</aside>}
         <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
       {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={closeStudiesDrawer} />}
       {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={closeResearchDrawer} />}
+      {showIndicatorLab && !focusMode && <IndicatorLabDrawer bars={displayHistorical?.bars ?? []} onAdd={addCustomIndicator} onClose={closeIndicatorLab} />}
     </section>
 
     {shortcutHelpOpen && !focusMode && <section className="keyboard-shortcuts-panel" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts"><header><div><span className="drawer-kicker">Workspace controls</span><h2>Keyboard shortcuts</h2></div><button onClick={closeShortcutHelp} aria-label="Close keyboard shortcuts"><X size={16} /></button></header><p>Shortcuts are inactive while typing in a field. They open research controls only; no shortcut creates an order or execution route.</p><dl><div><dt><kbd>⌘</kbd><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Open command palette</dd></div><div><dt><kbd>/</kbd></dt><dd>Focus market search</dd></div><div><dt><kbd>R</kbd> / <kbd>S</kbd></dt><dd>Open Research / Studies</dd></div><div><dt><kbd>F</kbd> / <kbd>Esc</kbd></dt><dd>Enter Focus mode / exit it</dd></div><div><dt><kbd>Shift</kbd> + <kbd>R</kbd></dt><dd>Refresh verified public data</dd></div><div><dt><kbd>?</kbd></dt><dd>Open this reference</dd></div></dl><footer><span>Use <kbd>↑</kbd><kbd>↓</kbd> and <kbd>Enter</kbd> in the command palette.</span></footer></section>}

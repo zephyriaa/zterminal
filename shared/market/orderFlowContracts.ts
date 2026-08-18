@@ -1,4 +1,4 @@
-export type PublicOrderFlowProvider = "gateio" | "binance_usdm" | "bybit_linear";
+export type PublicOrderFlowProvider = "gateio" | "binance_usdm" | "bybit_linear" | "coinbase_exchange";
 
 /** A public exchange trade whose taker side is reported by the venue, never inferred from price movement. */
 export type SignedPublicTrade = {

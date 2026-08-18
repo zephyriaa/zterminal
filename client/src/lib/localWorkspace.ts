@@ -1,6 +1,6 @@
 export const LOCAL_TERMINAL_WORKSPACE_KEY = "zterminal-local-workspace-v1";
 
-export type LocalTapeProvider = "gateio" | "binance_usdm" | "bybit_linear";
+export type LocalTapeProvider = "gateio" | "binance_usdm" | "bybit_linear" | "coinbase_exchange";
 export type LocalTerminalWorkspace = {
   version: 1;
   updatedAt: number;
@@ -35,7 +35,7 @@ function uniqueSymbols(values: unknown): string[] {
 }
 
 function validProvider(value: unknown): value is LocalTapeProvider {
-  return value === "gateio" || value === "binance_usdm" || value === "bybit_linear";
+  return value === "gateio" || value === "binance_usdm" || value === "bybit_linear" || value === "coinbase_exchange";
 }
 
 /** Reads only non-sensitive interface preferences from this browser; a malformed value is ignored. */
