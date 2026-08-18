@@ -93,8 +93,14 @@ export const appRouter = router({
         reasonCode: "INVALID_RANGE" as const, reason: "The requested historical range is invalid for the selected interval.", retryable: false,
       };
       try {
+        // Gate.io rejects requests that combine `limit` with both range bounds.
+        // A bounded request therefore uses only `from` and `to`; a latest-window
+        // request retains the bounded `limit` fallback for backwards compatibility.
+        const params = requested.from === null
+          ? { contract: symbol, interval: input.interval, limit: input.limit ?? 120 }
+          : { contract: symbol, interval: input.interval, from: Math.floor(requested.from / 1_000), to: Math.floor(requested.to / 1_000) };
         const response = await axios.get<unknown>(GATE_CANDLES_URL, {
-          params: { contract: symbol, interval: input.interval, limit: input.limit ?? 120, ...(requested.from === null ? {} : { from: Math.floor(requested.from / 1_000) }), ...(requested.to === null ? {} : { to: Math.floor(requested.to / 1_000) }) },
+          params,
           headers: { Accept: "application/json" }, timeout: 12_000, responseType: "json",
         });
         if (!Array.isArray(response.data)) throw new Error("Gate.io returned an invalid historical-candle payload");
