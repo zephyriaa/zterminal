@@ -704,3 +704,23 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .large-print-row.buy::before { background: #36d8bf; }.large-print-row.sell::before { background: #dd8bc3; }
 .large-print-row.buy em { color: #79e4d5; }.large-print-row.sell em { color: #e2a0ca; }
 @media (max-width: 760px) { .session-volume-histogram { height: 48px; } }
+
+/* IQ1: keyboard discovery remains compact and visually subordinate to the chart. */
+.command-list button.active { border-color: rgba(96,214,198,.32); background: linear-gradient(90deg, rgba(25,131,120,.18), rgba(106,59,183,.17)); color: #f3f0fa; outline: 0; }
+.keyboard-shortcuts-panel { position: fixed; z-index: 101; top: min(15vh, 120px); right: max(16px, calc((100vw - 600px) / 2)); left: max(16px, calc((100vw - 600px) / 2)); display: grid; overflow: hidden; width: auto; max-width: 600px; margin: 0 auto; border: 1px solid rgba(151,113,242,.38); border-radius: 11px; background: linear-gradient(150deg, rgba(22,18,37,.99), rgba(8,10,18,.99)); box-shadow: 0 24px 85px rgba(0,0,0,.66), 0 0 45px rgba(109,65,199,.17); }
+.keyboard-shortcuts-panel::before { position: fixed; z-index: -1; inset: 0; background: rgba(3,4,9,.68); content: ""; backdrop-filter: blur(7px); }
+.keyboard-shortcuts-panel header { display: flex; align-items: flex-start; justify-content: space-between; padding: 13px; border-bottom: 1px solid rgba(145,133,187,.17); }
+.keyboard-shortcuts-panel h2 { margin: 3px 0 0; color: #eeeafd; font: 720 15px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -.03em; }
+.keyboard-shortcuts-panel header button { display: grid; width: 26px; height: 26px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #9d9baa; place-items: center; }
+.keyboard-shortcuts-panel header button:hover, .keyboard-shortcuts-panel header button:focus-visible { border-color: rgba(175,133,249,.28); background: rgba(157,103,237,.12); color: #f1edff; outline: 0; }
+.keyboard-shortcuts-panel > p { margin: 0; padding: 10px 13px; border-bottom: 1px solid rgba(145,133,187,.12); color: #9a98a8; font-size: 9px; line-height: 1.45; }
+.keyboard-shortcuts-panel dl { display: grid; grid-template-columns: 1fr 1.35fr; gap: 1px; margin: 0; padding: 8px; }
+.keyboard-shortcuts-panel dl > div { display: contents; }
+.keyboard-shortcuts-panel dt, .keyboard-shortcuts-panel dd { min-height: 30px; margin: 0; padding: 7px 8px; border-bottom: 1px solid rgba(145,133,187,.09); color: #a9a7b5; font-size: 9px; }
+.keyboard-shortcuts-panel dt { display: flex; align-items: center; gap: 3px; color: #77e2d3; }
+.keyboard-shortcuts-panel dd { display: flex; align-items: center; color: #c3c0cd; }
+.keyboard-shortcuts-panel footer { padding: 10px 13px; border-top: 1px solid rgba(145,133,187,.14); color: #858391; font-size: 8px; }
+@media (max-width: 640px) { .keyboard-shortcuts-panel { top: 10vh; right: 9px; left: 9px; } .keyboard-shortcuts-panel dl { grid-template-columns: 1fr; gap: 0; } .keyboard-shortcuts-panel dt { padding-bottom: 2px; border-bottom: 0; } .keyboard-shortcuts-panel dd { min-height: 23px; padding-top: 1px; } }
+
+/* Focus mode is strictly chart-first: live evidence remains available in the full workspace but does not compete with the minimal chart view. */
+.is-focus .order-flow-dock { display: none; }

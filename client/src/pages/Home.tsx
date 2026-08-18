@@ -46,7 +46,7 @@ import { calculateUtcSessionVolumeProfile, evaluateFeatures, FEATURE_REGISTRY } 
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
 import { CommandPalette } from "@/components/terminal/CommandPalette";
-import { isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
+import { isHelpShortcut, isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, findLargeTapePrints, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { DEFAULT_LOCAL_WORKSPACE, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
@@ -305,7 +305,10 @@ export default function Home() {
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [backtestMarkers, setBacktestMarkers] = useState<BacktestMarker[]>([]);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
+  const [accessibilityStatus, setAccessibilityStatus] = useState("");
   const marketInputRef = useRef<HTMLInputElement | null>(null);
+  const focusReturnRef = useRef<HTMLElement | null>(null);
   const [lastVerifiedHistorical, setLastVerifiedHistorical] = useState<Historical | null>(null);
   const [lastVerifiedSnapshot, setLastVerifiedSnapshot] = useState<Snapshot | null>(null);
   const providerInterval = toProviderInterval(timeframe);
@@ -382,6 +385,19 @@ export default function Home() {
     };
   }, [displayHistorical]);
 
+  const captureFocusReturn = () => { const active = document.activeElement; focusReturnRef.current = active instanceof HTMLElement ? active : null; };
+  const restoreFocus = () => { window.requestAnimationFrame(() => { if (focusReturnRef.current?.isConnected) focusReturnRef.current.focus(); }); };
+  const openCommandPalette = () => { captureFocusReturn(); setShortcutHelpOpen(false); setCommandPaletteOpen(true); };
+  const closeCommandPalette = () => { setCommandPaletteOpen(false); restoreFocus(); };
+  const openShortcutHelp = () => { captureFocusReturn(); setCommandPaletteOpen(false); setShortcutHelpOpen(true); };
+  const closeShortcutHelp = () => { setShortcutHelpOpen(false); restoreFocus(); };
+  const openStudiesDrawer = () => { captureFocusReturn(); setShowStudies(true); setShowResearch(false); };
+  const closeStudiesDrawer = () => { setShowStudies(false); restoreFocus(); };
+  const openResearchDrawer = () => { captureFocusReturn(); setShowResearch(true); setShowStudies(false); };
+  const closeResearchDrawer = () => { setShowResearch(false); restoreFocus(); };
+  const setFocusWorkspace = (next: boolean) => { setFocusMode(next); setAccessibilityStatus(next ? "Focus mode enabled. Chart workspace only. Press Escape to exit." : "Focus mode exited. Full research workstation restored."); };
+  const toggleFocusWorkspace = () => setFocusWorkspace(!focusMode);
+
   const setMarket = (next: string) => {
     const normalized = next.trim().toUpperCase();
     if (!normalized) return;
@@ -407,11 +423,12 @@ export default function Home() {
   };
   const retry = () => { void Promise.all([snapshotQuery.refetch(), historicalQuery.refetch(), feedHealthQuery.refetch(), ...(needsGateTradeTape ? [gateTradeTapeQuery.refetch()] : []), ...(activeTapeProvider !== "gateio" && tapeEnabled ? [multiTradeTapeQuery.refetch()] : []), ...(domEnabled ? [depthQuery.refetch()] : [])]); setFeedback({ kind: "info", message: domEnabled ? "Retrying verified Gate.io chart data, selected public tape, connection health, and reconciled Gate.io depth." : tapeEnabled ? "Retrying verified chart data, selected public tape, and connection health." : "Retrying verified chart data and public connection health." }); };
   const runCommand = (id: TerminalCommandId) => {
-    setCommandPaletteOpen(false);
-    if (id === "open-research") { setShowResearch(true); setShowStudies(false); return; }
-    if (id === "open-studies") { setShowStudies(true); setShowResearch(false); return; }
-    if (id === "focus-mode") { setFocusMode(true); return; }
-    if (id === "exit-focus") { setFocusMode(false); return; }
+    closeCommandPalette();
+    if (id === "open-research") { openResearchDrawer(); return; }
+    if (id === "open-studies") { openStudiesDrawer(); return; }
+    if (id === "focus-mode") { setFocusWorkspace(true); return; }
+    if (id === "exit-focus") { setFocusWorkspace(false); return; }
+    if (id === "open-shortcuts") { openShortcutHelp(); return; }
     if (id === "focus-market") { marketInputRef.current?.focus(); return; }
     if (id === "refresh-market") { retry(); return; }
     if (id === "open-settings") { setFeedback({ kind: "info", message: "Settings status: current theme and chart defaults are session-local; durable account preferences are not configured." }); return; }
@@ -422,9 +439,10 @@ export default function Home() {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const editable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
-      if (isPaletteShortcut(event) && !focusMode) { event.preventDefault(); setCommandPaletteOpen(true); return; }
-      if (event.key === "Escape") { if (commandPaletteOpen) { setCommandPaletteOpen(false); return; } if (focusMode) { setFocusMode(false); return; } }
-      if (editable || commandPaletteOpen || focusMode) return;
+      if (isPaletteShortcut(event) && !focusMode) { event.preventDefault(); openCommandPalette(); return; }
+      if (event.key === "Escape") { if (shortcutHelpOpen) { closeShortcutHelp(); return; } if (commandPaletteOpen) { closeCommandPalette(); return; } if (focusMode) { setFocusWorkspace(false); return; } }
+      if (editable || commandPaletteOpen || shortcutHelpOpen || focusMode) return;
+      if (isHelpShortcut(event)) { event.preventDefault(); openShortcutHelp(); return; }
       if (isMarketShortcut(event)) { event.preventDefault(); marketInputRef.current?.focus(); return; }
       if (event.key.toLowerCase() === "r" && !event.shiftKey) runCommand("open-research");
       if (event.key.toLowerCase() === "s" && !event.shiftKey) runCommand("open-studies");
@@ -433,15 +451,15 @@ export default function Home() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commandPaletteOpen, focusMode, retry]);
+  }, [commandPaletteOpen, focusMode, retry, shortcutHelpOpen]);
   const resetViewport = () => { setReplay(false); setFeedback({ kind: "info", message: "Chart viewport reset to the latest verified window." }); };
   const shownBars = replay && displayHistorical ? displayHistorical.bars.slice(0, Math.max(60, Math.floor(displayHistorical.bars.length * 0.68))) : displayHistorical?.bars ?? [];
 
-  return <main className={`premium-terminal ${focusMode ? "is-focus" : ""}`}>
+  return <main className={`premium-terminal ${focusMode ? "is-focus" : ""}`}><span className="sr-only" role="status" aria-live="polite">{accessibilityStatus}</span>
     <header className="premium-topbar">
       <button className="brand-lockup" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><img src={zterminalMark} className="brand-mark" alt="" /><span><b>ZTERMINAL</b><small>crypto order-flow research</small></span></button>
-      <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={() => { setShowResearch(true); setShowStudies(false); }} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={() => { setShowStudies(true); setShowResearch(false); }} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button></nav>
-      <div className="topbar-actions"><button onClick={() => setCommandPaletteOpen(true)} aria-label="Open command palette"><Command size={16} /></button><button onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><span className="account-orb"><Sparkles size={13} /></span></div>
+      <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={openResearchDrawer} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={openStudiesDrawer} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button></nav>
+      <div className="topbar-actions"><button onClick={openCommandPalette} aria-label="Open command palette"><Command size={16} /></button><button onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><span className="account-orb"><Sparkles size={13} /></span></div>
     </header>
 
     <section className="instrument-command-bar">
@@ -456,19 +474,20 @@ export default function Home() {
     </section>
 
     <section className="terminal-main-layout">
-      <IconRail showLayers={showStudies} showResearch={showResearch} focusMode={focusMode} onLayers={() => { setShowStudies((visible) => !visible); setShowResearch(false); }} onResearch={() => { setShowResearch((visible) => !visible); setShowStudies(false); }} onFocus={() => setFocusMode((value) => !value)} onReset={resetViewport} />
+      <IconRail showLayers={showStudies} showResearch={showResearch} focusMode={focusMode} onLayers={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()} onResearch={() => showResearch ? closeResearchDrawer() : openResearchDrawer()} onFocus={toggleFocusWorkspace} onReset={resetViewport} />
       <section className="chart-workspace">
-        <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={() => { setShowStudies(true); setShowResearch(false); }}><Layers3 size={14} /> Studies</button><button onClick={() => { setShowResearch(true); setShowStudies(false); }}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Maximize2 size={16} /></button></div>
+        <div className="chart-command-toolbar"><div className="timeframe-switcher">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div><span className="toolbar-separator" /><button onClick={openStudiesDrawer}><Layers3 size={14} /> Studies</button><button onClick={openResearchDrawer}><FlaskConical size={14} /> Research</button><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data"><RefreshCw size={16} /></button><button className="toolbar-icon" onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Maximize2 size={16} /></button></div>
         {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
         <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} />
         {orderFlowDockOpen && <aside className="order-flow-dock" aria-label="Opt-in order-flow and candle-context panels">{activeLayers.includes("sessionProfile") && <SessionVolumePanel bars={displayHistorical?.bars ?? []} />}{activeLayers.includes("dom") && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeLayers.includes("tape") && <LiveTapePanel tape={selectedTape} />}{activeLayers.includes("largePrints") && <LiveLargePrintsPanel tape={selectedTape} />}{activeLayers.includes("footprint") && <LiveFootprintPanel tape={selectedTape} />}{flowPulseEnabled && <LiveFlowPulsePanel tape={selectedTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}</aside>}
         <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
-      {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={() => setShowStudies(false)} />}
-      {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
+      {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={closeStudiesDrawer} />}
+      {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={closeResearchDrawer} />}
     </section>
 
-    {commandPaletteOpen && !focusMode && <CommandPalette onRun={runCommand} onClose={() => setCommandPaletteOpen(false)} />}
+    {shortcutHelpOpen && !focusMode && <section className="keyboard-shortcuts-panel" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts"><header><div><span className="drawer-kicker">Workspace controls</span><h2>Keyboard shortcuts</h2></div><button onClick={closeShortcutHelp} aria-label="Close keyboard shortcuts"><X size={16} /></button></header><p>Shortcuts are inactive while typing in a field. They open research controls only; no shortcut creates an order or execution route.</p><dl><div><dt><kbd>⌘</kbd><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Open command palette</dd></div><div><dt><kbd>/</kbd></dt><dd>Focus market search</dd></div><div><dt><kbd>R</kbd> / <kbd>S</kbd></dt><dd>Open Research / Studies</dd></div><div><dt><kbd>F</kbd> / <kbd>Esc</kbd></dt><dd>Enter Focus mode / exit it</dd></div><div><dt><kbd>Shift</kbd> + <kbd>R</kbd></dt><dd>Refresh verified public data</dd></div><div><dt><kbd>?</kbd></dt><dd>Open this reference</dd></div></dl><footer><span>Use <kbd>↑</kbd><kbd>↓</kbd> and <kbd>Enter</kbd> in the command palette.</span></footer></section>}
+    {commandPaletteOpen && !focusMode && <CommandPalette onRun={runCommand} onClose={closeCommandPalette} />}
     <footer className="premium-terminal-footer"><span><Radio size={13} /> Public-market research only</span><span><Target size={13} /> Execution disabled · no broker route</span><a className="chart-engine-attribution" href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc.</a><span><Clock3 size={13} /> UTC · {new Date().toISOString().slice(11, 16)}</span></footer>
   </main>;
 }
