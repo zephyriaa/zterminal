@@ -47,3 +47,11 @@ Before opening the evaluation panel, the local Canvas loaded a verified QQQX/USD
 ### Browser-visible next-bar evaluation
 
 In Research mode, the recovered panel evaluated the same 97 verified bars with the labelled `EMA 20/50 + VWAP long-only` template. The UI disclosed that signals occur at bar close and fills occur at next bar open, showed the $100,000 fixed-capital and zero-cost defaults, and produced run `bt_a-8f8c43e4` with an input/result hash `fnv1a-8f8c43e4`. The panel reported one trade, net P&L `+0.12`, return `+0.00%`, and maximum drawdown `-0.73`, then visibly stated that the output is not investment advice and makes no broker-route, forecast, optimization, or intrabar-fill claim.
+
+
+## 2026-08-18 — Post-security-update smoke test
+
+After restarting the local service from the updated locked dependency tree, the public Gate.io snapshot and verified one-day, 15-minute historical window loaded successfully. The Canvas showed 97 effective bars, exact UTC coverage, `vwap · v1.0.0`, and fingerprint `fnv1a-49d35ff2`. This confirms the security dependency updates did not regress the core recovered market-data and feature-provenance path.
+
+
+The post-upgrade unauthenticated `research.listDrafts` check returned HTTP 401 and the typed `UNAUTHORIZED` code. The response retained no local source path or server stack trace, confirming that the shared error formatter remained effective after the tRPC update.
