@@ -4,6 +4,7 @@ import {
   Bell,
   BookOpen,
   CandlestickChart,
+  Command,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -44,6 +45,8 @@ import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft,
 import { evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
+import { CommandPalette } from "@/components/terminal/CommandPalette";
+import { isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeFootprint, toTimeAndSales, type DepthLevel, type GatePublicTrade } from "@shared/market/orderFlowContracts";
 
@@ -229,6 +232,8 @@ export default function Home() {
   const [replay, setReplay] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [backtestMarkers, setBacktestMarkers] = useState<BacktestMarker[]>([]);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const marketInputRef = useRef<HTMLInputElement | null>(null);
   const [lastVerifiedHistorical, setLastVerifiedHistorical] = useState<Historical | null>(null);
   const [lastVerifiedSnapshot, setLastVerifiedSnapshot] = useState<Snapshot | null>(null);
   const providerInterval = toProviderInterval(timeframe);
@@ -319,6 +324,34 @@ export default function Home() {
     setActiveLayers((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   };
   const retry = () => { void Promise.all([snapshotQuery.refetch(), historicalQuery.refetch(), ...(tapeEnabled ? [tradeTapeQuery.refetch()] : []), ...(domEnabled ? [depthQuery.refetch()] : [])]); setFeedback({ kind: "info", message: domEnabled ? "Retrying public snapshot, history, live trade tape, and reconciled depth requests." : tapeEnabled ? "Retrying public snapshot, historical, and live trade-tape requests." : "Retrying the public snapshot and historical data requests." }); };
+  const runCommand = (id: TerminalCommandId) => {
+    setCommandPaletteOpen(false);
+    if (id === "open-research") { setShowResearch(true); setShowStudies(false); return; }
+    if (id === "open-studies") { setShowStudies(true); setShowResearch(false); return; }
+    if (id === "focus-mode") { setFocusMode(true); return; }
+    if (id === "exit-focus") { setFocusMode(false); return; }
+    if (id === "focus-market") { marketInputRef.current?.focus(); return; }
+    if (id === "refresh-market") { retry(); return; }
+    if (id === "open-settings") { setFeedback({ kind: "info", message: "Settings status: current theme and chart defaults are session-local; durable account preferences are not configured." }); return; }
+    if (id === "open-alerts") { setFeedback({ kind: "info", message: "Alert status: no connected alert provider is configured. No market alerts are active." }); return; }
+    setFeedback({ kind: "info", message: "Risk status: sizing is not yet configured. No order, broker, or execution route exists." });
+  };
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const editable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      if (isPaletteShortcut(event) && !focusMode) { event.preventDefault(); setCommandPaletteOpen(true); return; }
+      if (event.key === "Escape") { if (commandPaletteOpen) { setCommandPaletteOpen(false); return; } if (focusMode) { setFocusMode(false); return; } }
+      if (editable || commandPaletteOpen || focusMode) return;
+      if (isMarketShortcut(event)) { event.preventDefault(); marketInputRef.current?.focus(); return; }
+      if (event.key.toLowerCase() === "r" && !event.shiftKey) runCommand("open-research");
+      if (event.key.toLowerCase() === "s" && !event.shiftKey) runCommand("open-studies");
+      if (event.key.toLowerCase() === "f" && !event.shiftKey) runCommand("focus-mode");
+      if (event.key.toLowerCase() === "r" && event.shiftKey) runCommand("refresh-market");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [commandPaletteOpen, focusMode, retry]);
   const resetViewport = () => { setReplay(false); setFeedback({ kind: "info", message: "Chart viewport reset to the latest verified window." }); };
   const shownBars = replay && displayHistorical ? displayHistorical.bars.slice(0, Math.max(60, Math.floor(displayHistorical.bars.length * 0.68))) : displayHistorical?.bars ?? [];
 
@@ -326,11 +359,11 @@ export default function Home() {
     <header className="premium-topbar">
       <button className="brand-lockup" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><span className="brand-glyph"><span /><span /></span><span><b>ZTERMINAL</b><small>deep research workstation</small></span></button>
       <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={() => { setShowResearch(true); setShowStudies(false); }} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={() => { setShowStudies(true); setShowResearch(false); }} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button></nav>
-      <div className="topbar-actions"><button onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><span className="account-orb"><Sparkles size={13} /></span></div>
+      <div className="topbar-actions"><button onClick={() => setCommandPaletteOpen(true)} aria-label="Open command palette"><Command size={16} /></button><button onClick={() => setFocusMode((value) => !value)} aria-label="Toggle focus mode"><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><span className="account-orb"><Sparkles size={13} /></span></div>
     </header>
 
     <section className="instrument-command-bar">
-      <form className="market-command" onSubmit={(event) => { event.preventDefault(); setMarket(symbolDraft); }}><Search size={16} /><input value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="Search Gate.io perpetual" aria-label="Gate.io perpetual market" spellCheck="false" /><button type="submit">Load market</button></form>
+      <form className="market-command" onSubmit={(event) => { event.preventDefault(); setMarket(symbolDraft); }}><Search size={16} /><input ref={marketInputRef} value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="Search Gate.io perpetual" aria-label="Gate.io perpetual market" spellCheck="false" /><button type="submit">Load market</button></form>
       <div className="quick-markets" aria-label="Suggested markets">{STARTING_MARKETS.map((item) => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}>{item.replace("_", " / ")}</button>)}</div>
       <div className={`market-state ${requestedMarketIsValid ? "live" : isUpdating ? "updating" : "unavailable"}`}><span /><b>{requestedMarketIsValid ? "Verified live data" : isUpdating ? "Verifying market" : "Market unavailable"}</b><small>{formatAge(displaySnapshot?.at)}</small></div>
     </section>
@@ -355,6 +388,7 @@ export default function Home() {
       {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={() => setShowResearch(false)} />}
     </section>
 
+    {commandPaletteOpen && !focusMode && <CommandPalette onRun={runCommand} onClose={() => setCommandPaletteOpen(false)} />}
     <footer className="premium-terminal-footer"><span><Radio size={13} /> Public-market research only</span><span><Target size={13} /> Execution disabled · no broker route</span><a className="chart-engine-attribution" href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc.</a><span><Clock3 size={13} /> UTC · {new Date().toISOString().slice(11, 16)}</span></footer>
   </main>;
 }

@@ -518,3 +518,38 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .backtest-trades em { font: 700 8px ui-monospace, SFMono-Regular, Menlo, monospace; font-style: normal; }
 .backtest-trades small { grid-column: 2 / -1; color: #7f7f8c; font-size: 8px; }
 @media (max-width: 760px) { .backtest-config-grid { grid-template-columns: 1fr; } .backtest-config-grid label:last-child { grid-column: auto; } .monthly-outcomes { grid-template-columns: 1fr; } }
+
+/* U1 keyboard discovery and strict chart-first focus state. */
+.command-palette-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; padding: min(15vh, 120px) 16px 16px; background: rgba(3,4,9,.68); backdrop-filter: blur(7px); place-items: start center; }
+.command-palette { width: min(600px, 100%); overflow: hidden; border: 1px solid rgba(151, 113, 242, .38); border-radius: 11px; background: linear-gradient(150deg, rgba(22,18,37,.99), rgba(8,10,18,.99)); box-shadow: 0 24px 85px rgba(0,0,0,.66), 0 0 45px rgba(109,65,199,.17); }
+.command-palette header { display: flex; align-items: center; gap: 9px; padding: 12px 13px; border-bottom: 1px solid rgba(145,133,187,.17); color: #b98eff; }
+.command-palette header > div { display: grid; gap: 1px; }
+.command-palette header b { color: #eeeafd; font-size: 11px; }
+.command-palette header small { color: #9290a1; font-size: 8px; }
+.command-palette header button { display: grid; width: 26px; height: 26px; margin-left: auto; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #9d9baa; place-items: center; }
+.command-palette header button:hover { border-color: rgba(175,133,249,.28); background: rgba(157,103,237,.12); color: #f1edff; }
+.command-search { display: flex; align-items: center; gap: 8px; margin: 10px; padding: 0 9px; border: 1px solid rgba(125,211,200,.29); border-radius: 7px; background: rgba(5,6,11,.76); color: #72dfd0; }
+.command-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #e9e7f0; padding: 10px 0; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.command-search input::placeholder { color: #727181; }
+kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 19px; padding: 2px 4px; border: 1px solid rgba(167,151,202,.28); border-bottom-color: rgba(198,183,232,.42); border-radius: 3px; background: rgba(132,116,169,.12); color: #c4bdd5; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.command-list { display: grid; max-height: min(54vh, 430px); overflow-y: auto; padding: 0 7px 8px; }
+.command-list button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 47px; padding: 8px 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #b8b5c4; text-align: left; }
+.command-list button:hover, .command-list button:focus-visible { border-color: rgba(96,214,198,.28); background: linear-gradient(90deg, rgba(25,131,120,.16), rgba(106,59,183,.15)); color: #f3f0fa; outline: 0; }
+.command-list button > span { display: grid; gap: 3px; min-width: 0; }
+.command-list button b { color: inherit; font-size: 10px; }
+.command-list button small { color: #8c8b9a; font-size: 8px; line-height: 1.35; }
+.command-list button > kbd { margin-left: auto; }
+.command-empty { padding: 20px 10px; color: #898795; font-size: 10px; text-align: center; }
+.command-palette footer { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-top: 1px solid rgba(145,133,187,.15); color: #858391; font-size: 8px; }
+.command-palette footer span { display: inline-flex; align-items: center; gap: 3px; }
+.is-focus .premium-topbar { min-height: 42px; padding: 0 12px; border-bottom-color: rgba(88,217,200,.18); }
+.is-focus .brand-lockup, .is-focus .top-navigation, .is-focus .topbar-actions button:not(:nth-child(2)), .is-focus .topbar-actions .account-orb, .is-focus .instrument-command-bar, .is-focus .instrument-summary, .is-focus .chart-command-toolbar, .is-focus .chart-meta-bar, .is-focus .chart-footer-context, .is-focus .chart-range-dock, .is-focus .premium-terminal-footer { display: none; }
+.is-focus .topbar-actions { display: flex; margin-left: auto; }
+.is-focus .topbar-actions button:nth-child(2) { display: inline-flex; align-items: center; gap: 6px; width: auto; height: 29px; padding: 0 9px; border-color: rgba(78,221,202,.35); background: rgba(16,117,105,.16); color: #9bf2e4; font-size: 9px; }
+.is-focus .topbar-actions button:nth-child(2)::after { content: "Exit focus · Esc"; }
+.is-focus .terminal-main-layout { padding: 0; }
+.is-focus .chart-workspace { border: 0; border-radius: 0; }
+.is-focus .professional-chart, .is-focus .chart-stage { min-height: calc(100dvh - 42px); }
+.is-focus .chart-stage { height: calc(100dvh - 42px); }
+.is-focus .chart-watermark { opacity: .42; }
+@media (max-width: 640px) { .command-palette-backdrop { padding: 10vh 9px 9px; } .command-palette footer { flex-direction: column; align-items: flex-start; } .is-focus .topbar-actions button:nth-child(2)::after { content: "Exit · Esc"; } }
