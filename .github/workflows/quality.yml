@@ -1,0 +1,36 @@
+name: Quality Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - recovery/final-form-foundation
+      - render-hosted-research-terminal
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Enable declared pnpm
+        run: corepack enable
+      - name: Install audited lockfile without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Static types
+        run: pnpm check
+      - name: Regression suite
+        run: pnpm test
+      - name: Production build
+        run: pnpm build
+      - name: Reject high or critical dependency findings
+        run: pnpm audit --audit-level=high

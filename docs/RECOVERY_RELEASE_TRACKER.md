@@ -16,13 +16,13 @@
 | R2 | Safe ZS compiler | Closed parser/runtime, diagnostics, discovered inputs, no unsafe execution surface | **Complete on recovery branch** (`a5238e3`; not yet production-promoted) | Compile fixtures, forbidden-capability tests, protected tRPC contract |
 | B1 | Reproducible backtester | Multi-strategy next-bar-open evaluation, costs, provenance, metrics, chart markers | **Complete on recovery branch** (`a400634`; not yet production-promoted) | Determinism, fill/cost/P&L/provenance tests; non-blocking execution evidence |
 | U1 | Command and contextual tools | Focus minimal mode, palette, Markets/Settings/Connections/Risk/Alerts surfaces | **Complete on recovery branch** (`2b19250`; not yet production-promoted) | Keyboard/accessibility/responsive tests; truthful local/simulated/unavailable states |
-| S1 | Storage and security | Durable workspace decision, protected mutations, logging, rate limits, docs | **Complete on recovery branch** (pending commit; not yet production-promoted; durable workspace remains configuration-blocked) | Auth/migration/export/restore/security tests; no durable claim before configuration |
-| Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | In progress | Passing check/test/build/lint, release record, rollback verification |
-| P1 | Freemium and desktop | Entitlement proposal and Tauri readiness after core trust | Deferred post-core | User-approved product policy and separate desktop release design |
+| S1 | Storage and security | Durable workspace decision, protected mutations, logging, rate limits, docs | **Complete on recovery branch** (`08be716`; not yet production-promoted; durable workspace remains configuration-blocked) | Auth/migration/export/restore/security tests; no durable claim before configuration |
+| Q1 | Quality and controlled release | CI, performance budgets, browser E2E, responsive and production smoke evidence | **Complete on recovery branch** (pending commit; not yet production-promoted) | Passing check/test/build/audit-high, release record, local production smoke and rollback review |
+| P1 | Freemium and desktop | Entitlement proposal and Tauri readiness after core trust | In progress | User-approved product policy and separate desktop release design |
 
 ## First Active Slice
 
-**Next active slice: Q1 — Quality and controlled release.** S1 completed on the recovery branch: public market and compiler APIs are bounded, session issuance fails closed without a suitable secret, request surfaces are constrained, and the audited dependency graph has no critical or high findings. Durable workspace remains deliberately unavailable until database, OAuth, JWT secret, and storage prerequisites are configured. Q1 may now add continuous quality gates, release evidence, and a controlled production readiness review without promoting the recovery branch.
+**Next active slice: P1 — Freemium and desktop roadmap.** Q1 completed on the recovery branch: the repository now has a CI-quality workflow, passes frozen-install/static/test/build/audit-high checks, and has a production-built local smoke record for health, readiness, headers, and static serving. It has not been merged or deployed to production. P1 may define a non-binding entitlement and desktop-readiness roadmap; any commercial policy, payment integration, or desktop release requires a separate user-approved product decision.
 
 ## Change-Control Checkpoints
 
@@ -48,3 +48,4 @@
 - [B1 deterministic backtest evidence validation](./B1_BACKTEST_EVIDENCE_VALIDATION.md)
 - [U1 interaction and accessibility validation](./U1_INTERACTION_ACCESSIBILITY_VALIDATION.md)
 - [S1 security and durable-workspace boundary](./S1_SECURITY_DURABILITY_VALIDATION.md)
+- [Q1 controlled release validation](./Q1_CONTROLLED_RELEASE_VALIDATION.md)
