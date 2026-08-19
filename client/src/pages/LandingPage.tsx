@@ -9,7 +9,6 @@ import {
   LockKeyhole,
   ScanLine,
   ShieldCheck,
-  Sparkles,
   Workflow,
 } from "lucide-react";
 import { Link } from "wouter";
@@ -56,19 +55,19 @@ export default function LandingPage() {
         </nav>
         <div className="landing-nav-actions">
           <Link href="/terminal" className="landing-text-link">Open terminal</Link>
-          <button className="landing-login" onClick={() => startLogin()}>Sign in</button>
+          <button className="landing-login" onClick={() => startLogin()}>Account access</button>
         </div>
       </header>
 
       <main>
         <section className="landing-hero" aria-labelledby="landing-title">
           <div className="landing-hero-copy">
-            <div className="landing-eyebrow"><span><Sparkles size={14} /></span> Crypto-native market research</div>
-            <h1 id="landing-title">See the market. <em>Keep the evidence.</em></h1>
-            <p>ZTerminal is a chart-first research terminal for traders who want transparent public-market data, professional order-flow context, and reproducible analysis—without handing execution to the interface.</p>
+            <div className="landing-eyebrow">Evidence-led market research</div>
+            <h1 id="landing-title">Research the market with evidence.</h1>
+            <p>ZTerminal is a chart-first research terminal for public-market data, venue-labelled order-flow context, and reproducible analysis. The interface remains strictly non-executing.</p>
             <div className="landing-hero-actions">
-              <Link href="/terminal" className="landing-primary-cta">Open research terminal <ArrowRight size={17} /></Link>
-              <button className="landing-secondary-cta" onClick={() => startLogin()}><LockKeyhole size={16} /> Create your research account</button>
+              <Link href="/terminal" className="landing-primary-cta">Open terminal <ArrowRight size={17} /></Link>
+              <button className="landing-secondary-cta" onClick={() => startLogin()}><LockKeyhole size={16} /> Account access</button>
             </div>
             <div className="landing-hero-proof" aria-label="Product principles">
               <span><CheckCircle2 size={15} /> Public source labelled</span>
@@ -96,13 +95,13 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-contract" id="data-contract" aria-labelledby="contract-title">
-          <div className="landing-contract-orbit" aria-hidden="true"><span><Database size={24} /></span><i /><i /><i /></div>
+          <div className="landing-contract-index" aria-hidden="true"><span>01</span><small>DATA CONTRACT</small><Database size={22} /></div>
           <div><span className="landing-eyebrow"><span><ShieldCheck size={14} /></span> A visible data contract</span><h2 id="contract-title">No invented tape. No hidden automation.</h2><p>Public exchange data can be useful when it is represented honestly. ZTerminal separates live, stale, degraded, and unavailable states so that the interface cannot quietly promote an old snapshot into current order-flow evidence.</p><ul>{guardrails.map((item) => <li key={item}><CheckCircle2 size={17} />{item}</li>)}</ul></div>
         </section>
 
         <section className="landing-access" id="access" aria-labelledby="access-title">
-          <div><span>Personal workspaces</span><h2 id="access-title">Your research should have an owner.</h2><p>Open the terminal as a guest to inspect public market data. Sign in to associate research drafts and future custom indicators with your identity. Cloud persistence appears only when it is configured and verified; until then, the product says so plainly.</p></div>
-          <div className="landing-access-actions"><Link href="/terminal" className="landing-secondary-cta">Explore as guest <ScanLine size={16} /></Link><button className="landing-primary-cta" onClick={() => startLogin()}>Sign in to ZTerminal <ArrowRight size={17} /></button><small>OAuth-backed identity · no password vault · no trading credentials</small></div>
+          <div><span>Research ownership</span><h2 id="access-title">Keep public research open. Keep ownership explicit.</h2><p>Open the terminal as a guest to inspect public market data. A signed-in workspace will be introduced only with a configured identity provider and verified durable storage.</p></div>
+          <div className="landing-access-actions"><Link href="/terminal" className="landing-secondary-cta">Continue as guest <ScanLine size={16} /></Link><button className="landing-primary-cta" onClick={() => startLogin()}>Account access <ArrowRight size={17} /></button><small>Identity provider configuration required · no password vault · no trading credentials</small></div>
         </section>
       </main>
 
