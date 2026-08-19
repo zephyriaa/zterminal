@@ -1071,3 +1071,51 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
   .landing-capability-grid { border: 0; gap: 8px; }
   .landing-capability-card { border: 1px solid rgba(159, 173, 187, .18); }
 }
+
+
+/* Direct Google identity is intentionally presented as a provider control, not a product CTA. */
+.google-sign-in,
+.account-google-sign-in {
+  display: grid;
+  min-width: 250px;
+  gap: 7px;
+}
+.google-sign-in-target {
+  min-height: 40px;
+}
+.google-sign-in-target > div,
+.google-sign-in-target iframe {
+  max-width: 100% !important;
+}
+.google-sign-in-pending,
+.google-sign-in-unavailable {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(159, 173, 187, .28);
+  border-radius: 4px;
+  background: #121820;
+  color: #aab5bf;
+  font-size: .75rem;
+  font-weight: 650;
+}
+.google-sign-in-unavailable {
+  border-style: dashed;
+  color: #8f9aa6;
+}
+.google-sign-in small {
+  color: #98a4ae;
+  font-size: .67rem;
+  line-height: 1.4;
+}
+.google-sign-in .google-sign-in-error {
+  color: #d7a7a7;
+}
+.account-actions:has(.account-google-sign-in) {
+  align-items: flex-start;
+}
+@media (max-width: 700px) {
+  .google-sign-in,
+  .account-google-sign-in { width: 100%; }
+}

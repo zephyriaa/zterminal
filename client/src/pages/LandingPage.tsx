@@ -1,4 +1,3 @@
-import { startLogin } from "@/const";
 import zterminalMark from "@/assets/zterminal-mark.png";
 import {
   ArrowRight,
@@ -55,7 +54,7 @@ export default function LandingPage() {
         </nav>
         <div className="landing-nav-actions">
           <Link href="/terminal" className="landing-text-link">Open terminal</Link>
-          <button className="landing-login" onClick={() => startLogin()}>Account access</button>
+          <Link href="/account" className="landing-login">Account access</Link>
         </div>
       </header>
 
@@ -67,7 +66,7 @@ export default function LandingPage() {
             <p>ZTerminal is a chart-first research terminal for public-market data, venue-labelled order-flow context, and reproducible analysis. The interface remains strictly non-executing.</p>
             <div className="landing-hero-actions">
               <Link href="/terminal" className="landing-primary-cta">Open terminal <ArrowRight size={17} /></Link>
-              <button className="landing-secondary-cta" onClick={() => startLogin()}><LockKeyhole size={16} /> Account access</button>
+              <Link href="/account" className="landing-secondary-cta"><LockKeyhole size={16} /> Account access</Link>
             </div>
             <div className="landing-hero-proof" aria-label="Product principles">
               <span><CheckCircle2 size={15} /> Public source labelled</span>
@@ -101,7 +100,7 @@ export default function LandingPage() {
 
         <section className="landing-access" id="access" aria-labelledby="access-title">
           <div><span>Research ownership</span><h2 id="access-title">Keep public research open. Keep ownership explicit.</h2><p>Open the terminal as a guest to inspect public market data. A signed-in workspace will be introduced only with a configured identity provider and verified durable storage.</p></div>
-          <div className="landing-access-actions"><Link href="/terminal" className="landing-secondary-cta">Continue as guest <ScanLine size={16} /></Link><button className="landing-primary-cta" onClick={() => startLogin()}>Account access <ArrowRight size={17} /></button><small>Identity provider configuration required · no password vault · no trading credentials</small></div>
+          <div className="landing-access-actions"><Link href="/terminal" className="landing-secondary-cta">Continue as guest <ScanLine size={16} /></Link><Link href="/account" className="landing-primary-cta">Account access <ArrowRight size={17} /></Link><small>Google identity · no password vault · no trading credentials</small></div>
         </section>
       </main>
 

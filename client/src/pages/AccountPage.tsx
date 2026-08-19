@@ -1,7 +1,7 @@
-import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, CloudOff, LogIn, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { ArrowLeft, CloudOff, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { Link } from "wouter";
 
 function AccountLoading() {
@@ -15,7 +15,7 @@ export default function AccountPage() {
   if (loading) return <AccountLoading />;
 
   if (!user) {
-    return <main className="account-page"><section className="account-shell account-guest"><div className="account-icon"><UserRound size={24} /></div><span className="account-kicker">Account access</span><h1>Research ownership, configured deliberately.</h1><p>Public charts and research remain available to guests. Signed-in workspaces will be enabled only after an identity provider and durable storage are configured and verified for this deployment.</p><div className="account-actions"><button className="account-primary" onClick={() => startLogin()}><LogIn size={16} /> Continue with configured sign-in</button><Link href="/terminal" className="account-secondary">Continue as guest</Link></div><small><ShieldCheck size={14} /> No password collection · no trading credentials · workspace sync requires verified storage</small></section></main>;
+    return <main className="account-page"><section className="account-shell account-guest"><div className="account-icon"><UserRound size={24} /></div><span className="account-kicker">Account access</span><h1>Research ownership, configured deliberately.</h1><p>Public charts and research remain available to guests. Google sign-in becomes available only after this deployment has verified identity, session, and durable-storage configuration.</p><div className="account-actions"><GoogleSignInButton className="account-google-sign-in" unavailableLabel="Google sign-in requires deployment configuration" /><Link href="/terminal" className="account-secondary">Continue as guest</Link></div><small><ShieldCheck size={14} /> Google subject-based identity · no password collection · no trading credentials</small></section></main>;
   }
 
   const storageUnavailable = draftsQuery.isError;

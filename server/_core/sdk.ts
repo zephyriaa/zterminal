@@ -19,10 +19,13 @@ import type {
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
+export type SessionProvider = "manus" | "google";
+
 export type SessionPayload = {
   openId: string;
   appId: string;
   name: string;
+  provider?: SessionProvider;
 };
 
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
@@ -84,11 +87,15 @@ const createOAuthHttpClient = (): AxiosInstance =>
 
 class SDKServer {
   private readonly client: AxiosInstance;
-  private readonly oauthService: OAuthService;
+  private oauthService: OAuthService | null = null;
 
   constructor(client: AxiosInstance = createOAuthHttpClient()) {
     this.client = client;
-    this.oauthService = new OAuthService(this.client);
+  }
+
+  private getOAuthService() {
+    if (!this.oauthService) this.oauthService = new OAuthService(this.client);
+    return this.oauthService;
   }
 
   private deriveLoginMethod(
@@ -122,7 +129,7 @@ class SDKServer {
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
-    return this.oauthService.getTokenByCode(code, state);
+    return this.getOAuthService().getTokenByCode(code, state);
   }
 
   /**
@@ -131,7 +138,7 @@ class SDKServer {
    * const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
    */
   async getUserInfo(accessToken: string): Promise<GetUserInfoResponse> {
-    const data = await this.oauthService.getUserInfoByToken({
+    const data = await this.getOAuthService().getUserInfoByToken({
       accessToken,
     } as ExchangeTokenResponse);
     const loginMethod = this.deriveLoginMethod(
@@ -172,8 +179,24 @@ class SDKServer {
         openId,
         appId: ENV.appId,
         name: options.name || "",
+        provider: "manus",
       },
       options
+    );
+  }
+
+  async createGoogleSessionToken(
+    openId: string,
+    options: { expiresInMs?: number; name?: string } = {}
+  ): Promise<string> {
+    return this.signSession(
+      {
+        openId,
+        appId: "zterminal",
+        name: options.name || "Google account",
+        provider: "google",
+      },
+      { expiresInMs: options.expiresInMs }
     );
   }
 
@@ -190,6 +213,7 @@ class SDKServer {
       openId: payload.openId,
       appId: payload.appId,
       name: payload.name,
+      provider: payload.provider ?? "manus",
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setExpirationTime(expirationSeconds)
@@ -198,7 +222,7 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
+  ): Promise<{ openId: string; appId: string; name: string; provider: SessionProvider } | null> {
     if (!cookieValue) {
       console.warn("[Auth] Missing session cookie");
       return null;
@@ -209,7 +233,8 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+      const { openId, appId, name, provider } = payload as Record<string, unknown>;
+      const normalizedProvider: SessionProvider = provider === "google" ? "google" : "manus";
 
       if (
         !isNonEmptyString(openId) ||
@@ -224,6 +249,7 @@ class SDKServer {
         openId,
         appId,
         name,
+        provider: normalizedProvider,
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -289,7 +315,14 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
-    // If user not in DB, sync from OAuth server automatically
+    // Direct Google sessions never call the legacy OAuth profile endpoint. They
+    // are issued only after the server has upserted the Google-backed user, and
+    // fail closed if durable account storage is absent or the record disappears.
+    if (!user && session.provider === "google") {
+      throw ForbiddenError("Google account is unavailable");
+    }
+
+    // Legacy OAuth sessions retain their existing profile synchronization path.
     if (!user) {
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionToken ?? "");
