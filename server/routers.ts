@@ -1,8 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
 import axios from "axios";
 import { z } from "zod";
+import { parse as parseCookieHeader } from "cookie";
 import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { ENV } from "./_core/env";
+import { sdk } from "./_core/sdk";
+import * as db from "./db";
+import { GOOGLE_CSRF_COOKIE, GOOGLE_CSRF_TTL_MS, createGoogleCsrfToken, hasMatchingGoogleCsrf, isGoogleIdentityEnabled, verifyGoogleCredential } from "./googleIdentity";
 import { finiteNumber, normalizePublicBars } from "./marketData";
 import { alignRange, classifyProviderFailure, coverageForBars, MARKET_INTERVALS, normalizeGatePerpetualSymbol } from "./marketContracts";
 import { systemRouter } from "./_core/systemRouter";
@@ -19,6 +24,7 @@ const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks
 const GATE_CONTRACTS_URL = "https://api.gateio.ws/api/v4/futures/usdt/contracts";
 const DEFAULT_SYMBOL = "QQQX_USDT";
 const MAX_CANDLE_LIMIT = 2_000;
+const GOOGLE_SESSION_MS = 1000 * 60 * 60 * 24 * 14;
 
 const SnapshotInput = z.object({ symbol: z.string().trim().min(1).max(40).optional() }).optional();
 const ContractListInput = z.object({
@@ -82,6 +88,10 @@ const ResearchDatasetInput = z.object({
 const StrategyCompileInput = z.object({
   source: z.string().max(16_000),
 });
+const GoogleSignInInput = z.object({
+  credential: z.string().trim().min(1).max(16_384),
+  csrfToken: z.string().trim().min(32).max(256),
+});
 
 const SaveResearchDraftInput = z.object({
   id: z.string().uuid().optional(),
@@ -96,9 +106,74 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    googleConfig: publicProcedure.query(({ ctx }) => {
+      const enabled = isGoogleIdentityEnabled({
+        clientId: ENV.googleClientId,
+        databaseUrl: ENV.databaseUrl,
+        sessionSecret: ENV.cookieSecret,
+      });
+      if (!enabled) return { enabled: false, clientId: null, csrfToken: null } as const;
+
+      const csrfToken = createGoogleCsrfToken();
+      const sessionCookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(GOOGLE_CSRF_COOKIE, csrfToken, {
+        httpOnly: false,
+        path: "/",
+        sameSite: "lax",
+        secure: sessionCookieOptions.secure,
+        maxAge: GOOGLE_CSRF_TTL_MS,
+      });
+      return { enabled: true, clientId: ENV.googleBrowserClientId || ENV.googleClientId, csrfToken } as const;
+    }),
+    googleSignIn: rateLimitedPublicProcedure.input(GoogleSignInInput).mutation(async ({ ctx, input }) => {
+      const configured = isGoogleIdentityEnabled({
+        clientId: ENV.googleClientId,
+        databaseUrl: ENV.databaseUrl,
+        sessionSecret: ENV.cookieSecret,
+      });
+      if (!configured) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Google sign-in is not configured for this deployment." });
+
+      const expectedCsrfToken = parseCookieHeader(ctx.req.headers.cookie ?? "")[GOOGLE_CSRF_COOKIE];
+      if (!hasMatchingGoogleCsrf(expectedCsrfToken, input.csrfToken)) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Google sign-in request could not be verified." });
+      }
+
+      let identity;
+      try {
+        identity = await verifyGoogleCredential(input.credential, ENV.googleClientId);
+      } catch (error) {
+        console.warn("[GoogleAuth] Credential verification rejected", String(error));
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Google credential could not be verified." });
+      }
+
+      try {
+        await db.upsertUser({
+          openId: identity.openId,
+          name: identity.name,
+          email: identity.email,
+          loginMethod: "google",
+          lastSignedIn: new Date(),
+        });
+        const user = await db.getUserByOpenId(identity.openId);
+        if (!user) throw new Error("Google identity was not persisted");
+
+        const sessionToken = await sdk.createGoogleSessionToken(identity.openId, {
+          name: identity.name || "Google account",
+          expiresInMs: GOOGLE_SESSION_MS,
+        });
+        const sessionCookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...sessionCookieOptions, maxAge: GOOGLE_SESSION_MS });
+        ctx.res.clearCookie(GOOGLE_CSRF_COOKIE, { path: "/", sameSite: "lax", secure: sessionCookieOptions.secure });
+        return user;
+      } catch (error) {
+        console.error("[GoogleAuth] Account session creation failed", error);
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Account storage is unavailable for this deployment." });
+      }
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(GOOGLE_CSRF_COOKIE, { path: "/", sameSite: "lax", secure: cookieOptions.secure });
       return { success: true } as const;
     }),
   }),
