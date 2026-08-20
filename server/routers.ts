@@ -9,7 +9,7 @@ import { sdk } from "./_core/sdk";
 import * as db from "./db";
 import { GOOGLE_CSRF_COOKIE, GOOGLE_CSRF_TTL_MS, createGoogleCsrfToken, hasMatchingGoogleCsrf, isGoogleIdentityEnabled, verifyGoogleCredential } from "./googleIdentity";
 import { finiteNumber, normalizePublicBars } from "./marketData";
-import { alignRange, classifyProviderFailure, coverageForBars, MARKET_INTERVALS, normalizeGatePerpetualSymbol } from "./marketContracts";
+import { alignRange, classifyProviderFailure, coverageForBars, MARKET_INTERVAL_MS, MARKET_INTERVALS, normalizeGatePerpetualSymbol } from "./marketContracts";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, rateLimitedPublicProcedure, router } from "./_core/trpc";
 import { listResearchDrafts, saveResearchDraft } from "./researchStore";
@@ -368,6 +368,12 @@ export const appRouter = router({
         provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const,
         symbol, interval: input.interval, sourceTimestamp: null, fetchedAt, coverage: coverageForBars(input.interval, [], { from: null, to: null }), bars: [],
         reasonCode: "INVALID_RANGE" as const, reason: "The requested historical range is invalid for the selected interval.", retryable: false,
+      };
+      const requestedBarCount = requested.from === null || requested.to === null ? input.limit ?? 120 : Math.floor((requested.to - requested.from) / MARKET_INTERVAL_MS[input.interval]) + 1;
+      if (requestedBarCount > MAX_CANDLE_LIMIT) return {
+        provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const,
+        symbol, interval: input.interval, sourceTimestamp: null, fetchedAt, coverage: coverageForBars(input.interval, [], requested), bars: [],
+        reasonCode: "INVALID_RANGE" as const, reason: `The requested range requires ${requestedBarCount.toLocaleString("en-US")} ${input.interval} bars. ZTerminal limits one verified public-history request to ${MAX_CANDLE_LIMIT.toLocaleString("en-US")} bars; choose a coarser interval or a shorter range.`, retryable: false,
       };
       try {
         // Gate.io rejects requests that combine `limit` with both range bounds.

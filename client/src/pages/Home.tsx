@@ -28,13 +28,14 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   getResearchLayerCapability,
+  rangeToTimeframe,
   summarizeDataset,
   toProviderInterval,
   type ResearchLayerId,
   type TerminalBar,
   type Timeframe,
 } from "@/lib/terminalWorkspace";
-import { RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
+import { MAX_VERIFIED_HISTORY_BARS, RANGE_PRESETS, resolveHistoricalWindow, type RangePreset } from "@/lib/marketWindow";
 import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft, writeLocalResearchDraft } from "@/lib/researchDraft";
 import { calculateUtcSessionVolumeProfile, evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
@@ -348,7 +349,10 @@ export default function Home() {
   const [lastVerifiedSnapshot, setLastVerifiedSnapshot] = useState<Snapshot | null>(null);
   const workspaceQuery = trpc.workspace.getTerminal.useQuery(undefined, { enabled: Boolean(user), staleTime: 15_000, retry: 1 });
   const saveWorkspace = trpc.workspace.saveTerminal.useMutation();
-  const providerInterval = toProviderInterval(timeframe);
+  const selectedProviderInterval = toProviderInterval(timeframe);
+  const selectedHistoricalWindow = useMemo(() => resolveHistoricalWindow(rangePreset, selectedProviderInterval), [rangePreset, selectedProviderInterval]);
+  const effectiveTimeframe = selectedHistoricalWindow.requiredBars > MAX_VERIFIED_HISTORY_BARS ? rangeToTimeframe(rangePreset) : timeframe;
+  const providerInterval = toProviderInterval(effectiveTimeframe);
   const historicalWindow = useMemo(() => resolveHistoricalWindow(rangePreset, providerInterval), [rangePreset, providerInterval]);
   const snapshotQuery = trpc.market.snapshot.useQuery({ symbol }, { refetchInterval: 15_000, staleTime: 10_000, retry: 1, placeholderData: (previous) => previous });
   const historicalQuery = trpc.market.bars.useQuery({ interval: providerInterval, symbol, from: historicalWindow.from, to: historicalWindow.to, limit: historicalWindow.requestedBars }, { refetchInterval: 45_000, staleTime: 30_000, retry: 1, placeholderData: (previous) => previous });
@@ -425,6 +429,9 @@ export default function Home() {
     persistCurrentWorkspace(cloudRevision);
   };
 
+  useEffect(() => {
+    if (effectiveTimeframe !== timeframe) setTimeframe(effectiveTimeframe);
+  }, [effectiveTimeframe, timeframe]);
   useEffect(() => { if (currentSnapshot) setLastVerifiedSnapshot(currentSnapshot); }, [currentSnapshot]);
   useEffect(() => { if (currentHistorical) setLastVerifiedHistorical(currentHistorical); }, [currentHistorical]);
   useEffect(() => { if (!feedback) return; const timer = window.setTimeout(() => setFeedback(null), 5_500); return () => window.clearTimeout(timer); }, [feedback]);
@@ -592,9 +599,12 @@ export default function Home() {
     setFeedback({ kind: "info", message: `Loading ${rangePreset} at ${toProviderInterval(next)} granularity.` });
   };
   const selectRange = (next: RangePreset) => {
+    const requestedAtCurrentGranularity = resolveHistoricalWindow(next, providerInterval);
+    const nextTimeframe = requestedAtCurrentGranularity.requiredBars > MAX_VERIFIED_HISTORY_BARS ? rangeToTimeframe(next) : timeframe;
     setRangePreset(next);
+    if (nextTimeframe !== timeframe) setTimeframe(nextTimeframe);
     setReplay(false);
-    setFeedback({ kind: "info", message: `Requesting the ${next} verified history window. Effective coverage will be shown once confirmed.` });
+    setFeedback({ kind: "info", message: nextTimeframe !== timeframe ? `${next} needs ${requestedAtCurrentGranularity.requiredBars.toLocaleString("en-US")} bars at ${providerInterval}. Loading the full verified range at ${toProviderInterval(nextTimeframe)} granularity instead.` : `Requesting the ${next} verified history window. Effective coverage will be shown once confirmed.` });
   };
   const toggleLayer = (id: ResearchLayerId) => {
     const layer = getResearchLayerCapability(id)!;
