@@ -1,6 +1,6 @@
 # Cloud Workspace and PWA Validation Record
 
-**Status:** Implemented and validated on `product/orderflow-research-terminal`; **not yet promoted to Render production**.
+**Status:** **Live in production** on `render-hosted-research-terminal` commit `155914a`, deployed through Render as `dep-da3fqfgu01pc738klvig` on 2026-08-20.
 
 ## Cloud-workspace boundary
 
@@ -37,11 +37,13 @@ The generated worker’s only route is a navigation fallback with an explicit `/
 | Focused workspace tests | 5 tests passed: preference contract plus protected router owner binding |
 | Full regression | `pnpm test` passed: **27 test files / 93 tests** |
 | Production build | `pnpm build` passed; generated `manifest.webmanifest`, `sw.js`, and Workbox asset bundle |
-| Browser smoke | Local terminal rendered in guest/local mode, preserving honest fallback while PWA controls did not break the workstation |
+| Browser smoke | Local terminal rendered in guest/local mode; live terminal rendered the guest account control and Chromium **Install app** control without disrupting the workstation |
 
-## Deployment boundary
+## Production activation evidence
 
-The TiDB schema migration has already been applied because the running cloud-workspace APIs require the table. The source release remains on the product branch pending the user’s explicit confirmation to promote it to `render-hosted-research-terminal` and perform a manual Render deployment. After authorization, validation will cover the live signed-in workspace creation/sync path and the production manifest/service-worker assets.
+The TiDB schema migration was applied before deployment and verified the `workspacePreferences`, `users`, `workspaces`, and `researchDrafts` tables. The user authorized the source promotion; Render built and started commit `155914a` in deployment `dep-da3fqfgu01pc738klvig` and reported the service live.
+
+The public production checks returned the declared standalone manifest, HTTP 200 for `/sw.js`, the live **Install app** control, and enabled Google configuration. The live terminal DOM also resolved the guest sign-in control rather than leaving the header in a loading state. The user subsequently reported that the signed-in flow appeared to be working. To respect account privacy, no user workspace payload or preference value was retrieved by the validation process; ownership and conflict behavior are covered by protected-router tests and server-side authorization.
 
 ## References
 
