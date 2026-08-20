@@ -1,0 +1,7 @@
+# P0 post-activation truth pass validation
+
+## Local browser verification
+
+On 2026-08-20, the local development build rendered `/research` as a complete ZTerminal product-information page rather than the generic 404 fallback. The page showed the direct workflow explanation, its non-executing research-only boundary, and usable navigation to the landing page, account page, and terminal. Visual inspection confirmed the dark institutional design aligns with the existing landing and terminal system.
+The local `/data-contract` and `/access` direct links also resolved correctly. The data-contract page preserved source-scoped, fail-closed provider wording and the explicit non-execution boundary. The access page accurately described the guest browser-local fallback, account-isolated signed-in workspace preferences and drafts, revision-aware conflict handling, Google sign-in, and absence of a password or trading-credential vault. Both pages visually matched the intended product-information template.
+The local `/terminal` visual check confirmed that the top-bar Settings control opens a compact, keyboard-addressable drawer. In guest mode, the drawer presents current market and timeframe defaults, truthful browser-workspace disclosure, a sign-in-to-sync path, and a narrowly scoped “Clear saved browser copy” action that explicitly leaves the session and cloud workspace unchanged. Current verified chart data remained visible behind the drawer, and no broker, execution, or credential functionality was introduced.
