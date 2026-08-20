@@ -54,8 +54,10 @@ export function GoogleSignInButton({
   const [uiError, setUiError] = useState<string | null>(null);
   const utils = trpc.useUtils();
   const configQuery = trpc.auth.googleConfig.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    // Keep the browser-visible token fresh while the account page remains open.
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
   const signInMutation = trpc.auth.googleSignIn.useMutation({
     onSuccess: async (user) => {
@@ -85,11 +87,25 @@ export function GoogleSignInButton({
           client_id: config.clientId,
           auto_select: false,
           callback: (response) => {
-            if (!response.credential) {
+            const credential = response.credential;
+            if (!credential) {
               setUiError("Google did not return a credential.");
               return;
             }
-            signInMutation.mutate({ credential: response.credential, csrfToken: config.csrfToken });
+
+            // A Google account chooser can outlive the initial page request. Refresh
+            // the double-submit pair immediately before the credential exchange so a
+            // previously open account page cannot submit an expired CSRF cookie.
+            void configQuery.refetch()
+              .then((refreshed) => {
+                const csrfToken = refreshed.data?.enabled ? refreshed.data.csrfToken : null;
+                if (!csrfToken) {
+                  setUiError("Google sign-in is not configured for this deployment.");
+                  return;
+                }
+                signInMutation.mutate({ credential, csrfToken });
+              })
+              .catch(() => setUiError("Unable to refresh the Google sign-in check. Please try again."));
           },
         });
         identityApi.renderButton(target, {
