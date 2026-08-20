@@ -157,7 +157,7 @@ const plugins = [
   jsxLocPlugin(),
   vitePluginManusRuntime(),
   VitePWA({
-    registerType: "prompt",
+    registerType: "autoUpdate",
     injectRegister: false,
     includeAssets: ["icons/zterminal-192.png", "icons/zterminal-512.png"],
     manifest: {
