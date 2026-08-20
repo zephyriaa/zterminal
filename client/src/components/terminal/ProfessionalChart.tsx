@@ -13,7 +13,7 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import { Activity, AlertTriangle, Crosshair, LoaderCircle, RefreshCw } from "lucide-react";
-import type { ResearchLayerId, TerminalBar } from "@/lib/terminalWorkspace";
+import { getResearchLayerCapability, type ResearchLayerId, type TerminalBar } from "@/lib/terminalWorkspace";
 import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries } from "@shared/features/registry";
 import { calculateCvd, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { evaluateIndicator, type CompiledIndicator } from "@shared/indicators/indicatorRuntime";
@@ -139,6 +139,7 @@ export function ProfessionalChart({
   const lastBar = visibleBars.at(-1) ?? null;
   const previousBar = visibleBars.at(-2) ?? null;
   const barChange = lastBar && previousBar && previousBar.c !== 0 ? ((lastBar.c - previousBar.c) / previousBar.c) * 100 : null;
+  const activeLayerLegend = activeLayers.map((layer) => getResearchLayerCapability(layer)).filter((layer): layer is NonNullable<typeof layer> => Boolean(layer));
 
   const cvdSeriesData = useMemo(() => toCvdSeries(cvdTrades), [cvdTrades]);
   const customIndicatorSeries = useMemo(() => customIndicators.flatMap((indicator) => {
@@ -190,7 +191,7 @@ export function ProfessionalChart({
         },
         rightPriceScale: { borderColor: "rgba(129,118,157,0.28)", scaleMargins: { top: 0.10, bottom: 0.08 }, minimumWidth: 76 },
         leftPriceScale: { visible: false },
-        timeScale: { borderColor: "rgba(129,118,157,0.28)", timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 0.5 },
+        timeScale: { borderColor: "rgba(129,118,157,0.28)", timeVisible: true, secondsVisible: false, rightOffset: 4, barSpacing: 7, minBarSpacing: 1 },
         handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
         handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
       });
@@ -311,7 +312,7 @@ export function ProfessionalChart({
       if (showMomentum) chart.panes()[2]?.setStretchFactor(has("cvd") && cvdSeriesData.length ? 1.35 : 1.65);
       if (has("cvd") && cvdSeriesData.length) chart.panes()[showMomentum ? 3 : 2]?.setStretchFactor(1.45);
 
-      const initialBars = Math.min(visibleBars.length, Math.max(75, Math.round(width / 11)));
+      const initialBars = Math.min(visibleBars.length, Math.max(110, Math.round(width / 7.5)));
       chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, visibleBars.length - initialBars), to: visibleBars.length + 4 });
       chart.subscribeCrosshairMove((parameter) => {
         if (!parameter.time || typeof parameter.time !== "number") {
@@ -348,6 +349,7 @@ export function ProfessionalChart({
       </div>
       <div className="chart-meta-status"><Activity size={13} /><span>{showingPrevious ? "Showing last verified window" : coverageLabel}</span>{has("cvd") && <span className={`chart-flow-status ${cvdState.toLowerCase()}`}>CVD · {cvdState === "LIVE" ? `${cvdTrades.length.toLocaleString("en-US")} live tape trades` : cvdState.toLowerCase()}</span>}</div>
     </div>
+    {(activeLayerLegend.length > 0 || customIndicators.length > 0) && <div className="chart-layer-legend" aria-label="Active chart layers"><span>Layers</span>{activeLayerLegend.map((layer) => <b key={layer.id}>{layer.label}</b>)}{customIndicators.map((indicator) => <b className="custom" key={indicator.definition.name}>{indicator.definition.name}</b>)}</div>}
     <div className="chart-stage" ref={containerRef}>
       {visibleBars.length === 0 && !isLoading && <div className="chart-empty-state"><AlertTriangle size={20} /><strong>No verified chart window</strong><p>{errorMessage ?? "Load a supported Gate.io USDT perpetual symbol to begin."}</p>{onRetry && <button onClick={onRetry}><RefreshCw size={14} /> Retry market data</button>}</div>}
       {(isLoading || isRefreshing) && <div className="chart-loading-state"><LoaderCircle size={17} /><span>{isLoading ? (showingPrevious ? "Updating verified market window" : "Loading verified market window") : "Refreshing verified market window"}</span></div>}
