@@ -1,9 +1,10 @@
 # Post-Authentication Product Release Summary
 
-**Prepared:** 2026-08-20  
-**Branch:** `product/orderflow-research-terminal`  
-**Release commit:** `1c176cc`  
-**Production branch remains:** `render-hosted-research-terminal` at `2a739a2`
+**Prepared:** 2026-08-20
+**Branch:** `product/orderflow-research-terminal`
+**Product implementation commit:** `1c176cc`
+**Production release commit:** `2313870` on `render-hosted-research-terminal`
+**Render deployment:** `dep-da3eovuk1f9s73eor4dg`
 
 ## Completed product work
 
@@ -36,11 +37,13 @@ Instead, ZTerminal implements transparent, independently authored formulas throu
 | Production build | `pnpm build` passed |
 | Safe-runtime catalog fixture | Every native preset compiled and evaluated on deterministic OHLCV fixtures |
 | Local browser review | Guest terminal account entry visible; code-first Research drawer rendered; catalog rendered; SMA selected, validated, and added to a verified live local chart |
-| Source control | Pushed to GitHub product branch at `1c176cc` |
+| Source control | Product branch preserved at `3822e3d`; isolated production release promoted at `2313870` |
+| Render deployment | Built successfully, server started, and primary URL marked live in `dep-da3eovuk1f9s73eor4dg` |
+| Production browser smoke | Guest account entry, code-first Research tabs, and native Indicator Catalog rendered over a verified BTC candle window |
 
 ## Release boundary
 
-The direct Google sign-in and CSRF-refresh hotfix are already live in production at `2a739a2` / Render deployment `dep-da3e8ie7bikc739q8rgg`. The work described in this document is **not yet deployed**; it is staged and pushed on `product/orderflow-research-terminal`. Promotion to the Render production branch is deliberately left for explicit user authorization.
+The direct Google sign-in and CSRF-refresh hotfix remain live in the release lineage. The account-control, code-first research, UI refinement, and native Indicator Catalog were then promoted in isolated production-derived commits `218d52c` and `2313870`, deployed by Render as `dep-da3eovuk1f9s73eor4dg`, and live-smoke-validated at `https://zterminal.onrender.com`.
 
 ## References
 
