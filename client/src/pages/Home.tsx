@@ -46,12 +46,14 @@ import { calculateUtcSessionVolumeProfile, evaluateFeatures, FEATURE_REGISTRY } 
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
 import { IndicatorLabDrawer } from "@/components/terminal/IndicatorLabDrawer";
-import { TerminalAccountControl } from "@/components/auth/TerminalAccountControl";
+import { TerminalAccountControl, type TerminalWorkspaceState } from "@/components/auth/TerminalAccountControl";
+import { PwaControls } from "@/components/app/PwaControls";
 import { CommandPalette } from "@/components/terminal/CommandPalette";
 import { isHelpShortcut, isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, findLargeTapePrints, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { DEFAULT_LOCAL_WORKSPACE, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
+import { parseTerminalWorkspacePreferences, type TerminalWorkspacePreferences } from "@shared/workspace/terminalPreferences";
 import type { CompiledIndicator } from "@shared/indicators/indicatorRuntime";
 import zterminalMark from "@/assets/zterminal-mark.png";
 
@@ -67,6 +69,28 @@ type TradeTape = { provider: "gateio" | "binance_usdm" | "bybit_linear" | "coinb
 type FeedHealth = { symbol: string; checkedAt: number; feeds: TradeTape[] };
 type DepthBook = { symbol: string; state: "CONNECTING" | "SYNCING" | "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; dataStatus: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE"; lastDepthAt: number | null; lastUpdateId: number | null; reason: string | null; bids: DepthLevel[]; asks: DepthLevel[] };
 type Feedback = { kind: "info" | "success" | "warning"; message: string } | null;
+
+type CloudPreferenceSnapshot = {
+  preferences: TerminalWorkspacePreferences;
+  revision: number | null;
+  updatedAt: Date | string | null;
+};
+
+function toCloudPreferences(value: { symbol: string; timeframe: string; rangePreset: string; activeTapeProvider: string; activeLayers: string[]; watchlist: string[] }): TerminalWorkspacePreferences | null {
+  return parseTerminalWorkspacePreferences({ version: 1, ...value });
+}
+
+function preferenceFingerprint(value: TerminalWorkspacePreferences) {
+  return JSON.stringify(value);
+}
+
+function workspaceStatusLabel(state: TerminalWorkspaceState) {
+  if (state === "synced") return { title: "Cloud workspace synced", detail: "Account-backed preferences" };
+  if (state === "syncing" || state === "checking") return { title: "Cloud workspace syncing", detail: "Account-backed when confirmed" };
+  if (state === "conflict") return { title: "Cloud sync needs review", detail: "Choose a workspace copy" };
+  if (state === "offline") return { title: "Cloud unavailable", detail: "Device copy retained" };
+  return { title: "Local workspace saved", detail: "This browser only" };
+}
 
 function formatQuote(value: number | null | undefined) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "—";
@@ -289,7 +313,16 @@ function ResearchDrawer({ bars, historical, symbol, onFeedback, onClose }: { bar
 }
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
   const [restoredWorkspace] = useState(() => readLocalTerminalWorkspace());
+  const initialLocalUpdatedAt = useRef(restoredWorkspace?.updatedAt ?? null);
+  const initializedWorkspaceUser = useRef<number | null>(null);
+  const syncedPreferenceFingerprint = useRef<string | null>(null);
+  const syncTimer = useRef<number | null>(null);
+  const [workspaceState, setWorkspaceState] = useState<TerminalWorkspaceState>("local");
+  const [cloudRevision, setCloudRevision] = useState<number | null>(null);
+  const [pendingCloudSnapshot, setPendingCloudSnapshot] = useState<CloudPreferenceSnapshot | null>(null);
+  const [showWorkspaceConflict, setShowWorkspaceConflict] = useState(false);
   const initialSymbol = restoredWorkspace?.symbol ?? DEFAULT_LOCAL_WORKSPACE.symbol;
   const initialTimeframe = TIMEFRAMES.includes(restoredWorkspace?.timeframe as Timeframe) ? restoredWorkspace!.timeframe as Timeframe : DEFAULT_LOCAL_WORKSPACE.timeframe as Timeframe;
   const initialRange = RANGE_PRESETS.includes(restoredWorkspace?.rangePreset as RangePreset) ? restoredWorkspace!.rangePreset as RangePreset : DEFAULT_LOCAL_WORKSPACE.rangePreset as RangePreset;
@@ -318,6 +351,8 @@ export default function Home() {
   const focusReturnRef = useRef<HTMLElement | null>(null);
   const [lastVerifiedHistorical, setLastVerifiedHistorical] = useState<Historical | null>(null);
   const [lastVerifiedSnapshot, setLastVerifiedSnapshot] = useState<Snapshot | null>(null);
+  const workspaceQuery = trpc.workspace.getTerminal.useQuery(undefined, { enabled: Boolean(user), staleTime: 15_000, retry: 1 });
+  const saveWorkspace = trpc.workspace.saveTerminal.useMutation();
   const providerInterval = toProviderInterval(timeframe);
   const historicalWindow = useMemo(() => resolveHistoricalWindow(rangePreset, providerInterval), [rangePreset, providerInterval]);
   const snapshotQuery = trpc.market.snapshot.useQuery({ symbol }, { refetchInterval: 15_000, staleTime: 10_000, retry: 1, placeholderData: (previous) => previous });
@@ -340,6 +375,61 @@ export default function Home() {
   const feedHealth = feedHealthQuery.data as FeedHealth | undefined;
   const depthBook = depthQuery.data as DepthBook | undefined;
 
+  const currentCloudPreferences = useMemo(() => toCloudPreferences({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist }), [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist]);
+
+  const applyCloudPreferences = (preferences: TerminalWorkspacePreferences) => {
+    setSymbol(preferences.symbol);
+    setSymbolDraft(preferences.symbol);
+    setTimeframe(preferences.timeframe as Timeframe);
+    setRangePreset(preferences.rangePreset as RangePreset);
+    setActiveTapeProvider(preferences.activeTapeProvider);
+    setActiveLayers(preferences.activeLayers.filter((item): item is ResearchLayerId => LAYER_ORDER.includes(item as ResearchLayerId)));
+    setWatchlist(preferences.watchlist);
+  };
+
+  const persistCurrentWorkspace = (expectedRevision: number | null | undefined = cloudRevision) => {
+    if (!currentCloudPreferences) {
+      setWorkspaceState("offline");
+      setFeedback({ kind: "warning", message: "This device workspace is invalid and was not sent to the cloud." });
+      return;
+    }
+    setWorkspaceState("syncing");
+    saveWorkspace.mutate({ preferences: currentCloudPreferences, expectedRevision }, {
+      onSuccess: (stored) => {
+        const preferences = stored.preferences as TerminalWorkspacePreferences | null;
+        if (!preferences) {
+          setWorkspaceState("offline");
+          setFeedback({ kind: "warning", message: "Cloud workspace storage returned no valid preference snapshot. This device copy is retained." });
+          return;
+        }
+        setCloudRevision(stored.revision);
+        syncedPreferenceFingerprint.current = preferenceFingerprint(preferences);
+        setPendingCloudSnapshot(null);
+        setWorkspaceState("synced");
+        setFeedback({ kind: "success", message: "Terminal preferences synced to your cloud workspace." });
+      },
+      onError: (error) => {
+        if (error.message.includes("another device")) {
+          initializedWorkspaceUser.current = null;
+          setWorkspaceState("conflict");
+          void workspaceQuery.refetch();
+          setFeedback({ kind: "warning", message: "Your cloud workspace changed elsewhere. Review the two copies before replacing it." });
+          return;
+        }
+        setWorkspaceState("offline");
+        setFeedback({ kind: "warning", message: "Cloud workspace is unavailable. This device keeps your preferences for retry." });
+      },
+    });
+  };
+
+  const reviewWorkspaceSync = () => {
+    if (pendingCloudSnapshot) {
+      setShowWorkspaceConflict(true);
+      return;
+    }
+    persistCurrentWorkspace(cloudRevision);
+  };
+
   useEffect(() => { if (currentSnapshot) setLastVerifiedSnapshot(currentSnapshot); }, [currentSnapshot]);
   useEffect(() => { if (currentHistorical) setLastVerifiedHistorical(currentHistorical); }, [currentHistorical]);
   useEffect(() => { if (!feedback) return; const timer = window.setTimeout(() => setFeedback(null), 5_500); return () => window.clearTimeout(timer); }, [feedback]);
@@ -347,6 +437,77 @@ export default function Home() {
     setWorkspaceSaved(writeLocalTerminalWorkspace({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist }));
   }, [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist]);
 
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      initializedWorkspaceUser.current = null;
+      syncedPreferenceFingerprint.current = null;
+      setCloudRevision(null);
+      setPendingCloudSnapshot(null);
+      setWorkspaceState("local");
+      return;
+    }
+    if (workspaceQuery.isLoading) {
+      setWorkspaceState("checking");
+      return;
+    }
+    if (workspaceQuery.isError || !workspaceQuery.data) {
+      setWorkspaceState("offline");
+      return;
+    }
+    if (initializedWorkspaceUser.current === user.id) return;
+
+    initializedWorkspaceUser.current = user.id;
+    const cloudPreferences = workspaceQuery.data.preferences as TerminalWorkspacePreferences | null;
+    const revision = workspaceQuery.data.revision as number | null;
+    const cloudUpdatedAt = workspaceQuery.data.updatedAt ? new Date(workspaceQuery.data.updatedAt).getTime() : null;
+    setCloudRevision(revision);
+
+    if (!cloudPreferences) {
+      if (!currentCloudPreferences) {
+        setWorkspaceState("offline");
+        return;
+      }
+      setWorkspaceState("syncing");
+      saveWorkspace.mutate({ preferences: currentCloudPreferences, expectedRevision: null }, {
+        onSuccess: (stored) => {
+          const preferences = stored.preferences as TerminalWorkspacePreferences | null;
+          if (!preferences) { setWorkspaceState("offline"); return; }
+          setCloudRevision(stored.revision);
+          syncedPreferenceFingerprint.current = preferenceFingerprint(preferences);
+          setWorkspaceState("synced");
+          setFeedback({ kind: "success", message: "Your cloud workspace is ready. This device was synced without uploading market data or credentials." });
+        },
+        onError: () => {
+          setWorkspaceState("offline");
+          setFeedback({ kind: "warning", message: "Cloud workspace setup is unavailable. Your device preferences remain local." });
+        },
+      });
+      return;
+    }
+
+    const localIsNewer = initialLocalUpdatedAt.current !== null && cloudUpdatedAt !== null && initialLocalUpdatedAt.current > cloudUpdatedAt;
+    if (currentCloudPreferences && localIsNewer && preferenceFingerprint(currentCloudPreferences) !== preferenceFingerprint(cloudPreferences)) {
+      setPendingCloudSnapshot({ preferences: cloudPreferences, revision, updatedAt: workspaceQuery.data.updatedAt });
+      setWorkspaceState("conflict");
+      return;
+    }
+
+    applyCloudPreferences(cloudPreferences);
+    syncedPreferenceFingerprint.current = preferenceFingerprint(cloudPreferences);
+    setWorkspaceState("synced");
+  }, [authLoading, currentCloudPreferences, saveWorkspace, user, workspaceQuery.data, workspaceQuery.isError, workspaceQuery.isLoading]);
+
+  useEffect(() => {
+    if (!user || workspaceState !== "synced" || !currentCloudPreferences) return;
+    const fingerprint = preferenceFingerprint(currentCloudPreferences);
+    if (syncedPreferenceFingerprint.current === fingerprint) return;
+    if (syncTimer.current !== null) window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(() => persistCurrentWorkspace(cloudRevision), 900);
+    return () => { if (syncTimer.current !== null) window.clearTimeout(syncTimer.current); };
+  }, [cloudRevision, currentCloudPreferences, user, workspaceState]);
+
+  const workspaceDisplay = workspaceStatusLabel(workspaceState);
   const displaySnapshot = currentSnapshot ?? lastVerifiedSnapshot;
   const displayHistorical = currentHistorical ?? lastVerifiedHistorical;
   const isUpdating = snapshotQuery.isFetching || historicalQuery.isFetching;
@@ -474,7 +635,7 @@ export default function Home() {
     <header className="premium-topbar">
       <button className="brand-lockup" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><img src={zterminalMark} className="brand-mark" alt="" /><span><b>ZTERMINAL</b><small>crypto order-flow research</small></span></button>
       <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={openResearchDrawer} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={openStudiesDrawer} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button><button onClick={openIndicatorLab} className={showIndicatorLab ? "active" : ""}><Code2 size={16} /><span>Indicators</span></button></nav>
-      <div className="topbar-actions"><button onClick={openCommandPalette} aria-label="Open command palette"><Command size={16} /></button><button onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><TerminalAccountControl /></div>
+      <div className="topbar-actions"><button onClick={openCommandPalette} aria-label="Open command palette"><Command size={16} /></button><button onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><PwaControls /><TerminalAccountControl workspaceState={workspaceState} onSync={reviewWorkspaceSync} /></div>
     </header>
 
     <section className="instrument-command-bar">
@@ -485,8 +646,10 @@ export default function Home() {
     <section className="instrument-summary">
       <div className="instrument-headline"><div className="instrument-identity"><span className="venue-tag">GATE.IO <ChevronDown size={12} /></span><h1>{verifiedSymbol.replace("_", " / ")}</h1><span className={requestedMarketIsValid ? "verified-tag" : "pending-tag"}>{requestedMarketIsValid ? "PUBLIC VERIFIED" : isShowingLastVerifiedMarket ? "LAST VERIFIED" : "REQUESTED"}</span>{isShowingLastVerifiedMarket && <small className="requested-instrument">Requested: {symbol.replace("_", " / ")}</small>}</div><div className="main-price"><strong>{formatQuote(displaySnapshot?.price)}</strong><span className={typeof displaySnapshot?.changePercent === "number" && displaySnapshot.changePercent >= 0 ? "positive" : "negative"}>{typeof displaySnapshot?.changePercent === "number" ? `${displaySnapshot.changePercent >= 0 ? "+" : ""}${displaySnapshot.changePercent.toFixed(2)}% · 24h` : "Awaiting verified quote"}</span></div></div>
       <div className="summary-metrics"><InstrumentMetric label="24h high" value={formatQuote(displaySnapshot?.dayHigh)} /><InstrumentMetric label="24h low" value={formatQuote(displaySnapshot?.dayLow)} /><InstrumentMetric label="24h volume" value={formatVolume(displaySnapshot?.quoteVolume)} /><InstrumentMetric label="Bid / ask" value={displaySnapshot?.bid && displaySnapshot?.ask ? `${formatQuote(displaySnapshot.bid)} / ${formatQuote(displaySnapshot.ask)}` : "—"} /></div>
-      <div className="terminal-context-cluster"><div className="data-contract-chip"><Radio size={14} /><span><b>{coverage?.complete ? "Verified coverage" : coverage ? "Partial coverage" : "Coverage pending"}</b><small>{coverage ? `${coverage.returnedBars.toLocaleString("en-US")} bars · ${coverage.granularity}` : "No effective historical window"}</small></span></div><div className={`local-workspace-chip ${workspaceSaved ? "saved" : "unsaved"}`} title="Interface preferences and watchlist are stored only in this browser. No market data, credentials, or orders are persisted."><BookOpen size={13} /><span><b>{workspaceSaved ? "Local workspace saved" : "Local workspace unavailable"}</b><small>This browser only</small></span></div></div>
+      <div className="terminal-context-cluster"><div className="data-contract-chip"><Radio size={14} /><span><b>{coverage?.complete ? "Verified coverage" : coverage ? "Partial coverage" : "Coverage pending"}</b><small>{coverage ? `${coverage.returnedBars.toLocaleString("en-US")} bars · ${coverage.granularity}` : "No effective historical window"}</small></span></div><div className={`local-workspace-chip ${workspaceState === "synced" ? "cloud" : workspaceSaved ? "saved" : "unsaved"}`} title={user ? "Only validated interface preferences and research drafts are cloud-synced. Market data, credentials, strategy source, and orders are never uploaded." : "Interface preferences and watchlist are stored only in this browser. No market data, credentials, or orders are persisted."}><BookOpen size={13} /><span><b>{workspaceDisplay.title}</b><small>{workspaceDisplay.detail}</small></span>{user && workspaceState !== "synced" && <button className="workspace-chip-action" onClick={reviewWorkspaceSync} disabled={workspaceState === "checking" || workspaceState === "syncing"}>{workspaceState === "conflict" ? "Review" : "Sync"}</button>}</div></div>
     </section>
+
+    {showWorkspaceConflict && pendingCloudSnapshot && <section className="workspace-conflict-dialog" role="dialog" aria-modal="true" aria-label="Resolve cloud workspace difference"><div><span className="drawer-kicker">Cloud workspace review</span><h2>Two device copies differ</h2><p>Your account has a newer saved workspace than this browser. Market data, credentials, and strategy source are not part of either copy.</p><dl><div><dt>Cloud copy</dt><dd>{pendingCloudSnapshot.updatedAt ? new Date(pendingCloudSnapshot.updatedAt).toLocaleString() : "Saved workspace"}</dd></div><div><dt>This device</dt><dd>{initialLocalUpdatedAt.current ? new Date(initialLocalUpdatedAt.current).toLocaleString() : "Current browser settings"}</dd></div></dl><div className="workspace-conflict-actions"><button className="terminal-secondary-button" onClick={() => { applyCloudPreferences(pendingCloudSnapshot.preferences); setCloudRevision(pendingCloudSnapshot.revision); syncedPreferenceFingerprint.current = preferenceFingerprint(pendingCloudSnapshot.preferences); setPendingCloudSnapshot(null); setShowWorkspaceConflict(false); setWorkspaceState("synced"); setFeedback({ kind: "info", message: "Cloud workspace applied to this device." }); }}>Use cloud workspace</button><button className="terminal-primary-button" onClick={() => { setShowWorkspaceConflict(false); persistCurrentWorkspace(pendingCloudSnapshot.revision); }}>Replace cloud with this device</button></div><button className="workspace-conflict-dismiss" onClick={() => setShowWorkspaceConflict(false)}>Decide later</button></div></section>}
 
     <section className="terminal-main-layout">
       <IconRail showLayers={showStudies} showResearch={showResearch} focusMode={focusMode} onLayers={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()} onResearch={() => showResearch ? closeResearchDrawer() : openResearchDrawer()} onFocus={toggleFocusWorkspace} onReset={resetViewport} />

@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,40 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  VitePWA({
+    registerType: "prompt",
+    injectRegister: false,
+    includeAssets: ["icons/zterminal-192.png", "icons/zterminal-512.png"],
+    manifest: {
+      name: "ZTerminal Research Terminal",
+      short_name: "ZTerminal",
+      description: "Crypto order-flow research terminal with account-isolated workspaces.",
+      start_url: "/terminal",
+      scope: "/",
+      display: "standalone",
+      display_override: ["standalone", "minimal-ui", "browser"],
+      theme_color: "#090b12",
+      background_color: "#090b12",
+      icons: [
+        { src: "/icons/zterminal-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+        { src: "/icons/zterminal-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      ],
+    },
+    workbox: {
+      globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+      navigateFallback: "/index.html",
+      navigateFallbackDenylist: [/^\/api\//],
+      runtimeCaching: [],
+      cleanupOutdatedCaches: true,
+    },
+  }),
+  vitePluginManusDebugCollector(),
+];
 
 export default defineConfig({
   plugins,

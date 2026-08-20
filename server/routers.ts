@@ -18,6 +18,7 @@ import { gateioTradeStream } from "./gateioTradeStream";
 import { gateioDepthStream } from "./gateioDepthStream";
 import { multiExchangeTradeStream } from "./multiExchangeTradeStream";
 import { compileZS } from "@shared/strategy/zsCompiler";
+import { terminalWorkspacePreferencesSchema } from "@shared/workspace/terminalPreferences";
 
 const GATE_TICKERS_URL = "https://api.gateio.ws/api/v4/futures/usdt/tickers";
 const GATE_CANDLES_URL = "https://api.gateio.ws/api/v4/futures/usdt/candlesticks";
@@ -91,6 +92,11 @@ const StrategyCompileInput = z.object({
 const GoogleSignInInput = z.object({
   credential: z.string().trim().min(1).max(16_384),
   csrfToken: z.string().trim().min(32).max(256),
+});
+
+const SaveTerminalWorkspaceInput = z.object({
+  preferences: terminalWorkspacePreferencesSchema,
+  expectedRevision: z.number().int().positive().nullable().optional(),
 });
 
 const SaveResearchDraftInput = z.object({
@@ -180,6 +186,26 @@ export const appRouter = router({
   strategy: router({
     compile: rateLimitedPublicProcedure.input(StrategyCompileInput).mutation(({ input }) => compileZS(input.source)),
   }),
+  workspace: router({
+    getTerminal: protectedProcedure.query(async ({ ctx }) => {
+      const workspace = await db.getTerminalWorkspace(ctx.user.id);
+      if (!workspace) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Cloud workspace storage is unavailable for this deployment." });
+      return workspace;
+    }),
+    saveTerminal: protectedProcedure.input(SaveTerminalWorkspaceInput).mutation(async ({ ctx, input }) => {
+      try {
+        const workspace = await db.saveTerminalWorkspace(ctx.user.id, input.preferences, input.expectedRevision);
+        if (!workspace) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Cloud workspace storage is unavailable for this deployment." });
+        return workspace;
+      } catch (error) {
+        if (error instanceof db.WorkspaceRevisionConflictError) {
+          throw new TRPCError({ code: "CONFLICT", message: "Cloud workspace changed on another device. Refresh it before replacing it." });
+        }
+        throw error;
+      }
+    }),
+  }),
+
   research: router({
     listDrafts: protectedProcedure.query(async ({ ctx }) => {
       const drafts = await listResearchDrafts(ctx.user.id);

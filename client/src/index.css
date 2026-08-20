@@ -1197,3 +1197,63 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .indicator-catalog-list em { max-width: 104px; color: #858c9f; font-size: 8px; font-style: normal; line-height: 1.25; text-align: right; }
 .indicator-catalog > p { margin: 0; color: #777e90; font-size: 8px; line-height: 1.4; }
 @media (max-width: 760px) { .indicator-catalog-list em { max-width: 78px; } }
+
+/* Durable cloud-workspace states. */
+.local-workspace-chip.cloud { border-color: rgba(64, 213, 193, .4); background: rgba(12, 92, 82, .14); color: #71decf; }
+.workspace-chip-action { margin-left: auto; padding: 3px 6px; border: 1px solid rgba(92, 215, 198, .38); border-radius: 4px; background: rgba(55, 180, 161, .12); color: #b7fff5; font: 720 8px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .05em; text-transform: uppercase; }
+.workspace-chip-action:hover:not(:disabled) { background: rgba(55, 180, 161, .24); }
+.workspace-chip-action:disabled { cursor: wait; opacity: .55; }
+.terminal-account-menu-sync { display: inline-flex; align-items: center; gap: 8px; min-height: 37px; padding: 0 13px; border: 0; border-bottom: 1px solid rgba(143,147,171,.15); background: transparent; color: #8ce5d9; font: 700 10px inherit; text-align: left; }
+.terminal-account-menu-sync:hover:not(:disabled) { background: rgba(69, 206, 189, .08); color: #e5fffb; }
+.terminal-account-menu-sync:disabled { cursor: wait; opacity: .62; }
+.terminal-account-menu-sync svg { flex: 0 0 auto; }
+.workspace-conflict-dialog { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(2, 4, 9, .74); }
+.workspace-conflict-dialog > div { width: min(460px, 100%); padding: 20px; border: 1px solid rgba(130, 144, 179, .3); border-radius: 10px; background: #11141f; box-shadow: 0 24px 66px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.035); }
+.workspace-conflict-dialog h2 { margin: 5px 0 9px; color: #edf2f5; font-size: 17px; letter-spacing: -.02em; }
+.workspace-conflict-dialog p { margin: 0; color: #a4aab9; font-size: 12px; line-height: 1.55; }
+.workspace-conflict-dialog dl { display: grid; gap: 7px; margin: 16px 0; }
+.workspace-conflict-dialog dl div { display: flex; justify-content: space-between; gap: 14px; padding: 8px 10px; border: 1px solid rgba(143,147,171,.16); border-radius: 6px; background: rgba(255,255,255,.018); }
+.workspace-conflict-dialog dt { color: #7d8495; font-size: 10px; }
+.workspace-conflict-dialog dd { margin: 0; color: #c9d5d5; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+.workspace-conflict-actions { display: flex; gap: 8px; }
+.workspace-conflict-actions button { flex: 1; min-height: 36px; justify-content: center; }
+.workspace-conflict-dismiss { display: block; width: 100%; margin-top: 9px; border: 0; background: transparent; color: #858b9b; font-size: 10px; }
+.workspace-conflict-dismiss:hover { color: #d0d5df; }
+@media (max-width: 760px) { .workspace-conflict-dialog { align-items: end; padding: 10px; } .workspace-conflict-dialog > div { border-radius: 10px 10px 7px 7px; } .workspace-conflict-actions { flex-direction: column-reverse; } .workspace-chip-action { display: none; } }
+
+/* Installable web app controls and handset-first terminal refinements. */
+.pwa-install-trigger, .pwa-update-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px; border: 1px solid rgba(112, 220, 205, .32); border-radius: 7px; background: rgba(22, 119, 108, .12); color: #b8fff5; font: 720 9px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .035em; text-transform: uppercase; white-space: nowrap; }
+.pwa-install-trigger:hover, .pwa-update-trigger:hover { border-color: rgba(112, 220, 205, .58); background: rgba(22, 119, 108, .23); }
+.pwa-install-trigger.apple { border-color: rgba(145, 133, 215, .35); background: rgba(92, 68, 148, .14); color: #d7caff; }
+.pwa-update-trigger { position: fixed; z-index: 72; right: 14px; bottom: 14px; box-shadow: 0 10px 28px rgba(0,0,0,.32); }
+.pwa-install-help { position: fixed; z-index: 85; inset: 0; display: grid; place-items: end center; padding: 12px; background: rgba(2,4,9,.7); }
+.pwa-install-help > div { position: relative; width: min(420px, 100%); padding: 20px; border: 1px solid rgba(132,143,177,.3); border-radius: 10px; background: #11141f; box-shadow: 0 24px 66px rgba(0,0,0,.46); }
+.pwa-install-help h2 { margin: 5px 28px 8px 0; color: #edf2f5; font-size: 17px; }
+.pwa-install-help p { margin: 0; color: #a7adba; font-size: 12px; line-height: 1.55; }
+.pwa-install-close { position: absolute; top: 11px; right: 11px; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid rgba(143,147,171,.22); border-radius: 6px; background: transparent; color: #a8adba; }
+@media (max-width: 760px) {
+  .premium-topbar { position: sticky; z-index: 42; top: 0; min-height: 50px; gap: 6px; padding: 0 8px; }
+  .brand-lockup { min-width: 0; }
+  .brand-lockup > span small { display: none; }
+  .brand-lockup b { font-size: 10px; }
+  .top-navigation { order: 3; width: 100%; overflow-x: auto; border-top: 1px solid rgba(143,147,171,.12); scrollbar-width: none; }
+  .top-navigation::-webkit-scrollbar { display: none; }
+  .top-navigation button { flex: 1 0 70px; min-height: 38px; padding: 0 8px; font-size: 10px; }
+  .top-navigation button span { display: inline; }
+  .topbar-actions { gap: 2px; margin-left: auto; }
+  .topbar-actions > button:not(.pwa-install-trigger) { width: 34px; height: 34px; }
+  .pwa-install-trigger { min-width: 34px; padding: 0 7px; }
+  .pwa-install-trigger span { display: none; }
+  .instrument-command-bar { position: relative; z-index: 1; padding: 7px 8px; }
+  .quick-markets { width: 100%; overflow-x: auto; padding-bottom: 1px; scrollbar-width: none; }
+  .quick-markets button { flex: 0 0 auto; min-width: 69px; min-height: 34px; }
+  .chart-command-toolbar { overflow-x: auto; scrollbar-width: none; }
+  .chart-command-toolbar::-webkit-scrollbar { display: none; }
+  .chart-command-toolbar > button, .timeframe-switcher button, .chart-range-dock button { min-height: 34px; }
+  .terminal-icon-rail { display: none; }
+  .terminal-main-layout { display: block; }
+  .studies-drawer, .protocol-research-drawer, .research-drawer, .indicator-lab-drawer { position: fixed; z-index: 62; right: 0; bottom: 0; left: 0; width: auto; max-height: min(78dvh, 680px); border-radius: 14px 14px 0 0; }
+  .premium-terminal-footer { padding: 0 8px; }
+  .premium-terminal-footer a { display: none; }
+  .pwa-update-trigger { right: 10px; bottom: 10px; }
+}
