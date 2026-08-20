@@ -66,6 +66,13 @@ describe("deterministic research backtest", () => {
     expect(incremental.classification.label).toBe("INCREMENTAL · ONE VARIABLE");
   });
 
+  it("classifies a code-only closed-source run as direct source with declared assumptions rather than a protocol baseline", () => {
+    const directSource = runBacktest("ema20_50_vwap_long", makeBars(), {}, { ...verifiedContext, protocol: { kind: "DIRECT_SOURCE" } });
+    expect(directSource.status).toBe("COMPLETED");
+    expect(directSource.classification).toEqual({ kind: "DIRECT_SOURCE", label: "DIRECT SOURCE · DECLARED ASSUMPTIONS", baselineFingerprint: null, incrementField: null });
+    expect(directSource.provenance).toMatchObject({ provider: "gateio", symbol: "QQQX_USDT", dataStatus: "HISTORICAL" });
+  });
+
   it("evaluates prevalidated closed-runtime signals with next-open fills rather than silently substituting the fixed template", () => {
     const bars = makeBars().slice(0, 6);
     const strategy: StrategyDefinition = { id: "zs-closed-fixture", version: "zs-historical-runtime-v1", label: "Closed fixture", description: "Fixture only", signalTiming: "bar_close", entryRule: "Declared entry", exitRule: "Declared close", limitations: ["Closed runtime fixture."] };

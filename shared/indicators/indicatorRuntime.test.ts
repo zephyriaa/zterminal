@@ -41,6 +41,25 @@ describe("closed Indicator Lab runtime", () => {
     expect(result.points.map(point => point.value)).toEqual([10, 10.5, 11.5, 12.5]);
   });
 
+  it("evaluates trusted weighted, volatility, extrema, momentum, and ATR formulas over loaded candles only", () => {
+    const formulas = [
+      ["WMA", "wma(close, 3)", 11.3333333333],
+      ["StdDev", "stdev(close, 3)", Math.sqrt(2 / 3)],
+      ["Highest", "highest(high, 3)", 13],
+      ["Lowest", "lowest(low, 3)", 9],
+      ["ROC", "roc(close, 3)", 20],
+      ["ATR", "atr(2)", 2],
+    ] as const;
+    for (const [name, expression, expected] of formulas) {
+      const compiled = compileIndicator({ name, expression, output: { pane: "pane", color: "#ffffff", lineWidth: 1 }, inputs: [] });
+      expect(compiled.status, name).toBe("VALID");
+      if (compiled.status !== "VALID") continue;
+      const result = evaluateIndicator(compiled, bars);
+      expect(result.status, name).toBe("COMPLETED");
+      if (result.status === "COMPLETED") expect(result.points[2]?.value).toBeCloseTo(expected);
+    }
+  });
+
   it("rejects escape hatches and unsupported market-data identifiers instead of executing them", () => {
     expect(compileIndicator({ name: "Unsafe", expression: "fetch('https://example.com')", output: { pane: "overlay", color: "#ffffff", lineWidth: 1 }, inputs: [] })).toMatchObject({ status: "INVALID", diagnostic: expect.stringMatching(/not allowed|unknown/i) });
     expect(compileIndicator({ name: "No tape", expression: "cvd + close", output: { pane: "overlay", color: "#ffffff", lineWidth: 1 }, inputs: [] })).toMatchObject({ status: "INVALID", diagnostic: expect.stringMatching(/unknown identifier/i) });
