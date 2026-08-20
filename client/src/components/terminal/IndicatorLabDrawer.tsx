@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, Code2, Plus, Trash2, X } from "lucide-react";
 import { compileIndicator, evaluateIndicator, type CompiledIndicator, type IndicatorDraft, type IndicatorInput } from "@shared/indicators/indicatorRuntime";
+import { NATIVE_INDICATOR_CATEGORIES, NATIVE_INDICATOR_PRESETS, clonePresetDraft, type NativeIndicatorCategory } from "@shared/indicators/catalog";
 import type { TerminalBar } from "@/lib/terminalWorkspace";
 
 const initialInputs: IndicatorInput[] = [
@@ -34,6 +35,8 @@ type IndicatorLabDrawerProps = {
 
 export function IndicatorLabDrawer({ bars, onAdd, onClose }: IndicatorLabDrawerProps) {
   const [draft, setDraft] = useState<IndicatorDraft>(defaultDraft);
+  const [catalogCategory, setCatalogCategory] = useState<NativeIndicatorCategory>("Trend");
+  const catalogPresets = useMemo(() => NATIVE_INDICATOR_PRESETS.filter(preset => preset.category === catalogCategory), [catalogCategory]);
   const compiled = useMemo(() => compileIndicator(draft), [draft]);
   const preview = useMemo(() => compiled.status === "VALID" ? evaluateIndicator(compiled, bars) : null, [bars, compiled]);
   const valid = compiled.status === "VALID" && preview?.status === "COMPLETED";
@@ -45,11 +48,12 @@ export function IndicatorLabDrawer({ bars, onAdd, onClose }: IndicatorLabDrawerP
   return <aside className="studies-drawer indicator-lab-drawer" aria-label="Indicator Lab">
     <div className="drawer-heading"><div><span className="drawer-kicker">Local custom study</span><h2>Indicator Lab</h2></div><button onClick={onClose} aria-label="Close Indicator Lab"><X size={16} /></button></div>
     <div className="indicator-lab-status"><Code2 size={14} /><span>Closed candle runtime</span><b>LOCAL</b></div>
-    <p className="indicator-lab-intro">Define one formula from the loaded verified OHLCV window. ZTerminal parses it into a closed expression tree; it never runs JavaScript, Pine Script, external requests, alerts, strategies, or orders.</p>
+    <p className="indicator-lab-intro">Choose a native study or define one formula from the loaded verified OHLCV window. ZTerminal parses it into a closed expression tree; it never runs JavaScript, Pine Script, external requests, alerts, strategies, or orders.</p>
+    <section className="indicator-catalog" aria-label="Native indicator catalog"><div className="indicator-catalog-heading"><span><b>Native catalog</b><small>Formula-reviewed · loaded OHLCV only</small></span><select value={catalogCategory} onChange={event => setCatalogCategory(event.target.value as NativeIndicatorCategory)} aria-label="Indicator category">{NATIVE_INDICATOR_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select></div><div className="indicator-catalog-list">{catalogPresets.map(preset => <button type="button" key={preset.id} onClick={() => setDraft(clonePresetDraft(preset))} title={`${preset.description} ${preset.attribution}`}><span><b>{preset.shortLabel}</b><small>{preset.label}</small></span><em>{preset.warmup}</em></button>)}</div><p>Each preset is a transparent ZTerminal-native formula. It is not a TradingView community-script import.</p></section>
     <div className="indicator-lab-form">
       <label>Indicator name<input value={draft.name} maxLength={64} onChange={event => setDraft(current => ({ ...current, name: event.target.value }))} /></label>
       <label>Formula<textarea value={draft.expression} maxLength={1200} spellCheck="false" onChange={event => setDraft(current => ({ ...current, expression: event.target.value }))} /></label>
-      <small className="indicator-lab-hint">Sources: open, high, low, close, volume, hl2, hlc3, ohlc4. Functions: sma(series, period), ema(series, period), rsi(series, period), abs, min, max.</small>
+      <small className="indicator-lab-hint">Sources: open, high, low, close, volume, hl2, hlc3, ohlc4. Functions: sma, ema, wma, rsi, stdev, highest, lowest, roc, atr, abs, min, max. Periods must be bounded numeric inputs or literals.</small>
       <div className="indicator-output-grid"><label>Pane<select value={draft.output.pane} onChange={event => setDraft(current => ({ ...current, output: { ...current.output, pane: event.target.value as "overlay" | "pane" } }))}><option value="overlay">Price overlay</option><option value="pane">Separate pane</option></select></label><label>Color<input type="color" value={draft.output.color} onChange={event => setDraft(current => ({ ...current, output: { ...current.output, color: event.target.value } }))} /></label><label>Width<select value={draft.output.lineWidth} onChange={event => setDraft(current => ({ ...current, output: { ...current.output, lineWidth: Number(event.target.value) } }))}>{[1, 2, 3, 4].map(value => <option key={value} value={value}>{value}px</option>)}</select></label></div>
       <section className="indicator-inputs"><div><span>Bounded numeric inputs</span><button onClick={addInput} type="button"><Plus size={13} /> Add input</button></div>{draft.inputs.map((input, index) => <div className="indicator-input-row" key={`${input.id}-${index}`}><input aria-label={`Input ${index + 1} id`} value={input.id} onChange={event => updateInput(index, { id: event.target.value })} /><input aria-label={`Input ${index + 1} label`} value={input.label} onChange={event => updateInput(index, { label: event.target.value })} /><input aria-label={`Input ${index + 1} default`} type="number" value={input.defaultValue} onChange={event => updateInput(index, { defaultValue: numeric(event.target.value, input.defaultValue) })} /><input aria-label={`Input ${index + 1} minimum`} type="number" value={input.min} onChange={event => updateInput(index, { min: numeric(event.target.value, input.min) })} /><input aria-label={`Input ${index + 1} maximum`} type="number" value={input.max} onChange={event => updateInput(index, { max: numeric(event.target.value, input.max) })} /><button type="button" onClick={() => removeInput(index)} aria-label={`Remove ${input.label}`}><Trash2 size={13} /></button></div>)}</section>
     </div>

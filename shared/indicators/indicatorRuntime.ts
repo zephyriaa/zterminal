@@ -31,7 +31,7 @@ type CallNode = { kind: "call"; name: IndicatorFunction; args: ExpressionNode[] 
 export type ExpressionNode = LiteralNode | SourceNode | InputNode | UnaryNode | BinaryNode | CallNode;
 
 type CandleSource = "open" | "high" | "low" | "close" | "volume" | "hl2" | "hlc3" | "ohlc4";
-type IndicatorFunction = "sma" | "ema" | "rsi" | "abs" | "min" | "max";
+type IndicatorFunction = "sma" | "ema" | "wma" | "rsi" | "stdev" | "highest" | "lowest" | "roc" | "atr" | "abs" | "min" | "max";
 type Token = { value: string; index: number };
 
 export type CompiledIndicator = {
@@ -56,8 +56,8 @@ export type IndicatorEvaluation =
   | { status: "UNAVAILABLE"; reason: string; points: [] };
 
 const CANDLE_SOURCES = new Set<CandleSource>(["open", "high", "low", "close", "volume", "hl2", "hlc3", "ohlc4"]);
-const FUNCTIONS = new Set<IndicatorFunction>(["sma", "ema", "rsi", "abs", "min", "max"]);
-const FUNCTION_ARITY: Record<IndicatorFunction, number> = { sma: 2, ema: 2, rsi: 2, abs: 1, min: 2, max: 2 };
+const FUNCTIONS = new Set<IndicatorFunction>(["sma", "ema", "wma", "rsi", "stdev", "highest", "lowest", "roc", "atr", "abs", "min", "max"]);
+const FUNCTION_ARITY: Record<IndicatorFunction, number> = { sma: 2, ema: 2, wma: 2, rsi: 2, stdev: 2, highest: 2, lowest: 2, roc: 2, atr: 1, abs: 1, min: 2, max: 2 };
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const FORBIDDEN_TERMS = /\b(eval|function|import|export|require|fetch|xmlhttprequest|websocket|window|document|globalthis|process|constructor|prototype|__proto__)\b/i;
 
@@ -145,7 +145,8 @@ class Parser {
     }
     this.expect(")");
     if (args.length !== FUNCTION_ARITY[name]) throw new IndicatorSyntaxError(`${name} expects ${FUNCTION_ARITY[name]} argument${FUNCTION_ARITY[name] === 1 ? "" : "s"}.`);
-    if ((name === "sma" || name === "ema" || name === "rsi") && !isConstantPeriod(args[1])) {
+    const periodArgument = name === "atr" ? args[0] : args[1];
+    if ((name === "sma" || name === "ema" || name === "wma" || name === "rsi" || name === "stdev" || name === "highest" || name === "lowest" || name === "roc" || name === "atr") && !isConstantPeriod(periodArgument!)) {
       throw new IndicatorSyntaxError(`${name} period must be a numeric literal or a declared numeric input.`);
     }
     return { kind: "call", name, args };
@@ -272,13 +273,37 @@ function evaluateNode(node: ExpressionNode, index: number, bars: MarketBar[], in
     return node.name === "min" ? Math.min(left, right) : Math.max(left, right);
   }
 
-  const period = periodAt(second, index, bars, inputs);
+  const period = periodAt(node.name === "atr" ? first : second, index, bars, inputs);
   if (!period) return null;
-  if (node.name === "sma") {
+  if (node.name === "atr") {
     const start = Math.max(0, index - period + 1);
-    const values = Array.from({ length: index - start + 1 }, (_, offset) => evaluateNode(first, start + offset, bars, inputs));
-    if (values.some(value => value === null)) return null;
-    return (values as number[]).reduce((sum, value) => sum + value, 0) / values.length;
+    let total = 0;
+    for (let cursor = start; cursor <= index; cursor += 1) {
+      const bar = bars[cursor]!;
+      const previous = cursor > 0 ? bars[cursor - 1] : null;
+      total += previous ? Math.max(bar.h - bar.l, Math.abs(bar.h - previous.c), Math.abs(bar.l - previous.c)) : bar.h - bar.l;
+    }
+    return total / (index - start + 1);
+  }
+  const start = Math.max(0, index - period + 1);
+  const values = Array.from({ length: index - start + 1 }, (_, offset) => evaluateNode(first, start + offset, bars, inputs));
+  if (values.some(value => value === null)) return null;
+  const numbers = values as number[];
+  if (node.name === "sma") return numbers.reduce((sum, value) => sum + value, 0) / numbers.length;
+  if (node.name === "wma") {
+    const denominator = (numbers.length * (numbers.length + 1)) / 2;
+    return numbers.reduce((sum, value, offset) => sum + value * (offset + 1), 0) / denominator;
+  }
+  if (node.name === "stdev") {
+    const average = numbers.reduce((sum, value) => sum + value, 0) / numbers.length;
+    return Math.sqrt(numbers.reduce((sum, value) => sum + (value - average) ** 2, 0) / numbers.length);
+  }
+  if (node.name === "highest") return Math.max(...numbers);
+  if (node.name === "lowest") return Math.min(...numbers);
+  if (node.name === "roc") {
+    const base = numbers[0]!;
+    const current = numbers.at(-1)!;
+    return base === 0 ? null : ((current - base) / Math.abs(base)) * 100;
   }
   if (node.name === "ema") {
     const multiplier = 2 / (period + 1);
@@ -291,10 +316,10 @@ function evaluateNode(node: ExpressionNode, index: number, bars: MarketBar[], in
     return ema;
   }
 
-  const start = Math.max(1, index - period + 1);
+  const rsiStart = Math.max(1, index - period + 1);
   let gains = 0;
   let losses = 0;
-  for (let cursor = start; cursor <= index; cursor += 1) {
+  for (let cursor = rsiStart; cursor <= index; cursor += 1) {
     const current = evaluateNode(first, cursor, bars, inputs);
     const previous = evaluateNode(first, cursor - 1, bars, inputs);
     if (current === null || previous === null) return null;

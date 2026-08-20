@@ -70,8 +70,8 @@ export type BacktestDataContext = {
 };
 
 export type ProtocolClassification = {
-  kind: "BASELINE" | "INCREMENTAL" | "UNCLASSIFIED";
-  label: "BASELINE · NO OPTIMIZATION" | "INCREMENTAL · ONE VARIABLE" | "UNCLASSIFIED · PROTOCOL REQUIRED";
+  kind: "DIRECT_SOURCE" | "BASELINE" | "INCREMENTAL" | "UNCLASSIFIED";
+  label: "DIRECT SOURCE · DECLARED ASSUMPTIONS" | "BASELINE · NO OPTIMIZATION" | "INCREMENTAL · ONE VARIABLE" | "UNCLASSIFIED · PROTOCOL REQUIRED";
   baselineFingerprint: string | null;
   incrementField: string | null;
 };
@@ -199,6 +199,7 @@ function validateConfig(config: BacktestConfig) {
 }
 
 function classificationFor(protocol?: Partial<ProtocolClassification>): ProtocolClassification {
+  if (protocol?.kind === "DIRECT_SOURCE") return { kind: "DIRECT_SOURCE", label: "DIRECT SOURCE · DECLARED ASSUMPTIONS", baselineFingerprint: null, incrementField: null };
   if (protocol?.kind === "BASELINE" && protocol.baselineFingerprint) return { kind: "BASELINE", label: "BASELINE · NO OPTIMIZATION", baselineFingerprint: protocol.baselineFingerprint, incrementField: null };
   if (protocol?.kind === "INCREMENTAL" && protocol.baselineFingerprint && protocol.incrementField) return { kind: "INCREMENTAL", label: "INCREMENTAL · ONE VARIABLE", baselineFingerprint: protocol.baselineFingerprint, incrementField: protocol.incrementField };
   return { kind: "UNCLASSIFIED", label: "UNCLASSIFIED · PROTOCOL REQUIRED", baselineFingerprint: null, incrementField: null };
