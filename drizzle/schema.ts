@@ -27,6 +27,20 @@ export const workspaces = mysqlTable("workspaces", {
  * hypothesis/condition text and a compact dataset reference; market bars and
  * provider secrets are never persisted in this table.
  */
+/**
+ * The durable, account-scoped terminal preference snapshot. It intentionally holds
+ * only validated interface choices; public-market data, credentials, and strategy
+ * source remain outside the cloud workspace boundary.
+ */
+export const workspacePreferences = mysqlTable("workspacePreferences", {
+  workspaceId: varchar("workspaceId", { length: 36 }).primaryKey().references(() => workspaces.id, { onDelete: "cascade" }),
+  version: int("version").notNull().default(1),
+  revision: int("revision").notNull().default(1),
+  preferencesJson: text("preferencesJson").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const researchDrafts = mysqlTable("researchDrafts", {
   id: varchar("id", { length: 36 }).primaryKey(),
   workspaceId: varchar("workspaceId", { length: 36 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
@@ -43,3 +57,4 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Workspace = typeof workspaces.$inferSelect;
 export type ResearchDraft = typeof researchDrafts.$inferSelect;
+export type WorkspacePreference = typeof workspacePreferences.$inferSelect;

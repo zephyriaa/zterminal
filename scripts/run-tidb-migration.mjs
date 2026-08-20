@@ -47,6 +47,18 @@ const statements = [
       FOREIGN KEY (\`ownerId\`) REFERENCES \`${database}\`.\`users\` (\`id\`)
       ON DELETE CASCADE
   )`,
+  `CREATE TABLE IF NOT EXISTS \`${database}\`.\`workspacePreferences\` (
+    \`workspaceId\` VARCHAR(36) NOT NULL,
+    \`version\` INT NOT NULL DEFAULT 1,
+    \`revision\` INT NOT NULL DEFAULT 1,
+    \`preferencesJson\` TEXT NOT NULL,
+    \`createdAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    \`updatedAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (\`workspaceId\`),
+    CONSTRAINT \`workspacePreferences_workspaceId_workspaces_id_fk\`
+      FOREIGN KEY (\`workspaceId\`) REFERENCES \`${database}\`.\`workspaces\` (\`id\`)
+      ON DELETE CASCADE
+  )`,
   `CREATE TABLE IF NOT EXISTS \`${database}\`.\`researchDrafts\` (
     \`id\` VARCHAR(36) NOT NULL,
     \`workspaceId\` VARCHAR(36) NOT NULL,
@@ -74,13 +86,13 @@ try {
     `SELECT TABLE_NAME AS tableName
      FROM information_schema.tables
      WHERE table_schema = ?
-       AND table_name IN ('users', 'workspaces', 'researchDrafts')
+       AND table_name IN ('users', 'workspaces', 'workspacePreferences', 'researchDrafts')
      ORDER BY table_name`,
     [database],
   );
 
-  if (tables.length !== 3) {
-    throw new Error(`Schema verification failed: expected 3 tables, found ${tables.length}`);
+  if (tables.length !== 4) {
+    throw new Error(`Schema verification failed: expected 4 tables, found ${tables.length}`);
   }
 
   console.log(JSON.stringify({ database, tables }, null, 2));
