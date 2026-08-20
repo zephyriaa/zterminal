@@ -25,4 +25,10 @@ describe("historical-window resolver", () => {
     expect(window.from).toBe(Date.UTC(2026, 0, 1));
     expect(window.to).toBe(Date.UTC(2026, 7, 18));
   });
+
+  it("exposes the uncapped bar requirement for long dense windows", () => {
+    const window = resolveHistoricalWindow("1Y", "15m", now);
+    expect(window.requiredBars).toBe(35_041);
+    expect(window.requestedBars).toBe(2_000);
+  });
 });

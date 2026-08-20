@@ -21,10 +21,12 @@ const RANGE_MS: Record<Exclude<RangePreset, "YTD" | "MAX">, number> = {
   "1Y": 365 * 24 * 60 * 60_000,
 };
 
-export type HistoricalWindow = { label: RangePreset; from: number; to: number; requestedBars: number; bounded: true };
+export const MAX_VERIFIED_HISTORY_BARS = 2_000;
+
+export type HistoricalWindow = { label: RangePreset; from: number; to: number; requestedBars: number; requiredBars: number; bounded: true };
 
 /** MAX is deliberately bounded by the provider request cap; it is not all-history. */
-export function resolveHistoricalWindow(preset: RangePreset, interval: ProviderInterval, now = Date.now(), maxBars = 2_000): HistoricalWindow {
+export function resolveHistoricalWindow(preset: RangePreset, interval: ProviderInterval, now = Date.now(), maxBars = MAX_VERIFIED_HISTORY_BARS): HistoricalWindow {
   const to = Math.floor(now / 1_000) * 1_000;
   const intervalMs = INTERVAL_MS[interval];
   let from: number;
@@ -33,5 +35,6 @@ export function resolveHistoricalWindow(preset: RangePreset, interval: ProviderI
   else from = to - RANGE_MS[preset];
   const alignedFrom = Math.floor(from / intervalMs) * intervalMs;
   const alignedTo = Math.floor(to / intervalMs) * intervalMs;
-  return { label: preset, from: alignedFrom, to: alignedTo, requestedBars: Math.min(maxBars, Math.max(2, Math.floor((alignedTo - alignedFrom) / intervalMs) + 1)), bounded: true };
+  const requiredBars = Math.max(2, Math.floor((alignedTo - alignedFrom) / intervalMs) + 1);
+  return { label: preset, from: alignedFrom, to: alignedTo, requestedBars: Math.min(maxBars, requiredBars), requiredBars, bounded: true };
 }
