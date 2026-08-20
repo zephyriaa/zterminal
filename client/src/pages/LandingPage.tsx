@@ -36,7 +36,7 @@ const capabilities = [
 const guardrails = [
   "Public-market research only — no broker, order, paper-trading, or execution route.",
   "A stale or unreconciled public feed is withheld instead of presented as current data.",
-  "Browser-local preferences are kept separate from market data and credentials.",
+  "Guest preferences stay browser-local; signed-in users can explicitly sync bounded workspace preferences and research drafts without storing market data or credentials.",
 ];
 
 export default function LandingPage() {
@@ -83,7 +83,7 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-trustbar" aria-label="Research terminal capabilities">
-          <span>Built for deliberate research</span><b>Verified chart data</b><b>Venue-labelled flow</b><b>Closed strategy runtime</b><b>Local-first workspace</b>
+          <span>Built for deliberate research</span><b>Verified chart data</b><b>Venue-labelled flow</b><b>Closed strategy runtime</b><b>Account-aware workspace</b>
         </section>
 
         <section className="landing-section landing-capabilities" id="research" aria-labelledby="research-title">
@@ -99,7 +99,7 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-access" id="access" aria-labelledby="access-title">
-          <div><span>Research ownership</span><h2 id="access-title">Keep public research open. Keep ownership explicit.</h2><p>Open the terminal as a guest to inspect public market data. A signed-in workspace will be introduced only with a configured identity provider and verified durable storage.</p></div>
+          <div><span>Research ownership</span><h2 id="access-title">Keep public research open. Keep ownership explicit.</h2><p>Open the terminal as a guest to inspect public market data. Signed-in researchers use Google identity to own and explicitly synchronize bounded workspace preferences and research drafts across devices.</p></div>
           <div className="landing-access-actions"><Link href="/terminal" className="landing-secondary-cta">Continue as guest <ScanLine size={16} /></Link><Link href="/account" className="landing-primary-cta">Account access <ArrowRight size={17} /></Link><small>Google identity · no password vault · no trading credentials</small></div>
         </section>
       </main>

@@ -46,13 +46,14 @@ import { calculateUtcSessionVolumeProfile, evaluateFeatures, FEATURE_REGISTRY } 
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
 import { IndicatorLabDrawer } from "@/components/terminal/IndicatorLabDrawer";
+import { SettingsDrawer } from "@/components/terminal/SettingsDrawer";
 import { TerminalAccountControl, type TerminalWorkspaceState } from "@/components/auth/TerminalAccountControl";
 import { PwaControls } from "@/components/app/PwaControls";
 import { CommandPalette } from "@/components/terminal/CommandPalette";
 import { isHelpShortcut, isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, findLargeTapePrints, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
-import { DEFAULT_LOCAL_WORKSPACE, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
+import { DEFAULT_LOCAL_WORKSPACE, LOCAL_TERMINAL_WORKSPACE_KEY, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
 import { parseTerminalWorkspacePreferences, type TerminalWorkspacePreferences } from "@shared/workspace/terminalPreferences";
 import type { CompiledIndicator } from "@shared/indicators/indicatorRuntime";
 import zterminalMark from "@/assets/zterminal-mark.png";
@@ -337,6 +338,7 @@ export default function Home() {
   const [showStudies, setShowStudies] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [showIndicatorLab, setShowIndicatorLab] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [customIndicators, setCustomIndicators] = useState<CompiledIndicator[]>([]);
   const [focusMode, setFocusMode] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState<ResearchLayerId | null>("vwap");
@@ -566,12 +568,23 @@ export default function Home() {
   const closeResearchDrawer = () => { setShowResearch(false); restoreFocus(); };
   const openIndicatorLab = () => { captureFocusReturn(); setShowIndicatorLab(true); setShowStudies(false); setShowResearch(false); };
   const closeIndicatorLab = () => { setShowIndicatorLab(false); restoreFocus(); };
+  const openSettingsDrawer = () => { captureFocusReturn(); setShowSettings(true); setShowStudies(false); setShowResearch(false); setShowIndicatorLab(false); };
+  const closeSettingsDrawer = () => { setShowSettings(false); restoreFocus(); };
+  const clearSavedBrowserCopy = () => {
+    try {
+      window.localStorage.removeItem(LOCAL_TERMINAL_WORKSPACE_KEY);
+      setWorkspaceSaved(false);
+      setFeedback({ kind: "success", message: "Saved browser terminal preferences cleared. This session and your cloud workspace are unchanged." });
+    } catch {
+      setFeedback({ kind: "warning", message: "This browser did not allow its saved terminal preferences to be cleared." });
+    }
+  };
   const addCustomIndicator = (indicator: CompiledIndicator) => {
     setCustomIndicators(current => current.some(item => item.definition.name.toLowerCase() === indicator.definition.name.toLowerCase()) ? [...current.filter(item => item.definition.name.toLowerCase() !== indicator.definition.name.toLowerCase()), indicator] : [...current, indicator]);
     setFeedback({ kind: "success", message: `${indicator.definition.name} is validated on the current loaded candle window and added locally to this chart. No source code or market data is uploaded.` });
     closeIndicatorLab();
   };
-  const setFocusWorkspace = (next: boolean) => { setFocusMode(next); setAccessibilityStatus(next ? "Focus mode enabled. Chart workspace only. Press Escape to exit." : "Focus mode exited. Full research workstation restored."); };
+  const setFocusWorkspace = (next: boolean) => { if (next) setShowSettings(false); setFocusMode(next); setAccessibilityStatus(next ? "Focus mode enabled. Chart workspace only. Press Escape to exit." : "Focus mode exited. Full research workstation restored."); };
   const toggleFocusWorkspace = () => setFocusWorkspace(!focusMode);
 
   const setMarket = (next: string) => {
@@ -607,7 +620,7 @@ export default function Home() {
     if (id === "open-shortcuts") { openShortcutHelp(); return; }
     if (id === "focus-market") { marketInputRef.current?.focus(); return; }
     if (id === "refresh-market") { retry(); return; }
-    if (id === "open-settings") { setFeedback({ kind: "info", message: "Settings status: current theme and chart defaults are session-local; durable account preferences are not configured." }); return; }
+    if (id === "open-settings") { openSettingsDrawer(); return; }
     if (id === "open-alerts") { setFeedback({ kind: "info", message: "Alert status: no connected alert provider is configured. No market alerts are active." }); return; }
     setFeedback({ kind: "info", message: "Risk status: sizing is not yet configured. No order, broker, or execution route exists." });
   };
@@ -635,7 +648,7 @@ export default function Home() {
     <header className="premium-topbar">
       <button className="brand-lockup" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><img src={zterminalMark} className="brand-mark" alt="" /><span><b>ZTERMINAL</b><small>crypto order-flow research</small></span></button>
       <nav className="top-navigation" aria-label="Workspace navigation"><button className="active"><CandlestickChart size={16} /><span>Chart</span></button><button onClick={openResearchDrawer} className={showResearch ? "active" : ""}><FlaskConical size={16} /><span>Research</span></button><button onClick={openStudiesDrawer} className={showStudies ? "active" : ""}><Layers3 size={16} /><span>Studies</span></button><button onClick={openIndicatorLab} className={showIndicatorLab ? "active" : ""}><Code2 size={16} /><span>Indicators</span></button></nav>
-      <div className="topbar-actions"><button onClick={openCommandPalette} aria-label="Open command palette"><Command size={16} /></button><button onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Focus size={16} /></button><button aria-label="Terminal settings" onClick={() => setFeedback({ kind: "info", message: "Terminal settings and entitlements are planned for the next workspace release." })}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><PwaControls /><TerminalAccountControl workspaceState={workspaceState} onSync={reviewWorkspaceSync} /></div>
+      <div className="topbar-actions"><button onClick={openCommandPalette} aria-label="Open command palette"><Command size={16} /></button><button onClick={toggleFocusWorkspace} aria-label="Toggle focus mode" aria-pressed={focusMode}><Focus size={16} /></button><button aria-label="Terminal settings" onClick={openSettingsDrawer}><Settings2 size={16} /></button><button aria-label="Notifications" onClick={() => setFeedback({ kind: "info", message: "No research alerts are configured. Alerts remain a future connected-data capability." })}><Bell size={16} /></button><PwaControls /><TerminalAccountControl workspaceState={workspaceState} onSync={reviewWorkspaceSync} /></div>
     </header>
 
     <section className="instrument-command-bar">
@@ -663,6 +676,7 @@ export default function Home() {
       {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} onSelect={setSelectedLayer} onToggle={toggleLayer} onClose={closeStudiesDrawer} />}
       {showResearch && !focusMode && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={closeResearchDrawer} />}
       {showIndicatorLab && !focusMode && <IndicatorLabDrawer bars={displayHistorical?.bars ?? []} onAdd={addCustomIndicator} onClose={closeIndicatorLab} />}
+      {showSettings && !focusMode && <SettingsDrawer symbol={symbol} timeframe={timeframe} symbols={Array.from(new Set([...STARTING_MARKETS, symbol]))} timeframes={TIMEFRAMES} workspaceState={workspaceState} isAuthenticated={Boolean(user)} onSymbolChange={setMarket} onTimeframeChange={(next) => selectTimeframe(next as Timeframe)} onSync={reviewWorkspaceSync} onClearLocalCopy={clearSavedBrowserCopy} onClose={closeSettingsDrawer} />}
     </section>
 
     {shortcutHelpOpen && !focusMode && <section className="keyboard-shortcuts-panel" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts"><header><div><span className="drawer-kicker">Workspace controls</span><h2>Keyboard shortcuts</h2></div><button onClick={closeShortcutHelp} aria-label="Close keyboard shortcuts"><X size={16} /></button></header><p>Shortcuts are inactive while typing in a field. They open research controls only; no shortcut creates an order or execution route.</p><dl><div><dt><kbd>⌘</kbd><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Open command palette</dd></div><div><dt><kbd>/</kbd></dt><dd>Focus market search</dd></div><div><dt><kbd>R</kbd> / <kbd>S</kbd></dt><dd>Open Research / Studies</dd></div><div><dt><kbd>F</kbd> / <kbd>Esc</kbd></dt><dd>Enter Focus mode / exit it</dd></div><div><dt><kbd>Shift</kbd> + <kbd>R</kbd></dt><dd>Refresh verified public data</dd></div><div><dt><kbd>?</kbd></dt><dd>Open this reference</dd></div></dl><footer><span>Use <kbd>↑</kbd><kbd>↓</kbd> and <kbd>Enter</kbd> in the command palette.</span></footer></section>}
