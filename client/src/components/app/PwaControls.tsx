@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Download, RefreshCw, Smartphone, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, Smartphone, X } from "lucide-react";
 import { registerSW } from "virtual:pwa-register";
 
 type DeferredInstallPrompt = Event & {
@@ -19,16 +19,26 @@ export function PwaControls() {
   const [deferredPrompt, setDeferredPrompt] = useState<DeferredInstallPrompt | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showAppleHelp, setShowAppleHelp] = useState(false);
-  const [updateReady, setUpdateReady] = useState(false);
-  const [updateServiceWorker, setUpdateServiceWorker] = useState<((reloadPage?: boolean) => Promise<void>) | null>(null);
+  const reloadingForControllerChange = useRef(false);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const reloadForFreshController = () => {
+      if (reloadingForControllerChange.current) return;
+      reloadingForControllerChange.current = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", reloadForFreshController);
+    return () => navigator.serviceWorker.removeEventListener("controllerchange", reloadForFreshController);
+  }, []);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     const updateSW = registerSW({
       immediate: true,
       onNeedRefresh() {
-        setUpdateServiceWorker(() => updateSW);
-        setUpdateReady(true);
+        // A validated release must never depend on a user discovering an update button.
+        void updateSW(true);
       },
     });
     return undefined;
@@ -66,6 +76,5 @@ export function PwaControls() {
     {deferredPrompt && <button className="pwa-install-trigger" onClick={() => void requestInstall()} aria-label="Install ZTerminal as an app"><Download size={14} /><span>Install app</span></button>}
     {!deferredPrompt && isAppleMobile() && <button className="pwa-install-trigger apple" onClick={() => setShowAppleHelp(true)} aria-label="Show iPhone or iPad home screen instructions"><Smartphone size={14} /><span>Add to Home Screen</span></button>}
     {showAppleHelp && <section className="pwa-install-help" role="dialog" aria-modal="true" aria-label="Add ZTerminal to the home screen"><div><button className="pwa-install-close" onClick={() => setShowAppleHelp(false)} aria-label="Close installation instructions"><X size={15} /></button><span className="drawer-kicker">iPhone and iPad</span><h2>Add ZTerminal to your Home Screen</h2><p>In Safari, use the Share button, choose <b>Add to Home Screen</b>, then confirm <b>Add</b>. The installed app opens in its own window; live market data still needs a network connection.</p></div></section>}
-    {updateReady && <button className="pwa-update-trigger" onClick={() => void updateServiceWorker?.(true)}><RefreshCw size={13} /> Update ready · refresh</button>}
   </>;
 }
