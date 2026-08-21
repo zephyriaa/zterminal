@@ -48,7 +48,7 @@ function StatusPill({ tone, children }: { tone: "ready" | "blocked" | "pending";
   return <span className={`protocol-status ${tone}`}>{tone === "ready" ? <CheckCircle2 size={12} /> : tone === "blocked" ? <CircleAlert size={12} /> : <ShieldCheck size={12} />}{children}</span>;
 }
 
-export function ProtocolResearchDrawer({ dataset, bars, dataContext, onBacktestMarkers, onFeedback, onClose }: { dataset: ResearchDatasetContext | null; bars: BacktestBar[]; dataContext?: BacktestRunContext["data"]; onBacktestMarkers: (markers: BacktestMarker[]) => void; onFeedback: (feedback: Feedback) => void; onClose: () => void }) {
+export function ProtocolResearchDrawer({ dataset, bars, dataContext, onBacktestMarkers, onFeedback, onClose, embedded = false }: { dataset: ResearchDatasetContext | null; bars: BacktestBar[]; dataContext?: BacktestRunContext["data"]; onBacktestMarkers: (markers: BacktestMarker[]) => void; onFeedback: (feedback: Feedback) => void; onClose: () => void; embedded?: boolean }) {
   const [tab, setTab] = useState<Tab>("strategy");
   const [restoredBaseline] = useState<LockedBaseline | null>(() => typeof window === "undefined" ? null : readLocalBaseline());
   const [citation, setCitation] = useState<ResearchCitation>(() => restoredBaseline?.citation ?? EMPTY_CITATION);
@@ -133,8 +133,8 @@ export function ProtocolResearchDrawer({ dataset, bars, dataContext, onBacktestM
     onFeedback({ kind: "info", message: "Browser-local protocol baseline cleared. Create a new cited baseline before evaluation." });
   };
 
-  return <aside className="research-drawer protocol-research-drawer strategy-tester-drawer" aria-label="Historical Strategy Tester">
-    <div className="drawer-heading"><div><span className="drawer-kicker">Historical Strategy Tester</span><h2>Strategy Tester</h2></div><button onClick={onClose} aria-label="Close Strategy Tester"><X size={16} /></button></div>
+  return <aside className={`research-drawer protocol-research-drawer strategy-tester-drawer ${embedded ? "embedded-strategy-tester" : ""}`} aria-label="Historical Strategy Tester">
+    {!embedded && <div className="drawer-heading"><div><span className="drawer-kicker">Historical Strategy Tester</span><h2>Strategy Tester</h2></div><button onClick={onClose} aria-label="Close Strategy Tester"><X size={16} /></button></div>}
     <div className="protocol-tabs strategy-tester-tabs" role="tablist" aria-label="Strategy Tester tabs">
       <button className={tab === "strategy" ? "active" : ""} onClick={() => setTab("strategy")} role="tab" aria-selected={tab === "strategy"}><Code2 size={13} /> Strategy</button>
       <button className={tab === "properties" ? "active" : ""} onClick={() => setTab("properties")} role="tab" aria-selected={tab === "properties"}><Settings2 size={13} /> Properties</button>

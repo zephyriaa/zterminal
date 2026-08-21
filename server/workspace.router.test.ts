@@ -16,6 +16,7 @@ const { getTerminalWorkspace, saveTerminalWorkspace, WorkspaceRevisionConflictEr
 vi.mock("./db", () => ({ getTerminalWorkspace, saveTerminalWorkspace, WorkspaceRevisionConflictError }));
 
 import { appRouter } from "./routers";
+import { cloneTerminalPanelLayout } from "../shared/workspace/terminalPreferences";
 
 function contextFor(userId: number) {
   return {
@@ -69,7 +70,7 @@ describe("workspace router", () => {
 
     await caller.workspace.saveTerminal({ preferences, expectedRevision: 4 });
 
-    expect(saveTerminalWorkspace).toHaveBeenCalledWith(17, { ...preferences, nativeStudies: [], indicatorFavorites: [] }, 4);
+    expect(saveTerminalWorkspace).toHaveBeenCalledWith(17, { ...preferences, nativeStudies: [], indicatorFavorites: [], panelLayout: cloneTerminalPanelLayout() }, 4);
   });
 
   it("rejects extra or sensitive payload fields before persistence", async () => {

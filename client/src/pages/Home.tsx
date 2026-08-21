@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   Command,
@@ -38,6 +38,7 @@ import { clearLocalResearchDraft, createResearchDraftId, readLocalResearchDraft,
 import { calculateUtcSessionVolumeProfile, evaluateFeatures, FEATURE_REGISTRY } from "@shared/features/registry";
 import { DEFAULT_BACKTEST_CONFIG, runBacktest, STRATEGY_TEMPLATES, type BacktestMarker } from "@shared/backtest/engine";
 import { ProfessionalChart } from "@/components/terminal/ProfessionalChart";
+import { FloatingPanel } from "@/components/terminal/FloatingPanel";
 import { IndicatorLabDrawer } from "@/components/terminal/IndicatorLabDrawer";
 import { IndicatorsDialog } from "@/components/terminal/IndicatorsDialog";
 import { SettingsDrawer } from "@/components/terminal/SettingsDrawer";
@@ -48,7 +49,7 @@ import { isHelpShortcut, isMarketShortcut, isPaletteShortcut, type TerminalComma
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
 import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, findLargeTapePrints, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { DEFAULT_LOCAL_WORKSPACE, LOCAL_TERMINAL_WORKSPACE_KEY, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
-import { parseTerminalWorkspacePreferences, type TerminalWorkspacePreferences } from "@shared/workspace/terminalPreferences";
+import { cloneTerminalPanelLayout, parseTerminalWorkspacePreferences, type TerminalFloatingPanelGeometry, type TerminalFloatingPanelId, type TerminalPanelLayout, type TerminalWorkspacePreferences } from "@shared/workspace/terminalPreferences";
 import type { CompiledIndicator } from "@shared/indicators/indicatorRuntime";
 import { NATIVE_STUDY_IDS, type NativeStudyConfig, type NativeStudyId } from "@shared/indicators/nativeStudies";
 import zterminalMark from "@/assets/zterminal-mark.png";
@@ -73,7 +74,7 @@ type CloudPreferenceSnapshot = {
   updatedAt: Date | string | null;
 };
 
-function toCloudPreferences(value: { symbol: string; timeframe: string; rangePreset: string; activeTapeProvider: string; activeLayers: string[]; watchlist: string[]; nativeStudies: NativeStudyConfig[]; indicatorFavorites: NativeStudyId[] }): TerminalWorkspacePreferences | null {
+function toCloudPreferences(value: { symbol: string; timeframe: string; rangePreset: string; activeTapeProvider: string; activeLayers: string[]; watchlist: string[]; nativeStudies: NativeStudyConfig[]; indicatorFavorites: NativeStudyId[]; panelLayout: TerminalPanelLayout }): TerminalWorkspacePreferences | null {
   return parseTerminalWorkspacePreferences({ version: 1, ...value });
 }
 
@@ -322,6 +323,8 @@ export default function Home() {
   const [showStudies, setShowStudies] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [showUtilityRail, setShowUtilityRail] = useState(true);
+  const [panelLayout, setPanelLayout] = useState<TerminalPanelLayout>(() => cloneTerminalPanelLayout(restoredWorkspace?.panelLayout ?? DEFAULT_LOCAL_WORKSPACE.panelLayout));
+  const [desktopWorkspace, setDesktopWorkspace] = useState(() => typeof window === "undefined" ? true : window.innerWidth >= 960);
   const [showIndicatorLab, setShowIndicatorLab] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [customIndicators, setCustomIndicators] = useState<CompiledIndicator[]>([]);
@@ -371,7 +374,7 @@ export default function Home() {
   const feedHealth = feedHealthQuery.data as FeedHealth | undefined;
   const depthBook = depthQuery.data as DepthBook | undefined;
 
-  const currentCloudPreferences = useMemo(() => toCloudPreferences({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites }), [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites]);
+  const currentCloudPreferences = useMemo(() => toCloudPreferences({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites, panelLayout }), [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites, panelLayout]);
 
   const applyCloudPreferences = (preferences: TerminalWorkspacePreferences) => {
     setSymbol(preferences.symbol);
@@ -383,6 +386,7 @@ export default function Home() {
     setWatchlist(preferences.watchlist);
     setNativeStudies(preferences.nativeStudies.filter((study): study is NativeStudyConfig => NATIVE_STUDY_IDS.includes(study.id as NativeStudyId)).map((study) => ({ id: study.id, ...(study.inputs ? { inputs: study.inputs } : {}) })));
     setIndicatorFavorites(preferences.indicatorFavorites.filter((id): id is NativeStudyId => NATIVE_STUDY_IDS.includes(id as NativeStudyId)));
+    setPanelLayout(cloneTerminalPanelLayout(preferences.panelLayout));
   };
 
   const persistCurrentWorkspace = (expectedRevision: number | null | undefined = cloudRevision) => {
@@ -432,11 +436,17 @@ export default function Home() {
     if (effectiveTimeframe !== timeframe) setTimeframe(effectiveTimeframe);
   }, [effectiveTimeframe, timeframe]);
   useEffect(() => { if (currentSnapshot) setLastVerifiedSnapshot(currentSnapshot); }, [currentSnapshot]);
+  useEffect(() => {
+    const updateWorkspaceBreakpoint = () => setDesktopWorkspace(window.innerWidth >= 960);
+    updateWorkspaceBreakpoint();
+    window.addEventListener("resize", updateWorkspaceBreakpoint);
+    return () => window.removeEventListener("resize", updateWorkspaceBreakpoint);
+  }, []);
   useEffect(() => { if (currentHistorical) setLastVerifiedHistorical(currentHistorical); }, [currentHistorical]);
   useEffect(() => { if (!feedback) return; const timer = window.setTimeout(() => setFeedback(null), 5_500); return () => window.clearTimeout(timer); }, [feedback]);
   useEffect(() => {
-    setWorkspaceSaved(writeLocalTerminalWorkspace({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites }));
-  }, [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites]);
+    setWorkspaceSaved(writeLocalTerminalWorkspace({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites, panelLayout }));
+  }, [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites, panelLayout]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -646,6 +656,22 @@ export default function Home() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [commandPaletteOpen, retry, shortcutHelpOpen, showIndicatorLab, showResearch, showSettings, showStudies]);
   const resetViewport = () => { setReplay(false); setFeedback({ kind: "info", message: "Chart viewport reset to the latest verified window." }); };
+  const updatePanelLayout = useCallback((id: TerminalFloatingPanelId, next: TerminalFloatingPanelGeometry) => {
+    setPanelLayout((current) => ({ ...current, [id]: next }));
+  }, []);
+  const raisePanel = useCallback((id: TerminalFloatingPanelId) => {
+    setPanelLayout((current) => {
+      const highest = Math.max(...Object.values(current).map((panel) => panel.z));
+      const target = current[id];
+      if (target.z === highest) return current;
+      return { ...current, [id]: { ...target, z: Math.min(24, highest + 1) } };
+    });
+  }, []);
+  const resetPanelLayout = () => {
+    setPanelLayout(cloneTerminalPanelLayout());
+    setShowUtilityRail(true);
+    setFeedback({ kind: "success", message: "Desktop panel layout reset to the chart-first default." });
+  };
   const shownBars = replay && displayHistorical ? displayHistorical.bars.slice(0, Math.max(60, Math.floor(displayHistorical.bars.length * 0.68))) : displayHistorical?.bars ?? [];
 
   return <main className="premium-terminal trading-terminal"><span className="sr-only" role="status" aria-live="polite">{accessibilityStatus}</span>
@@ -653,7 +679,7 @@ export default function Home() {
       <a className="terminal-brand-lockup" href="/" aria-label="ZTerminal home"><img src={zterminalMark} alt="" /><span><b>ZTERMINAL</b><small>Verified market research</small></span></a>
       <form className="terminal-market-select" onSubmit={(event) => { event.preventDefault(); setMarket(symbolDraft); }}><Search size={14} /><input ref={marketInputRef} value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="Search market" aria-label="Gate.io perpetual market" spellCheck="false" /><button type="submit" aria-label="Load market">↵</button></form>
       <div className="terminal-quote terminalbar-quote"><span>GATE.IO · PERP</span><b>{formatQuote(displaySnapshot?.price)}</b><em className={typeof displaySnapshot?.changePercent === "number" && displaySnapshot.changePercent >= 0 ? "positive" : "negative"}>{typeof displaySnapshot?.changePercent === "number" ? `${displaySnapshot.changePercent >= 0 ? "+" : ""}${displaySnapshot.changePercent.toFixed(2)}%` : "—"}</em></div>
-      <nav className="terminal-primary-actions" aria-label="Research tools"><button className={showStudies ? "active" : ""} onClick={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()}><Layers3 size={15} /> Indicators</button><button className={showResearch ? "active" : ""} onClick={() => showResearch ? closeResearchDrawer() : openResearchDrawer()}><FlaskConical size={15} /> Strategy Tester</button></nav>
+      <div className="terminal-workstation-status" aria-label="Floating workstation status"><span>Floating workstation</span><b>Drag panels to arrange</b></div>
       <div className="terminal-global-actions"><button onClick={openCommandPalette} aria-label="Search terminal commands" title="Search terminal commands"><Search size={16} /></button><button onClick={() => runCommand("open-alerts")} aria-label="Alert status" title="Alert status"><Radio size={16} /></button><button onClick={openSettingsDrawer} aria-label="Terminal settings" title="Settings"><Settings2 size={16} /></button><PwaControls /><TerminalAccountControl workspaceState={workspaceState} onSync={reviewWorkspaceSync} /></div>
     </header>
 
@@ -669,19 +695,35 @@ export default function Home() {
 
     {showWorkspaceConflict && pendingCloudSnapshot && <section className="workspace-conflict-dialog" role="dialog" aria-modal="true" aria-label="Resolve cloud workspace difference"><div><span className="drawer-kicker">Cloud workspace review</span><h2>Two device copies differ</h2><p>Your account has a newer saved workspace than this browser. Market data, credentials, and strategy source are not part of either copy.</p><dl><div><dt>Cloud copy</dt><dd>{pendingCloudSnapshot.updatedAt ? new Date(pendingCloudSnapshot.updatedAt).toLocaleString() : "Saved workspace"}</dd></div><div><dt>This device</dt><dd>{initialLocalUpdatedAt.current ? new Date(initialLocalUpdatedAt.current).toLocaleString() : "Current browser settings"}</dd></div></dl><div className="workspace-conflict-actions"><button className="terminal-secondary-button" onClick={() => { applyCloudPreferences(pendingCloudSnapshot.preferences); setCloudRevision(pendingCloudSnapshot.revision); syncedPreferenceFingerprint.current = preferenceFingerprint(pendingCloudSnapshot.preferences); setPendingCloudSnapshot(null); setShowWorkspaceConflict(false); setWorkspaceState("synced"); setFeedback({ kind: "info", message: "Cloud workspace applied to this device." }); }}>Use cloud workspace</button><button className="terminal-primary-button" onClick={() => { setShowWorkspaceConflict(false); persistCurrentWorkspace(pendingCloudSnapshot.revision); }}>Replace cloud with this device</button></div><button className="workspace-conflict-dismiss" onClick={() => setShowWorkspaceConflict(false)}>Decide later</button></div></section>}
 
-    <section className={`terminal-workbench ${showUtilityRail ? "with-utility-rail" : ""}`}>
-      <section className="chart-workspace">
-        <div className="chart-command-toolbar"><div><span className="chart-toolbar-label">Candles · verified market data</span><small>{coverageLabel}</small></div><span className="toolbar-grow" /><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><button className="toolbar-icon" onClick={resetViewport} aria-label="Reset chart viewport" title="Reset chart viewport"><Undo2 size={15} /></button><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data" title="Refresh verified market data"><RefreshCw size={15} /></button></div>
-        {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
-        <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} customIndicators={customIndicators} nativeStudies={nativeStudies} intrabarDelta={intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? intrabarDelta : null} />
-        {activeContextLayer && <section className="chart-context-pane" aria-label="Active chart context layer"><header><span>{activeContextLayer === "sessionProfile" ? "Value context" : activeContextLayer === "dom" ? "Live depth" : activeContextLayer === "flowPulse" ? "Flow pulse" : "Live order-flow context"}</span><small>{activeContextLayer === "sessionProfile" ? "Derived from the verified candle window" : "Live-only public evidence — withheld when source state is not current"}</small></header>{activeContextLayer === "sessionProfile" && <SessionVolumePanel bars={displayHistorical?.bars ?? []} />}{activeContextLayer === "dom" && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeContextLayer === "tape" && <LiveTapePanel tape={selectedTape} />}{activeContextLayer === "largePrints" && <LiveLargePrintsPanel tape={selectedTape} />}{activeContextLayer === "footprint" && <LiveFootprintPanel tape={selectedTape} />}{activeContextLayer === "flowPulse" && <LiveFlowPulsePanel tape={flowPulseTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} tapeWithheldReason={activeTapeProvider !== "gateio" ? "Selected external tape is intentionally excluded: Flow Pulse never combines it with Gate.io perpetual depth." : undefined} />}</section>}
-        <div className="chart-range-dock"><span className="range-label">Range</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
+    <section className={`terminal-workstation-stage ${desktopWorkspace ? "desktop-workstation" : "compact-workstation"}`} aria-label="Arrangeable research workstation">
+      <aside className="terminal-tool-rail" aria-label="Terminal tools">
+        <button className={showStudies ? "active" : ""} onClick={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()} title="Indicators" aria-label="Open Indicators"><Layers3 size={17} /></button>
+        <button className={showResearch ? "active" : ""} onClick={() => showResearch ? closeResearchDrawer() : openResearchDrawer()} title="Strategy Tester" aria-label="Open Strategy Tester"><FlaskConical size={17} /></button>
+        <button className={showUtilityRail ? "active" : ""} onClick={() => setShowUtilityRail(value => !value)} title="Market context" aria-label="Open market context"><LayoutPanelTop size={17} /></button>
+        <span className="tool-rail-divider" />
+        <button onClick={resetPanelLayout} title="Reset panel layout" aria-label="Reset panel layout"><Undo2 size={16} /></button>
+      </aside>
+      <section className="terminal-panel-space" aria-label="Movable terminal panels">
+        <FloatingPanel id="chart" title={`${verifiedSymbol.replace("_", " / ")} · ${providerInterval}`} eyebrow="Verified market canvas" layout={panelLayout.chart} onLayoutChange={(next) => updatePanelLayout("chart", next)} onRaise={() => raisePanel("chart")} minWidth={48} minHeight={48} mobile={!desktopWorkspace} className="floating-chart-panel" controls={<><button type="button" className="floating-panel-text-action" onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={13} /> {replay ? "Stop" : "Replay"}</button><button type="button" className="floating-panel-icon" onClick={resetViewport} aria-label="Reset chart viewport" title="Reset chart viewport"><Undo2 size={14} /></button><button type="button" className="floating-panel-icon" onClick={retry} aria-label="Refresh verified market data" title="Refresh verified market data"><RefreshCw size={14} /></button></>}>
+          <div className="chart-window-meta"><span><Radio size={12} /> {coverageLabel}</span><span>{requestedMarketIsValid ? "Verified source" : isUpdating ? "Verifying source" : "Awaiting source"}</span></div>
+          {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
+          <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} customIndicators={customIndicators} nativeStudies={nativeStudies} intrabarDelta={intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? intrabarDelta : null} />
+          {activeContextLayer && <section className="chart-context-pane" aria-label="Active chart context layer"><header><span>{activeContextLayer === "sessionProfile" ? "Value context" : activeContextLayer === "dom" ? "Live depth" : activeContextLayer === "flowPulse" ? "Flow pulse" : "Live order-flow context"}</span><small>{activeContextLayer === "sessionProfile" ? "Derived from the verified candle window" : "Live-only public evidence — withheld when source state is not current"}</small></header>{activeContextLayer === "sessionProfile" && <SessionVolumePanel bars={displayHistorical?.bars ?? []} />}{activeContextLayer === "dom" && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeContextLayer === "tape" && <LiveTapePanel tape={selectedTape} />}{activeContextLayer === "largePrints" && <LiveLargePrintsPanel tape={selectedTape} />}{activeContextLayer === "footprint" && <LiveFootprintPanel tape={selectedTape} />}{activeContextLayer === "flowPulse" && <LiveFlowPulsePanel tape={flowPulseTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} tapeWithheldReason={activeTapeProvider !== "gateio" ? "Selected external tape is intentionally excluded: Flow Pulse never combines it with Gate.io perpetual depth." : undefined} />}</section>}
+          <div className="chart-range-dock"><span className="range-label">Range</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
+        </FloatingPanel>
+
+        {showUtilityRail && <FloatingPanel id="market" title={verifiedSymbol.replace("_", " / ")} eyebrow="Market context" layout={panelLayout.market} onLayoutChange={(next) => updatePanelLayout("market", next)} onRaise={() => raisePanel("market")} onClose={() => setShowUtilityRail(false)} minWidth={18} minHeight={30} mobile={!desktopWorkspace} className="floating-market-panel">
+          <section className="utility-quote-grid"><div><span>Last</span><b>{formatQuote(displaySnapshot?.price)}</b></div><div><span>24h high</span><b>{formatQuote(displaySnapshot?.dayHigh)}</b></div><div><span>24h low</span><b>{formatQuote(displaySnapshot?.dayLow)}</b></div><div><span>24h volume</span><b>{formatVolume(displaySnapshot?.quoteVolume)}</b></div></section>
+          <section className="utility-watchlist"><span>Watchlist</span>{watchlist.map(item => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}><b>{item.replace("_", " / ")}</b><small>{item === verifiedSymbol ? "Loaded" : "Load"}</small></button>)}</section>
+          <section className="utility-data-status"><span>Data contract</span><b>{coverageLabel}</b><small>{formatAge(displaySnapshot?.at)}</small></section>
+        </FloatingPanel>}
+
+        {showStudies && <FloatingPanel id="indicators" title="Indicators" eyebrow="Verified studies" layout={panelLayout.indicators} onLayoutChange={(next) => updatePanelLayout("indicators", next)} onRaise={() => raisePanel("indicators")} onClose={closeStudiesDrawer} minWidth={26} minHeight={36} mobile={!desktopWorkspace} className="floating-indicators-panel"><IndicatorsDialog embedded nativeStudies={nativeStudies} favorites={indicatorFavorites} activeLayers={activeLayers} customIndicators={customIndicators} intrabarState={intrabarDeltaQuery.isLoading ? "checking" : intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? "available" : "unavailable"} intrabarDetail={intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? `${intrabarDelta.intrabarInterval} Gate.io intrabars · ${intrabarDelta.coverage.returnedBars.toLocaleString("en-US")} chart bars · directional-volume estimate` : intrabarDelta?.reason ?? "Checking verified intrabar coverage for this range."} onToggleNative={toggleNativeStudy} onUpdateNative={updateNativeStudy} onToggleFavorite={toggleIndicatorFavorite} onToggleLayer={toggleLayer} onCreateIndicator={openIndicatorLab} onClose={closeStudiesDrawer} /></FloatingPanel>}
+
+        {showResearch && <FloatingPanel id="strategy" title="Strategy Tester" eyebrow="Historical evaluation" layout={panelLayout.strategy} onLayoutChange={(next) => updatePanelLayout("strategy", next)} onRaise={() => raisePanel("strategy")} onClose={closeResearchDrawer} minWidth={32} minHeight={44} mobile={!desktopWorkspace} className="floating-strategy-panel"><ProtocolResearchDrawer embedded dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={closeResearchDrawer} /></FloatingPanel>}
       </section>
-      {showUtilityRail && <aside className="terminal-utility-rail" aria-label="Market panel"><header><div><span className="drawer-kicker">Market</span><h2>{verifiedSymbol.replace("_", " / ")}</h2></div><button onClick={() => setShowUtilityRail(false)} aria-label="Close market panel"><X size={16} /></button></header><section className="utility-quote-grid"><div><span>Last</span><b>{formatQuote(displaySnapshot?.price)}</b></div><div><span>24h high</span><b>{formatQuote(displaySnapshot?.dayHigh)}</b></div><div><span>24h low</span><b>{formatQuote(displaySnapshot?.dayLow)}</b></div><div><span>24h volume</span><b>{formatVolume(displaySnapshot?.quoteVolume)}</b></div></section><section className="utility-watchlist"><span>Watchlist</span>{watchlist.map(item => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}><b>{item.replace("_", " / ")}</b><small>{item === verifiedSymbol ? "Loaded" : "Load"}</small></button>)}</section><section className="utility-data-status"><span>Data contract</span><b>{coverageLabel}</b><small>{formatAge(displaySnapshot?.at)}</small></section></aside>}
     </section>
 
-    {showStudies && <IndicatorsDialog nativeStudies={nativeStudies} favorites={indicatorFavorites} activeLayers={activeLayers} customIndicators={customIndicators} intrabarState={intrabarDeltaQuery.isLoading ? "checking" : intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? "available" : "unavailable"} intrabarDetail={intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? `${intrabarDelta.intrabarInterval} Gate.io intrabars · ${intrabarDelta.coverage.returnedBars.toLocaleString("en-US")} chart bars · directional-volume estimate` : intrabarDelta?.reason ?? "Checking verified intrabar coverage for this range."} onToggleNative={toggleNativeStudy} onUpdateNative={updateNativeStudy} onToggleFavorite={toggleIndicatorFavorite} onToggleLayer={toggleLayer} onCreateIndicator={openIndicatorLab} onClose={closeStudiesDrawer} />}
-    {showResearch && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={closeResearchDrawer} />}
     {showIndicatorLab && <IndicatorLabDrawer bars={displayHistorical?.bars ?? []} onAdd={addCustomIndicator} onClose={closeIndicatorLab} />}
     {showSettings && <SettingsDrawer symbol={symbol} timeframe={timeframe} symbols={Array.from(new Set([...STARTING_MARKETS, symbol]))} timeframes={TIMEFRAMES} workspaceState={workspaceState} isAuthenticated={Boolean(user)} onSymbolChange={setMarket} onTimeframeChange={(next) => selectTimeframe(next as Timeframe)} onSync={reviewWorkspaceSync} onClearLocalCopy={clearSavedBrowserCopy} onClose={closeSettingsDrawer} />}
 
