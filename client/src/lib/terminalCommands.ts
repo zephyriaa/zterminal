@@ -1,4 +1,4 @@
-export type TerminalCommandId = "open-research" | "open-studies" | "focus-mode" | "exit-focus" | "focus-market" | "refresh-market" | "open-shortcuts" | "open-settings" | "open-alerts" | "open-risk";
+export type TerminalCommandId = "open-research" | "open-studies" | "focus-market" | "refresh-market" | "open-shortcuts" | "open-settings" | "open-alerts" | "open-risk";
 
 export type TerminalCommand = {
   id: TerminalCommandId;
@@ -9,10 +9,8 @@ export type TerminalCommand = {
 };
 
 export const TERMINAL_COMMANDS: TerminalCommand[] = [
-  { id: "open-research", label: "Open Research", detail: "Open the chart-context Evidence Lab.", keywords: ["research", "hypothesis", "strategy", "backtest"], shortcut: "R" },
-  { id: "open-studies", label: "Open Studies", detail: "Open verified chart studies and capability gates.", keywords: ["studies", "indicators", "order flow"], shortcut: "S" },
-  { id: "focus-mode", label: "Enter Focus Mode", detail: "Show the chart, history controls, and a single exit control.", keywords: ["focus", "minimal", "distraction free"], shortcut: "F" },
-  { id: "exit-focus", label: "Exit Focus Mode", detail: "Return to the complete research workstation.", keywords: ["focus", "exit", "escape"], shortcut: "Esc" },
+  { id: "open-research", label: "Open Strategy Tester", detail: "Open the code-first historical backtest overlay.", keywords: ["strategy", "backtest", "historical", "code"], shortcut: "R" },
+  { id: "open-studies", label: "Open Indicators", detail: "Open verified chart studies and capability gates.", keywords: ["studies", "indicators", "order flow"], shortcut: "S" },
   { id: "focus-market", label: "Find Market", detail: "Focus the Gate.io perpetual market input.", keywords: ["market", "symbol", "contract", "gate"], shortcut: "/" },
   { id: "refresh-market", label: "Refresh Verified Data", detail: "Retry public snapshot and verified historical data.", keywords: ["refresh", "retry", "data", "market"], shortcut: "Shift R" },
   { id: "open-shortcuts", label: "Keyboard Shortcuts", detail: "Show chart-workspace keyboard navigation and accessibility help.", keywords: ["keyboard", "shortcuts", "help", "accessibility"], shortcut: "?" },

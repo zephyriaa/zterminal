@@ -69,7 +69,7 @@ describe("workspace router", () => {
 
     await caller.workspace.saveTerminal({ preferences, expectedRevision: 4 });
 
-    expect(saveTerminalWorkspace).toHaveBeenCalledWith(17, { ...preferences, workspaceMode: "focus", nativeStudies: [], indicatorFavorites: [] }, 4);
+    expect(saveTerminalWorkspace).toHaveBeenCalledWith(17, { ...preferences, nativeStudies: [], indicatorFavorites: [] }, 4);
   });
 
   it("rejects extra or sensitive payload fields before persistence", async () => {
