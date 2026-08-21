@@ -182,6 +182,8 @@ export function TerminalChart({
   const priceMetrics = useRef({ autoCenter: 0, autoRange: 1, priceHeight: 1 });
   const cross = useRef<{ x: number; y: number } | null>(null);
   const dragging = useRef<{ mode: "time" | "price"; x: number; y: number; right: number; priceZoom: number } | null>(null);
+  const touchPoints = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ mode: "time" | "price"; distance: number; count: number; right: number; priceZoom: number; clientY: number } | null>(null);
   const raf = useRef(0);
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
 
@@ -609,14 +611,64 @@ export function TerminalChart({
     invalidateViewport();
   };
 
+  const beginPinch = (rect: DOMRect) => {
+    const points = Array.from(touchPoints.current.values());
+    if (points.length < 2) return;
+    const [first, second] = points;
+    const distance = Math.hypot(first.x - second.x, first.y - second.y);
+    const onPriceAxis = first.x - rect.left >= rect.width - PRICE_AXIS_W && second.x - rect.left >= rect.width - PRICE_AXIS_W;
+    pinch.current = {
+      mode: onPriceAxis ? "price" : "time",
+      distance: Math.max(1, distance),
+      count: view.current.count,
+      right: view.current.right,
+      priceZoom: priceView.current.zoom,
+      clientY: (first.y + second.y) / 2,
+    };
+    dragging.current = null;
+  };
+  const beginSingleTouchDrag = (point: { x: number; y: number }, rect: DOMRect) => {
+    dragging.current = {
+      mode: point.x - rect.left >= rect.width - PRICE_AXIS_W ? "price" : "time",
+      x: point.x,
+      y: point.y,
+      right: view.current.right,
+      priceZoom: priceView.current.zoom,
+    };
+  };
   const onPointerMove = (e: React.PointerEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    if (e.pointerType === "touch" && touchPoints.current.has(e.pointerId)) {
+      touchPoints.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touchPoints.current.size >= 2) {
+        if (!pinch.current) beginPinch(rect);
+        const gesture = pinch.current;
+        const points = Array.from(touchPoints.current.values());
+        if (gesture && points.length >= 2) {
+          const distance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
+          if (gesture.mode === "price") {
+            // Pinch over the price scale controls candle height, mirroring desktop wheel zoom on that axis.
+            zoomPriceScaleAtPointer(gesture.priceZoom * (distance / gesture.distance), (points[0].y + points[1].y) / 2, rect);
+          } else {
+            // Pinch in the plot controls candle density while keeping the pinch midpoint stable in time.
+            const nextCount = Math.max(30, Math.min(400, Math.round(gesture.count * (gesture.distance / distance))));
+            const midpointX = (points[0].x + points[1].x) / 2;
+            const pivot = Math.max(0, Math.min(1, (midpointX - rect.left) / Math.max(1, rect.width - PRICE_AXIS_W)));
+            view.current.right = clampRight(gesture.right + (nextCount - gesture.count) * (1 - pivot));
+            view.current.count = nextCount;
+            invalidateViewport();
+          }
+        }
+        cross.current = { x, y };
+        scheduleDraw();
+        return;
+      }
+    }
     if (dragging.current) {
       if (dragging.current.mode === "price") {
-        // TradingView-style: dragging the price scale stretches or compresses
-        // candle height around the pointer rather than panning the time series.
+        // Dragging the price scale stretches or compresses candle height around the pointer.
         const deltaY = e.clientY - dragging.current.y;
         const nextZoom = dragging.current.priceZoom * Math.exp(-deltaY * 0.01);
         zoomPriceScaleAtPointer(nextZoom, e.clientY, rect);
@@ -638,19 +690,34 @@ export function TerminalChart({
     e.preventDefault();
     canvasRef.current?.focus();
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    const x = e.clientX - canvasRef.current!.getBoundingClientRect().left;
-    dragging.current = {
-      mode: x >= canvasRef.current!.getBoundingClientRect().width - PRICE_AXIS_W ? "price" : "time",
-      x: e.clientX,
-      y: e.clientY,
-      right: view.current.right,
-      priceZoom: priceView.current.zoom,
-    };
+    const rect = canvasRef.current!.getBoundingClientRect();
+    if (e.pointerType === "touch") {
+      touchPoints.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touchPoints.current.size >= 2) beginPinch(rect);
+      else beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect);
+      return;
+    }
+    beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect);
   };
-  const onPointerUp = () => {
-    dragging.current = null;
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (e.pointerType !== "touch") {
+      dragging.current = null;
+      return;
+    }
+    touchPoints.current.delete(e.pointerId);
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const remaining = Array.from(touchPoints.current.values());
+    if (remaining.length >= 2) beginPinch(rect);
+    else if (remaining.length === 1) {
+      pinch.current = null;
+      beginSingleTouchDrag(remaining[0], rect);
+    } else {
+      pinch.current = null;
+      dragging.current = null;
+    }
   };
-  const onPointerLeave = () => {
+  const onPointerLeave = (e: React.PointerEvent) => {
+    if (e.pointerType === "touch") return;
     cross.current = null;
     onCrosshair?.(null);
     scheduleDraw();
@@ -708,6 +775,7 @@ export function TerminalChart({
         onPointerMove={onPointerMove}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         onPointerLeave={onPointerLeave}
         onWheel={onWheel}
         onDoubleClick={(event) => {
@@ -719,8 +787,9 @@ export function TerminalChart({
           }
         }}
         tabIndex={0}
-        aria-label={`${symbol} ${timeframe} chart; drag the plot to pan time, drag or scroll the price scale to vertically stretch or compress candles, double click to reset`}
+        aria-label={`${symbol} ${timeframe} chart; drag to pan time, pinch the plot to change candle density, pinch or drag the price scale to stretch or compress candle height, double click to reset`}
       />
+      <div className="mobile-chart-gesture-hint pointer-events-none absolute right-2 top-2 rounded-[3px] border hairline bg-panel/80 px-1.5 py-1 text-[8px] text-muted-foreground backdrop-blur">Drag to pan · pinch to scale</div>
       <div className="pointer-events-none absolute bottom-7 left-2 flex items-center gap-1.5">
         <button
           type="button"
