@@ -21,3 +21,9 @@ A 390 × 844 headless-browser capture confirmed the mobile Focus workspace keeps
 ## Automated and build gates
 
 The complete suite passed after the restoration: 29 test files and 103 tests. TypeScript validation and the production PWA build also passed. The workspace-router regression was updated to explicitly assert the backward-compatible `workspaceMode: "focus"` normalization.
+
+## Production promotion — 2026-08-21
+
+The validated restoration was committed as `c605c25` on the product branch and promoted as `3d07a77` to the Render-tracked release branch. Render built the Docker image successfully and reported the service live at the primary URL. A cache-bypassing inspection of the deployed route assets resolved the released `Home-Cfb-h0e0.js` chunk and confirmed the emitted Focus, Canvas, Research, Layer-driven canvas, and hypothesis-to-evidence workstation markers.
+
+An already-open sandbox client initially retained the previous application shell, consistent with the known PWA stale-shell behavior. The deployed HTML and directly fetched current route bundle are the production verification authority; installed/client tabs should update through the existing auto-activation flow or a normal reload.
