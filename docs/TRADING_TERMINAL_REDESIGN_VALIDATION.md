@@ -37,3 +37,21 @@ This review confirms the intended code-first workflow no longer requires the opt
 The local validation compiled the default EMA-crossover closed ZS source successfully. The compiler displayed its discovered `Length` input and confirmed that the source was eligible only for closed historical interpretation. Running it on the visible verified 1D/15-minute QQQX_USDT window completed in the browser worker and automatically opened the **Overview** tab.
 
 The resulting overview rendered an equity curve, metrics, a run identifier/hash, and the full execution/data contract. The observed historical run was `bt_a-38ed73a8` with **97 normalized bars**, **11 modeled trades**, and source/interval/coverage disclosure. The UI correctly retained the no-broker and no-order-routing boundary.
+
+## Production Promotion Record — 2026-08-21
+
+The validated product commit `1837310` was pushed to the product branch. It was then cherry-picked onto the isolated release base `25ea071` as production promotion commit `c513b89` and pushed to the Render-tracked `render-hosted-research-terminal` branch. All validation gates had already passed before the promotion.
+
+Render dashboard interaction is being monitored separately because the Free-tier dashboard can reload service controls asynchronously. No plan, billing, or instance configuration changes were made during deployment navigation.
+
+## Render Deployment Monitoring — 2026-08-21
+
+Render accepted the promoted production commit `c513b89` and recorded a successful live deployment event followed by a second active latest-commit deployment event. Both events reference the same promoted commit, so no source divergence is present. Monitoring remains in progress until the active deployment reports live health.
+
+## Render Live Confirmation and Production Check — 2026-08-21
+
+Render reported the active deployment for `c513b89` as **live**. An initial browser visit to the production terminal displayed the prior shell controls, which is consistent with a retained client service-worker/app-shell cache rather than the Render deployment record. The production asset response will be inspected independently and then rechecked with a cache-cleared client before final delivery.
+
+## Cache-Bypassing Production Asset Verification — 2026-08-21
+
+A direct cache-bypassing request to `https://zterminal.onrender.com/?release=c513b89` resolved the deployed route bundle `Home-C1lQLUjn.js`, which contains the new **Indicators**, **Strategy Tester**, **Historical Strategy Tester**, and **Volume Delta** markers. This confirms that production is serving the promoted `c513b89` build even though an earlier browser tab retained the previous service-worker app shell.

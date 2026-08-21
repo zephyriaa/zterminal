@@ -1,6 +1,7 @@
 export const LOCAL_TERMINAL_WORKSPACE_KEY = "zterminal-local-workspace-v1";
 
 export type LocalTapeProvider = "gateio" | "binance_usdm" | "bybit_linear" | "coinbase_exchange";
+export type LocalWorkspaceMode = "focus" | "canvas" | "research";
 type LocalNativeStudy = { id: string; inputs?: Record<string, number> };
 export type LocalTerminalWorkspace = {
   version: 1;
@@ -9,6 +10,7 @@ export type LocalTerminalWorkspace = {
   timeframe: string;
   rangePreset: string;
   activeTapeProvider: LocalTapeProvider;
+  workspaceMode: LocalWorkspaceMode;
   activeLayers: string[];
   watchlist: string[];
   nativeStudies: LocalNativeStudy[];
@@ -23,6 +25,7 @@ export const DEFAULT_LOCAL_WORKSPACE: Omit<LocalTerminalWorkspace, "updatedAt"> 
   timeframe: "15m",
   rangePreset: "1D",
   activeTapeProvider: "gateio",
+  workspaceMode: "focus",
   activeLayers: ["vwap", "ema", "profile", "structure"],
   watchlist: ["BTC_USDT", "ETH_USDT", "SOL_USDT", "QQQX_USDT"],
   nativeStudies: [{ id: "volume" }],
@@ -39,6 +42,10 @@ function uniqueSymbols(values: unknown): string[] {
     if (unique.size >= 20) break;
   }
   return Array.from(unique);
+}
+
+function validWorkspaceMode(value: unknown): value is LocalWorkspaceMode {
+  return value === "focus" || value === "canvas" || value === "research";
 }
 
 function validProvider(value: unknown): value is LocalTapeProvider {
@@ -78,7 +85,7 @@ export function readLocalTerminalWorkspace(storage: Storage | null = typeof wind
     const candidate = JSON.parse(raw) as Partial<LocalTerminalWorkspace>;
     const watchlist = uniqueSymbols(candidate.watchlist);
     if (candidate.version !== 1 || typeof candidate.symbol !== "string" || !/^[A-Z0-9]+_USDT$/.test(candidate.symbol) || typeof candidate.timeframe !== "string" || typeof candidate.rangePreset !== "string" || !validProvider(candidate.activeTapeProvider) || !Array.isArray(candidate.activeLayers) || !watchlist.length || typeof candidate.updatedAt !== "number") return null;
-    return { version: 1, updatedAt: candidate.updatedAt, symbol: candidate.symbol, timeframe: candidate.timeframe, rangePreset: candidate.rangePreset, activeTapeProvider: candidate.activeTapeProvider, activeLayers: candidate.activeLayers.filter((item): item is string => typeof item === "string").slice(0, 16), watchlist, nativeStudies: validNativeStudies(candidate.nativeStudies), indicatorFavorites: validNativeFavorites(candidate.indicatorFavorites) };
+    return { version: 1, updatedAt: candidate.updatedAt, symbol: candidate.symbol, timeframe: candidate.timeframe, rangePreset: candidate.rangePreset, activeTapeProvider: candidate.activeTapeProvider, workspaceMode: validWorkspaceMode(candidate.workspaceMode) ? candidate.workspaceMode : "focus", activeLayers: candidate.activeLayers.filter((item): item is string => typeof item === "string").slice(0, 16), watchlist, nativeStudies: validNativeStudies(candidate.nativeStudies), indicatorFavorites: validNativeFavorites(candidate.indicatorFavorites) };
   } catch {
     return null;
   }
@@ -91,7 +98,7 @@ export function writeLocalTerminalWorkspace(value: Omit<LocalTerminalWorkspace, 
   const watchlist = uniqueSymbols(value.watchlist);
   if (!/^[A-Z0-9]+_USDT$/.test(symbol) || !validProvider(value.activeTapeProvider) || !watchlist.length) return false;
   try {
-    storage.setItem(LOCAL_TERMINAL_WORKSPACE_KEY, JSON.stringify({ version: 1, updatedAt: now, symbol, timeframe: value.timeframe, rangePreset: value.rangePreset, activeTapeProvider: value.activeTapeProvider, activeLayers: value.activeLayers.slice(0, 16), watchlist, nativeStudies: validNativeStudies(value.nativeStudies), indicatorFavorites: validNativeFavorites(value.indicatorFavorites) } satisfies LocalTerminalWorkspace));
+    storage.setItem(LOCAL_TERMINAL_WORKSPACE_KEY, JSON.stringify({ version: 1, updatedAt: now, symbol, timeframe: value.timeframe, rangePreset: value.rangePreset, activeTapeProvider: value.activeTapeProvider, workspaceMode: validWorkspaceMode(value.workspaceMode) ? value.workspaceMode : "focus", activeLayers: value.activeLayers.slice(0, 16), watchlist, nativeStudies: validNativeStudies(value.nativeStudies), indicatorFavorites: validNativeFavorites(value.indicatorFavorites) } satisfies LocalTerminalWorkspace));
     return true;
   } catch {
     return false;

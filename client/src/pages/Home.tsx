@@ -48,11 +48,12 @@ import { PwaControls } from "@/components/app/PwaControls";
 import { CommandPalette } from "@/components/terminal/CommandPalette";
 import { isHelpShortcut, isMarketShortcut, isPaletteShortcut, type TerminalCommandId } from "@/lib/terminalCommands";
 import { ProtocolResearchDrawer } from "@/components/research/ProtocolResearchDrawer";
+import { ContextDeck } from "@/components/terminal/ContextDeck";
 import { calculateLiveTapeBuckets, calculateLiveTapeFootprint, findLargeTapePrints, summarizeDepthImbalance, toTimeAndSales, type DepthLevel, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { DEFAULT_LOCAL_WORKSPACE, LOCAL_TERMINAL_WORKSPACE_KEY, addToLocalWatchlist, readLocalTerminalWorkspace, writeLocalTerminalWorkspace } from "@/lib/localWorkspace";
 import { parseTerminalWorkspacePreferences, type TerminalWorkspacePreferences } from "@shared/workspace/terminalPreferences";
 import type { CompiledIndicator } from "@shared/indicators/indicatorRuntime";
-import { NATIVE_STUDY_IDS, type NativeStudyConfig, type NativeStudyId } from "@shared/indicators/nativeStudies";
+import { getNativeStudy, NATIVE_STUDY_IDS, type NativeStudyConfig, type NativeStudyId } from "@shared/indicators/nativeStudies";
 import zterminalMark from "@/assets/zterminal-mark.png";
 
 const TIMEFRAMES: Timeframe[] = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "D"];
@@ -60,6 +61,7 @@ const LAYER_ORDER: ResearchLayerId[] = ["vwap", "ema", "profile", "sessionProfil
 const STARTING_MARKETS = ["BTC_USDT", "ETH_USDT", "SOL_USDT", "QQQX_USDT"];
 
 type MarketState = "CONNECTED" | "DEGRADED" | "UNAVAILABLE";
+type WorkspaceMode = "focus" | "canvas" | "research";
 type Coverage = { requestedFrom: number | null; requestedTo: number | null; effectiveFrom: number | null; effectiveTo: number | null; returnedBars: number; complete: boolean; granularity: string };
 type Snapshot = { symbol: string | null; price: number | null; changePercent: number | null; dayHigh: number | null; dayLow: number | null; quoteVolume: number | null; bid: number | null; ask: number | null; at: number; dataStatus: "LIVE" | "UNAVAILABLE"; state: MarketState; reason?: string; retryable?: boolean };
 type Historical = { symbol: string; interval: string; bars: TerminalBar[]; fetchedAt: number; sourceTimestamp: number | null; dataStatus: "HISTORICAL" | "UNAVAILABLE"; state: MarketState; coverage: Coverage; reason?: string; retryable?: boolean };
@@ -75,7 +77,7 @@ type CloudPreferenceSnapshot = {
   updatedAt: Date | string | null;
 };
 
-function toCloudPreferences(value: { symbol: string; timeframe: string; rangePreset: string; activeTapeProvider: string; activeLayers: string[]; watchlist: string[]; nativeStudies: NativeStudyConfig[]; indicatorFavorites: NativeStudyId[] }): TerminalWorkspacePreferences | null {
+function toCloudPreferences(value: { symbol: string; timeframe: string; rangePreset: string; activeTapeProvider: string; workspaceMode: WorkspaceMode; activeLayers: string[]; watchlist: string[]; nativeStudies: NativeStudyConfig[]; indicatorFavorites: NativeStudyId[] }): TerminalWorkspacePreferences | null {
   return parseTerminalWorkspacePreferences({ version: 1, ...value });
 }
 
@@ -215,7 +217,7 @@ function IconRail({ showLayers, showResearch, focusMode, onLayers, onResearch, o
   </aside>;
 }
 
-function StudiesDrawer({ activeLayers, selectedLayer, bars, cvdState, domState, customIndicators, onSelect, onToggle, onOpenIndicatorLab, onClose }: { activeLayers: ResearchLayerId[]; selectedLayer: ResearchLayerId | null; bars: TerminalBar[]; cvdState: TradeTape["dataStatus"]; domState: DepthBook["dataStatus"] | "UNAVAILABLE"; customIndicators: CompiledIndicator[]; onSelect: (id: ResearchLayerId) => void; onToggle: (id: ResearchLayerId) => void; onOpenIndicatorLab: () => void; onClose: () => void }) {
+function StudiesDrawer({ activeLayers, selectedLayer, bars, cvdState, domState, customIndicators, nativeStudies, onSelect, onToggle, onOpenIndicators, onOpenIndicatorLab, onClose }: { activeLayers: ResearchLayerId[]; selectedLayer: ResearchLayerId | null; bars: TerminalBar[]; cvdState: TradeTape["dataStatus"]; domState: DepthBook["dataStatus"] | "UNAVAILABLE"; customIndicators: CompiledIndicator[]; nativeStudies: NativeStudyConfig[]; onSelect: (id: ResearchLayerId) => void; onToggle: (id: ResearchLayerId) => void; onOpenIndicators: () => void; onOpenIndicatorLab: () => void; onClose: () => void }) {
   const selected = selectedLayer ? getResearchLayerCapability(selectedLayer) : null;
   const features = useMemo(() => evaluateFeatures(bars), [bars]);
   const dataset = summarizeDataset(bars);
@@ -242,8 +244,8 @@ function StudiesDrawer({ activeLayers, selectedLayer, bars, cvdState, domState, 
   };
   return <aside className="studies-drawer layered-studies-panel" aria-label="Analysis layers">
     <div className="drawer-heading"><div><span className="drawer-kicker">Canvas workspace</span><h2>Layers</h2></div><button onClick={onClose} aria-label="Close analysis layers"><X size={16} /></button></div>
-    <div className="layer-panel-actions"><span>Verified studies only</span><button className="terminal-secondary-button" onClick={onOpenIndicatorLab}>Create indicator</button></div>
-    <div className="study-list">{groups.map((group) => <section className="study-group" key={group.label}><h3>{group.label}</h3>{group.layers.map(renderLayer)}</section>)}<section className="study-group liquidity-gate"><h3>Liquidity</h3><div className="study-row locked"><span className="study-select"><span className="study-icon"><CircleHelp size={14} /></span><span><b>Resting liquidity</b><small>Verified public source required</small></span></span></div></section><section className="study-group custom-indicator-group"><h3>My indicators</h3>{customIndicators.length ? customIndicators.map((indicator) => <div className="study-row selected" key={indicator.definition.name}><span className="study-select"><span className="study-icon"><Code2 size={14} /></span><span><b>{indicator.definition.name}</b><small>Closed runtime · active on chart</small></span></span></div>) : <button className="empty-indicator-row" onClick={onOpenIndicatorLab}>Create a local indicator in the closed Indicator Lab</button>}</section></div>
+    <div className="layer-panel-actions"><span>Verified studies only</span><div><button className="terminal-secondary-button" onClick={onOpenIndicators}>Browse indicators</button><button className="terminal-secondary-button" onClick={onOpenIndicatorLab}>Create indicator</button></div></div>
+    <div className="study-list">{groups.map((group) => <section className="study-group" key={group.label}><h3>{group.label}</h3>{group.layers.map(renderLayer)}</section>)}<section className="study-group liquidity-gate"><h3>Liquidity</h3><div className="study-row locked"><span className="study-select"><span className="study-icon"><CircleHelp size={14} /></span><span><b>Resting liquidity</b><small>Verified public source required</small></span></span></div></section><section className="study-group native-indicator-group"><h3>Installed indicators</h3>{nativeStudies.length ? nativeStudies.map((study) => <div className="study-row selected" key={study.id}><span className="study-select"><span className="study-icon"><LineChart size={14} /></span><span><b>{getNativeStudy(study.id)?.shortLabel ?? study.id}</b><small>{getNativeStudy(study.id)?.dataContract === "VERIFIED_INTRABAR" ? "Verified intrabar gate" : "Verified candle study"}</small></span></span></div>) : <button className="empty-indicator-row" onClick={onOpenIndicators}>Browse ZTerminal native indicators</button>}</section><section className="study-group custom-indicator-group"><h3>My indicators</h3>{customIndicators.length ? customIndicators.map((indicator) => <div className="study-row selected" key={indicator.definition.name}><span className="study-select"><span className="study-icon"><Code2 size={14} /></span><span><b>{indicator.definition.name}</b><small>Closed runtime · active on chart</small></span></span></div>) : <button className="empty-indicator-row" onClick={onOpenIndicatorLab}>Create a local indicator in the closed Indicator Lab</button>}</section></div>
     {selected && <section className="study-detail"><span className={`detail-state ${selected.availability === "available" ? "available" : "locked"}`}>{selected.availability === "available" ? "Verified study" : "Capability gate"}</span><h3>{selected.label}</h3><p>{selected.detail}</p><dl><div><dt>Source</dt><dd>{selected.source}</dd></div><div><dt>Loaded window</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "largePrints" || selectedLayer === "footprint" || selectedLayer === "flowPulse" ? "Current selected bounded public tape" : selectedLayer === "dom" ? "Current reconciled public book" : selectedLayer === "sessionProfile" ? "Latest UTC-day segment of verified candles" : dataset.barCount ? `${dataset.barCount.toLocaleString("en-US")} bars` : "Awaiting verified bars"}</dd></div>{definition && <><div><dt>Feature version</dt><dd>{definition.id} · v{definition.version}</dd></div><div><dt>Dataset fingerprint</dt><dd>{features.fingerprint ?? "Awaiting bars"}</dd></div></>}{profile && <><div><dt>Profile POC</dt><dd>{formatQuote(profile.pointOfControl)}</dd></div><div><dt>Value area</dt><dd>{formatQuote(profile.valueAreaLow)} — {formatQuote(profile.valueAreaHigh)}</dd></div></>}<div><dt>Status</dt><dd>{selectedLayer === "cvd" || selectedLayer === "tape" || selectedLayer === "largePrints" || selectedLayer === "footprint" || selectedLayer === "flowPulse" ? cvdState === "LIVE" ? "Rendered from live selected public tape" : `Not rendered while selected live tape is ${cvdState.toLowerCase()}` : selectedLayer === "dom" ? domState === "LIVE" ? "Rendered from reconciled live public depth" : `Not rendered while public depth is ${domState.toLowerCase()}` : selected.availability === "available" ? "Rendered from verified candle data" : "Not rendered without its required dataset"}</dd></div></dl></section>}
   </aside>;
 }
@@ -329,9 +331,11 @@ export default function Home() {
   const [symbol, setSymbol] = useState(initialSymbol);
   const [symbolDraft, setSymbolDraft] = useState(initialSymbol);
   const [activeTapeProvider, setActiveTapeProvider] = useState<TradeTape["provider"]>(restoredWorkspace?.activeTapeProvider ?? DEFAULT_LOCAL_WORKSPACE.activeTapeProvider);
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>(restoredWorkspace?.workspaceMode ?? DEFAULT_LOCAL_WORKSPACE.workspaceMode);
   const [watchlist, setWatchlist] = useState(restoredWorkspace?.watchlist ?? DEFAULT_LOCAL_WORKSPACE.watchlist);
   const [, setWorkspaceSaved] = useState(false);
   const [showStudies, setShowStudies] = useState(false);
+  const [showIndicatorsDialog, setShowIndicatorsDialog] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [showUtilityRail, setShowUtilityRail] = useState(true);
   const [showIndicatorLab, setShowIndicatorLab] = useState(false);
@@ -363,7 +367,7 @@ export default function Home() {
   const historicalWindow = useMemo(() => resolveHistoricalWindow(rangePreset, providerInterval), [rangePreset, providerInterval]);
   const snapshotQuery = trpc.market.snapshot.useQuery({ symbol }, { refetchInterval: 15_000, staleTime: 10_000, retry: 1, placeholderData: (previous) => previous });
   const historicalQuery = trpc.market.bars.useQuery({ interval: providerInterval, symbol, from: historicalWindow.from, to: historicalWindow.to, limit: historicalWindow.requestedBars }, { refetchInterval: 45_000, staleTime: 30_000, retry: 1, placeholderData: (previous) => previous });
-  const intrabarDeltaQuery = trpc.market.intrabarDelta.useQuery({ interval: providerInterval, symbol, from: historicalWindow.from, to: historicalWindow.to }, { enabled: showStudies && historicalWindow.from !== null && historicalWindow.to !== null, staleTime: 30_000, retry: 1, placeholderData: (previous) => previous });
+  const intrabarDeltaQuery = trpc.market.intrabarDelta.useQuery({ interval: providerInterval, symbol, from: historicalWindow.from, to: historicalWindow.to }, { enabled: (showStudies || showIndicatorsDialog) && historicalWindow.from !== null && historicalWindow.to !== null, staleTime: 30_000, retry: 1, placeholderData: (previous) => previous });
   const cvdEnabled = activeLayers.includes("cvd");
   const flowPulseEnabled = activeLayers.includes("flowPulse");
   const domEnabled = activeLayers.includes("dom") || flowPulseEnabled;
@@ -383,7 +387,7 @@ export default function Home() {
   const feedHealth = feedHealthQuery.data as FeedHealth | undefined;
   const depthBook = depthQuery.data as DepthBook | undefined;
 
-  const currentCloudPreferences = useMemo(() => toCloudPreferences({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites }), [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites]);
+  const currentCloudPreferences = useMemo(() => toCloudPreferences({ symbol, timeframe, rangePreset, activeTapeProvider, workspaceMode, activeLayers, watchlist, nativeStudies, indicatorFavorites }), [symbol, timeframe, rangePreset, activeTapeProvider, workspaceMode, activeLayers, watchlist, nativeStudies, indicatorFavorites]);
 
   const applyCloudPreferences = (preferences: TerminalWorkspacePreferences) => {
     setSymbol(preferences.symbol);
@@ -391,6 +395,7 @@ export default function Home() {
     setTimeframe(preferences.timeframe as Timeframe);
     setRangePreset(preferences.rangePreset as RangePreset);
     setActiveTapeProvider(preferences.activeTapeProvider);
+    setWorkspaceMode(preferences.workspaceMode);
     setActiveLayers(preferences.activeLayers.filter((item): item is ResearchLayerId => LAYER_ORDER.includes(item as ResearchLayerId)));
     setWatchlist(preferences.watchlist);
     setNativeStudies(preferences.nativeStudies.filter((study): study is NativeStudyConfig => NATIVE_STUDY_IDS.includes(study.id as NativeStudyId)).map((study) => ({ id: study.id, ...(study.inputs ? { inputs: study.inputs } : {}) })));
@@ -447,8 +452,8 @@ export default function Home() {
   useEffect(() => { if (currentHistorical) setLastVerifiedHistorical(currentHistorical); }, [currentHistorical]);
   useEffect(() => { if (!feedback) return; const timer = window.setTimeout(() => setFeedback(null), 5_500); return () => window.clearTimeout(timer); }, [feedback]);
   useEffect(() => {
-    setWorkspaceSaved(writeLocalTerminalWorkspace({ symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites }));
-  }, [symbol, timeframe, rangePreset, activeTapeProvider, activeLayers, watchlist, nativeStudies, indicatorFavorites]);
+    setWorkspaceSaved(writeLocalTerminalWorkspace({ symbol, timeframe, rangePreset, activeTapeProvider, workspaceMode, activeLayers, watchlist, nativeStudies, indicatorFavorites }));
+  }, [symbol, timeframe, rangePreset, activeTapeProvider, workspaceMode, activeLayers, watchlist, nativeStudies, indicatorFavorites]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -571,11 +576,21 @@ export default function Home() {
   const closeCommandPalette = () => { setCommandPaletteOpen(false); restoreFocus(); };
   const openShortcutHelp = () => { captureFocusReturn(); setCommandPaletteOpen(false); setShortcutHelpOpen(true); };
   const closeShortcutHelp = () => { setShortcutHelpOpen(false); restoreFocus(); };
-  const openStudiesDrawer = () => { captureFocusReturn(); setShowStudies(true); setShowResearch(false); setShowIndicatorLab(false); setShowSettings(false); };
+  const selectWorkspaceMode = (mode: WorkspaceMode) => {
+    setWorkspaceMode(mode);
+    setShowStudies(mode !== "focus");
+    setShowResearch(mode === "research");
+    setShowIndicatorLab(false);
+    setShowSettings(false);
+  };
+  const focusMode = workspaceMode === "focus";
+  const openStudiesDrawer = () => { captureFocusReturn(); setWorkspaceMode("canvas"); setShowStudies(true); setShowResearch(false); setShowIndicatorLab(false); setShowSettings(false); };
+  const openIndicatorsDialog = () => { captureFocusReturn(); setShowIndicatorsDialog(true); setShowIndicatorLab(false); setShowSettings(false); };
+  const closeIndicatorsDialog = () => { setShowIndicatorsDialog(false); restoreFocus(); };
   const closeStudiesDrawer = () => { setShowStudies(false); restoreFocus(); };
-  const openResearchDrawer = () => { captureFocusReturn(); setShowResearch(true); setShowStudies(false); setShowIndicatorLab(false); setShowSettings(false); };
+  const openResearchDrawer = () => { captureFocusReturn(); setWorkspaceMode("research"); setShowResearch(true); setShowStudies(true); setShowIndicatorLab(false); setShowSettings(false); };
   const closeResearchDrawer = () => { setShowResearch(false); restoreFocus(); };
-  const openIndicatorLab = () => { captureFocusReturn(); setShowIndicatorLab(true); setShowStudies(false); setShowResearch(false); };
+  const openIndicatorLab = () => { captureFocusReturn(); setShowIndicatorLab(true); setShowIndicatorsDialog(false); setShowStudies(false); setShowResearch(false); };
   const closeIndicatorLab = () => { setShowIndicatorLab(false); restoreFocus(); };
   const openSettingsDrawer = () => { captureFocusReturn(); setShowSettings(true); setShowStudies(false); setShowResearch(false); setShowIndicatorLab(false); };
   const closeSettingsDrawer = () => { setShowSettings(false); restoreFocus(); };
@@ -634,7 +649,8 @@ export default function Home() {
     closeCommandPalette();
     if (id === "open-research") { openResearchDrawer(); return; }
     if (id === "open-studies") { openStudiesDrawer(); return; }
-    if (id === "focus-mode" || id === "exit-focus") { setFeedback({ kind: "info", message: "The chart-first workspace is always active. Use Indicators or Strategy Tester to open focused research tools." }); return; }
+    if (id === "focus-mode") { selectWorkspaceMode("focus"); setFeedback({ kind: "info", message: "Focus Mode enabled: the analytical cockpit now prioritizes the verified chart." }); return; }
+    if (id === "exit-focus") { selectWorkspaceMode("canvas"); setFeedback({ kind: "info", message: "Canvas Mode enabled: Layers and research controls are available beside the verified chart." }); return; }
     if (id === "open-shortcuts") { openShortcutHelp(); return; }
     if (id === "focus-market") { marketInputRef.current?.focus(); return; }
     if (id === "refresh-market") { retry(); return; }
@@ -647,56 +663,60 @@ export default function Home() {
       const target = event.target as HTMLElement | null;
       const editable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
       if (isPaletteShortcut(event)) { event.preventDefault(); openCommandPalette(); return; }
-      if (event.key === "Escape") { if (shortcutHelpOpen) { closeShortcutHelp(); return; } if (commandPaletteOpen) { closeCommandPalette(); return; } if (showSettings) { closeSettingsDrawer(); return; } if (showIndicatorLab) { closeIndicatorLab(); return; } if (showResearch) { closeResearchDrawer(); return; } if (showStudies) { closeStudiesDrawer(); return; } }
+      if (event.key === "Escape") { if (shortcutHelpOpen) { closeShortcutHelp(); return; } if (commandPaletteOpen) { closeCommandPalette(); return; } if (showSettings) { closeSettingsDrawer(); return; } if (showIndicatorsDialog) { closeIndicatorsDialog(); return; } if (showIndicatorLab) { closeIndicatorLab(); return; } if (showResearch) { closeResearchDrawer(); return; } if (showStudies) { closeStudiesDrawer(); return; } }
       if (editable || commandPaletteOpen || shortcutHelpOpen) return;
       if (isHelpShortcut(event)) { event.preventDefault(); openShortcutHelp(); return; }
       if (isMarketShortcut(event)) { event.preventDefault(); marketInputRef.current?.focus(); return; }
+      if (event.key.toLowerCase() === "f" && !event.shiftKey) selectWorkspaceMode("focus");
       if (event.key.toLowerCase() === "r" && !event.shiftKey) runCommand("open-research");
       if (event.key.toLowerCase() === "s" && !event.shiftKey) runCommand("open-studies");
       if (event.key.toLowerCase() === "r" && event.shiftKey) runCommand("refresh-market");
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commandPaletteOpen, retry, shortcutHelpOpen, showIndicatorLab, showResearch, showSettings, showStudies]);
+  }, [commandPaletteOpen, retry, shortcutHelpOpen, showIndicatorLab, showIndicatorsDialog, showResearch, showSettings, showStudies, workspaceMode]);
   const resetViewport = () => { setReplay(false); setFeedback({ kind: "info", message: "Chart viewport reset to the latest verified window." }); };
   const shownBars = replay && displayHistorical ? displayHistorical.bars.slice(0, Math.max(60, Math.floor(displayHistorical.bars.length * 0.68))) : displayHistorical?.bars ?? [];
 
-  return <main className="premium-terminal trading-terminal"><span className="sr-only" role="status" aria-live="polite">{accessibilityStatus}</span>
-    <header className="terminal-terminalbar">
-      <a className="terminal-brand-lockup" href="/" aria-label="ZTerminal home"><img src={zterminalMark} alt="" /><span><b>ZTERMINAL</b><small>Verified market research</small></span></a>
-      <form className="terminal-market-select" onSubmit={(event) => { event.preventDefault(); setMarket(symbolDraft); }}><Search size={14} /><input ref={marketInputRef} value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="Search market" aria-label="Gate.io perpetual market" spellCheck="false" /><button type="submit" aria-label="Load market">↵</button></form>
-      <div className="terminal-quote terminalbar-quote"><span>GATE.IO · PERP</span><b>{formatQuote(displaySnapshot?.price)}</b><em className={typeof displaySnapshot?.changePercent === "number" && displaySnapshot.changePercent >= 0 ? "positive" : "negative"}>{typeof displaySnapshot?.changePercent === "number" ? `${displaySnapshot.changePercent >= 0 ? "+" : ""}${displaySnapshot.changePercent.toFixed(2)}%` : "—"}</em></div>
-      <nav className="terminal-primary-actions" aria-label="Research tools"><button className={showStudies ? "active" : ""} onClick={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()}><Layers3 size={15} /> Indicators</button><button className={showResearch ? "active" : ""} onClick={() => showResearch ? closeResearchDrawer() : openResearchDrawer()}><FlaskConical size={15} /> Strategy Tester</button></nav>
+  return <main className={`premium-terminal terminal-full-workstation ${focusMode ? "is-focus" : `is-${workspaceMode}`}`}><span className="sr-only" role="status" aria-live="polite">{accessibilityStatus}</span>
+    <header className="terminal-workstation-topbar">
+      <a className="terminal-brand-lockup" href="/" aria-label="ZTerminal home"><img src={zterminalMark} alt="" /><span><b>ZTERMINAL</b><small>Chart-first research workstation</small></span></a>
+      <nav className="terminal-workspace-modes" aria-label="Terminal workspaces">
+        <button className={workspaceMode === "focus" ? "active" : ""} onClick={() => selectWorkspaceMode("focus")}><b>1.</b><span>Focus mode<small>Minimal analytical cockpit</small></span></button>
+        <button className={workspaceMode === "canvas" ? "active" : ""} onClick={() => selectWorkspaceMode("canvas")}><b>2.</b><span>Canvas mode<small>Layer-driven research canvas</small></span></button>
+        <button className={workspaceMode === "research" ? "active" : ""} onClick={() => selectWorkspaceMode("research")}><b>3.</b><span>Research mode<small>Hypothesis to evidence workstation</small></span></button>
+      </nav>
       <div className="terminal-global-actions"><button onClick={openCommandPalette} aria-label="Search terminal commands" title="Search terminal commands"><Search size={16} /></button><button onClick={() => runCommand("open-alerts")} aria-label="Alert status" title="Alert status"><Radio size={16} /></button><button onClick={openSettingsDrawer} aria-label="Terminal settings" title="Settings"><Settings2 size={16} /></button><PwaControls /><TerminalAccountControl workspaceState={workspaceState} onSync={reviewWorkspaceSync} /></div>
     </header>
-
-    <section className="terminal-instrumentbar" aria-label="Chart controls">
+    <header className="terminal-control-strip">
       <button className="terminal-z-mark" onClick={() => setMarket("BTC_USDT")} aria-label="Load BTC USDT"><img src={zterminalMark} alt="" /></button>
+      <form className="terminal-market-select" onSubmit={(event) => { event.preventDefault(); setMarket(symbolDraft); }}><Search size={14} /><input ref={marketInputRef} value={symbolDraft} onChange={(event) => setSymbolDraft(event.target.value)} placeholder="Symbol" aria-label="Gate.io perpetual market" spellCheck="false" /><button type="submit" aria-label="Load market">↵</button></form>
       <details className="terminal-watchlist"><summary aria-label="Open local watchlist">{verifiedSymbol.replace("_", " / ")}</summary><div><div className="quick-markets" aria-label="Local watchlist">{watchlist.map((item) => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}>{item.replace("_", " / ")}</button>)}</div><button className="watchlist-add" onClick={() => { setWatchlist((current) => addToLocalWatchlist(current, symbol)); setFeedback({ kind: "success", message: `${symbol.replace("_", " / ")} saved to this browser’s local watchlist. No market data or account credentials are stored.` }); }}>Add current market</button></div></details>
       <div className="compact-timeframes" aria-label="Chart timeframe">{TIMEFRAMES.map((item) => <button key={item} className={timeframe === item ? "selected" : ""} onClick={() => selectTimeframe(item)}>{item}</button>)}</div>
-      <div className="instrumentbar-spacer" />
-      <ExchangeHealthStrip health={feedHealth} selectedProvider={activeTapeProvider} onSelect={(provider) => { setActiveTapeProvider(provider); setFeedback({ kind: "info", message: provider === "gateio" ? "Gate.io tape selected. CVD, DOM, and chart history share verified Gate.io provenance." : `${FEED_LABEL[provider]} public tape selected. Chart history and DOM remain explicitly Gate.io-only until a cross-venue history/depth contract is released.` }); }} />
-      <span className={`market-state ${requestedMarketIsValid ? "live" : isUpdating ? "updating" : "unavailable"}`} title={`${coverageLabel} · ${formatAge(displaySnapshot?.at)}`}><i /><b>{requestedMarketIsValid ? "Verified" : isUpdating ? "Verifying" : "Unavailable"}</b></span>
-      <button className={showUtilityRail ? "utility-toggle active" : "utility-toggle"} onClick={() => setShowUtilityRail(value => !value)} aria-pressed={showUtilityRail} title="Toggle market panel"><LayoutPanelTop size={15} /><span>Market</span></button>
-    </section>
+      <div className="terminal-quote"><span>GATE.IO · PERP</span><b>{formatQuote(displaySnapshot?.price)}</b><em className={typeof displaySnapshot?.changePercent === "number" && displaySnapshot.changePercent >= 0 ? "positive" : "negative"}>{typeof displaySnapshot?.changePercent === "number" ? `${displaySnapshot.changePercent >= 0 ? "+" : ""}${displaySnapshot.changePercent.toFixed(2)}%` : "—"}</em></div>
+      <div className="terminal-canvas-actions"><button className={showIndicatorsDialog ? "active" : ""} onClick={openIndicatorsDialog} aria-label="Open indicators" title="Indicators"><Layers3 size={15} /></button><button className={showStudies ? "active" : ""} onClick={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()} aria-label="Open chart layers" title="Layers"><LayoutPanelTop size={15} /></button><button className={showResearch ? "active" : ""} onClick={() => showResearch ? closeResearchDrawer() : openResearchDrawer()} aria-label="Open chart-connected research" title="Research"><FlaskConical size={15} /></button><button onClick={openCommandPalette} aria-label="Open command palette" title="Command palette"><Command size={15} /></button></div>
+      <div className="terminal-data-inspector"><ExchangeHealthStrip health={feedHealth} selectedProvider={activeTapeProvider} onSelect={(provider) => { setActiveTapeProvider(provider); setFeedback({ kind: "info", message: provider === "gateio" ? "Gate.io tape selected. CVD, DOM, and chart history share verified Gate.io provenance." : `${FEED_LABEL[provider]} public tape selected. Chart history and DOM remain explicitly Gate.io-only until a cross-venue history/depth contract is released.` }); }} /><span className={`market-state ${requestedMarketIsValid ? "live" : isUpdating ? "updating" : "unavailable"}`} title={`${coverageLabel} · ${formatAge(displaySnapshot?.at)}`}><i /><b>{requestedMarketIsValid ? "Verified" : isUpdating ? "Verifying" : "Unavailable"}</b></span></div>
+      <div className="terminal-control-actions"><button onClick={() => selectWorkspaceMode(focusMode ? "canvas" : "focus")} aria-label="Toggle chart focus" aria-pressed={focusMode} title="Focus chart"><Focus size={15} /></button><button onClick={() => runCommand("open-alerts")} aria-label="Alert status" title="Alert status"><Radio size={15} /></button><button aria-label="Terminal settings" onClick={openSettingsDrawer} title="Settings"><Settings2 size={15} /></button></div>
+    </header>
 
     {showWorkspaceConflict && pendingCloudSnapshot && <section className="workspace-conflict-dialog" role="dialog" aria-modal="true" aria-label="Resolve cloud workspace difference"><div><span className="drawer-kicker">Cloud workspace review</span><h2>Two device copies differ</h2><p>Your account has a newer saved workspace than this browser. Market data, credentials, and strategy source are not part of either copy.</p><dl><div><dt>Cloud copy</dt><dd>{pendingCloudSnapshot.updatedAt ? new Date(pendingCloudSnapshot.updatedAt).toLocaleString() : "Saved workspace"}</dd></div><div><dt>This device</dt><dd>{initialLocalUpdatedAt.current ? new Date(initialLocalUpdatedAt.current).toLocaleString() : "Current browser settings"}</dd></div></dl><div className="workspace-conflict-actions"><button className="terminal-secondary-button" onClick={() => { applyCloudPreferences(pendingCloudSnapshot.preferences); setCloudRevision(pendingCloudSnapshot.revision); syncedPreferenceFingerprint.current = preferenceFingerprint(pendingCloudSnapshot.preferences); setPendingCloudSnapshot(null); setShowWorkspaceConflict(false); setWorkspaceState("synced"); setFeedback({ kind: "info", message: "Cloud workspace applied to this device." }); }}>Use cloud workspace</button><button className="terminal-primary-button" onClick={() => { setShowWorkspaceConflict(false); persistCurrentWorkspace(pendingCloudSnapshot.revision); }}>Replace cloud with this device</button></div><button className="workspace-conflict-dismiss" onClick={() => setShowWorkspaceConflict(false)}>Decide later</button></div></section>}
 
-    <section className={`terminal-workbench ${showUtilityRail ? "with-utility-rail" : ""}`}>
+    <section className="terminal-main-layout">
+      <IconRail showLayers={showStudies} showResearch={showResearch} focusMode={focusMode} onLayers={() => showStudies ? closeStudiesDrawer() : openStudiesDrawer()} onResearch={() => showResearch ? closeResearchDrawer() : openResearchDrawer()} onFocus={() => selectWorkspaceMode(focusMode ? "canvas" : "focus")} onReset={resetViewport} />
       <section className="chart-workspace">
-        <div className="chart-command-toolbar"><div><span className="chart-toolbar-label">Candles · verified market data</span><small>{coverageLabel}</small></div><span className="toolbar-grow" /><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay"}</button><button className="toolbar-icon" onClick={resetViewport} aria-label="Reset chart viewport" title="Reset chart viewport"><Undo2 size={15} /></button><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data" title="Refresh verified market data"><RefreshCw size={15} /></button></div>
+        <div className="chart-command-toolbar"><span className="chart-toolbar-label">Verified market canvas</span><button className={replay ? "selected-action" : ""} onClick={() => { setReplay((value) => !value); setFeedback({ kind: "info", message: replay ? "Replay preview stopped. Full verified window restored." : "Replay preview is showing an earlier slice of the same verified dataset." }); }}><Play size={14} /> {replay ? "Stop replay" : "Replay verified window"}</button><span className="toolbar-grow" /><button className="toolbar-icon" onClick={retry} aria-label="Refresh public market data" title="Refresh verified market data"><RefreshCw size={15} /></button><button className="toolbar-icon" onClick={() => selectWorkspaceMode(focusMode ? "canvas" : "focus")} aria-label="Toggle focus mode" aria-pressed={focusMode} title="Focus chart"><Maximize2 size={15} /></button></div>
         {feedback && <div className={`terminal-feedback ${feedback.kind}`} role="status"><span>{feedback.kind === "warning" ? <CircleHelp size={14} /> : feedback.kind === "success" ? <Target size={14} /> : <Clock3 size={14} />}</span>{feedback.message}<button onClick={() => setFeedback(null)} aria-label="Dismiss message"><X size={13} /></button></div>}
         <ProfessionalChart bars={shownBars} interval={providerInterval} symbol={verifiedSymbol} activeLayers={activeLayers} isLoading={isInitialLoading} isRefreshing={isUpdating && Boolean(displayHistorical)} errorMessage={marketError} coverageLabel={coverageLabel} onRetry={retry} cvdTrades={cvdTrades} cvdState={cvdState} tradeMarkers={backtestMarkers} customIndicators={customIndicators} nativeStudies={nativeStudies} intrabarDelta={intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? intrabarDelta : null} />
         {activeContextLayer && <section className="chart-context-pane" aria-label="Active chart context layer"><header><span>{activeContextLayer === "sessionProfile" ? "Value context" : activeContextLayer === "dom" ? "Live depth" : activeContextLayer === "flowPulse" ? "Flow pulse" : "Live order-flow context"}</span><small>{activeContextLayer === "sessionProfile" ? "Derived from the verified candle window" : "Live-only public evidence — withheld when source state is not current"}</small></header>{activeContextLayer === "sessionProfile" && <SessionVolumePanel bars={displayHistorical?.bars ?? []} />}{activeContextLayer === "dom" && <LiveDepthPanel depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} />}{activeContextLayer === "tape" && <LiveTapePanel tape={selectedTape} />}{activeContextLayer === "largePrints" && <LiveLargePrintsPanel tape={selectedTape} />}{activeContextLayer === "footprint" && <LiveFootprintPanel tape={selectedTape} />}{activeContextLayer === "flowPulse" && <LiveFlowPulsePanel tape={flowPulseTape} depth={depthBook?.symbol === verifiedSymbol ? depthBook : undefined} tapeWithheldReason={activeTapeProvider !== "gateio" ? "Selected external tape is intentionally excluded: Flow Pulse never combines it with Gate.io perpetual depth." : undefined} />}</section>}
-        <div className="chart-range-dock"><span className="range-label">Range</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
+        <div className="chart-range-dock"><span className="range-label">History</span>{RANGE_PRESETS.map((range) => <button key={range} className={rangePreset === range ? "selected" : ""} onClick={() => selectRange(range)}>{range}</button>)}<span className="range-dock-divider" /><span className="range-provenance"><Radio size={13} /> {coverageLabel}</span></div>
       </section>
-      {showUtilityRail && <aside className="terminal-utility-rail" aria-label="Market panel"><header><div><span className="drawer-kicker">Market</span><h2>{verifiedSymbol.replace("_", " / ")}</h2></div><button onClick={() => setShowUtilityRail(false)} aria-label="Close market panel"><X size={16} /></button></header><section className="utility-quote-grid"><div><span>Last</span><b>{formatQuote(displaySnapshot?.price)}</b></div><div><span>24h high</span><b>{formatQuote(displaySnapshot?.dayHigh)}</b></div><div><span>24h low</span><b>{formatQuote(displaySnapshot?.dayLow)}</b></div><div><span>24h volume</span><b>{formatVolume(displaySnapshot?.quoteVolume)}</b></div></section><section className="utility-watchlist"><span>Watchlist</span>{watchlist.map(item => <button key={item} className={symbol === item ? "selected" : ""} onClick={() => setMarket(item)}><b>{item.replace("_", " / ")}</b><small>{item === verifiedSymbol ? "Loaded" : "Load"}</small></button>)}</section><section className="utility-data-status"><span>Data contract</span><b>{coverageLabel}</b><small>{formatAge(displaySnapshot?.at)}</small></section></aside>}
+      {showStudies && !focusMode && <StudiesDrawer activeLayers={activeLayers} selectedLayer={selectedLayer} bars={displayHistorical?.bars ?? []} cvdState={cvdState} domState={domState} customIndicators={customIndicators} nativeStudies={nativeStudies} onSelect={setSelectedLayer} onToggle={toggleLayer} onOpenIndicators={openIndicatorsDialog} onOpenIndicatorLab={openIndicatorLab} onClose={closeStudiesDrawer} />}
+      {showResearch && workspaceMode === "research" && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={closeResearchDrawer} />}
+      {showIndicatorLab && !focusMode && <IndicatorLabDrawer bars={displayHistorical?.bars ?? []} onAdd={addCustomIndicator} onClose={closeIndicatorLab} />}
+      {showSettings && !focusMode && <SettingsDrawer symbol={symbol} timeframe={timeframe} symbols={Array.from(new Set([...STARTING_MARKETS, symbol]))} timeframes={TIMEFRAMES} workspaceState={workspaceState} isAuthenticated={Boolean(user)} onSymbolChange={setMarket} onTimeframeChange={(next) => selectTimeframe(next as Timeframe)} onSync={reviewWorkspaceSync} onClearLocalCopy={clearSavedBrowserCopy} onClose={closeSettingsDrawer} />}
     </section>
-
-    {showStudies && <IndicatorsDialog nativeStudies={nativeStudies} favorites={indicatorFavorites} activeLayers={activeLayers} customIndicators={customIndicators} intrabarState={intrabarDeltaQuery.isLoading ? "checking" : intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? "available" : "unavailable"} intrabarDetail={intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? `${intrabarDelta.intrabarInterval} Gate.io intrabars · ${intrabarDelta.coverage.returnedBars.toLocaleString("en-US")} chart bars · directional-volume estimate` : intrabarDelta?.reason ?? "Checking verified intrabar coverage for this range."} onToggleNative={toggleNativeStudy} onUpdateNative={updateNativeStudy} onToggleFavorite={toggleIndicatorFavorite} onToggleLayer={toggleLayer} onCreateIndicator={openIndicatorLab} onClose={closeStudiesDrawer} />}
-    {showResearch && <ProtocolResearchDrawer dataset={researchDataset} bars={displayHistorical?.bars ?? []} dataContext={backtestDataContext} onBacktestMarkers={setBacktestMarkers} onFeedback={setFeedback} onClose={closeResearchDrawer} />}
-    {showIndicatorLab && <IndicatorLabDrawer bars={displayHistorical?.bars ?? []} onAdd={addCustomIndicator} onClose={closeIndicatorLab} />}
-    {showSettings && <SettingsDrawer symbol={symbol} timeframe={timeframe} symbols={Array.from(new Set([...STARTING_MARKETS, symbol]))} timeframes={TIMEFRAMES} workspaceState={workspaceState} isAuthenticated={Boolean(user)} onSymbolChange={setMarket} onTimeframeChange={(next) => selectTimeframe(next as Timeframe)} onSync={reviewWorkspaceSync} onClearLocalCopy={clearSavedBrowserCopy} onClose={closeSettingsDrawer} />}
+    {!focusMode && <ContextDeck symbol={verifiedSymbol} snapshot={displaySnapshot} feedHealth={feedHealth} onOpenLayers={openStudiesDrawer} onOpenResearch={openResearchDrawer} onOpenSettings={openSettingsDrawer} onAlertStatus={() => runCommand("open-alerts")} />}
+    {showIndicatorsDialog && <IndicatorsDialog nativeStudies={nativeStudies} favorites={indicatorFavorites} activeLayers={activeLayers} customIndicators={customIndicators} intrabarState={intrabarDeltaQuery.isLoading ? "checking" : intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? "available" : "unavailable"} intrabarDetail={intrabarDelta?.dataStatus === "HISTORICAL" && intrabarDelta.coverage.complete ? `${intrabarDelta.intrabarInterval} Gate.io intrabars · ${intrabarDelta.coverage.returnedBars.toLocaleString("en-US")} chart bars · directional-volume estimate` : intrabarDelta?.reason ?? "Checking verified intrabar coverage for this range."} onToggleNative={toggleNativeStudy} onUpdateNative={updateNativeStudy} onToggleFavorite={toggleIndicatorFavorite} onToggleLayer={toggleLayer} onCreateIndicator={openIndicatorLab} onClose={closeIndicatorsDialog} />}
 
     {shortcutHelpOpen && <section className="keyboard-shortcuts-panel" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts"><header><div><span className="drawer-kicker">Terminal controls</span><h2>Keyboard shortcuts</h2></div><button onClick={closeShortcutHelp} aria-label="Close keyboard shortcuts"><X size={16} /></button></header><p>Shortcuts are inactive while typing in a field. They only open research tools and never create an order or execution route.</p><dl><div><dt><kbd>⌘</kbd><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Open command palette</dd></div><div><dt><kbd>/</kbd></dt><dd>Focus market search</dd></div><div><dt><kbd>R</kbd> / <kbd>S</kbd></dt><dd>Open Strategy Tester / Indicators</dd></div><div><dt><kbd>Shift</kbd> + <kbd>R</kbd></dt><dd>Refresh verified market data</dd></div><div><dt><kbd>?</kbd></dt><dd>Open this reference</dd></div></dl><footer><span>Use <kbd>↑</kbd><kbd>↓</kbd> and <kbd>Enter</kbd> in the command palette.</span></footer></section>}
     {commandPaletteOpen && <CommandPalette onRun={runCommand} onClose={closeCommandPalette} />}
