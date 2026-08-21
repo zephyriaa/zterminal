@@ -49,7 +49,7 @@ function StatusPill({ tone, children }: { tone: "ready" | "blocked" | "pending";
 }
 
 export function ProtocolResearchDrawer({ dataset, bars, dataContext, onBacktestMarkers, onFeedback, onClose }: { dataset: ResearchDatasetContext | null; bars: BacktestBar[]; dataContext?: BacktestRunContext["data"]; onBacktestMarkers: (markers: BacktestMarker[]) => void; onFeedback: (feedback: Feedback) => void; onClose: () => void }) {
-  const [tab, setTab] = useState<Tab>("strategy");
+  const [tab, setTab] = useState<Tab>("overview");
   const [restoredBaseline] = useState<LockedBaseline | null>(() => typeof window === "undefined" ? null : readLocalBaseline());
   const [citation, setCitation] = useState<ResearchCitation>(() => restoredBaseline?.citation ?? EMPTY_CITATION);
   const [rules, setRules] = useState<RuleSpec>(() => restoredBaseline?.rules ?? EMPTY_RULES);
