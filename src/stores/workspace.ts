@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { DataStatus, Environment, ProviderId } from "@/lib/market/types";
 
 export type ViewId =
   | "markets"
@@ -44,12 +45,12 @@ interface WorkspaceState {
   commandOpen: boolean;
   setCommandOpen: (o: boolean) => void;
 
-  // Market data connection (mock by default)
+  // Market data connection (mock by default). Provider identity stays canonical.
   connection: {
     state: "connected" | "connecting" | "reconnecting" | "stale" | "disconnected" | "degraded" | "unavailable";
-    provider: "mock" | "gateio" | "rithmic-test" | "rithmic-prod";
-    environment: "simulation" | "paper" | "live";
-    dataStatus: "SIMULATED" | "LIVE" | "HISTORICAL" | "DELAYED" | "STALE" | "DEGRADED" | "UNAVAILABLE" | "DISCONNECTED";
+    provider: ProviderId;
+    environment: Environment;
+    dataStatus: DataStatus;
   };
   setConnection: (c: Partial<WorkspaceState["connection"]>) => void;
 

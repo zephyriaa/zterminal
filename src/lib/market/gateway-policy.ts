@@ -11,10 +11,12 @@ export function resolveGatewayOrigins(environment: string | undefined, configure
   return [...new Set([...DEVELOPMENT_ORIGINS, ...configured])];
 }
 
+export type MarketSubscriptionType = "trade" | "quote" | "depth" | "derivatives" | "liquidation";
+
 export function validateSubscriptionRequest(
   request: { symbol?: string; types?: string[] },
   options: { activeSubscriptionCount: number; maximumSubscriptions: number },
-): { ok: true; types: Set<"trade" | "quote" | "depth"> } | { ok: false; error: string } {
+): { ok: true; types: Set<MarketSubscriptionType> } | { ok: false; error: string } {
   if (!Number.isInteger(options.maximumSubscriptions) || options.maximumSubscriptions < 1) {
     return { ok: false, error: "gateway maximum subscription configuration is invalid" };
   }
@@ -22,9 +24,9 @@ export function validateSubscriptionRequest(
     return { ok: false, error: "subscription limit reached" };
   }
   const requested = request.types ?? ["trade", "quote", "depth"];
-  const allowed = new Set(["trade", "quote", "depth"] as const);
-  if (!requested.length || requested.some((type) => !allowed.has(type as "trade" | "quote" | "depth"))) {
+  const allowed = new Set<MarketSubscriptionType>(["trade", "quote", "depth", "derivatives", "liquidation"]);
+  if (!requested.length || requested.some((type) => !allowed.has(type as MarketSubscriptionType))) {
     return { ok: false, error: "unsupported subscription event type" };
   }
-  return { ok: true, types: new Set(requested as Array<"trade" | "quote" | "depth">) };
+  return { ok: true, types: new Set(requested as MarketSubscriptionType[]) };
 }

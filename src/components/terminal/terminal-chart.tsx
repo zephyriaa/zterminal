@@ -68,6 +68,8 @@ interface ChartProps {
   replayIndex?: number | null; // when in replay, show bars up to this index
   markers?: TradeMarker[];
   settings?: ChartSettings;
+  /** Provider-normalized mark price. Omit it when the venue does not supply one. */
+  markPrice?: number | null;
   onCrosshair?: (b: Bar | null) => void;
 }
 
@@ -165,6 +167,7 @@ export function TerminalChart({
   replayIndex,
   markers,
   settings = DEFAULT_CHART_SETTINGS,
+  markPrice,
   onCrosshair,
 }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -280,7 +283,7 @@ export function TerminalChart({
       raf.current = 0;
       draw();
     });
-  }, [bars, chartType, indicators, replayIndex, markers, settings, viewVersion]);
+  }, [bars, chartType, indicators, replayIndex, markers, settings, markPrice, viewVersion]);
 
   // redraw when data/view changes
   useEffect(() => {
@@ -348,6 +351,7 @@ export function TerminalChart({
       values: study.kind === "ema" ? ema(closes, Math.max(1, study.period ?? 20)) : study.kind === "sma" ? sma(closes, Math.max(1, study.period ?? 20)) : sessionVWAP(vb),
     }));
     for (const v of [...ema20, ...ema50, ...vwap, ...customLines.flatMap((line) => line.values)]) if (typeof v === "number") { hi = Math.max(hi, v); lo = Math.min(lo, v); }
+    if (typeof markPrice === "number" && Number.isFinite(markPrice)) { hi = Math.max(hi, markPrice); lo = Math.min(lo, markPrice); }
     const pad = (hi - lo) * 0.08 || hi * 0.01;
     hi += pad; lo -= pad;
     const autoRange = hi - lo || 1;
@@ -530,6 +534,24 @@ export function TerminalChart({
     ctx.textAlign = "left";
     ctx.fillText(fmtPrice(last.c, contract.tickSize), plotW + 6, lastY + 3);
 
+    // Provider-normalized derivatives mark price; only rendered when supplied.
+    if (typeof markPrice === "number" && Number.isFinite(markPrice)) {
+      const markY = yFor(markPrice);
+      ctx.strokeStyle = c.mdata;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, markY);
+      ctx.lineTo(plotW, markY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = c.mdata;
+      ctx.fillRect(plotW, markY - 8, PRICE_AXIS_W, 16);
+      ctx.fillStyle = "#0a0a0a";
+      ctx.font = "bold 9px ui-monospace, monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`M ${fmtPrice(markPrice, contract.tickSize)}`, plotW + 3, markY + 3);
+    }
+
     // crosshair
     if (settings.showCrosshair && cross.current) {
       const { x, y } = cross.current;
@@ -578,7 +600,7 @@ export function TerminalChart({
         onCrosshair(null);
       }
     }
-  }, [viewport, chartType, indicators, contract.tickSize, markers, timeframe, onCrosshair, settings]);
+  }, [viewport, chartType, indicators, contract.tickSize, markers, timeframe, markPrice, onCrosshair, settings]);
 
   // pointer handlers
   const maxFutureBars = Math.max(settings.futureBars * 5, 160);

@@ -57,3 +57,6 @@ server.log
 /desktop/dist/
 /src-tauri/target/
 /src-tauri/gen/
+
+# local process artifacts
+*.pid
