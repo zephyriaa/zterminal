@@ -19,6 +19,7 @@ type Props = {
   onToggleLayer: (id: ResearchLayerId) => void;
   onCreateIndicator: () => void;
   onClose: () => void;
+  embedded?: boolean;
 };
 
 const legacyDataStudies: Array<{ id: ResearchLayerId; label: string; detail: string; enabled: boolean }> = [
@@ -55,7 +56,7 @@ function StudyRow({ study, installed, favorite, intrabarState, intrabarDetail, o
   </article>;
 }
 
-export function IndicatorsDialog({ nativeStudies, favorites, activeLayers, customIndicators, intrabarState, intrabarDetail, onToggleNative, onUpdateNative, onToggleFavorite, onToggleLayer, onCreateIndicator, onClose }: Props) {
+export function IndicatorsDialog({ nativeStudies, favorites, activeLayers, customIndicators, intrabarState, intrabarDetail, onToggleNative, onUpdateNative, onToggleFavorite, onToggleLayer, onCreateIndicator, onClose, embedded = false }: Props) {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [tab, setTab] = useState<IndicatorBrowserTab>("builtins");
   const [query, setQuery] = useState("");
@@ -86,8 +87,8 @@ export function IndicatorsDialog({ nativeStudies, favorites, activeLayers, custo
     onUpdateNative(selected.id, { ...current, [key]: value });
   };
 
-  return <section className="indicators-dialog" role="dialog" aria-modal="true" aria-label="Indicators">
-    <header className="indicator-dialog-header"><div><span className="drawer-kicker">Studies</span><h2>Indicators</h2></div><button onClick={onClose} aria-label="Close indicators"><X size={16} /></button></header>
+  return <section className={`indicators-dialog ${embedded ? "embedded-indicators-dialog" : ""}`} role="dialog" aria-modal={embedded ? undefined : true} aria-label="Indicators">
+    {!embedded && <header className="indicator-dialog-header"><div><span className="drawer-kicker">Studies</span><h2>Indicators</h2></div><button onClick={onClose} aria-label="Close indicators"><X size={16} /></button></header>}
     <div className="indicator-search"><Search size={15} /><input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search indicators" aria-label="Search indicators" /><kbd>Esc</kbd></div>
     <nav className="indicator-tabs" role="tablist" aria-label="Indicator catalog"><button className={tab === "builtins" ? "active" : ""} onClick={() => setTab("builtins")} role="tab" aria-selected={tab === "builtins"}>Built-ins</button><button className={tab === "favorites" ? "active" : ""} onClick={() => setTab("favorites")} role="tab" aria-selected={tab === "favorites"}>Favorites <small>{favorites.length}</small></button><button className={tab === "mine" ? "active" : ""} onClick={() => setTab("mine")} role="tab" aria-selected={tab === "mine"}>My indicators <small>{customIndicators.length}</small></button><button className={tab === "gated" ? "active" : ""} onClick={() => setTab("gated")} role="tab" aria-selected={tab === "gated"}>Data-gated</button></nav>
     {tab !== "mine" && <div className="indicator-category-strip" aria-label="Indicator categories"><button className={category === "All" ? "active" : ""} onClick={() => setCategory("All")}>All</button>{NATIVE_STUDY_CATEGORIES.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div>}

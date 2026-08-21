@@ -18,6 +18,21 @@ describe("terminal cloud workspace preferences", () => {
     });
   });
 
+  it("normalizes bounded floating panel layout for authenticated workspace sync", () => {
+    const parsed = parseTerminalWorkspacePreferences({
+      ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES,
+      panelLayout: { ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES.panelLayout, chart: { ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES.panelLayout.chart, x: 8, y: 10, width: 64, height: 72, z: 12 } },
+    });
+    expect(parsed?.panelLayout.chart).toMatchObject({ x: 8, y: 10, width: 64, height: 72, z: 12, minimized: false });
+  });
+
+  it("rejects out-of-bounds floating panel geometry", () => {
+    expect(parseTerminalWorkspacePreferences({
+      ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES,
+      panelLayout: { ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES.panelLayout, chart: { ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES.panelLayout.chart, x: 60, width: 60 } },
+    })).toBeNull();
+  });
+
   it("rejects market payloads, credentials, unsupported providers, and malformed symbols", () => {
     expect(parseTerminalWorkspacePreferences({
       ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES,
