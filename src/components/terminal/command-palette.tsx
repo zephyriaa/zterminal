@@ -62,7 +62,22 @@ export function CommandPalette() {
   }, [commandOpen, setCommandOpen]);
 
   const go = (id: ViewId) => {
-    setView(id);
+    const dockTab: Partial<Record<ViewId, string>> = {
+      strategy: "script",
+      backtester: "tester",
+      research: "research",
+      markets: "data",
+      alerts: "alerts",
+    };
+    if (dockTab[id]) {
+      setView("chart");
+      window.dispatchEvent(new CustomEvent("zterminal:open-dock", { detail: dockTab[id] }));
+    } else if (id === "orderflow") {
+      setView("chart");
+      window.dispatchEvent(new Event("zterminal:context"));
+    } else {
+      setView(id);
+    }
     setCommandOpen(false);
   };
   const openSymbol = (s: string) => {

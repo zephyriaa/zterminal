@@ -268,7 +268,39 @@
   }
 }
 
-/* Reduced motion respect */
+  .dock-action {
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--muted-foreground);
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dock-action:hover { background: var(--hover); color: var(--foreground); }
+  .dock-action:disabled { opacity: 0.4; }
+  .dock-action.primary {
+    border-color: color-mix(in oklch, var(--mdata) 30%, transparent);
+    background: color-mix(in oklch, var(--mdata) 10%, transparent);
+    color: var(--mdata);
+  }
+  .dock-action.primary:hover { background: color-mix(in oklch, var(--mdata) 20%, transparent); }
+  .terminal-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px);
+    background-size: 72px 48px;
+  }
+
+  /* Reduced motion respect */
+
+@media (max-width: 1280px) {
+  .context-panel-optional { display: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
