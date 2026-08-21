@@ -18,6 +18,15 @@ describe("terminal cloud workspace preferences", () => {
     });
   });
 
+  it("restores Focus for prior cloud preferences and retains every supported workstation mode", () => {
+    const legacy = { ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES } as Record<string, unknown>;
+    delete legacy.workspaceMode;
+    expect(parseTerminalWorkspacePreferences(legacy)?.workspaceMode).toBe("focus");
+    expect(parseTerminalWorkspacePreferences({ ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES, workspaceMode: "canvas" })?.workspaceMode).toBe("canvas");
+    expect(parseTerminalWorkspacePreferences({ ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES, workspaceMode: "research" })?.workspaceMode).toBe("research");
+    expect(parseTerminalWorkspacePreferences({ ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES, workspaceMode: "operator" })).toBeNull();
+  });
+
   it("rejects market payloads, credentials, unsupported providers, and malformed symbols", () => {
     expect(parseTerminalWorkspacePreferences({
       ...DEFAULT_TERMINAL_WORKSPACE_PREFERENCES,

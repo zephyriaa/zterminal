@@ -21,6 +21,14 @@ describe("local terminal workspace", () => {
     expect(readLocalTerminalWorkspace(storage)).toEqual(expect.objectContaining({ symbol: "BTC_USDT", updatedAt: 1_700_000_000_000, watchlist: ["BTC_USDT", "ETH_USDT"] }));
   });
 
+  it("persists workspace modes and restores Focus from a prior saved workspace", () => {
+    const storage = memoryStorage();
+    expect(writeLocalTerminalWorkspace({ ...DEFAULT_LOCAL_WORKSPACE, workspaceMode: "research" }, storage, 1_700_000_000_002)).toBe(true);
+    expect(readLocalTerminalWorkspace(storage)).toEqual(expect.objectContaining({ workspaceMode: "research" }));
+    storage.setItem(LOCAL_TERMINAL_WORKSPACE_KEY, JSON.stringify({ ...DEFAULT_LOCAL_WORKSPACE, updatedAt: 1_700_000_000_003, workspaceMode: undefined }));
+    expect(readLocalTerminalWorkspace(storage)).toEqual(expect.objectContaining({ workspaceMode: "focus" }));
+  });
+
   it("persists a Coinbase Exchange tape preference without retaining market data or credentials", () => {
     const storage = memoryStorage();
     expect(writeLocalTerminalWorkspace({ ...DEFAULT_LOCAL_WORKSPACE, activeTapeProvider: "coinbase_exchange" }, storage, 1_700_000_000_001)).toBe(true);
