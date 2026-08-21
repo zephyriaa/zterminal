@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./trading-terminal.css";
 
 @theme inline {
   --radius-sm: 6px;
