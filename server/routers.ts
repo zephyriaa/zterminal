@@ -14,6 +14,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, rateLimitedPublicProcedure, router } from "./_core/trpc";
 import { listResearchDrafts, saveResearchDraft } from "./researchStore";
 import { PROVIDER_CATALOG, gateContractToMarketMetadata } from "@shared/market/providerContracts";
+import { calculateIntrabarDelta, hasCompleteIntrabarSequence, requiredIntervalBars, selectIntrabarInterval } from "@shared/market/intrabarDelta";
 import { gateioTradeStream } from "./gateioTradeStream";
 import { gateioDepthStream } from "./gateioDepthStream";
 import { multiExchangeTradeStream } from "./multiExchangeTradeStream";
@@ -62,6 +63,12 @@ const CandleInput = z.object({
   if (hasFrom !== hasTo) ctx.addIssue({ code: "custom", message: "from and to must be supplied together" });
   if (hasFrom && hasTo && value.from! >= value.to!) ctx.addIssue({ code: "custom", message: "from must be earlier than to" });
 });
+const IntrabarDeltaInput = z.object({
+  interval: z.enum(MARKET_INTERVALS),
+  symbol: z.string().trim().min(1).max(40).optional(),
+  from: z.number().int().nonnegative(),
+  to: z.number().int().positive(),
+}).refine((value) => value.from < value.to, { message: "from must be earlier than to" });
 
 function resolveSymbol(requested: string | undefined) {
   return normalizeGatePerpetualSymbol(requested ?? DEFAULT_SYMBOL);
@@ -353,6 +360,34 @@ export const appRouter = router({
           provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol,
           price: null, changePercent: null, dayHigh: null, dayLow: null, quoteVolume: null, bid: null, ask: null, sourceTimestamp: null, at, ...failure,
         };
+      }
+    }),
+    intrabarDelta: rateLimitedPublicProcedure.input(IntrabarDeltaInput).query(async ({ input }) => {
+      const fetchedAt = Date.now();
+      const symbol = resolveSymbol(input.symbol);
+      const sourceInterval = selectIntrabarInterval(input.interval);
+      if (!symbol) return { provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol: input.symbol, interval: input.interval, intrabarInterval: sourceInterval, fetchedAt, sourceTimestamp: null, coverage: { requestedFrom: input.from, requestedTo: input.to, effectiveFrom: null, effectiveTo: null, returnedBars: 0, complete: false, granularity: input.interval }, points: [], method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, reason: "The requested instrument is not a Gate.io USDT perpetual symbol.", retryable: false };
+      if (!sourceInterval) return { provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol, interval: input.interval, intrabarInterval: null, fetchedAt, sourceTimestamp: null, coverage: { requestedFrom: input.from, requestedTo: input.to, effectiveFrom: null, effectiveTo: null, returnedBars: 0, complete: false, granularity: input.interval }, points: [], method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, reason: "Volume Delta is withheld for 1m charts because no lower verified intrabar interval is available.", retryable: false };
+      const requested = alignRange(input.from, input.to, input.interval);
+      const effectiveRequested = requested ? { from: requested.from, to: requested.to - MARKET_INTERVAL_MS[input.interval] } : null;
+      const intrabarTo = effectiveRequested ? effectiveRequested.to + MARKET_INTERVAL_MS[input.interval] - MARKET_INTERVAL_MS[sourceInterval] : null;
+      const intrabarRequested = effectiveRequested && intrabarTo !== null && effectiveRequested.from <= effectiveRequested.to ? alignRange(effectiveRequested.from, intrabarTo, sourceInterval) : null;
+      if (!requested || !effectiveRequested || !intrabarRequested) return { provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol, interval: input.interval, intrabarInterval: sourceInterval, fetchedAt, sourceTimestamp: null, coverage: { requestedFrom: input.from, requestedTo: input.to, effectiveFrom: null, effectiveTo: null, returnedBars: 0, complete: false, granularity: input.interval }, points: [], method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, reason: "The requested Volume Delta range is invalid.", retryable: false };
+      const lowerBarCount = requiredIntervalBars(intrabarRequested.from, intrabarRequested.to, sourceInterval);
+      if (lowerBarCount > MAX_CANDLE_LIMIT) return { provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol, interval: input.interval, intrabarInterval: sourceInterval, fetchedAt, sourceTimestamp: null, coverage: { requestedFrom: effectiveRequested!.from, requestedTo: effectiveRequested!.to, effectiveFrom: null, effectiveTo: null, returnedBars: 0, complete: false, granularity: input.interval }, points: [], method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, reason: `Volume Delta needs ${lowerBarCount.toLocaleString("en-US")} ${sourceInterval} bars for this range. ZTerminal withholds it above the ${MAX_CANDLE_LIMIT.toLocaleString("en-US")}-bar verified intrabar limit.`, retryable: false };
+      try {
+        const response = await axios.get<unknown>(GATE_CANDLES_URL, { params: { contract: symbol, interval: sourceInterval, from: Math.floor(intrabarRequested.from / 1_000), to: Math.floor(intrabarRequested.to / 1_000) }, headers: { Accept: "application/json" }, timeout: 12_000, responseType: "json" });
+        if (!Array.isArray(response.data)) throw new Error("Gate.io returned an invalid intrabar candle payload");
+        const bars = normalizePublicBars(response.data).filter((bar) => bar.t >= intrabarRequested.from && bar.t <= intrabarRequested.to);
+        const complete = hasCompleteIntrabarSequence(bars, intrabarRequested.from, intrabarRequested.to, sourceInterval);
+        if (!complete) return { provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol, interval: input.interval, intrabarInterval: sourceInterval, fetchedAt, sourceTimestamp: bars.at(-1)?.t ?? null, coverage: { requestedFrom: effectiveRequested!.from, requestedTo: effectiveRequested!.to, effectiveFrom: bars.at(0)?.t ?? null, effectiveTo: bars.at(-1)?.t ?? null, returnedBars: bars.length, complete: false, granularity: input.interval }, points: [], method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, reason: "Volume Delta is withheld because the provider did not return complete verified intrabar coverage for this effective range.", retryable: true };
+        const points = calculateIntrabarDelta({ bars, chartInterval: input.interval, from: effectiveRequested!.from, to: intrabarRequested.to });
+        const expectedChartBars = requiredIntervalBars(effectiveRequested!.from, effectiveRequested!.to, input.interval);
+        if (points.length !== expectedChartBars) return { provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol, interval: input.interval, intrabarInterval: sourceInterval, fetchedAt, sourceTimestamp: bars.at(-1)?.t ?? null, coverage: { requestedFrom: effectiveRequested!.from, requestedTo: effectiveRequested!.to, effectiveFrom: null, effectiveTo: null, returnedBars: 0, complete: false, granularity: input.interval }, points: [], method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, reason: "Volume Delta is withheld because the complete intrabar window could not be aligned to every chart bar.", retryable: true };
+        return { provider: "gateio" as const, environment: "public-read-only" as const, state: "CONNECTED" as const, dataStatus: "HISTORICAL" as const, symbol, interval: input.interval, intrabarInterval: sourceInterval, fetchedAt, sourceTimestamp: bars.at(-1)?.t ?? null, coverage: { requestedFrom: effectiveRequested!.from, requestedTo: effectiveRequested!.to, effectiveFrom: effectiveRequested!.from, effectiveTo: effectiveRequested!.to, returnedBars: points.length, complete: true, granularity: input.interval }, points, method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, retryable: false };
+      } catch (error) {
+        const failure = classifyProviderFailure(error);
+        return { provider: "gateio" as const, environment: "public-read-only" as const, state: "UNAVAILABLE" as const, dataStatus: "UNAVAILABLE" as const, symbol, interval: input.interval, intrabarInterval: sourceInterval, fetchedAt, sourceTimestamp: null, coverage: { requestedFrom: effectiveRequested!.from, requestedTo: effectiveRequested!.to, effectiveFrom: null, effectiveTo: null, returnedBars: 0, complete: false, granularity: input.interval }, points: [], method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE" as const, ...failure };
       }
     }),
     bars: rateLimitedPublicProcedure.input(CandleInput).query(async ({ input }) => {

@@ -12,11 +12,12 @@ import {
   type ISeriesApi,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { Activity, AlertTriangle, Crosshair, LoaderCircle, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle, LoaderCircle, RefreshCw } from "lucide-react";
 import { getResearchLayerCapability, type ResearchLayerId, type TerminalBar } from "@/lib/terminalWorkspace";
 import { calculateEmaSeries, calculateVolumeProfile, calculateVwapSeries } from "@shared/features/registry";
 import { calculateCvd, type SignedPublicTrade } from "@shared/market/orderFlowContracts";
 import { evaluateIndicator, type CompiledIndicator } from "@shared/indicators/indicatorRuntime";
+import { evaluateNativeStudy, type NativeStudyConfig } from "@shared/indicators/nativeStudies";
 import type { BacktestMarker } from "@shared/backtest/engine";
 
 type HoveredBar = {
@@ -43,20 +44,22 @@ type ProfessionalChartProps = {
   cvdState?: "LIVE" | "STALE" | "DEGRADED" | "UNAVAILABLE";
   tradeMarkers?: BacktestMarker[];
   customIndicators?: CompiledIndicator[];
+  nativeStudies?: NativeStudyConfig[];
+  intrabarDelta?: { intrabarInterval: string | null; method: "INTRABAR_CANDLE_DIRECTION_ESTIMATE"; points: Array<{ t: number; delta: number; cumulativeDelta: number; intrabarCount: number }> } | null;
 };
 
 const chartColors = {
-  background: "#090a12",
-  grid: "rgba(129, 118, 157, 0.13)",
-  text: "#8f92a6",
-  up: "#1cc7c3",
-  down: "#9f55ef",
-  vwap: "#4be0ce",
-  ema20: "#a984ff",
-  ema50: "#4d95ff",
-  structure: "rgba(167, 126, 255, 0.52)",
-  profile: "rgba(92, 223, 205, 0.48)",
-  cvd: "#ffb454",
+  background: "#131722",
+  grid: "rgba(42, 46, 57, 0.9)",
+  text: "#787b86",
+  up: "#26a69a",
+  down: "#ef5350",
+  vwap: "#22c7c3",
+  ema20: "#9f7aea",
+  ema50: "#5d8cff",
+  structure: "rgba(159, 122, 234, 0.52)",
+  profile: "rgba(34, 199, 195, 0.48)",
+  cvd: "#f3b35c",
 };
 
 function priceFormatter(value: number) {
@@ -131,6 +134,8 @@ export function ProfessionalChart({
   cvdState = "UNAVAILABLE",
   tradeMarkers = [],
   customIndicators = [],
+  nativeStudies = [],
+  intrabarDelta = null,
 }: ProfessionalChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [hoveredBar, setHoveredBar] = useState<HoveredBar>(null);
@@ -146,6 +151,19 @@ export function ProfessionalChart({
     const evaluation = evaluateIndicator(indicator, visibleBars);
     return evaluation.status === "COMPLETED" ? [{ indicator, points: evaluation.points.map(point => ({ time: Math.floor(point.t / 1_000) as UTCTimestamp, value: point.value })) }] : [];
   }), [customIndicators, visibleBars]);
+  const nativeStudyResults = useMemo(() => nativeStudies.flatMap((study) => {
+    const evaluation = evaluateNativeStudy(study, visibleBars);
+    return evaluation.status === "COMPLETED" ? [evaluation] : [];
+  }), [nativeStudies, visibleBars]);
+  const intrabarStudySeries = useMemo<Array<{ id: string; label: string; kind: "line" | "histogram"; points: Array<{ t: number; value: number; color?: string }> }>>(() => {
+    if (!intrabarDelta) return [];
+    const series: Array<{ id: string; label: string; kind: "line" | "histogram"; points: Array<{ t: number; value: number; color?: string }> }> = [];
+    for (const study of nativeStudies) {
+      if (study.id === "volume_delta") series.push({ id: "volume-delta", label: `Volume Delta · ${intrabarDelta.intrabarInterval ?? "intrabar"} estimate`, kind: "histogram", points: intrabarDelta.points.map((point) => ({ t: point.t, value: point.delta, color: point.delta >= 0 ? "rgba(38,166,154,.72)" : "rgba(239,83,80,.72)" })) });
+      if (study.id === "cumulative_volume_delta") series.push({ id: "cumulative-volume-delta", label: `CVD · ${intrabarDelta.intrabarInterval ?? "intrabar"} estimate`, kind: "line", points: intrabarDelta.points.map((point) => ({ t: point.t, value: point.cumulativeDelta })) });
+    }
+    return series;
+  }, [intrabarDelta, nativeStudies]);
 
   const studies = useMemo(() => {
     const ema20 = calculateEmaSeries(visibleBars, 20);
@@ -289,9 +307,35 @@ export function ProfessionalChart({
         });
         if (custom.indicator.definition.output.pane === "pane") {
           customSeries.moveToPane(chart.panes().length);
-          customSeries.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.18 }, borderColor: "rgba(129,118,157,0.18)" });
+          customSeries.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.18 }, borderColor: "rgba(42,46,57,0.82)" });
         }
         customSeries.setData(custom.points);
+      }
+
+      for (const result of nativeStudyResults) {
+        for (const native of result.series) {
+          if (native.id === "volume") continue;
+          const series = native.kind === "histogram"
+            ? chart.addSeries(HistogramSeries, { color: native.color, lastValueVisible: false, priceLineVisible: false, base: 0 })
+            : chart.addSeries(LineSeries, { color: native.color, lineWidth: 2, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false });
+          if (native.pane === "pane") {
+            series.moveToPane(chart.panes().length);
+            series.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.18 }, borderColor: "rgba(42,46,57,0.82)" });
+          } else if (native.pane === "volume") {
+            series.moveToPane(1);
+            series.priceScale().applyOptions({ scaleMargins: { top: 0.26, bottom: 0 }, borderColor: "rgba(42,46,57,0.82)" });
+          }
+          series.setData(native.points.map((point) => ({ time: Math.floor(point.t / 1_000) as UTCTimestamp, value: point.value, ...(native.kind === "histogram" && point.color ? { color: point.color } : {}) })));
+        }
+      }
+
+      for (const intrabar of intrabarStudySeries) {
+        const series = intrabar.kind === "histogram"
+          ? chart.addSeries(HistogramSeries, { color: "#f3b35c", lastValueVisible: false, priceLineVisible: false, base: 0 })
+          : chart.addSeries(LineSeries, { color: "#f3b35c", lineWidth: 2, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false });
+        series.moveToPane(chart.panes().length);
+        series.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.18 }, borderColor: "rgba(42,46,57,0.82)" });
+        series.setData(intrabar.points.map((point) => ({ time: Math.floor(point.t / 1_000) as UTCTimestamp, value: point.value, ...(intrabar.kind === "histogram" && point.color ? { color: point.color } : {}) })));
       }
 
       if (has("structure") && studies.high !== null && studies.low !== null && studies.midpoint !== null) {
@@ -335,7 +379,7 @@ export function ProfessionalChart({
       resizeObserver?.disconnect();
       chart?.remove();
     };
-  }, [visibleBars, activeLayers, has, showMomentum, studies, cvdSeriesData, customIndicatorSeries, tradeMarkers]);
+  }, [visibleBars, activeLayers, has, showMomentum, studies, cvdSeriesData, customIndicatorSeries, nativeStudyResults, intrabarStudySeries, tradeMarkers]);
 
   const quote = hoveredBar ?? (lastBar ? { time: lastBar.t, open: lastBar.o, high: lastBar.h, low: lastBar.l, close: lastBar.c, volume: lastBar.v } : null);
   const showingPrevious = !bars.length && visibleBars.length > 0;
@@ -349,12 +393,11 @@ export function ProfessionalChart({
       </div>
       <div className="chart-meta-status"><Activity size={13} /><span>{showingPrevious ? "Showing last verified window" : coverageLabel}</span>{has("cvd") && <span className={`chart-flow-status ${cvdState.toLowerCase()}`}>CVD · {cvdState === "LIVE" ? `${cvdTrades.length.toLocaleString("en-US")} live tape trades` : cvdState.toLowerCase()}</span>}</div>
     </div>
-    {(activeLayerLegend.length > 0 || customIndicators.length > 0) && <div className="chart-layer-legend" aria-label="Active chart layers"><span>Layers</span>{activeLayerLegend.map((layer) => <b key={layer.id}>{layer.label}</b>)}{customIndicators.map((indicator) => <b className="custom" key={indicator.definition.name}>{indicator.definition.name}</b>)}</div>}
+    {(activeLayerLegend.length > 0 || customIndicators.length > 0 || nativeStudyResults.length > 0) && <div className="chart-layer-legend" aria-label="Active chart layers"><span>Studies</span>{activeLayerLegend.map((layer) => <b key={layer.id}>{layer.label}</b>)}{nativeStudyResults.map((result) => <b className="native" key={result.study.id}>{result.study.shortLabel}</b>)}{intrabarStudySeries.map((study) => <b className="native intrabar" key={study.id}>{study.label}</b>)}{customIndicators.map((indicator) => <b className="custom" key={indicator.definition.name}>{indicator.definition.name}</b>)}</div>}
     <div className="chart-stage" ref={containerRef}>
       {visibleBars.length === 0 && !isLoading && <div className="chart-empty-state"><AlertTriangle size={20} /><strong>No verified chart window</strong><p>{errorMessage ?? "Load a supported Gate.io USDT perpetual symbol to begin."}</p>{onRetry && <button onClick={onRetry}><RefreshCw size={14} /> Retry market data</button>}</div>}
       {(isLoading || isRefreshing) && <div className="chart-loading-state"><LoaderCircle size={17} /><span>{isLoading ? (showingPrevious ? "Updating verified market window" : "Loading verified market window") : "Refreshing verified market window"}</span></div>}
       {errorMessage && visibleBars.length > 0 && <div className="chart-recovery-state"><AlertTriangle size={14} /><span>{errorMessage}</span>{onRetry && <button onClick={onRetry} aria-label="Retry market request"><RefreshCw size={13} /></button>}</div>}
-      <div className="chart-watermark"><Crosshair size={16} /><span>ZT / VERIFIED RESEARCH</span></div>
     </div>
     <div className="chart-footer-context">
       <span>{quote ? timeFormatter(quote.time) : "Awaiting time context"}</span>
