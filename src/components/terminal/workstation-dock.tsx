@@ -6,6 +6,8 @@ import {
   Bell,
   BookOpen,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Code2,
   Database,
   Dices,
@@ -47,6 +49,7 @@ const DEFAULT_RESEARCH_STAGES = [
 export function BottomDock() {
   const [tab, setTab] = useState<DockTab>("script");
   const [open, setOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [height, setHeight] = useState(() => {
     if (typeof window === "undefined") return 254;
     try {
@@ -69,6 +72,7 @@ export function BottomDock() {
       if (!TABS.some((item) => item.id === requested)) return;
       setTab(requested);
       setOpen(true);
+      setMobileOpen(true);
     };
     window.addEventListener("zterminal:open-dock", openTab);
     return () => window.removeEventListener("zterminal:open-dock", openTab);
@@ -154,24 +158,25 @@ export function BottomDock() {
   };
 
   return (
-    <section className={cn("shrink-0 border-t hairline bg-panel", !open && "h-8")} style={open ? { height } : undefined} aria-label="Research workspace dock">
-      {open && <button aria-label="Resize lower workspace" onPointerDown={startResize} className="group absolute -translate-y-1/2 left-0 right-0 h-2 cursor-row-resize z-10">
+    <section className={cn("bottom-dock shrink-0 border-t hairline bg-panel", !open && "h-8", mobileOpen && "mobile-dock-expanded")} style={open ? { height } : undefined} aria-label="Research workspace dock">
+      {open && <button aria-label="Resize lower workspace" onPointerDown={startResize} className="dock-resizer group absolute -translate-y-1/2 left-0 right-0 h-2 cursor-row-resize z-10">
         <span className="mx-auto block h-0.5 w-12 rounded-full bg-foreground/15 group-hover:bg-mdata/70" />
       </button>}
-      <div className="h-8 shrink-0 border-b hairline flex items-center px-2 gap-0.5 bg-panel">
+      <div className="dock-tabs h-8 shrink-0 border-b hairline flex items-center px-2 gap-0.5 bg-panel">
         <div className="flex items-center gap-1 pr-2 mr-1 border-r hairline">
           <TerminalSquare className="w-3.5 h-3.5 text-mdata" />
           <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Workspace</span>
         </div>
         {TABS.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => { setTab(id); setOpen(true); }} className={cn("h-6 px-2 rounded-[3px] flex items-center gap-1.5 text-[10.5px] whitespace-nowrap", tab === id && open ? "bg-hover text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-hover/60")}>
-            <Icon className="w-3 h-3" />{label}
+          <button key={id} onClick={() => { setTab(id); setOpen(true); setMobileOpen(true); }} className={cn("dock-tab h-6 px-2 rounded-[3px] flex items-center gap-1.5 text-[10.5px] whitespace-nowrap", tab === id && open ? "bg-hover text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-hover/60")}>
+            <Icon className="w-3 h-3" /><span className="dock-tab-label">{label}</span>
             {id === "tester" && lastResult && <span className="h-1.5 w-1.5 rounded-full bg-pos" />}
           </button>
         ))}
-        <button onClick={() => setOpen((value) => !value)} className="ml-auto h-6 px-2 rounded-[3px] text-[10px] text-muted-foreground hover:text-foreground hover:bg-hover" aria-expanded={open}>{open ? "Collapse" : "Expand"}</button>
+        <button onClick={() => setMobileOpen((value) => !value)} className="mobile-dock-toggle ml-auto grid h-6 w-7 place-items-center rounded-[3px] text-muted-foreground hover:bg-hover hover:text-foreground" aria-label={mobileOpen ? "Collapse workspace sheet" : "Expand workspace sheet"}>{mobileOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}</button>
+        <button onClick={() => { setOpen((value) => !value); setMobileOpen(false); }} className="desktop-dock-toggle h-6 px-2 rounded-[3px] text-[10px] text-muted-foreground hover:text-foreground hover:bg-hover" aria-expanded={open}>{open ? "Collapse" : "Expand"}</button>
       </div>
-      {open && <div className="h-[calc(100%-32px)] min-h-0 overflow-hidden">{tab === "script" && <ScriptPanel source={source} setSource={setSource} lastCompile={lastCompile} busy={busy} validate={validate} runBacktest={runBacktest} log={log} />}{tab === "tester" && <TesterPanel result={lastResult} log={log} />}{tab === "research" && <ResearchPanel hasResult={Boolean(lastResult)} />}{tab === "data" && <DataPanel symbol={symbol} timeframe={timeframe} />}{tab === "alerts" && <AlertsPanel search={search} setSearch={setSearch} />}{tab === "trading" && <TradingPanel />}</div>}
+      {open && <div className="dock-content h-[calc(100%-32px)] min-h-0 overflow-hidden">{tab === "script" && <ScriptPanel source={source} setSource={setSource} lastCompile={lastCompile} busy={busy} validate={validate} runBacktest={runBacktest} log={log} />}{tab === "tester" && <TesterPanel result={lastResult} log={log} />}{tab === "research" && <ResearchPanel hasResult={Boolean(lastResult)} />}{tab === "data" && <DataPanel symbol={symbol} timeframe={timeframe} />}{tab === "alerts" && <AlertsPanel search={search} setSearch={setSearch} />}{tab === "trading" && <TradingPanel />}</div>}
     </section>
   );
 }
@@ -190,9 +195,9 @@ function ScriptPanel({ source, setSource, lastCompile, busy, validate, runBackte
         <button onClick={runBacktest} disabled={busy !== null} className="dock-action primary"><Play className="w-3 h-3" />{busy === "run" ? "Running" : "Run"}</button>
       </div>
     </div>
-    <div className="min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_240px]">
-      <div className="min-w-0 min-h-0 border-r hairline"><CodeEditor value={source} onChange={setSource} /></div>
-      <div className="min-h-0 flex flex-col bg-surface/30">
+    <div className="script-panel-grid min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_240px]">
+      <div className="script-code min-w-0 min-h-0 border-r hairline"><CodeEditor value={source} onChange={setSource} /></div>
+      <div className="script-details min-h-0 flex flex-col bg-surface/30">
         <div className="px-2.5 py-2 border-b hairline"><div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Execution</div><div className="mt-1 text-[11px] font-mono-num text-foreground">next bar open</div><div className="mt-1 text-[10px] text-muted-foreground">Deterministic runtime · no broker route</div></div>
         <div className="min-h-0 flex-1 overflow-y-auto scroll-thin p-2.5">
           <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-2">Diagnostics</div>
@@ -218,9 +223,9 @@ function TesterPanel({ result, log }: { result: ReturnType<typeof useStrategy.ge
   ] : [];
   return <div className="h-full flex flex-col">
     <div className="h-8 shrink-0 border-b hairline flex items-center px-2.5 gap-2"><span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Backtest evidence</span>{result && <><span className="text-[10px] text-muted-foreground/50">·</span><span className="text-[10px] font-mono-num text-mdata">{result.config.symbol} · {result.config.timeframe}</span><span className="text-[10px] text-pos ml-auto">verified runtime</span></>}</div>
-    {!result ? <div className="flex-1 grid place-items-center text-center"><div><FlaskConical className="mx-auto w-5 h-5 text-muted-foreground/60 mb-2" /><div className="text-[11px] text-muted-foreground">Run the active script to attach trades to the chart.</div><div className="text-[10px] text-muted-foreground/60 mt-1">No performance values are shown until a deterministic run exists.</div></div></div> : <div className="min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_280px]">
+    {!result ? <div className="flex-1 grid place-items-center text-center"><div><FlaskConical className="mx-auto w-5 h-5 text-muted-foreground/60 mb-2" /><div className="text-[11px] text-muted-foreground">Run the active script to attach trades to the chart.</div><div className="text-[10px] text-muted-foreground/60 mt-1">No performance values are shown until a deterministic run exists.</div></div></div> : <div className="tester-grid min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0 min-h-0 overflow-y-auto scroll-thin"><table className="w-full text-[10.5px] tnum"><thead><tr className="border-b hairline text-[9px] uppercase tracking-[0.14em] text-muted-foreground"><th className="px-3 py-2 text-left font-medium">Trade</th><th className="px-3 py-2 text-left font-medium">Side</th><th className="px-3 py-2 text-right font-medium">Entry</th><th className="px-3 py-2 text-right font-medium">Exit</th><th className="px-3 py-2 text-right font-medium">P&amp;L</th></tr></thead><tbody>{result.trades.slice(-12).reverse().map((trade) => <tr key={trade.id} className="border-b hairline/60"><td className="px-3 py-1.5 text-muted-foreground">#{trade.id}</td><td className={cn("px-3 py-1.5 uppercase", trade.side === "long" ? "text-pos" : "text-neg")}>{trade.side}</td><td className="px-3 py-1.5 text-right text-muted-foreground">{trade.entryPrice.toLocaleString()}</td><td className="px-3 py-1.5 text-right text-muted-foreground">{trade.exitPrice.toLocaleString()}</td><td className={cn("px-3 py-1.5 text-right", trade.pnl >= 0 ? "text-pos" : "text-neg")}>{trade.pnl >= 0 ? "+" : "−"}{Math.abs(trade.pnl).toFixed(2)}</td></tr>)}</tbody></table></div>
-      <div className="min-h-0 overflow-y-auto scroll-thin border-l hairline bg-surface/30 p-2.5"><div className="grid grid-cols-2 content-start gap-x-4 gap-y-2">{rows.map(([label, value, tone]) => <div key={label}><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div><div className={cn("mt-0.5 text-[12px] font-mono-num", tone)}>{value}</div></div>)}<div className="col-span-2 pt-2 border-t hairline text-[9px] text-muted-foreground font-mono-num truncate">{result.barsProcessed} bars · {result.hash}</div></div><MonteCarloPanel result={result} /></div>
+      <div className="tester-metrics min-h-0 overflow-y-auto scroll-thin border-l hairline bg-surface/30 p-2.5"><div className="grid grid-cols-2 content-start gap-x-4 gap-y-2">{rows.map(([label, value, tone]) => <div key={label}><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div><div className={cn("mt-0.5 text-[12px] font-mono-num", tone)}>{value}</div></div>)}<div className="col-span-2 pt-2 border-t hairline text-[9px] text-muted-foreground font-mono-num truncate">{result.barsProcessed} bars · {result.hash}</div></div><MonteCarloPanel result={result} /></div>
     </div>}
     <div className="h-6 shrink-0 border-t hairline px-2.5 flex items-center gap-2 text-[9px] text-muted-foreground"><span className="uppercase tracking-[0.14em]">Run log</span><span className="truncate font-mono-num">{log[0]}</span></div>
   </div>;
@@ -241,11 +246,11 @@ function MonteCarloRange({ label, values, money }: { label: string; values: { lo
 
 function ResearchPanel({ hasResult }: { hasResult: boolean }) {
   const stages = DEFAULT_RESEARCH_STAGES.map((stage) => stage.label === "Backtest" ? { ...stage, detail: hasResult ? "Deterministic run attached to active context" : stage.detail, state: hasResult ? "ready" : stage.state } : stage);
-  return <div className="h-full p-3 overflow-y-auto scroll-thin"><div className="flex items-start justify-between"><div><div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Research notebook</div><div className="text-[12px] mt-1">Momentum continuation above session VWAP</div></div><button className="dock-action"><Save className="w-3 h-3" />Save note</button></div><div className="mt-4 grid grid-cols-6 gap-1.5">{stages.map((stage, index) => <div key={stage.label} className="relative"><div className={cn("h-1 mb-2", stage.state === "active" ? "bg-mdata" : stage.state === "ready" ? "bg-pos/70" : "bg-foreground/15")} /><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">0{index + 1} · {stage.label}</div><div className="mt-1 text-[10px] text-foreground/80 leading-snug">{stage.detail}</div></div>)}</div><div className="mt-5 grid grid-cols-[1fr_1fr] gap-3"><div className="border hairline bg-surface/40 p-2.5"><div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Observation</div><div className="mt-2 text-[10.5px] leading-relaxed text-foreground/80">Fast EMA is above slow EMA while price holds the session VWAP. Keep the claim tied to the selected verified window.</div></div><div className="border hairline bg-surface/40 p-2.5"><div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Next action</div><div className="mt-2 text-[10.5px] leading-relaxed text-foreground/80">{hasResult ? "Inspect the verified result, then compare it against an out-of-sample window." : "Run the strategy, inspect trade markers, then compare the result against an out-of-sample window."}</div></div></div></div>;
+  return <div className="h-full p-3 overflow-y-auto scroll-thin"><div className="flex items-start justify-between"><div><div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Research notebook</div><div className="text-[12px] mt-1">Momentum continuation above session VWAP</div></div><button className="dock-action"><Save className="w-3 h-3" />Save note</button></div><div className="research-stages mt-4 grid grid-cols-6 gap-1.5">{stages.map((stage, index) => <div key={stage.label} className="relative"><div className={cn("h-1 mb-2", stage.state === "active" ? "bg-mdata" : stage.state === "ready" ? "bg-pos/70" : "bg-foreground/15")} /><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">0{index + 1} · {stage.label}</div><div className="mt-1 text-[10px] text-foreground/80 leading-snug">{stage.detail}</div></div>)}</div><div className="research-insights mt-5 grid grid-cols-[1fr_1fr] gap-3"><div className="border hairline bg-surface/40 p-2.5"><div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Observation</div><div className="mt-2 text-[10.5px] leading-relaxed text-foreground/80">Fast EMA is above slow EMA while price holds the session VWAP. Keep the claim tied to the selected verified window.</div></div><div className="border hairline bg-surface/40 p-2.5"><div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Next action</div><div className="mt-2 text-[10.5px] leading-relaxed text-foreground/80">{hasResult ? "Inspect the verified result, then compare it against an out-of-sample window." : "Run the strategy, inspect trade markers, then compare the result against an out-of-sample window."}</div></div></div></div>;
 }
 
 function DataPanel({ symbol, timeframe }: { symbol: string; timeframe: string }) {
-  return <div className="h-full grid grid-cols-[1fr_1fr] divide-x divide-[color-mix(in_oklch,var(--foreground)_8%,transparent)]"><div className="p-3"><div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Data contract</div><div className="mt-3 space-y-2">{[["Provider", "Gate.io"], ["Native symbol", symbol], ["Timeframe", timeframe], ["Coverage", "Verified historical window"], ["Execution", "Next-bar open"]].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b hairline pb-1.5 text-[10.5px]"><span className="text-muted-foreground">{label}</span><span className="font-mono-num text-foreground">{value}</span></div>)}</div></div><div className="p-3"><div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Evidence rules</div><div className="mt-3 space-y-2 text-[10.5px] text-foreground/80 leading-relaxed"><div className="flex gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-pos shrink-0" />Source and coverage stay visible beside the chart.</div><div className="flex gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-pos shrink-0" />Stale or unavailable data is withheld.</div><div className="flex gap-2"><Radio className="w-3.5 h-3.5 text-warn shrink-0" />Public-market research only; execution is disabled.</div></div></div></div>;
+  return <div className="data-panel-grid h-full grid grid-cols-[1fr_1fr] divide-x divide-[color-mix(in_oklch,var(--foreground)_8%,transparent)]"><div className="p-3"><div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Data contract</div><div className="mt-3 space-y-2">{[["Provider", "Gate.io"], ["Native symbol", symbol], ["Timeframe", timeframe], ["Coverage", "Verified historical window"], ["Execution", "Next-bar open"]].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b hairline pb-1.5 text-[10.5px]"><span className="text-muted-foreground">{label}</span><span className="font-mono-num text-foreground">{value}</span></div>)}</div></div><div className="p-3"><div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Evidence rules</div><div className="mt-3 space-y-2 text-[10.5px] text-foreground/80 leading-relaxed"><div className="flex gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-pos shrink-0" />Source and coverage stay visible beside the chart.</div><div className="flex gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-pos shrink-0" />Stale or unavailable data is withheld.</div><div className="flex gap-2"><Radio className="w-3.5 h-3.5 text-warn shrink-0" />Public-market research only; execution is disabled.</div></div></div></div>;
 }
 
 function AlertsPanel({ search, setSearch }: { search: string; setSearch: (value: string) => void }) {

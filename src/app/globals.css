@@ -309,3 +309,154 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Mobile workstation: preserve chart priority while converting desktop panels to touch sheets. */
+@media (max-width: 639px) {
+  .floating-research-canvas {
+    min-height: 0;
+  }
+
+  .floating-chart-window {
+    inset: 0 !important;
+    width: 100% !important;
+    height: calc(100% - 44px) !important;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0 !important;
+    box-shadow: none;
+  }
+
+  .floating-chart-window > header {
+    height: 32px;
+    padding-inline: 8px;
+    gap: 4px;
+    cursor: default;
+  }
+
+  .floating-chart-window > header button[title="Replay"],
+  .floating-chart-window > header button[title="Refresh viewport"] {
+    display: none;
+  }
+
+  .mobile-chart-toolbar {
+    height: 34px;
+    padding-inline: 8px;
+    gap: 4px;
+  }
+
+  .mobile-chart-toolbar > button[aria-label="Change instrument"] {
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  .mobile-chart-toolbar > div:nth-of-type(2),
+  .mobile-chart-toolbar > div:nth-of-type(3) {
+    display: none;
+  }
+
+  .mobile-workspace-dock {
+    height: 44px;
+  }
+
+  .bottom-dock {
+    position: absolute;
+    inset: auto 0 0;
+    height: 44px !important;
+    transition: height 180ms ease;
+    z-index: 35;
+  }
+
+  .bottom-dock.mobile-dock-expanded {
+    height: min(64dvh, 520px) !important;
+    box-shadow: 0 -18px 38px rgba(0, 0, 0, 0.34);
+  }
+
+  .dock-resizer,
+  .desktop-dock-toggle,
+  .dock-tabs > div:first-child > span {
+    display: none;
+  }
+
+  .dock-tabs {
+    height: 44px;
+    padding-inline: 6px;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .dock-tabs::-webkit-scrollbar { display: none; }
+  .dock-tabs > div:first-child {
+    margin: 0;
+    padding: 0 5px 0 0;
+    border-right: 0;
+  }
+
+  .dock-tab {
+    min-width: 34px;
+    height: 32px;
+    padding-inline: 8px;
+  }
+
+  .dock-tab-label { display: none; }
+  .dock-content { display: none; }
+  .mobile-dock-expanded .dock-content {
+    display: block;
+    height: calc(100% - 44px);
+  }
+
+  .mobile-dock-toggle { display: grid; }
+  .script-panel-grid,
+  .tester-grid,
+  .data-panel-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .script-details,
+  .tester-metrics {
+    border-top: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+    border-left: 0;
+  }
+
+  .script-code {
+    min-height: 220px;
+    border-right: 0;
+  }
+
+  .research-stages {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .research-insights { grid-template-columns: 1fr; }
+
+  .studies-panel {
+    position: fixed;
+    inset: 44px 0 44px !important;
+    width: auto !important;
+    border-radius: 0;
+  }
+
+  .studies-panel .form-input {
+    height: 32px;
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 640px) {
+  .mobile-dock-toggle { display: none; }
+}
+
+.form-input {
+  display: block;
+  width: 100%;
+  height: 28px;
+  margin-top: 4px;
+  border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+  border-radius: 3px;
+  background: var(--background);
+  padding: 0 8px;
+  color: var(--foreground);
+  font-size: 10px;
+  outline: none;
+}
+.form-input:focus { border-color: color-mix(in oklch, var(--mdata) 55%, transparent); }
