@@ -4,10 +4,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
+import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import "./index.css";
 
 const queryClient = new QueryClient();
+
+// Update registration belongs at the application root, not in an optional header
+// control. This prevents installed or previously cached terminals from retaining an
+// obsolete workspace shell after a validated deployment.
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  let reloadingForControllerChange = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadingForControllerChange) return;
+    reloadingForControllerChange = true;
+    window.location.reload();
+  });
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      void updateSW(true);
+    },
+  });
+}
 
 const redirectToAccountAccessIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;

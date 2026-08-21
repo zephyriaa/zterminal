@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Smartphone, X } from "lucide-react";
-import { registerSW } from "virtual:pwa-register";
 
 type DeferredInstallPrompt = Event & {
   prompt: () => Promise<void>;
@@ -19,31 +18,6 @@ export function PwaControls() {
   const [deferredPrompt, setDeferredPrompt] = useState<DeferredInstallPrompt | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showAppleHelp, setShowAppleHelp] = useState(false);
-  const reloadingForControllerChange = useRef(false);
-
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-    const reloadForFreshController = () => {
-      if (reloadingForControllerChange.current) return;
-      reloadingForControllerChange.current = true;
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener("controllerchange", reloadForFreshController);
-    return () => navigator.serviceWorker.removeEventListener("controllerchange", reloadForFreshController);
-  }, []);
-
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-    const updateSW = registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        // A validated release must never depend on a user discovering an update button.
-        void updateSW(true);
-      },
-    });
-    return undefined;
-  }, []);
-
   useEffect(() => {
     setInstalled(isStandalone());
     const handlePrompt = (event: Event) => {
