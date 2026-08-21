@@ -460,3 +460,8 @@
   outline: none;
 }
 .form-input:focus { border-color: color-mix(in oklch, var(--mdata) 55%, transparent); }
+
+.mobile-chart-gesture-hint { display: none; }
+@media (max-width: 639px) {
+  .mobile-chart-gesture-hint { display: block; }
+}

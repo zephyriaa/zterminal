@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Camera,
   ChevronDown,
@@ -38,7 +39,7 @@ export function Topbar() {
   };
 
   return <header className="h-11 sm:h-12 shrink-0 border-b hairline bg-panel flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 overflow-x-auto no-scrollbar" aria-label="Terminal navigation">
-    <button onClick={() => setView("chart")} className="shrink-0 grid h-7 w-7 place-items-center rounded-[5px] text-mdata hover:bg-hover" aria-label="Open chart workspace" title="ZTerminal chart workspace"><span className="text-[18px] leading-none font-bold italic">Z</span></button>
+    <button onClick={() => setView("chart")} className="shrink-0 grid h-7 w-7 place-items-center rounded-[5px] hover:bg-hover" aria-label="Open chart workspace" title="Open chart workspace"><Image src="/brand/zterminal-mark-v2.png" alt="" width={20} height={20} className="h-5 w-5 object-contain" priority /></button>
     <div className="h-5 w-px bg-foreground/10" />
     <button onClick={() => setCommandOpen(true)} className="shrink-0 h-7 w-[min(42vw,168px)] sm:w-auto sm:min-w-[168px] sm:max-w-[260px] px-2 flex items-center gap-2 rounded-[4px] bg-surface hover:bg-hover border hairline" aria-label={`Search instruments, current ${symbol}`}><Search className="w-3.5 h-3.5 text-muted-foreground" /><span className="truncate text-[11.5px] font-mono-num text-foreground">{symbol}</span><ChevronDown className="ml-auto w-3 h-3 text-muted-foreground" /></button>
     <div className="hidden md:flex items-center gap-1.5 text-[10px] font-mono-num"><span className="text-muted-foreground">GATE.IO · PERP</span></div>
