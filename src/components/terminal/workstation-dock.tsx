@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Bell,
+  BookOpen,
   CheckCircle2,
   Code2,
   Database,
+  Dices,
   FlaskConical,
   GripHorizontal,
   Play,
@@ -20,6 +22,7 @@ import { CodeEditor } from "./code-editor";
 import { useStrategy } from "@/stores/strategy";
 import { useWorkspace } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
+import { simulateTradeSequence, type MonteCarloSummary } from "@/domain/validation/resampling";
 
 export type DockTab = "script" | "tester" | "research" | "data" | "alerts" | "trading";
 
@@ -180,6 +183,7 @@ function ScriptPanel({ source, setSource, lastCompile, busy, validate, runBackte
       <span className="text-[10px] text-muted-foreground font-mono-num">strategy.zs</span>
       <span className="text-[10px] text-muted-foreground/60">·</span>
       <span className="text-[10px] text-muted-foreground">ZS runtime</span>
+      <a href="/docs/zscript" target="_blank" rel="noreferrer" className="ml-1 inline-flex h-6 items-center gap-1 rounded-[3px] px-1.5 text-[10px] text-mdata hover:bg-mdata/10"><BookOpen className="h-3 w-3" />ZS docs</a>
       <div className="ml-auto flex items-center gap-1">
         <button onClick={() => window.dispatchEvent(new Event("zterminal:saved"))} className="dock-action"><Save className="w-3 h-3" />Save</button>
         <button onClick={validate} disabled={busy !== null} className="dock-action"><CheckCircle2 className="w-3 h-3" />{busy === "validate" ? "Validating" : "Validate"}</button>
@@ -214,12 +218,25 @@ function TesterPanel({ result, log }: { result: ReturnType<typeof useStrategy.ge
   ] : [];
   return <div className="h-full flex flex-col">
     <div className="h-8 shrink-0 border-b hairline flex items-center px-2.5 gap-2"><span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Backtest evidence</span>{result && <><span className="text-[10px] text-muted-foreground/50">·</span><span className="text-[10px] font-mono-num text-mdata">{result.config.symbol} · {result.config.timeframe}</span><span className="text-[10px] text-pos ml-auto">verified runtime</span></>}</div>
-    {!result ? <div className="flex-1 grid place-items-center text-center"><div><FlaskConical className="mx-auto w-5 h-5 text-muted-foreground/60 mb-2" /><div className="text-[11px] text-muted-foreground">Run the active script to attach trades to the chart.</div><div className="text-[10px] text-muted-foreground/60 mt-1">No performance values are shown until a deterministic run exists.</div></div></div> : <div className="min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_250px]">
+    {!result ? <div className="flex-1 grid place-items-center text-center"><div><FlaskConical className="mx-auto w-5 h-5 text-muted-foreground/60 mb-2" /><div className="text-[11px] text-muted-foreground">Run the active script to attach trades to the chart.</div><div className="text-[10px] text-muted-foreground/60 mt-1">No performance values are shown until a deterministic run exists.</div></div></div> : <div className="min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0 min-h-0 overflow-y-auto scroll-thin"><table className="w-full text-[10.5px] tnum"><thead><tr className="border-b hairline text-[9px] uppercase tracking-[0.14em] text-muted-foreground"><th className="px-3 py-2 text-left font-medium">Trade</th><th className="px-3 py-2 text-left font-medium">Side</th><th className="px-3 py-2 text-right font-medium">Entry</th><th className="px-3 py-2 text-right font-medium">Exit</th><th className="px-3 py-2 text-right font-medium">P&amp;L</th></tr></thead><tbody>{result.trades.slice(-12).reverse().map((trade) => <tr key={trade.id} className="border-b hairline/60"><td className="px-3 py-1.5 text-muted-foreground">#{trade.id}</td><td className={cn("px-3 py-1.5 uppercase", trade.side === "long" ? "text-pos" : "text-neg")}>{trade.side}</td><td className="px-3 py-1.5 text-right text-muted-foreground">{trade.entryPrice.toLocaleString()}</td><td className="px-3 py-1.5 text-right text-muted-foreground">{trade.exitPrice.toLocaleString()}</td><td className={cn("px-3 py-1.5 text-right", trade.pnl >= 0 ? "text-pos" : "text-neg")}>{trade.pnl >= 0 ? "+" : "−"}{Math.abs(trade.pnl).toFixed(2)}</td></tr>)}</tbody></table></div>
-      <div className="border-l hairline bg-surface/30 p-2.5 grid grid-cols-2 content-start gap-x-4 gap-y-2">{rows.map(([label, value, tone]) => <div key={label}><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div><div className={cn("mt-0.5 text-[12px] font-mono-num", tone)}>{value}</div></div>)}<div className="col-span-2 pt-2 border-t hairline text-[9px] text-muted-foreground font-mono-num truncate">{result.barsProcessed} bars · {result.hash}</div></div>
+      <div className="min-h-0 overflow-y-auto scroll-thin border-l hairline bg-surface/30 p-2.5"><div className="grid grid-cols-2 content-start gap-x-4 gap-y-2">{rows.map(([label, value, tone]) => <div key={label}><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div><div className={cn("mt-0.5 text-[12px] font-mono-num", tone)}>{value}</div></div>)}<div className="col-span-2 pt-2 border-t hairline text-[9px] text-muted-foreground font-mono-num truncate">{result.barsProcessed} bars · {result.hash}</div></div><MonteCarloPanel result={result} /></div>
     </div>}
     <div className="h-6 shrink-0 border-t hairline px-2.5 flex items-center gap-2 text-[9px] text-muted-foreground"><span className="uppercase tracking-[0.14em]">Run log</span><span className="truncate font-mono-num">{log[0]}</span></div>
   </div>;
+}
+
+function MonteCarloPanel({ result }: { result: NonNullable<ReturnType<typeof useStrategy.getState>["lastResult"]> }) {
+  const [seed, setSeed] = useState(90210);
+  const [paths, setPaths] = useState(1000);
+  const tradePnl = result.trades.map((trade) => trade.pnl);
+  const summary = useMemo<MonteCarloSummary | null>(() => tradePnl.length >= 10 ? simulateTradeSequence(tradePnl, { paths, initialEquity: result.config.initialCapital, seed }) : null, [paths, result.config.initialCapital, result.hash, seed, tradePnl.length]);
+  return <section className="mt-4 border-t hairline pt-3"><div className="flex items-center gap-1.5"><Dices className="w-3.5 h-3.5 text-research" /><span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Monte Carlo · trade-path order</span></div><p className="mt-1 text-[9px] leading-4 text-muted-foreground">Resamples the completed closed-trade sequence only. It models path dependency, not price forecasting.</p><div className="mt-2 grid grid-cols-2 gap-2"><label className="text-[9px] text-muted-foreground">Paths<select value={paths} onChange={(event) => setPaths(Number(event.target.value))} className="mt-1 h-6 w-full border hairline bg-panel px-1.5 text-[10px] text-foreground outline-none"><option value={250}>250</option><option value={1000}>1,000</option><option value={2000}>2,000</option></select></label><label className="text-[9px] text-muted-foreground">Seed<input value={seed} onChange={(event) => setSeed(Math.max(0, Number(event.target.value) || 0))} inputMode="numeric" className="mt-1 h-6 w-full border hairline bg-panel px-1.5 text-[10px] font-mono-num text-foreground outline-none" /></label></div>{!summary ? <div className="mt-3 border border-warn/25 bg-warn/5 p-2 text-[9px] leading-4 text-warn">At least 10 closed trades are required before path-order uncertainty is displayed. This run contains {tradePnl.length}.</div> : <div className="mt-3 space-y-2"><MonteCarloRange label="Terminal equity · 5 / 50 / 95%" values={summary.terminalEquity} money /><MonteCarloRange label="Max drawdown · 5 / 50 / 95%" values={summary.maxDrawdown} money /><div className="border-t hairline pt-2 text-[9px] leading-4 text-muted-foreground">{summary.paths.toLocaleString()} seeded paths · source {result.hash.slice(0, 8)} · values remain in the backtest account currency.</div></div>}</section>;
+}
+
+function MonteCarloRange({ label, values, money }: { label: string; values: { lower: number; median: number; upper: number }; money?: boolean }) {
+  const fmt = (value: number) => money ? `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : value.toLocaleString();
+  return <div><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div><div className="mt-1 grid grid-cols-3 gap-1 text-[10px] font-mono-num"><span className="rounded bg-neg/10 px-1.5 py-1 text-neg">{fmt(values.lower)}</span><span className="rounded bg-foreground/5 px-1.5 py-1 text-foreground">{fmt(values.median)}</span><span className="rounded bg-pos/10 px-1.5 py-1 text-pos">{fmt(values.upper)}</span></div></div>;
 }
 
 function ResearchPanel({ hasResult }: { hasResult: boolean }) {
