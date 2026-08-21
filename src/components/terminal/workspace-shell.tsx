@@ -72,7 +72,7 @@ export function WorkspaceShell() {
 
   return (
     <div className="h-screen w-screen flex bg-background text-foreground overflow-hidden">
-      <Sidebar />
+      <div className="hidden shrink-0 sm:block"><Sidebar /></div>
       <div className="flex-1 min-w-0 flex flex-col">
         <Topbar />
         <main className="flex-1 min-h-0 overflow-hidden relative">

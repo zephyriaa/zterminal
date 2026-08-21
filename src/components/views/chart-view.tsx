@@ -197,19 +197,19 @@ export function ChartView() {
   const changeStudies = (change: (current: ChartStudy[]) => ChartStudy[]) => setManualStudies((current) => change(current ?? persistedStudies));
   const updateSettings = (patch: Partial<ChartSettings>) => setChartSettings((current) => ({ ...(current ?? persistedChartSettings), ...patch }));
 
-  return <div className="relative h-full overflow-hidden bg-background p-3" aria-label="Floating research canvas">
+  return <div className="floating-research-canvas relative h-full overflow-hidden bg-background p-0 sm:p-3" aria-label="Floating research canvas">
     {windowMode !== "minimized" && <section
-      className={cn("absolute z-20 relative flex min-h-0 flex-col overflow-hidden border hairline bg-panel shadow-[0_18px_45px_rgba(0,0,0,0.26)]", windowMode === "maximized" ? "rounded-none" : "rounded-[6px]")}
+      className={cn("floating-chart-window absolute z-20 relative flex min-h-0 flex-col overflow-hidden border hairline bg-panel shadow-[0_18px_45px_rgba(0,0,0,0.26)]", windowMode === "maximized" ? "rounded-none" : "rounded-[6px]")}
       style={windowStyle}
       onPointerDown={() => windowMode === "normal" && undefined}
       aria-label="Floating chart window"
     >
       <header onPointerDown={(event) => beginInteraction("move", event)} className={cn("flex h-9 shrink-0 items-center gap-2 border-b hairline bg-surface/80 px-2.5", windowMode === "normal" && "cursor-move")}>
-        <div className="flex items-center gap-2 min-w-0"><span className="grid h-4 w-4 place-items-center rounded-sm border border-mdata/40 text-[9px] text-mdata">⋮⋮</span><div className="min-w-0"><div className="text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">Verified market canvas</div><div className="truncate text-[10.5px] font-mono-num text-foreground">{symbol.replace("_", " / ")} · {timeframe.toUpperCase()} · {contract.exchange}</div></div></div>
+        <div className="floating-chart-window-title flex items-center gap-2 min-w-0"><span className="hidden sm:grid h-4 w-4 place-items-center rounded-sm border border-mdata/40 text-[9px] text-mdata">⋮⋮</span><div className="min-w-0"><div className="hidden sm:block text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">Verified market canvas</div><div className="truncate text-[10.5px] font-mono-num text-foreground">{symbol.replace("_", " / ")} · {timeframe.toUpperCase()}</div></div></div>
         <div className="ml-auto flex items-center gap-1"><span className={cn("hidden sm:flex items-center gap-1 px-1.5 text-[9px] uppercase tracking-[0.12em]", dataStatus === "LIVE" ? "text-pos" : "text-warn")}><span className="h-1.5 w-1.5 rounded-full bg-current" />{provider ?? "gateio"} · {dataStatus}</span><WindowButton label="Replay" onClick={() => setReplay((value) => !value)} active={replay}><Play /></WindowButton><WindowButton label="Refresh viewport" onClick={() => setReplayIdx(null)}><RotateCcw /></WindowButton><WindowButton label={windowMode === "maximized" ? "Restore chart window" : "Maximize chart window"} onClick={() => setWindowMode((mode) => mode === "maximized" ? "normal" : "maximized")}>{windowMode === "maximized" ? <Minimize2 /> : <Maximize2 />}</WindowButton><WindowButton label="Minimize chart window" onClick={() => setWindowMode("minimized")}><Minus /></WindowButton></div>
       </header>
 
-      <div className="h-9 shrink-0 border-b hairline bg-panel flex items-center gap-1.5 px-2.5 overflow-x-auto no-scrollbar">
+      <div className="mobile-chart-toolbar h-9 shrink-0 border-b hairline bg-panel flex items-center gap-1.5 px-2.5 overflow-x-auto no-scrollbar">
         <button onClick={() => setCommandOpen(true)} className="h-7 px-2 flex items-center gap-1.5 rounded-[4px] hover:bg-hover text-foreground" aria-label="Change instrument"><span className="font-mono-num text-[10.5px] font-semibold">{symbol}</span><ChevronDown className="w-3 h-3 text-muted-foreground" /></button>
         <div className="h-4 w-px bg-foreground/10" />
         <div className="flex items-center gap-1 text-[10px] font-mono-num"><span className={cn("font-semibold", change == null ? "text-foreground" : change >= 0 ? "text-pos" : "text-neg")}>{fmtPrice(livePrice, contract.tickSize)}</span>{changePct != null && <span className={changePct >= 0 ? "text-pos" : "text-neg"}>{changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%</span>}</div>
@@ -227,10 +227,10 @@ export function ChartView() {
         {rightOpen && <ContextPanel symbol={symbol} contract={contract} quote={quote} trades={trades} markets={markets} onClose={() => setRightOpen(false)} />}
       </div>
       {studiesOpen && <StudiesPanel builtIns={LAYERS.map((study) => ({ id: study.id, name: study.label, category: study.id === "volume" || study.id === "profile" ? "Volume" as const : study.id === "structure" ? "Structure" as const : "Trend" as const, description: study.id === "vwap" ? "Session-anchored price-volume reference" : study.id === "ema20" ? "Fast exponential average · 20" : study.id === "ema50" ? "Slow exponential average · 50" : study.id === "volume" ? "Volume histogram pane" : study.id === "profile" ? "Distribution context (planned canvas layer)" : "Market-structure annotation context", color: study.tone === "warn" ? "#f59e0b" : study.tone === "mdata" ? "#38bdf8" : study.tone === "research" ? "#a78bfa" : "#94a3b8", active: layers[study.id] }))} customStudies={customStudies} onToggleBuiltIn={toggleBuiltInStudy} onCreate={(study) => changeStudies((current) => [...current, study])} onUpdate={(study) => changeStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => changeStudies((current) => current.filter((item) => item.id !== id))} />}
-      {windowMode === "normal" && <button onPointerDown={(event) => beginInteraction("resize", event)} className="absolute bottom-0 right-0 z-40 grid h-5 w-5 cursor-nwse-resize place-items-center text-muted-foreground/60 hover:text-mdata" aria-label="Resize chart window"><span className="block h-2.5 w-2.5 border-b border-r border-current" /></button>}
+      {windowMode === "normal" && <button onPointerDown={(event) => beginInteraction("resize", event)} className="absolute bottom-0 right-0 z-40 hidden sm:grid h-5 w-5 cursor-nwse-resize place-items-center text-muted-foreground/60 hover:text-mdata" aria-label="Resize chart window"><span className="block h-2.5 w-2.5 border-b border-r border-current" /></button>}
     </section>}
 
-    {windowMode !== "maximized" && <div className="absolute inset-x-3 bottom-3 z-10"><BottomDock /></div>}
+    {windowMode !== "maximized" && <div className="mobile-workspace-dock absolute inset-x-0 bottom-0 sm:inset-x-3 sm:bottom-3 z-10"><BottomDock /></div>}
     {windowMode === "minimized" && <button onClick={() => setWindowMode("normal")} className="absolute left-3 top-3 z-30 flex h-8 items-center gap-2 rounded-[5px] border hairline bg-panel px-2.5 text-[10px] shadow-lg hover:bg-hover"><CandlestickChart className="h-3.5 w-3.5 text-mdata" /><span className="font-mono-num">{symbol} · {timeframe.toUpperCase()}</span><span className="text-muted-foreground">Chart minimized</span><Maximize2 className="h-3 w-3 text-muted-foreground" /></button>}
   </div>;
 }
