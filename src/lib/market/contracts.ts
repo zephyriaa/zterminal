@@ -25,6 +25,14 @@ function futExpiry(year: number, month: number): string {
 
 /** Front-month futures symbols currently modeled. */
 export const CONTRACTS: Record<string, ContractDef> = {
+  BTCUSDT: {
+    root: "BTC", symbol: "BTCUSDT", description: "BTC / USDT Perpetual (Binance USDⓈ-M Futures)",
+    exchange: "BINANCE", product: "perpetual",
+    // Binance's BTCUSDT perpetual tick is 0.10. These references support only mock rendering before data arrives.
+    tickSize: 0.1, tickValue: 0.1, multiplier: 1, currency: "USDT",
+    session: "crypto", supportsDepth: true, supportsMBO: false,
+    basePrice: 100_000, dailyVolPct: 0.025,
+  },
   QQQX_USDT: {
     root: "QQQX", symbol: "QQQX_USDT", description: "QQQX / USDT Perpetual (Gate.io)",
     exchange: "GATEIO", product: "perpetual",

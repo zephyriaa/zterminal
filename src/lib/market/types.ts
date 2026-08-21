@@ -9,10 +9,10 @@
  * See MARKET_DATA_SCHEMA.md for the full specification.
  */
 
-export type ProviderId = "mock" | "gateio" | "binance" | "bybit" | "okx" | "mexc" | "rithmic-test" | "rithmic-prod" | "databento";
+export type ProviderId = "mock" | "gateio" | "binance" | "bybit" | "okx" | "mexc" | "coinbase" | "deribit" | "rithmic-test" | "rithmic-prod" | "databento";
 export type Environment = "simulation" | "paper" | "live";
 
-export type Exchange = "CME" | "CBOT" | "COMEX" | "NYMEX" | "NASDAQ" | "NYSE" | "ICE" | "GATEIO" | "BINANCE" | "BYBIT" | "OKX" | "MEXC";
+export type Exchange = "CME" | "CBOT" | "COMEX" | "NYMEX" | "NASDAQ" | "NYSE" | "ICE" | "GATEIO" | "BINANCE" | "BYBIT" | "OKX" | "MEXC" | "COINBASE" | "DERIBIT";
 export type Side = "buy" | "sell";
 export type Aggressor = "buy" | "sell" | "unknown";
 
@@ -82,6 +82,57 @@ export interface DepthEvent {
   timestamp: number;
   sequence: number;
   levels: DepthLevel[];
+}
+
+/** Public derivatives context. Values stay undefined when the selected venue does not supply them. */
+export interface DerivativesEvent {
+  type: "derivatives";
+  provider: ProviderId;
+  environment: Environment;
+  symbol: string;
+  exchange: Exchange;
+  timestamp: number;
+  markPrice?: number;
+  indexPrice?: number;
+  fundingRate?: number;
+  nextFundingTime?: number;
+  openInterest?: number;
+  openInterestTimestamp?: number;
+  /** `unavailable` means the provider did not return the metric; it is not a zero value. */
+  openInterestStatus?: "live" | "unavailable";
+  openInterestReason?: string;
+}
+
+/** Exchange-declared liquidation/order-forced-close event; never inferred from price movement. */
+export interface LiquidationEvent {
+  type: "liquidation";
+  provider: ProviderId;
+  environment: Environment;
+  symbol: string;
+  exchange: Exchange;
+  timestamp: number;
+  sequence: number;
+  side: Side;
+  orderType?: string;
+  status?: string;
+  quantity: number;
+  filledQuantity?: number;
+  averagePrice?: number;
+  lastFilledPrice?: number;
+}
+
+export type FeedHealthState = "LIVE" | "SYNCING" | "STALE" | "GAP_DETECTED" | "RESYNCING" | "DEGRADED" | "UNAVAILABLE" | "DISCONNECTED";
+
+export interface FeedHealth {
+  provider: ProviderId;
+  symbol?: string;
+  state: FeedHealthState;
+  updatedAt: number;
+  lastMessageAt?: number;
+  latencyMs?: number;
+  sequence?: number;
+  reconnectCount?: number;
+  reason?: string;
 }
 
 /** Market-by-order (MBO) — only when provider genuinely supplies it. */

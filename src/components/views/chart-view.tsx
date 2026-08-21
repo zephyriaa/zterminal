@@ -34,6 +34,7 @@ import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
+import { buildFootprint, calculateCVD } from "@/lib/market/order-flow";
 
 const LAYERS = [
   { id: "vwap", label: "Session VWAP", short: "VWAP", tone: "warn" },
@@ -114,6 +115,7 @@ export function ChartView() {
   const [rightOpen, setRightOpen] = useState(true);
   const [replay, setReplay] = useState(false);
   const [replayIdx, setReplayIdx] = useState<number | null>(null);
+  const [orderFlowPane, setOrderFlowPane] = useState<"cvd" | "footprint" | null>(null);
   const [windowMode, setWindowMode] = useState<WindowMode>("normal");
   const persistedBounds = useSyncExternalStore(
     subscribeToBrowserPreference,
@@ -135,7 +137,7 @@ export function ChartView() {
   const persistedStudies = useSyncExternalStore(subscribeToBrowserPreference, getStoredStudies, () => [] as ChartStudy[]);
   const [manualStudies, setManualStudies] = useState<ChartStudy[] | null>(null);
   const customStudies = manualStudies ?? persistedStudies;
-  const { quote, lastTrade, trades, dataStatus, provider } = useMarketStream(symbol, { trades: 28, depth: false });
+  const { quote, lastTrade, trades, dataStatus, provider, derivatives } = useMarketStream(symbol, { trades: 600, depth: false });
 
   useEffect(() => { if (!manualChartSettings) return; try { window.localStorage.setItem("zterminal.chart-settings.v1", JSON.stringify(manualChartSettings)); } catch { /* ignore */ } }, [manualChartSettings]);
   useEffect(() => { if (!manualBounds) return; try { window.localStorage.setItem("zterminal.chart-window.v1", JSON.stringify(manualBounds)); } catch { /* ignore */ } }, [manualBounds]);
@@ -175,6 +177,8 @@ export function ChartView() {
   const reference = markets.find((row) => row.symbol === symbol);
   const change = reference && livePrice != null ? livePrice - (reference.price - reference.change) : null;
   const changePct = reference && livePrice != null ? (change! / (reference.price - reference.change)) * 100 : null;
+  const cvd = useMemo(() => calculateCVD(trades, 1_000), [trades]);
+  const footprint = useMemo(() => buildFootprint(trades, contract.tickSize, 60_000).at(-1), [trades, contract.tickSize]);
   const markers = useMemo(() => {
     if (!lastResult || lastResult.config.symbol !== symbol || lastResult.config.timeframe !== timeframe) return [];
     return lastResult.trades.flatMap((trade) => [
@@ -214,15 +218,19 @@ export function ChartView() {
         <div className="h-4 w-px bg-foreground/10" />
         <div className="flex items-center gap-1 text-[10px] font-mono-num"><span className={cn("font-semibold", change == null ? "text-foreground" : change >= 0 ? "text-pos" : "text-neg")}>{fmtPrice(livePrice, contract.tickSize)}</span>{changePct != null && <span className={changePct >= 0 ? "text-pos" : "text-neg"}>{changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%</span>}</div>
         <div className="h-4 w-px bg-foreground/10" />
-        <button onClick={() => setStudiesOpen((value) => !value)} className={cn("flex h-7 items-center gap-1.5 rounded-[3px] px-2 text-[10px]", studiesOpen ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover hover:text-foreground")} aria-pressed={studiesOpen}><Layers3 className="h-3.5 w-3.5" />Studies<span className="font-mono-num text-[9px] opacity-70">{LAYERS.filter((layer) => layers[layer.id]).length + customStudies.filter((study) => study.visible).length}</span></button>
+        <button onClick={() => setStudiesOpen((value) => !value)} className={cn("flex h-7 items-center gap-1.5 rounded-[3px] px-2 text-[10px]", studiesOpen ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover hover:text-foreground")} aria-pressed={studiesOpen}><Layers3 className="h-3.5 w-3.5" />Studies<span className="font-mono-num text-[9px] opacity-70">{LAYERS.filter((layer) => layers[layer.id]).length + customStudies.filter((study) => study.visible).length}</span></button><button onClick={() => setOrderFlowPane((current) => current === "cvd" ? null : "cvd")} className={cn("h-7 px-2 rounded-[3px] text-[9.5px] font-mono-num", orderFlowPane === "cvd" ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover")} title="Toggle CVD chart pane">CVD</button><button onClick={() => setOrderFlowPane((current) => current === "footprint" ? null : "footprint")} className={cn("h-7 px-2 rounded-[3px] text-[9.5px] font-mono-num", orderFlowPane === "footprint" ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover")} title="Toggle footprint chart pane">FP</button>
         <div className="ml-auto flex items-center gap-0.5 shrink-0"><ChartTypeButton active={chartType === "candles"} label="Candles" onClick={() => setChartType("candles")}><CandlestickChart /></ChartTypeButton><ChartTypeButton active={chartType === "bars"} label="Bars" onClick={() => setChartType("bars")}><BarChart3 /></ChartTypeButton><ChartTypeButton active={chartType === "line"} label="Line" onClick={() => setChartType("line")}><LineChart /></ChartTypeButton><button onClick={() => setRightOpen((value) => !value)} className={cn("grid place-items-center h-7 w-7 rounded-[4px]", rightOpen ? "text-mdata bg-mdata/10" : "text-muted-foreground hover:text-foreground hover:bg-hover")} aria-label="Toggle market context"><SlidersHorizontal className="w-3.5 h-3.5" /></button><details className="relative group"><summary className="list-none grid place-items-center h-7 w-7 rounded-[4px] text-muted-foreground hover:text-foreground hover:bg-hover cursor-pointer" aria-label="Chart settings"><Settings2 className="w-3.5 h-3.5" /></summary><div className="absolute right-0 top-8 z-30 w-64 p-3 bg-popover border hairline shadow-xl"><div className="flex items-center justify-between"><div><div className="text-[11px] font-semibold">Chart settings</div><div className="text-[9px] text-muted-foreground">Saved in this browser</div></div><button className="text-[9px] text-mdata" onClick={() => setChartSettings(DEFAULT_CHART_SETTINGS)}>Reset</button></div><SettingRange label="Future space" value={chartSettings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => updateSettings({ futureBars })} /><SettingRange label="Grid intensity" value={Math.round(chartSettings.gridOpacity * 100)} min={0} max={18} suffix="%" onChange={(value) => updateSettings({ gridOpacity: value / 100 })} /><label className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">Show crosshair<input type="checkbox" checked={chartSettings.showCrosshair} onChange={(event) => updateSettings({ showCrosshair: event.target.checked })} /></label></div></details></div>
       </div>
 
       <div className="min-h-0 flex-1 flex">
-        <div className="relative min-w-0 flex-1 bg-background">
+        <div className="min-w-0 flex-1 bg-background flex flex-col">
+          <div className="relative min-h-0 flex-1">
           <div className="absolute z-10 left-3 top-2.5 pointer-events-none"><div className="flex items-center gap-2 text-[10px] font-mono-num"><span className="text-muted-foreground">O <b className="text-foreground/90">{fmtPrice(crosshairBar?.o ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">H <b className="text-foreground/90">{fmtPrice(crosshairBar?.h ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">L <b className="text-foreground/90">{fmtPrice(crosshairBar?.l ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">C <b className="text-foreground/90">{fmtPrice(crosshairBar?.c ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">V <b className="text-foreground/90">{crosshairBar?.v?.toLocaleString() ?? "—"}</b></span></div><div className="mt-1.5 flex items-center gap-2">{LAYERS.filter((layer) => layers[layer.id]).map((layer) => <span key={layer.id} className={cn("text-[9px] font-mono-num", layer.tone === "warn" ? "text-warn" : layer.tone === "mdata" ? "text-mdata" : layer.tone === "research" ? "text-research" : "text-muted-foreground")}>{layer.short}</span>)}</div></div>
-          <TerminalChart key={`${windowMode}-${bounds.width}-${bounds.height}`} symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={chartSettings} replayIndex={replay ? replayIdx : null} markers={markers} onCrosshair={setCrosshairBar} />
+          <TerminalChart key={`${windowMode}-${bounds.width}-${bounds.height}`} symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={chartSettings} replayIndex={replay ? replayIdx : null} markers={markers} markPrice={derivatives?.markPrice} onCrosshair={setCrosshairBar} />
+          {(derivatives?.markPrice || derivatives?.fundingRate !== undefined) && <div className="absolute right-[70px] top-2 z-10 flex items-center gap-2 rounded-[3px] border hairline bg-panel/85 px-1.5 py-1 text-[8.5px] font-mono-num pointer-events-none"><span className="text-mdata">MARK {fmtPrice(derivatives?.markPrice, contract.tickSize)}</span><span className="text-muted-foreground">FUND {derivatives?.fundingRate === undefined ? "—" : `${(derivatives.fundingRate * 100).toFixed(4)}%`}</span></div>}
           {replay && <div className="absolute left-3 right-3 bottom-8 z-10 h-8 flex items-center gap-2 px-2.5 border hairline bg-panel/95"><span className="text-[9px] uppercase tracking-[0.14em] text-warn">Replay</span><input type="range" min={0} max={100} defaultValue={100} onChange={(event) => setReplayIdx(Math.round((Number(event.target.value) / 100) * 500))} className="flex-1 h-1 accent-[var(--warn)]" /><span className="text-[9px] text-muted-foreground font-mono-num">historical window</span></div>}
+          </div>
+          {orderFlowPane && <ChartOrderFlowPane kind={orderFlowPane} cvd={cvd} footprint={footprint} tickSize={contract.tickSize} />}
         </div>
         {rightOpen && <ContextPanel symbol={symbol} contract={contract} quote={quote} trades={trades} markets={markets} onClose={() => setRightOpen(false)} />}
       </div>
@@ -260,4 +268,29 @@ function ContextPanel({ symbol, contract, quote, trades, markets, onClose }: { s
 
 function ContextStat({ label, value, tone = "text-foreground" }: { label: string; value: string; tone?: string }) {
   return <div><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div><div className={cn("mt-0.5 text-[11px] font-mono-num", tone)}>{value}</div></div>;
+}
+
+function ChartOrderFlowPane({ kind, cvd, footprint, tickSize }: { kind: "cvd" | "footprint"; cvd: ReturnType<typeof calculateCVD>; footprint: ReturnType<typeof buildFootprint>[number] | undefined; tickSize: number }) {
+  if (kind === "cvd") {
+    const last = cvd.at(-1)?.value ?? 0;
+    return <section className="h-40 shrink-0 border-t hairline bg-panel/65" aria-label="CVD chart sub-panel"><div className="h-7 flex items-center gap-2 px-2.5 border-b hairline"><span className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">CVD · client observation window</span><span className={cn("ml-auto text-[10px] font-mono-num", last >= 0 ? "text-pos" : "text-neg")}>{last >= 0 ? "+" : ""}{last.toLocaleString("en-US", { maximumFractionDigits: 4 })}</span></div><div className="h-[calc(100%-28px)] px-2 py-1"><ChartCvdSparkline cvd={cvd} /></div></section>;
+  }
+
+  const levels = footprint?.levels.slice(0, 16) ?? [];
+  const maximum = Math.max(1, ...levels.map((level) => level.totalVolume));
+  return <section className="h-40 shrink-0 border-t hairline bg-panel/65 overflow-hidden" aria-label="Footprint chart sub-panel"><div className="h-7 flex items-center gap-2 px-2.5 border-b hairline"><span className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Footprint · latest 60-second bucket</span><span className={cn("ml-auto text-[10px] font-mono-num", (footprint?.delta ?? 0) >= 0 ? "text-pos" : "text-neg")}>Δ {footprint ? `${footprint.delta >= 0 ? "+" : ""}${footprint.delta.toLocaleString("en-US", { maximumFractionDigits: 4 })}` : "Awaiting prints"}</span></div><div className="h-[calc(100%-28px)] overflow-y-auto scroll-thin px-2 py-1">{!levels.length && <p className="grid h-full place-items-center text-[10px] text-muted-foreground">Awaiting observed public trades; no footprint is synthesized.</p>}{levels.map((level) => { const buyHeavy = level.buyVolume >= Math.max(1, level.sellVolume) * 3; const sellHeavy = level.sellVolume >= Math.max(1, level.buyVolume) * 3; return <div key={level.price} className={cn("grid grid-cols-[1fr_92px_1fr_72px] gap-2 items-center h-5 text-[9.5px] font-mono-num", buyHeavy && "bg-pos/5", sellHeavy && "bg-neg/5")}><div className="flex justify-end items-center gap-1 text-neg"><span>{level.sellVolume.toLocaleString("en-US", { maximumFractionDigits: 3 })}</span><span className="h-1.5 bg-neg/35" style={{ width: `${(level.sellVolume / maximum) * 64}px` }} /></div><span className="text-center text-muted-foreground">{fmtPrice(level.price, tickSize)}</span><div className="flex items-center gap-1 text-pos"><span className="h-1.5 bg-pos/35" style={{ width: `${(level.buyVolume / maximum) * 64}px` }} /><span>{level.buyVolume.toLocaleString("en-US", { maximumFractionDigits: 3 })}</span></div><span className={cn("text-right", level.delta >= 0 ? "text-pos" : "text-neg")}>{level.delta >= 0 ? "+" : ""}{level.delta.toLocaleString("en-US", { maximumFractionDigits: 3 })}</span></div>;})}</div></section>;
+}
+
+function ChartCvdSparkline({ cvd }: { cvd: ReturnType<typeof calculateCVD> }) {
+  const width = 900;
+  const height = 120;
+  const values = cvd.map((point) => point.value);
+  const low = Math.min(0, ...values);
+  const high = Math.max(0, ...values);
+  const range = high - low || 1;
+  const y = (value: number) => height - ((value - low) / range) * height;
+  const zero = y(0);
+  const path = cvd.map((point, index) => `${index === 0 ? "M" : "L"} ${(index / Math.max(1, cvd.length - 1)) * width} ${y(point.value)}`).join(" ");
+  const area = path ? `${path} L ${width} ${zero} L 0 ${zero} Z` : "";
+  return <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="h-full w-full"><line x1="0" y1={zero} x2={width} y2={zero} stroke="var(--border)" strokeDasharray="3 4" /><path d={area} fill="var(--mdata)" opacity="0.12" /><path d={path} fill="none" stroke="var(--mdata)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />{!cvd.length && <text x={width / 2} y={height / 2} textAnchor="middle" fill="var(--muted-foreground)" fontSize="16">Awaiting observed trade flow</text>}</svg>;
 }
