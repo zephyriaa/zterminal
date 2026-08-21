@@ -1,173 +1,71 @@
 "use client";
 
 import {
-  Activity,
-  Bell,
-  Briefcase,
-  Calendar,
-  CandlestickChart,
-  Code2,
-  FlaskConical,
-  Layers,
-  Microscope,
-  NotebookPen,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plug,
-  Settings,
-  ShieldAlert,
+  ArrowDownRight,
+  Circle,
+  Crosshair,
+  Eraser,
+  Lock,
+  MousePointer2,
+  MoveDiagonal,
+  Minus,
+  MoreHorizontal,
+  Pencil,
+  Square,
+  TextCursorInput,
+  Trash2,
+  Type,
+  Undo2,
   Waves,
 } from "lucide-react";
-import { useWorkspace, type ViewId } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
-interface NavItem {
-  id: ViewId;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  hint: string;
-}
-
-const SECTIONS: { title: string; items: NavItem[] }[] = [
-  {
-    title: "Markets",
-    items: [
-      { id: "markets", label: "Markets", icon: Activity, hint: "Watchlist" },
-      { id: "calendar", label: "Calendar", icon: Calendar, hint: "Econ events" },
-      { id: "alerts", label: "Alerts", icon: Bell, hint: "Price alerts" },
-    ],
-  },
-  {
-    title: "Analysis",
-    items: [
-      { id: "chart", label: "Chart", icon: CandlestickChart, hint: "Charting" },
-      { id: "orderflow", label: "Order Flow", icon: Waves, hint: "DOM / Footprint" },
-    ],
-  },
-  {
-    title: "Research",
-    items: [
-      { id: "strategy", label: "Strategy Builder", icon: Code2, hint: "Code-first IDE" },
-      { id: "backtester", label: "Backtester", icon: FlaskConical, hint: "Event-driven" },
-      { id: "research", label: "Research Lab", icon: Microscope, hint: "Hypotheses" },
-    ],
-  },
-  {
-    title: "Portfolio",
-    items: [
-      { id: "portfolio", label: "Portfolio", icon: Briefcase, hint: "Positions" },
-      { id: "risk", label: "Risk", icon: ShieldAlert, hint: "Sizing / exposure" },
-    ],
-  },
-  {
-    title: "Journal",
-    items: [{ id: "journal", label: "Journal", icon: NotebookPen, hint: "Trade log" }],
-  },
-  {
-    title: "System",
-    items: [
-      { id: "connections", label: "Connections", icon: Plug, hint: "Providers" },
-      { id: "settings", label: "Settings", icon: Settings, hint: "Preferences" },
-    ],
-  },
+const DRAWING_TOOLS = [
+  { label: "Cursor", icon: MousePointer2 },
+  { label: "Crosshair", icon: Crosshair },
+  { label: "Trend line", icon: TrendingLineIcon },
+  { label: "Ray", icon: MoveDiagonal },
+  { label: "Horizontal line", icon: Minus },
+  { label: "Vertical line", icon: MoreHorizontal },
+  { label: "Rectangle", icon: Square },
+  { label: "Circle", icon: Circle },
+  { label: "Arrow", icon: ArrowDownRight },
+  { label: "Brush", icon: Pencil },
+  { label: "Text", icon: Type },
 ];
 
 export function Sidebar() {
-  const { activeView, setView, sidebarCollapsed, toggleSidebar, connection } = useWorkspace();
-  const collapsed = sidebarCollapsed;
+  const [selected, setSelected] = useState("Cursor");
+  const [locked, setLocked] = useState(false);
+
+  const choose = (label: string) => {
+    setSelected(label);
+    window.dispatchEvent(new CustomEvent("zterminal:drawing-tool", { detail: label }));
+  };
 
   return (
-    <aside
-      className={cn(
-        "shrink-0 border-r hairline bg-panel flex flex-col h-full transition-[width] duration-200",
-        collapsed ? "w-[52px]" : "w-[208px]"
-      )}
-      aria-label="Primary navigation"
-    >
-      {/* Brand */}
-      <div className="h-11 flex items-center gap-2 px-3 border-b hairline">
-        <img
-          src="/brand/zterminal-mark-v2.png"
-          alt="Z Terminal"
-          className="h-7 w-7 shrink-0 rounded-[7px] object-contain"
-        />
-        {!collapsed && (
-          <img
-            src="/brand/zterminal-wordmark.png"
-            alt="Z Terminal"
-            className="h-6 w-[96px] min-w-0 object-contain object-left"
-          />
-        )}
-        <button
-          onClick={toggleSidebar}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "ml-auto grid place-items-center h-7 w-7 rounded text-muted-foreground hover:text-foreground hover:bg-hover transition-colors",
-            collapsed && "absolute right-1 top-1.5"
-          )}
-        >
-          {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto scroll-thin py-2">
-        {SECTIONS.map((sec) => (
-          <div key={sec.title} className="px-2 mb-2">
-            {!collapsed && (
-              <div className="px-2 mb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground/70">
-                {sec.title}
-              </div>
-            )}
-            <ul className="space-y-0.5">
-              {sec.items.map((item) => {
-                const active = activeView === item.id;
-                const Icon = item.icon;
-                return (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => setView(item.id)}
-                      title={collapsed ? item.label : undefined}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "group relative w-full flex items-center gap-2.5 rounded-[5px] px-2 h-8 text-[13px] transition-colors",
-                        collapsed && "justify-center px-0",
-                        active
-                          ? "bg-hover text-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-hover/60"
-                      )}
-                    >
-                      {active && (
-                        <span
-                          className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-foreground/80"
-                          aria-hidden
-                        />
-                      )}
-                      <Icon className={cn("w-[15px] h-[15px] shrink-0", active && "text-foreground")} />
-                      {!collapsed && <span className="truncate">{item.label}</span>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer status */}
-      <div className="border-t hairline px-2 py-2">
-        <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
-          <span className={cn("w-1.5 h-1.5 rounded-full", connection.dataStatus === "LIVE" ? "bg-mdata shadow-[0_0_6px_var(--mdata)]" : "bg-warn")} />
-          {!collapsed && (
-            <span className="text-[10.5px] text-muted-foreground uppercase tracking-wider">
-              {(connection.provider ?? "gateio").toUpperCase()} · {connection.dataStatus}
-            </span>
-          )}
-        </div>
+    <aside className="w-10 shrink-0 border-r hairline bg-panel flex flex-col items-center py-1.5 gap-0.5" aria-label="Chart drawing tools">
+      <ToolButton label="Cursor" active={selected === "Cursor"} onClick={() => choose("Cursor")}><MousePointer2 /></ToolButton>
+      <ToolButton label="Crosshair" active={selected === "Crosshair"} onClick={() => choose("Crosshair")}><Crosshair /></ToolButton>
+      <div className="h-px w-5 bg-foreground/10 my-1" />
+      {DRAWING_TOOLS.slice(2).map(({ label, icon: Icon }) => <ToolButton key={label} label={label} active={selected === label} onClick={() => choose(label)}><Icon /></ToolButton>)}
+      <div className="mt-auto flex flex-col items-center gap-0.5">
+        <div className="h-px w-5 bg-foreground/10 my-1" />
+        <ToolButton label="Remove drawings" onClick={() => window.dispatchEvent(new CustomEvent("zterminal:clear-drawings"))}><Eraser /></ToolButton>
+        <ToolButton label={locked ? "Unlock drawings" : "Lock drawings"} active={locked} onClick={() => setLocked((value) => !value)}><Lock /></ToolButton>
+        <ToolButton label="Undo drawing" onClick={() => window.dispatchEvent(new CustomEvent("zterminal:undo-drawing"))}><Undo2 /></ToolButton>
       </div>
     </aside>
   );
 }
 
+function ToolButton({ label, active, onClick, children }: { label: string; active?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" onClick={onClick} title={label} aria-label={label} className={cn("grid place-items-center h-7 w-7 rounded-[4px] text-muted-foreground hover:text-foreground hover:bg-hover transition-colors", active && "bg-hover text-mdata")}>{children}</button>;
+}
 
-export { Layers };
+function TrendingLineIcon({ className }: { className?: string }) {
+  return <svg className={className ?? "h-3.5 w-3.5"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 18 9 12l3 3 8-9" /><path d="M16 6h4v4" /></svg>;
+}
+
+export { Trash2, TextCursorInput, Waves };
