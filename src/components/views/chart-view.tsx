@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
   Activity,
   BarChart3,
@@ -11,11 +11,11 @@ import {
   LineChart,
   Maximize2,
   Minimize2,
+  Minus,
   Play,
   RotateCcw,
   Settings2,
   SlidersHorizontal,
-  TrendingUp,
   X,
 } from "lucide-react";
 import {
@@ -23,9 +23,11 @@ import {
   TerminalChart,
   type ChartIndicators,
   type ChartSettings,
+  type ChartStudy,
   type ChartType,
 } from "@/components/terminal/terminal-chart";
 import { BottomDock } from "@/components/terminal/workstation-dock";
+import { StudiesPanel, type BuiltInStudyId } from "@/components/terminal/studies-panel";
 import { useWorkspace } from "@/stores/workspace";
 import { useStrategy } from "@/stores/strategy";
 import { getContract } from "@/lib/market/contracts";
@@ -43,7 +45,8 @@ const LAYERS = [
 ] as const;
 
 type LayerId = typeof LAYERS[number]["id"];
-
+type WindowMode = "normal" | "maximized" | "minimized";
+type WindowBounds = { x: number; y: number; width: number; height: number };
 type MarketRow = { symbol: string; description?: string; price: number; change: number; changePct: number; exchange: string; product: string; supportsDepth: boolean };
 
 function fmtPrice(value: number | null | undefined, tickSize: number) {
@@ -52,25 +55,91 @@ function fmtPrice(value: number | null | undefined, tickSize: number) {
   return value.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+const DEFAULT_BOUNDS: WindowBounds = { x: 14, y: 14, width: 920, height: 520 };
+const subscribeToBrowserPreference = () => () => {};
+let cachedBoundsRaw: string | null | undefined;
+let cachedBounds: WindowBounds = DEFAULT_BOUNDS;
+let cachedSettingsRaw: string | null | undefined;
+let cachedSettings: ChartSettings = DEFAULT_CHART_SETTINGS;
+let cachedStudiesRaw: string | null | undefined;
+let cachedStudies: ChartStudy[] = [];
+
+function defaultBounds(): WindowBounds {
+  return DEFAULT_BOUNDS;
+}
+
+function getStoredBounds() {
+  const raw = window.localStorage.getItem("zterminal.chart-window.v1");
+  if (raw === cachedBoundsRaw) return cachedBounds;
+  cachedBoundsRaw = raw;
+  try { cachedBounds = clampBounds({ ...DEFAULT_BOUNDS, ...JSON.parse(raw ?? "{}") }); } catch { cachedBounds = DEFAULT_BOUNDS; }
+  return cachedBounds;
+}
+
+function getStoredChartSettings() {
+  const raw = window.localStorage.getItem("zterminal.chart-settings.v1");
+  if (raw === cachedSettingsRaw) return cachedSettings;
+  cachedSettingsRaw = raw;
+  try { cachedSettings = { ...DEFAULT_CHART_SETTINGS, ...JSON.parse(raw ?? "{}") } as ChartSettings; } catch { cachedSettings = DEFAULT_CHART_SETTINGS; }
+  return cachedSettings;
+}
+
+function getStoredStudies() {
+  const raw = window.localStorage.getItem("zterminal.custom-studies.v1");
+  if (raw === cachedStudiesRaw) return cachedStudies;
+  cachedStudiesRaw = raw;
+  try {
+    const candidate = JSON.parse(raw ?? "[]");
+    cachedStudies = Array.isArray(candidate) ? candidate.filter((study): study is ChartStudy => study && typeof study.id === "string" && typeof study.name === "string" && ["ema", "sma", "vwap"].includes(study.kind)).map((study) => ({ ...study, visible: Boolean(study.visible), color: typeof study.color === "string" ? study.color : "#38bdf8" })) : [];
+  } catch { cachedStudies = []; }
+  return cachedStudies;
+}
+
+function clampBounds(next: WindowBounds): WindowBounds {
+  return {
+    x: Math.max(0, next.x),
+    y: Math.max(0, next.y),
+    width: Math.max(560, next.width),
+    height: Math.max(320, next.height),
+  };
+}
+
 export function ChartView() {
   const { symbol, timeframe, setCommandOpen } = useWorkspace();
   const { lastResult } = useStrategy();
   const contract = getContract(symbol);
   const [chartType, setChartType] = useState<ChartType>("candles");
   const [layers, setLayers] = useState<Record<LayerId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true, profile: false, structure: false });
+  const [studiesOpen, setStudiesOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(true);
   const [replay, setReplay] = useState(false);
   const [replayIdx, setReplayIdx] = useState<number | null>(null);
-  const [full, setFull] = useState(false);
+  const [windowMode, setWindowMode] = useState<WindowMode>("normal");
+  const persistedBounds = useSyncExternalStore(
+    subscribeToBrowserPreference,
+    getStoredBounds,
+    defaultBounds,
+  );
+  const [manualBounds, setBounds] = useState<WindowBounds | null>(null);
+  const bounds = manualBounds ?? persistedBounds;
+  const interaction = useRef<{ kind: "move" | "resize"; startX: number; startY: number; origin: WindowBounds } | null>(null);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
   const [markets, setMarkets] = useState<MarketRow[]>([]);
-  const [chartSettings, setChartSettings] = useState<ChartSettings>(() => {
-    if (typeof window === "undefined") return DEFAULT_CHART_SETTINGS;
-    try { return { ...DEFAULT_CHART_SETTINGS, ...JSON.parse(window.localStorage.getItem("zterminal.chart-settings.v1") ?? "{}")} as ChartSettings; } catch { return DEFAULT_CHART_SETTINGS; }
-  });
+  const persistedChartSettings = useSyncExternalStore(
+    subscribeToBrowserPreference,
+    getStoredChartSettings,
+    () => DEFAULT_CHART_SETTINGS,
+  );
+  const [manualChartSettings, setChartSettings] = useState<ChartSettings | null>(null);
+  const chartSettings = manualChartSettings ?? persistedChartSettings;
+  const persistedStudies = useSyncExternalStore(subscribeToBrowserPreference, getStoredStudies, () => [] as ChartStudy[]);
+  const [manualStudies, setManualStudies] = useState<ChartStudy[] | null>(null);
+  const customStudies = manualStudies ?? persistedStudies;
   const { quote, lastTrade, trades, dataStatus, provider } = useMarketStream(symbol, { trades: 28, depth: false });
 
-  useEffect(() => { try { window.localStorage.setItem("zterminal.chart-settings.v1", JSON.stringify(chartSettings)); } catch { /* ignore */ } }, [chartSettings]);
+  useEffect(() => { if (!manualChartSettings) return; try { window.localStorage.setItem("zterminal.chart-settings.v1", JSON.stringify(manualChartSettings)); } catch { /* ignore */ } }, [manualChartSettings]);
+  useEffect(() => { if (!manualBounds) return; try { window.localStorage.setItem("zterminal.chart-window.v1", JSON.stringify(manualBounds)); } catch { /* ignore */ } }, [manualBounds]);
+  useEffect(() => { if (!manualStudies) return; try { window.localStorage.setItem("zterminal.custom-studies.v1", JSON.stringify(manualStudies)); } catch { /* ignore */ } }, [manualStudies]);
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -87,13 +156,25 @@ export function ChartView() {
     window.addEventListener("zterminal:replay", replayEvent);
     return () => { window.removeEventListener("zterminal:context", toggle); window.removeEventListener("zterminal:replay", replayEvent); };
   }, []);
+  useEffect(() => {
+    const move = (event: PointerEvent) => {
+      if (!interaction.current) return;
+      const { kind, startX, startY, origin } = interaction.current;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      setBounds(clampBounds(kind === "move" ? { ...origin, x: origin.x + dx, y: origin.y + dy } : { ...origin, width: origin.width + dx, height: origin.height + dy }));
+    };
+    const stop = () => { interaction.current = null; document.body.style.removeProperty("user-select"); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", stop); };
+  }, []);
 
-  const indicators: ChartIndicators = { vwap: layers.vwap, ema20: layers.ema20, ema50: layers.ema50, volume: layers.volume };
+  const indicators: ChartIndicators = { vwap: layers.vwap, ema20: layers.ema20, ema50: layers.ema50, volume: layers.volume, customStudies };
   const livePrice = lastTrade?.price ?? markets.find((row) => row.symbol === symbol)?.price ?? null;
   const reference = markets.find((row) => row.symbol === symbol);
   const change = reference && livePrice != null ? livePrice - (reference.price - reference.change) : null;
   const changePct = reference && livePrice != null ? (change! / (reference.price - reference.change)) * 100 : null;
-  const activeLayerCount = Object.values(layers).filter(Boolean).length;
   const markers = useMemo(() => {
     if (!lastResult || lastResult.config.symbol !== symbol || lastResult.config.timeframe !== timeframe) return [];
     return lastResult.trades.flatMap((trade) => [
@@ -101,49 +182,56 @@ export function ChartView() {
       { t: trade.exitTime, side: trade.side === "long" ? "sell" as const : "buy" as const, price: trade.exitPrice, qty: trade.qty, label: "X" },
     ]);
   }, [lastResult, symbol, timeframe]);
+  const windowStyle: CSSProperties = windowMode === "maximized"
+    ? { inset: 0 }
+    : { left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height };
 
+  const beginInteraction = (kind: "move" | "resize", event: ReactPointerEvent) => {
+    if (windowMode !== "normal") return;
+    event.preventDefault();
+    interaction.current = { kind, startX: event.clientX, startY: event.clientY, origin: bounds };
+    document.body.style.userSelect = "none";
+  };
   const toggleLayer = (id: LayerId) => setLayers((current) => ({ ...current, [id]: !current[id] }));
-  const updateSettings = (patch: Partial<ChartSettings>) => setChartSettings((current) => ({ ...current, ...patch }));
+  const toggleBuiltInStudy = (id: BuiltInStudyId) => toggleLayer(id as LayerId);
+  const changeStudies = (change: (current: ChartStudy[]) => ChartStudy[]) => setManualStudies((current) => change(current ?? persistedStudies));
+  const updateSettings = (patch: Partial<ChartSettings>) => setChartSettings((current) => ({ ...(current ?? persistedChartSettings), ...patch }));
 
-  return <div className={cn("h-full flex flex-col bg-background", full && "fixed inset-0 z-50")}>
-    <div className="h-9 shrink-0 border-b hairline bg-panel flex items-center gap-1.5 px-2.5 overflow-x-auto no-scrollbar">
-      <button onClick={() => setCommandOpen(true)} className="h-7 px-2 flex items-center gap-2 rounded-[4px] hover:bg-hover text-foreground" aria-label="Change instrument"><span className="font-mono-num text-[11px] font-semibold">{symbol}</span><span className="text-[9px] text-muted-foreground uppercase">{contract.exchange}</span><ChevronDown className="w-3 h-3 text-muted-foreground" /></button>
-      <div className="h-4 w-px bg-foreground/10" />
-      <div className="flex items-center gap-1 text-[10px] font-mono-num"><span className={cn("text-[15px] font-semibold", change == null ? "text-foreground" : change >= 0 ? "text-pos" : "text-neg")}>{fmtPrice(livePrice, contract.tickSize)}</span>{changePct != null && <span className={changePct >= 0 ? "text-pos" : "text-neg"}>{changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%</span>}</div>
-      <div className="h-4 w-px bg-foreground/10" />
-      <div className="flex items-center gap-1.5">
-        <Layers3 className="w-3.5 h-3.5 text-muted-foreground" />
-        {LAYERS.map((layer) => <button key={layer.id} onClick={() => toggleLayer(layer.id)} className={cn("h-6 px-1.5 rounded-[3px] text-[9.5px] whitespace-nowrap", layers[layer.id] ? layerToneClass(layer.tone) : "text-muted-foreground/60 hover:text-foreground hover:bg-hover")} aria-pressed={layers[layer.id]} title={layer.label}>{layer.short}</button>)}
-      </div>
-      <div className="ml-auto flex items-center gap-0.5 shrink-0">
-        <ChartTypeButton active={chartType === "candles"} label="Candles" onClick={() => setChartType("candles")}><CandlestickChart /></ChartTypeButton>
-        <ChartTypeButton active={chartType === "bars"} label="Bars" onClick={() => setChartType("bars")}><BarChart3 /></ChartTypeButton>
-        <ChartTypeButton active={chartType === "line"} label="Line" onClick={() => setChartType("line")}><LineChart /></ChartTypeButton>
-        <button onClick={() => setReplay((value) => !value)} className={cn("h-7 px-2 rounded-[4px] flex items-center gap-1.5 text-[10px]", replay ? "bg-warn/10 text-warn" : "text-muted-foreground hover:text-foreground hover:bg-hover")} aria-pressed={replay}><Play className="w-3 h-3" />Replay</button>
-        <button onClick={() => setRightOpen((value) => !value)} className={cn("grid place-items-center h-7 w-7 rounded-[4px]", rightOpen ? "text-mdata bg-mdata/10" : "text-muted-foreground hover:text-foreground hover:bg-hover")} aria-label="Toggle market context" title="Toggle market context"><SlidersHorizontal className="w-3.5 h-3.5" /></button>
-        <details className="relative group">
-          <summary className="list-none grid place-items-center h-7 w-7 rounded-[4px] text-muted-foreground hover:text-foreground hover:bg-hover cursor-pointer" aria-label="Chart settings"><Settings2 className="w-3.5 h-3.5" /></summary>
-          <div className="absolute right-0 top-8 z-20 w-64 p-3 bg-popover border hairline shadow-xl"><div className="flex items-center justify-between"><div><div className="text-[11px] font-semibold">Chart settings</div><div className="text-[9px] text-muted-foreground">Saved in this browser</div></div><button className="text-[9px] text-mdata" onClick={() => setChartSettings(DEFAULT_CHART_SETTINGS)}>Reset</button></div><SettingRange label="Future space" value={chartSettings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => updateSettings({ futureBars })} /><SettingRange label="Grid intensity" value={Math.round(chartSettings.gridOpacity * 100)} min={0} max={18} suffix="%" onChange={(value) => updateSettings({ gridOpacity: value / 100 })} /><label className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">Show crosshair<input type="checkbox" checked={chartSettings.showCrosshair} onChange={(event) => updateSettings({ showCrosshair: event.target.checked })} /></label></div>
-        </details>
-        <button onClick={() => setFull((value) => !value)} className="grid place-items-center h-7 w-7 rounded-[4px] text-muted-foreground hover:text-foreground hover:bg-hover" aria-label={full ? "Exit fullscreen" : "Fullscreen"} title={full ? "Exit fullscreen" : "Fullscreen"}>{full ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}</button>
-      </div>
-    </div>
+  return <div className="relative h-full overflow-hidden bg-background p-3" aria-label="Floating research canvas">
+    {windowMode !== "minimized" && <section
+      className={cn("absolute z-20 relative flex min-h-0 flex-col overflow-hidden border hairline bg-panel shadow-[0_18px_45px_rgba(0,0,0,0.26)]", windowMode === "maximized" ? "rounded-none" : "rounded-[6px]")}
+      style={windowStyle}
+      onPointerDown={() => windowMode === "normal" && undefined}
+      aria-label="Floating chart window"
+    >
+      <header onPointerDown={(event) => beginInteraction("move", event)} className={cn("flex h-9 shrink-0 items-center gap-2 border-b hairline bg-surface/80 px-2.5", windowMode === "normal" && "cursor-move")}>
+        <div className="flex items-center gap-2 min-w-0"><span className="grid h-4 w-4 place-items-center rounded-sm border border-mdata/40 text-[9px] text-mdata">⋮⋮</span><div className="min-w-0"><div className="text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">Verified market canvas</div><div className="truncate text-[10.5px] font-mono-num text-foreground">{symbol.replace("_", " / ")} · {timeframe.toUpperCase()} · {contract.exchange}</div></div></div>
+        <div className="ml-auto flex items-center gap-1"><span className={cn("hidden sm:flex items-center gap-1 px-1.5 text-[9px] uppercase tracking-[0.12em]", dataStatus === "LIVE" ? "text-pos" : "text-warn")}><span className="h-1.5 w-1.5 rounded-full bg-current" />{provider ?? "gateio"} · {dataStatus}</span><WindowButton label="Replay" onClick={() => setReplay((value) => !value)} active={replay}><Play /></WindowButton><WindowButton label="Refresh viewport" onClick={() => setReplayIdx(null)}><RotateCcw /></WindowButton><WindowButton label={windowMode === "maximized" ? "Restore chart window" : "Maximize chart window"} onClick={() => setWindowMode((mode) => mode === "maximized" ? "normal" : "maximized")}>{windowMode === "maximized" ? <Minimize2 /> : <Maximize2 />}</WindowButton><WindowButton label="Minimize chart window" onClick={() => setWindowMode("minimized")}><Minus /></WindowButton></div>
+      </header>
 
-    <div className="flex-1 min-h-0 flex">
-      <div className="flex-1 min-w-0 relative bg-background">
-        <div className="absolute z-10 left-3 top-2.5 pointer-events-none">
-          <div className="flex items-center gap-1.5 text-[11px] font-mono-num"><span className="font-semibold">{symbol.replace("_", " / ")}</span><span className="text-muted-foreground">·</span><span className="text-muted-foreground">{timeframe}</span><span className="text-muted-foreground">·</span><span className="text-muted-foreground">{contract.exchange}</span></div>
-          <div className="mt-1 flex items-center gap-2 text-[10px] font-mono-num"><span className="text-muted-foreground">O <b className="text-foreground/90">{fmtPrice(crosshairBar?.o ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">H <b className="text-foreground/90">{fmtPrice(crosshairBar?.h ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">L <b className="text-foreground/90">{fmtPrice(crosshairBar?.l ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">C <b className="text-foreground/90">{fmtPrice(crosshairBar?.c ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">V <b className="text-foreground/90">{crosshairBar?.v?.toLocaleString() ?? "—"}</b></span></div>
-          <div className="mt-1.5 flex items-center gap-2">{LAYERS.filter((layer) => layers[layer.id]).map((layer) => <span key={layer.id} className={cn("text-[9px] font-mono-num", layer.tone === "warn" ? "text-warn" : layer.tone === "mdata" ? "text-mdata" : layer.tone === "research" ? "text-research" : "text-muted-foreground")}>{layer.short}</span>)}</div>
+      <div className="h-9 shrink-0 border-b hairline bg-panel flex items-center gap-1.5 px-2.5 overflow-x-auto no-scrollbar">
+        <button onClick={() => setCommandOpen(true)} className="h-7 px-2 flex items-center gap-1.5 rounded-[4px] hover:bg-hover text-foreground" aria-label="Change instrument"><span className="font-mono-num text-[10.5px] font-semibold">{symbol}</span><ChevronDown className="w-3 h-3 text-muted-foreground" /></button>
+        <div className="h-4 w-px bg-foreground/10" />
+        <div className="flex items-center gap-1 text-[10px] font-mono-num"><span className={cn("font-semibold", change == null ? "text-foreground" : change >= 0 ? "text-pos" : "text-neg")}>{fmtPrice(livePrice, contract.tickSize)}</span>{changePct != null && <span className={changePct >= 0 ? "text-pos" : "text-neg"}>{changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%</span>}</div>
+        <div className="h-4 w-px bg-foreground/10" />
+        <button onClick={() => setStudiesOpen((value) => !value)} className={cn("flex h-7 items-center gap-1.5 rounded-[3px] px-2 text-[10px]", studiesOpen ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover hover:text-foreground")} aria-pressed={studiesOpen}><Layers3 className="h-3.5 w-3.5" />Studies<span className="font-mono-num text-[9px] opacity-70">{LAYERS.filter((layer) => layers[layer.id]).length + customStudies.filter((study) => study.visible).length}</span></button>
+        <div className="ml-auto flex items-center gap-0.5 shrink-0"><ChartTypeButton active={chartType === "candles"} label="Candles" onClick={() => setChartType("candles")}><CandlestickChart /></ChartTypeButton><ChartTypeButton active={chartType === "bars"} label="Bars" onClick={() => setChartType("bars")}><BarChart3 /></ChartTypeButton><ChartTypeButton active={chartType === "line"} label="Line" onClick={() => setChartType("line")}><LineChart /></ChartTypeButton><button onClick={() => setRightOpen((value) => !value)} className={cn("grid place-items-center h-7 w-7 rounded-[4px]", rightOpen ? "text-mdata bg-mdata/10" : "text-muted-foreground hover:text-foreground hover:bg-hover")} aria-label="Toggle market context"><SlidersHorizontal className="w-3.5 h-3.5" /></button><details className="relative group"><summary className="list-none grid place-items-center h-7 w-7 rounded-[4px] text-muted-foreground hover:text-foreground hover:bg-hover cursor-pointer" aria-label="Chart settings"><Settings2 className="w-3.5 h-3.5" /></summary><div className="absolute right-0 top-8 z-30 w-64 p-3 bg-popover border hairline shadow-xl"><div className="flex items-center justify-between"><div><div className="text-[11px] font-semibold">Chart settings</div><div className="text-[9px] text-muted-foreground">Saved in this browser</div></div><button className="text-[9px] text-mdata" onClick={() => setChartSettings(DEFAULT_CHART_SETTINGS)}>Reset</button></div><SettingRange label="Future space" value={chartSettings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => updateSettings({ futureBars })} /><SettingRange label="Grid intensity" value={Math.round(chartSettings.gridOpacity * 100)} min={0} max={18} suffix="%" onChange={(value) => updateSettings({ gridOpacity: value / 100 })} /><label className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">Show crosshair<input type="checkbox" checked={chartSettings.showCrosshair} onChange={(event) => updateSettings({ showCrosshair: event.target.checked })} /></label></div></details></div>
+      </div>
+
+      <div className="min-h-0 flex-1 flex">
+        <div className="relative min-w-0 flex-1 bg-background">
+          <div className="absolute z-10 left-3 top-2.5 pointer-events-none"><div className="flex items-center gap-2 text-[10px] font-mono-num"><span className="text-muted-foreground">O <b className="text-foreground/90">{fmtPrice(crosshairBar?.o ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">H <b className="text-foreground/90">{fmtPrice(crosshairBar?.h ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">L <b className="text-foreground/90">{fmtPrice(crosshairBar?.l ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">C <b className="text-foreground/90">{fmtPrice(crosshairBar?.c ?? lastTrade?.price, contract.tickSize)}</b></span><span className="text-muted-foreground">V <b className="text-foreground/90">{crosshairBar?.v?.toLocaleString() ?? "—"}</b></span></div><div className="mt-1.5 flex items-center gap-2">{LAYERS.filter((layer) => layers[layer.id]).map((layer) => <span key={layer.id} className={cn("text-[9px] font-mono-num", layer.tone === "warn" ? "text-warn" : layer.tone === "mdata" ? "text-mdata" : layer.tone === "research" ? "text-research" : "text-muted-foreground")}>{layer.short}</span>)}</div></div>
+          <TerminalChart key={`${windowMode}-${bounds.width}-${bounds.height}`} symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={chartSettings} replayIndex={replay ? replayIdx : null} markers={markers} onCrosshair={setCrosshairBar} />
+          {replay && <div className="absolute left-3 right-3 bottom-8 z-10 h-8 flex items-center gap-2 px-2.5 border hairline bg-panel/95"><span className="text-[9px] uppercase tracking-[0.14em] text-warn">Replay</span><input type="range" min={0} max={100} defaultValue={100} onChange={(event) => setReplayIdx(Math.round((Number(event.target.value) / 100) * 500))} className="flex-1 h-1 accent-[var(--warn)]" /><span className="text-[9px] text-muted-foreground font-mono-num">historical window</span></div>}
         </div>
-        <div className="absolute right-3 top-2.5 z-10 flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-muted-foreground"><span className={cn("h-1.5 w-1.5 rounded-full", dataStatus === "LIVE" ? "bg-pos" : "bg-warn")} />{provider ?? "gateio"} · {dataStatus}</div>
-        <TerminalChart symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={chartSettings} replayIndex={replay ? replayIdx : null} markers={markers} onCrosshair={setCrosshairBar} />
-        {replay && <div className="absolute left-3 right-3 bottom-8 z-10 h-8 flex items-center gap-2 px-2.5 border hairline bg-panel/95"><span className="text-[9px] uppercase tracking-[0.14em] text-warn">Replay</span><input type="range" min={0} max={100} defaultValue={100} onChange={(event) => setReplayIdx(Math.round((Number(event.target.value) / 100) * 500))} className="flex-1 h-1 accent-[var(--warn)]" /><span className="text-[9px] text-muted-foreground font-mono-num">historical window</span></div>}
+        {rightOpen && <ContextPanel symbol={symbol} contract={contract} quote={quote} trades={trades} markets={markets} onClose={() => setRightOpen(false)} />}
       </div>
+      {studiesOpen && <StudiesPanel builtIns={LAYERS.map((study) => ({ id: study.id, name: study.label, category: study.id === "volume" || study.id === "profile" ? "Volume" as const : study.id === "structure" ? "Structure" as const : "Trend" as const, description: study.id === "vwap" ? "Session-anchored price-volume reference" : study.id === "ema20" ? "Fast exponential average · 20" : study.id === "ema50" ? "Slow exponential average · 50" : study.id === "volume" ? "Volume histogram pane" : study.id === "profile" ? "Distribution context (planned canvas layer)" : "Market-structure annotation context", color: study.tone === "warn" ? "#f59e0b" : study.tone === "mdata" ? "#38bdf8" : study.tone === "research" ? "#a78bfa" : "#94a3b8", active: layers[study.id] }))} customStudies={customStudies} onToggleBuiltIn={toggleBuiltInStudy} onCreate={(study) => changeStudies((current) => [...current, study])} onUpdate={(study) => changeStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => changeStudies((current) => current.filter((item) => item.id !== id))} />}
+      {windowMode === "normal" && <button onPointerDown={(event) => beginInteraction("resize", event)} className="absolute bottom-0 right-0 z-40 grid h-5 w-5 cursor-nwse-resize place-items-center text-muted-foreground/60 hover:text-mdata" aria-label="Resize chart window"><span className="block h-2.5 w-2.5 border-b border-r border-current" /></button>}
+    </section>}
 
-      {rightOpen && !full && <ContextPanel symbol={symbol} contract={contract} quote={quote} trades={trades} markets={markets} onClose={() => setRightOpen(false)} />}
-    </div>
-    {!full && <BottomDock />}
+    {windowMode !== "maximized" && <div className="absolute inset-x-3 bottom-3 z-10"><BottomDock /></div>}
+    {windowMode === "minimized" && <button onClick={() => setWindowMode("normal")} className="absolute left-3 top-3 z-30 flex h-8 items-center gap-2 rounded-[5px] border hairline bg-panel px-2.5 text-[10px] shadow-lg hover:bg-hover"><CandlestickChart className="h-3.5 w-3.5 text-mdata" /><span className="font-mono-num">{symbol} · {timeframe.toUpperCase()}</span><span className="text-muted-foreground">Chart minimized</span><Maximize2 className="h-3 w-3 text-muted-foreground" /></button>}
   </div>;
 }
 
@@ -152,6 +240,10 @@ function layerToneClass(tone: "warn" | "mdata" | "research" | "muted") {
   if (tone === "mdata") return "text-mdata bg-mdata/10";
   if (tone === "research") return "text-research bg-research/10";
   return "text-muted-foreground bg-foreground/5";
+}
+
+function WindowButton({ label, onClick, children, active }: { label: string; onClick: () => void; children: React.ReactNode; active?: boolean }) {
+  return <button onPointerDown={(event) => event.stopPropagation()} onClick={onClick} className={cn("grid h-6 w-6 place-items-center rounded-[3px] text-muted-foreground hover:bg-hover hover:text-foreground", active && "bg-warn/10 text-warn")} aria-label={label} title={label}>{children}</button>;
 }
 
 function ChartTypeButton({ active, label, onClick, children }: { active: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
@@ -163,14 +255,7 @@ function SettingRange({ label, value, min, max, suffix, onChange }: { label: str
 }
 
 function ContextPanel({ symbol, contract, quote, trades, markets, onClose }: { symbol: string; contract: ReturnType<typeof getContract>; quote: { bid: number; ask: number; bidSize: number; askSize: number } | null; trades: { timestamp: number; price: number; quantity: number; side: string; sequence: number }[]; markets: MarketRow[]; onClose: () => void }) {
-  return <aside className="context-panel-optional w-[248px] shrink-0 border-l hairline bg-panel flex flex-col min-h-0" aria-label="Market context">
-    <div className="h-8 shrink-0 px-2.5 border-b hairline flex items-center gap-2"><Activity className="w-3.5 h-3.5 text-mdata" /><span className="text-[10px] font-semibold uppercase tracking-[0.16em]">Market context</span><button onClick={onClose} className="ml-auto grid place-items-center h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-hover" aria-label="Close market context"><X className="w-3.5 h-3.5" /></button></div>
-    <div className="p-2.5 border-b hairline grid grid-cols-2 gap-x-4 gap-y-2"><ContextStat label="Bid" value={quote ? quote.bid.toLocaleString() : "—"} tone="text-neg" /><ContextStat label="Ask" value={quote ? quote.ask.toLocaleString() : "—"} tone="text-pos" /><ContextStat label="Spread" value={quote ? (quote.ask - quote.bid).toFixed(2) : "—"} /><ContextStat label="Bid size" value={quote ? String(quote.bidSize) : "—"} /><ContextStat label="Ask size" value={quote ? String(quote.askSize) : "—"} /><ContextStat label="Tick" value={String(contract.tickSize)} /></div>
-    <div className="px-2.5 py-2 border-b hairline"><div className="flex items-center justify-between"><span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Watchlist</span><span className="text-[9px] font-mono-num text-mdata">{markets.length || 1} verified</span></div><div className="mt-2">{markets.length ? markets.map((market) => <div key={market.symbol} className="flex items-center justify-between py-1 text-[10px]"><div><div className="font-mono-num">{market.symbol.replace("_", " / ")}</div><div className="text-[9px] text-muted-foreground">{market.exchange} · {market.product}</div></div><div className="text-right font-mono-num"><div>{market.price.toLocaleString()}</div><div className={market.changePct >= 0 ? "text-pos" : "text-neg"}>{market.changePct >= 0 ? "+" : ""}{market.changePct.toFixed(2)}%</div></div></div>) : <div className="py-1 text-[10px] text-muted-foreground">{symbol.replace("_", " / ")} · awaiting verified snapshot</div>}</div></div>
-    <div className="h-8 shrink-0 px-2.5 border-b hairline flex items-center"><span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Time &amp; sales</span></div>
-    <div className="min-h-0 flex-1 overflow-y-auto scroll-thin"><table className="w-full text-[10px] font-mono-num"><tbody>{trades.slice().reverse().map((trade) => <tr key={`${trade.timestamp}-${trade.sequence}`} className="border-b hairline/60"><td className="px-2 py-1 text-muted-foreground">{new Date(trade.timestamp).toISOString().slice(11, 19)}</td><td className={cn("px-2 py-1", trade.side === "buy" ? "text-pos" : "text-neg")}>{trade.price.toLocaleString()}</td><td className="px-2 py-1 text-right text-muted-foreground">{trade.quantity}</td></tr>)}{!trades.length && <tr><td className="px-2.5 py-3 text-muted-foreground">Awaiting venue tape…</td></tr>}</tbody></table></div>
-    <div className="shrink-0 border-t hairline p-2.5"><div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Data contract</div><div className="mt-1.5 space-y-1 text-[10px]"><div className="flex justify-between"><span className="text-muted-foreground">Venue</span><span>Gate.io public</span></div><div className="flex justify-between"><span className="text-muted-foreground">Product</span><span>{contract.product}</span></div><div className="flex justify-between"><span className="text-muted-foreground">Execution</span><span className="text-warn">Disabled</span></div></div></div>
-  </aside>;
+  return <aside className="context-panel-optional w-[248px] shrink-0 border-l hairline bg-panel flex flex-col min-h-0" aria-label="Market context"><div className="h-8 shrink-0 px-2.5 border-b hairline flex items-center gap-2"><Activity className="w-3.5 h-3.5 text-mdata" /><span className="text-[10px] font-semibold uppercase tracking-[0.16em]">Market context</span><button onClick={onClose} className="ml-auto grid place-items-center h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-hover" aria-label="Close market context"><X className="w-3.5 h-3.5" /></button></div><div className="p-2.5 border-b hairline grid grid-cols-2 gap-x-4 gap-y-2"><ContextStat label="Bid" value={quote ? quote.bid.toLocaleString() : "—"} tone="text-neg" /><ContextStat label="Ask" value={quote ? quote.ask.toLocaleString() : "—"} tone="text-pos" /><ContextStat label="Spread" value={quote ? (quote.ask - quote.bid).toFixed(2) : "—"} /><ContextStat label="Bid size" value={quote ? String(quote.bidSize) : "—"} /><ContextStat label="Ask size" value={quote ? String(quote.askSize) : "—"} /><ContextStat label="Tick" value={String(contract.tickSize)} /></div><div className="px-2.5 py-2 border-b hairline"><div className="flex items-center justify-between"><span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Watchlist</span><span className="text-[9px] font-mono-num text-mdata">{markets.length || 1} verified</span></div><div className="mt-2">{markets.length ? markets.map((market) => <div key={market.symbol} className="flex items-center justify-between py-1 text-[10px]"><div><div className="font-mono-num">{market.symbol.replace("_", " / ")}</div><div className="text-[9px] text-muted-foreground">{market.exchange} · {market.product}</div></div><div className="text-right font-mono-num"><div>{market.price.toLocaleString()}</div><div className={market.changePct >= 0 ? "text-pos" : "text-neg"}>{market.changePct >= 0 ? "+" : ""}{market.changePct.toFixed(2)}%</div></div></div>) : <div className="py-1 text-[10px] text-muted-foreground">{symbol.replace("_", " / ")} · awaiting verified snapshot</div>}</div></div><div className="h-8 shrink-0 px-2.5 border-b hairline flex items-center"><span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Time &amp; sales</span></div><div className="min-h-0 flex-1 overflow-y-auto scroll-thin"><table className="w-full text-[10px] font-mono-num"><tbody>{trades.slice().reverse().map((trade) => <tr key={`${trade.timestamp}-${trade.sequence}`} className="border-b hairline/60"><td className="px-2 py-1 text-muted-foreground">{new Date(trade.timestamp).toISOString().slice(11, 19)}</td><td className={cn("px-2 py-1", trade.side === "buy" ? "text-pos" : "text-neg")}>{trade.price.toLocaleString()}</td><td className="px-2 py-1 text-right text-muted-foreground">{trade.quantity}</td></tr>)}{!trades.length && <tr><td className="px-2.5 py-3 text-muted-foreground">Awaiting venue tape…</td></tr>}</tbody></table></div><div className="shrink-0 border-t hairline p-2.5"><div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Data contract</div><div className="mt-1.5 space-y-1 text-[10px]"><div className="flex justify-between"><span className="text-muted-foreground">Venue</span><span>Gate.io public</span></div><div className="flex justify-between"><span className="text-muted-foreground">Product</span><span>{contract.product}</span></div><div className="flex justify-between"><span className="text-muted-foreground">Execution</span><span className="text-warn">Disabled</span></div></div></div></aside>;
 }
 
 function ContextStat({ label, value, tone = "text-foreground" }: { label: string; value: string; tone?: string }) {

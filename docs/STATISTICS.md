@@ -89,19 +89,20 @@ Notes:
 - Metrics can be unit-tested in isolation without running the strategy: pass
   in a synthetic `trades` + `equity` array and assert the output.
 
-## 7. Roadmap — NOT yet implemented
+## 7. Monte Carlo trade-path analysis
 
-The following are **explicitly out of scope** for the current engine. They
-must not be fabricated, presented in the UI, or implied in any response:
+The Strategy Tester can run a deterministic **trade-order Monte Carlo** analysis after a completed backtest contains at least ten closed trades. It uses the verified closed-trade P&L sequence from that run and a seeded local pseudo-random generator. For each path, the observed outcomes are shuffled without replacement, then applied to the selected initial equity. The result reports the 5th, 50th, and 95th percentiles of terminal equity and maximum drawdown, together with the path count, seed, and source backtest hash.
 
-- **Monte Carlo simulation** — trade-order resampling to produce a
-  distribution of terminal equity and drawdown.
+This analysis models **path dependency only**. It does not create synthetic candles, forecast prices, estimate market probabilities, or justify execution. It is withheld when fewer than ten closed trades are available, because a display of path uncertainty from an extremely small trade set would be misleading.
+
+## 8. Roadmap — NOT yet implemented
+
+The following are **explicitly out of scope** for the current engine. They must not be fabricated, presented in the UI, or implied in any response:
+
 - **Bootstrap confidence intervals** — nonparametric resampling of per-bar
   or per-trade returns for confidence bands on Sharpe / expectancy.
 - **Parameter sensitivity / optimization sweeps** — with proper in-sample /
   out-of-sample discipline to avoid overfitting.
 - **Walk-forward efficiency** and **probabilistic Sharpe ratio**.
 
-When any of these is implemented, this document will be updated with the
-exact formula, sample size, randomization discipline (deterministic seed
-required), and the honest caveat that must accompany the number in the UI.
+When any remaining item is implemented, this document will be updated with the exact formula, sample size, randomization discipline, and the honest caveat that must accompany the number in the UI.

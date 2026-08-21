@@ -12,11 +12,22 @@ import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 
 export type ChartType = "candles" | "bars" | "line" | "area";
 
+export interface ChartStudy {
+  id: string;
+  name: string;
+  kind: "ema" | "sma" | "vwap";
+  period?: number;
+  color: string;
+  visible: boolean;
+  source?: "native" | "migration";
+}
+
 export interface ChartIndicators {
   vwap: boolean;
   ema20: boolean;
   ema50: boolean;
   volume: boolean;
+  customStudies?: ChartStudy[];
 }
 
 export interface TradeMarker {
@@ -73,6 +84,17 @@ function ema(values: number[], period: number): (number | null)[] {
   for (let i = 1; i < values.length; i++) {
     prev = values[i] * k + prev * (1 - k);
     out[i] = prev;
+  }
+  return out;
+}
+
+function sma(values: number[], period: number): (number | null)[] {
+  const out: (number | null)[] = new Array(values.length).fill(null);
+  let sum = 0;
+  for (let i = 0; i < values.length; i++) {
+    sum += values[i];
+    if (i >= period) sum -= values[i - period];
+    if (i >= period - 1) out[i] = sum / period;
   }
   return out;
 }
@@ -314,11 +336,16 @@ export function TerminalChart({
       if (b.l < lo) lo = b.l;
       if (b.v > maxVol) maxVol = b.v;
     }
-    // include overlays in range (vwap/ema)
-    const ema20 = indicators.ema20 ? ema(vb.map((b) => b.c), 20) : [];
-    const ema50 = indicators.ema50 ? ema(vb.map((b) => b.c), 50) : [];
+    // include overlays in range (vwap/ema/custom native studies)
+    const closes = vb.map((b) => b.c);
+    const ema20 = indicators.ema20 ? ema(closes, 20) : [];
+    const ema50 = indicators.ema50 ? ema(closes, 50) : [];
     const vwap = indicators.vwap ? sessionVWAP(vb) : [];
-    for (const v of [...ema20, ...ema50, ...vwap]) if (typeof v === "number") { hi = Math.max(hi, v); lo = Math.min(lo, v); }
+    const customLines = (indicators.customStudies ?? []).filter((study) => study.visible).map((study) => ({
+      study,
+      values: study.kind === "ema" ? ema(closes, Math.max(1, study.period ?? 20)) : study.kind === "sma" ? sma(closes, Math.max(1, study.period ?? 20)) : sessionVWAP(vb),
+    }));
+    for (const v of [...ema20, ...ema50, ...vwap, ...customLines.flatMap((line) => line.values)]) if (typeof v === "number") { hi = Math.max(hi, v); lo = Math.min(lo, v); }
     const pad = (hi - lo) * 0.08 || hi * 0.01;
     hi += pad; lo -= pad;
     const autoRange = hi - lo || 1;
@@ -456,6 +483,7 @@ export function TerminalChart({
     if (indicators.vwap) drawLine(vwap, c.warn, [4, 3]);
     if (indicators.ema20) drawLine(ema20, c.mdata);
     if (indicators.ema50) drawLine(ema50, c.research);
+    for (const line of customLines) drawLine(line.values, line.study.color, line.study.kind === "vwap" ? [4, 3] : []);
 
     // trade markers
     if (markers?.length) {
