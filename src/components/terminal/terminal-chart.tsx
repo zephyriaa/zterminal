@@ -233,26 +233,33 @@ export function TerminalChart({
   useEffect(() => {
     if (!lastTrade || !bars.length) return;
     const t = lastTrade.timestamp;
+    const price = lastTrade.price;
     const bucket = alignToTimeframe(t, timeframe);
     setBars((prev) => {
       const next = prev.slice();
       const last = next[next.length - 1];
-      if (!last) return prev;
+      if (!last || !Number.isFinite(price) || price <= 0) return prev;
+
+      // A reconnecting or degraded venue can emit a placeholder price. Preserve
+      // verified historical structure until the next stream print is plausible.
+      const ratio = last.c > 0 ? price / last.c : 1;
+      if (ratio < 0.5 || ratio > 1.5) return prev;
+
       if (bucket === last.t) {
         next[next.length - 1] = {
           ...last,
-          c: lastTrade.price,
-          h: Math.max(last.h, lastTrade.price),
-          l: Math.min(last.l, lastTrade.price),
+          c: price,
+          h: Math.max(last.h, price),
+          l: Math.min(last.l, price),
           v: last.v + lastTrade.quantity,
         };
       } else if (bucket > last.t) {
         next.push({
           t: bucket,
           o: last.c,
-          h: Math.max(last.c, lastTrade.price),
-          l: Math.min(last.c, lastTrade.price),
-          c: lastTrade.price,
+          h: Math.max(last.c, price),
+          l: Math.min(last.c, price),
+          c: price,
           v: lastTrade.quantity,
         });
         if (next.length > 2000) next.shift();
