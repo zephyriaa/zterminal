@@ -1,118 +1,85 @@
 "use client";
 
-import { useEffect, type ComponentType } from "react";
+import { useEffect } from "react";
+import Image from "next/image";
 import {
   Activity,
-  BarChart3,
-  BookOpen,
-  CandlestickChart,
+  ChartNoAxesCombined,
   FlaskConical,
-  LineChart,
+  Layers3,
+  RotateCcw,
   Settings2,
+  SlidersHorizontal,
 } from "lucide-react";
-import { CommandPalette } from "./command-palette";
-import { Topbar } from "./topbar";
-import { useWorkspace, type ViewId } from "@/stores/workspace";
-import { ChartView } from "@/components/views/chart-view";
-import { MarketsView } from "@/components/views/markets-view";
-import { StrategyView } from "@/components/views/strategy-view";
-import { BacktesterView } from "@/components/views/backtester-view";
-import { OrderFlowView } from "@/components/views/orderflow-view";
-import {
-  AlertsView,
-  CalendarView,
-  ConnectionsView,
-  JournalView,
-  PortfolioView,
-  ResearchView,
-  RiskView,
-  SettingsView,
-} from "@/components/views/secondary-views";
+import { InstrumentPicker } from "./instrument-picker";
+import { ReferenceChartWorkspace } from "./reference-chart-workspace";
+import { useWorkspace } from "@/stores/workspace";
+import { useMarketStream } from "@/hooks/use-market-stream";
+import { cn } from "@/lib/utils";
 
-const REGISTRY: Record<ViewId, ComponentType> = {
-  chart: ChartView,
-  markets: MarketsView,
-  strategy: StrategyView,
-  backtester: BacktesterView,
-  orderflow: OrderFlowView,
-  calendar: CalendarView,
-  alerts: AlertsView,
-  research: ResearchView,
-  portfolio: PortfolioView,
-  risk: RiskView,
-  journal: JournalView,
-  connections: ConnectionsView,
-  settings: SettingsView,
-};
-
-const RAIL_ITEMS: Array<{ id: ViewId; label: string; icon: ComponentType<{ className?: string }> }> = [
-  { id: "chart", label: "Chart workspace", icon: CandlestickChart },
-  { id: "markets", label: "Markets", icon: BarChart3 },
-  { id: "orderflow", label: "Order flow", icon: Activity },
-  { id: "strategy", label: "Strategy developer", icon: LineChart },
-  { id: "backtester", label: "Backtester", icon: FlaskConical },
-  { id: "research", label: "Research notes", icon: BookOpen },
-];
+function formatPrice(value: number | undefined | null) {
+  return value == null || !Number.isFinite(value) ? "—" : value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 /**
- * The public terminal deliberately keeps the legacy workstation hierarchy:
- * one compact control bar, a narrow tool rail, and a chart-first canvas.
- * The contents remain the current Next/P0 components, so data availability
- * and withholding rules are not inherited from the archived Vite client.
+ * The public terminal uses one reference-led windowed workstation. Existing P0
+ * chart and stream components remain inside it, so visual restoration never
+ * substitutes an archived client or simulated market state.
  */
 export function FloatingWorkstationShell() {
-  const { activeView, setCommandOpen, setView } = useWorkspace();
-  const ActiveView = REGISTRY[activeView] ?? ChartView;
+  const { symbol } = useWorkspace();
+  const { lastTrade, derivatives, provider, dataStatus } = useMarketStream(symbol, { trades: 1, depth: false });
+  const price = lastTrade?.price ?? derivatives?.markPrice;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const editable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
-      if (!editable && event.key === "?") {
+      if (!editable && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setCommandOpen(true);
+        window.dispatchEvent(new Event("zterminal:open-symbol-picker"));
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [setCommandOpen]);
+  }, []);
 
   return (
-    <div className="zt-legacy-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
-      <Topbar />
-      <div className="zt-legacy-workstation">
-        <nav className="zt-legacy-toolrail hidden sm:flex" aria-label="Terminal tools">
-          {RAIL_ITEMS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              className={activeView === id ? "is-active" : undefined}
-              onClick={() => setView(id)}
-              aria-label={label}
-              aria-pressed={activeView === id}
-              title={label}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          ))}
-          <span className="zt-legacy-rail-divider" aria-hidden="true" />
-          <button type="button" onClick={() => setView("settings")} aria-label="Terminal settings" title="Terminal settings">
-            <Settings2 className="h-4 w-4" />
-          </button>
+    <div className="zt-reference-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
+      <header className="zt-reference-header" aria-label="Terminal header">
+        <button type="button" className="zt-reference-mark" onClick={() => window.dispatchEvent(new Event("zterminal:focus-chart"))} aria-label="Focus chart workspace" title="Chart workspace">
+          <Image src="/brand/zterminal-mark-v2.png" alt="" width={24} height={24} priority />
+        </button>
+        <span className="zt-header-separator" aria-hidden="true" />
+        <InstrumentPicker />
+        <div className="zt-header-market hidden md:flex">
+          <span>{provider?.toUpperCase() ?? "BINANCE"} · USDⓈ-M</span>
+          <b>{formatPrice(price)}</b>
+          <em className={cn(dataStatus === "LIVE" ? "is-positive" : "")}>{dataStatus === "LIVE" ? "OBSERVED" : "RESEARCH"}</em>
+        </div>
+        <div className="zt-workspace-label hidden lg:block"><b>FLOATING WORKSTATION</b><span>Drag windows to arrange</span></div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><SlidersHorizontal /></button>
+          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-settings"))} aria-label="Terminal settings" title="Terminal settings"><Settings2 /></button>
+          <div className="zt-research-account"><span>R</span><div className="hidden sm:block"><b>Research mode</b><small>Read only</small></div></div>
+        </div>
+      </header>
+      <div className="zt-reference-body">
+        <nav className="zt-reference-toolrail" aria-label="Research tools">
+          <RailButton label="Studies" onClick={() => window.dispatchEvent(new Event("zterminal:open-studies"))}><Layers3 /></RailButton>
+          <RailButton label="Strategy and backtesting" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))}><FlaskConical /></RailButton>
+          <RailButton label="Market context" onClick={() => window.dispatchEvent(new Event("zterminal:open-context"))}><SlidersHorizontal /></RailButton>
+          <RailButton label="Observed order flow" onClick={() => window.dispatchEvent(new Event("zterminal:open-flow"))}><ChartNoAxesCombined /></RailButton>
+          <span className="zt-rail-divider" aria-hidden="true" />
+          <RailButton label="Reset workspace layout" onClick={() => window.dispatchEvent(new Event("zterminal:reset-layout"))}><RotateCcw /></RailButton>
+          <RailButton label="Feed details" onClick={() => window.dispatchEvent(new Event("zterminal:open-context"))}><Activity /></RailButton>
         </nav>
-        <main className="min-w-0 min-h-0 overflow-hidden" aria-label="Floating research workstation">
-          <ActiveView />
-        </main>
+        <main className="min-h-0 min-w-0 overflow-hidden" aria-label="Floating market research canvas"><ReferenceChartWorkspace /></main>
       </div>
-      <CommandPalette />
     </div>
   );
 }
 
-export const SHORTCUTS: Record<string, ViewId> = {
-  "g c": "chart",
-  "g s": "strategy",
-  "g b": "backtester",
-  "g o": "orderflow",
-  "g m": "markets",
-};
+function RailButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" className="zt-reference-rail-button" onClick={onClick} aria-label={label} title={label}>{children}</button>;
+}
