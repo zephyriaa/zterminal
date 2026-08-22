@@ -113,6 +113,7 @@ export function ChartView() {
   const [layers, setLayers] = useState<Record<LayerId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true, profile: false, structure: false });
   const [studiesOpen, setStudiesOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(true);
+  const [flowOpen, setFlowOpen] = useState(true);
   const [replay, setReplay] = useState(false);
   const [replayIdx, setReplayIdx] = useState<number | null>(null);
   const [orderFlowPane, setOrderFlowPane] = useState<"cvd" | "footprint" | null>(null);
@@ -201,9 +202,9 @@ export function ChartView() {
   const changeStudies = (change: (current: ChartStudy[]) => ChartStudy[]) => setManualStudies((current) => change(current ?? persistedStudies));
   const updateSettings = (patch: Partial<ChartSettings>) => setChartSettings((current) => ({ ...(current ?? persistedChartSettings), ...patch }));
 
-  return <div className="floating-research-canvas relative h-full overflow-hidden bg-background p-0 sm:p-3" aria-label="Floating research canvas">
+  return <div className="zt-floating-workspace floating-research-canvas relative h-full overflow-hidden bg-background p-0 sm:p-3" aria-label="Floating research canvas">
     {windowMode !== "minimized" && <section
-      className={cn("floating-chart-window absolute z-20 relative flex min-h-0 flex-col overflow-hidden border hairline bg-panel shadow-[0_18px_45px_rgba(0,0,0,0.26)]", windowMode === "maximized" ? "rounded-none" : "rounded-[6px]")}
+      className={cn("zt-floating-window zt-chart-window floating-chart-window absolute z-20 relative flex min-h-0 flex-col overflow-hidden border hairline bg-panel shadow-[0_18px_45px_rgba(0,0,0,0.26)]", windowMode === "maximized" ? "rounded-none" : "rounded-[6px]")}
       style={windowStyle}
       onPointerDown={() => windowMode === "normal" && undefined}
       aria-label="Floating chart window"
@@ -218,7 +219,7 @@ export function ChartView() {
         <div className="h-4 w-px bg-foreground/10" />
         <div className="flex items-center gap-1 text-[10px] font-mono-num"><span className={cn("font-semibold", change == null ? "text-foreground" : change >= 0 ? "text-pos" : "text-neg")}>{fmtPrice(livePrice, contract.tickSize)}</span>{changePct != null && <span className={changePct >= 0 ? "text-pos" : "text-neg"}>{changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%</span>}</div>
         <div className="h-4 w-px bg-foreground/10" />
-        <button onClick={() => setStudiesOpen((value) => !value)} className={cn("flex h-7 items-center gap-1.5 rounded-[3px] px-2 text-[10px]", studiesOpen ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover hover:text-foreground")} aria-pressed={studiesOpen}><Layers3 className="h-3.5 w-3.5" />Studies<span className="font-mono-num text-[9px] opacity-70">{LAYERS.filter((layer) => layers[layer.id]).length + customStudies.filter((study) => study.visible).length}</span></button><button onClick={() => setOrderFlowPane((current) => current === "cvd" ? null : "cvd")} className={cn("h-7 px-2 rounded-[3px] text-[9.5px] font-mono-num", orderFlowPane === "cvd" ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover")} title="Toggle CVD chart pane">CVD</button><button onClick={() => setOrderFlowPane((current) => current === "footprint" ? null : "footprint")} className={cn("h-7 px-2 rounded-[3px] text-[9.5px] font-mono-num", orderFlowPane === "footprint" ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover")} title="Toggle footprint chart pane">FP</button>
+        <button onClick={() => setStudiesOpen((value) => !value)} className={cn("flex h-7 items-center gap-1.5 rounded-[3px] px-2 text-[10px]", studiesOpen ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover hover:text-foreground")} aria-pressed={studiesOpen}><Layers3 className="h-3.5 w-3.5" />Studies<span className="font-mono-num text-[9px] opacity-70">{LAYERS.filter((layer) => layers[layer.id]).length + customStudies.filter((study) => study.visible).length}</span></button><button onClick={() => setOrderFlowPane((current) => current === "cvd" ? null : "cvd")} className={cn("h-7 px-2 rounded-[3px] text-[9.5px] font-mono-num", orderFlowPane === "cvd" ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover")} title="Toggle CVD chart pane">CVD</button><button onClick={() => setOrderFlowPane((current) => current === "footprint" ? null : "footprint")} className={cn("h-7 px-2 rounded-[3px] text-[9.5px] font-mono-num", orderFlowPane === "footprint" ? "bg-mdata/12 text-mdata" : "text-muted-foreground hover:bg-hover")} title="Toggle footprint chart pane">FP</button><button onClick={() => setFlowOpen((value) => !value)} className={cn("grid h-7 w-7 place-items-center rounded-[3px]", flowOpen ? "bg-research/15 text-research" : "text-muted-foreground hover:bg-hover hover:text-foreground")} aria-label="Toggle order-flow window" title="Toggle order-flow window"><Activity className="h-3.5 w-3.5" /></button>
         <div className="ml-auto flex items-center gap-0.5 shrink-0"><ChartTypeButton active={chartType === "candles"} label="Candles" onClick={() => setChartType("candles")}><CandlestickChart /></ChartTypeButton><ChartTypeButton active={chartType === "bars"} label="Bars" onClick={() => setChartType("bars")}><BarChart3 /></ChartTypeButton><ChartTypeButton active={chartType === "line"} label="Line" onClick={() => setChartType("line")}><LineChart /></ChartTypeButton><button onClick={() => setRightOpen((value) => !value)} className={cn("grid place-items-center h-7 w-7 rounded-[4px]", rightOpen ? "text-mdata bg-mdata/10" : "text-muted-foreground hover:text-foreground hover:bg-hover")} aria-label="Toggle market context"><SlidersHorizontal className="w-3.5 h-3.5" /></button><details className="relative group"><summary className="list-none grid place-items-center h-7 w-7 rounded-[4px] text-muted-foreground hover:text-foreground hover:bg-hover cursor-pointer" aria-label="Chart settings"><Settings2 className="w-3.5 h-3.5" /></summary><div className="absolute right-0 top-8 z-30 w-64 p-3 bg-popover border hairline shadow-xl"><div className="flex items-center justify-between"><div><div className="text-[11px] font-semibold">Chart settings</div><div className="text-[9px] text-muted-foreground">Saved in this browser</div></div><button className="text-[9px] text-mdata" onClick={() => setChartSettings(DEFAULT_CHART_SETTINGS)}>Reset</button></div><SettingRange label="Future space" value={chartSettings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => updateSettings({ futureBars })} /><SettingRange label="Grid intensity" value={Math.round(chartSettings.gridOpacity * 100)} min={0} max={18} suffix="%" onChange={(value) => updateSettings({ gridOpacity: value / 100 })} /><label className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">Show crosshair<input type="checkbox" checked={chartSettings.showCrosshair} onChange={(event) => updateSettings({ showCrosshair: event.target.checked })} /></label></div></details></div>
       </div>
 
@@ -232,12 +233,13 @@ export function ChartView() {
           </div>
           {orderFlowPane && <ChartOrderFlowPane kind={orderFlowPane} cvd={cvd} footprint={footprint} tickSize={contract.tickSize} />}
         </div>
-        {rightOpen && <ContextPanel symbol={symbol} contract={contract} quote={quote} trades={trades} markets={markets} onClose={() => setRightOpen(false)} />}
       </div>
       {studiesOpen && <StudiesPanel builtIns={LAYERS.map((study) => ({ id: study.id, name: study.label, category: study.id === "volume" || study.id === "profile" ? "Volume" as const : study.id === "structure" ? "Structure" as const : "Trend" as const, description: study.id === "vwap" ? "Session-anchored price-volume reference" : study.id === "ema20" ? "Fast exponential average · 20" : study.id === "ema50" ? "Slow exponential average · 50" : study.id === "volume" ? "Volume histogram pane" : study.id === "profile" ? "Distribution context (planned canvas layer)" : "Market-structure annotation context", color: study.tone === "warn" ? "#f59e0b" : study.tone === "mdata" ? "#38bdf8" : study.tone === "research" ? "#a78bfa" : "#94a3b8", active: layers[study.id] }))} customStudies={customStudies} onToggleBuiltIn={toggleBuiltInStudy} onCreate={(study) => changeStudies((current) => [...current, study])} onUpdate={(study) => changeStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => changeStudies((current) => current.filter((item) => item.id !== id))} />}
       {windowMode === "normal" && <button onPointerDown={(event) => beginInteraction("resize", event)} className="absolute bottom-0 right-0 z-40 hidden sm:grid h-5 w-5 cursor-nwse-resize place-items-center text-muted-foreground/60 hover:text-mdata" aria-label="Resize chart window"><span className="block h-2.5 w-2.5 border-b border-r border-current" /></button>}
     </section>}
 
+    {windowMode !== "maximized" && rightOpen && <section className="zt-floating-window zt-market-window absolute z-30 hidden min-h-0 flex-col overflow-hidden sm:flex" aria-label="Floating market context"><ContextPanel symbol={symbol} contract={contract} quote={quote} trades={trades} markets={markets} onClose={() => setRightOpen(false)} /></section>}
+    {windowMode !== "maximized" && flowOpen && <FloatingFlowWindow symbol={symbol} trades={trades} cvd={cvd} tickSize={contract.tickSize} onClose={() => setFlowOpen(false)} />}
     {windowMode !== "maximized" && <div className="mobile-workspace-dock absolute inset-x-0 bottom-0 sm:inset-x-3 sm:bottom-3 z-10"><BottomDock /></div>}
     {windowMode === "minimized" && <button onClick={() => setWindowMode("normal")} className="absolute left-3 top-3 z-30 flex h-8 items-center gap-2 rounded-[5px] border hairline bg-panel px-2.5 text-[10px] shadow-lg hover:bg-hover"><CandlestickChart className="h-3.5 w-3.5 text-mdata" /><span className="font-mono-num">{symbol} · {timeframe.toUpperCase()}</span><span className="text-muted-foreground">Chart minimized</span><Maximize2 className="h-3 w-3 text-muted-foreground" /></button>}
   </div>;
@@ -260,6 +262,25 @@ function ChartTypeButton({ active, label, onClick, children }: { active: boolean
 
 function SettingRange({ label, value, min, max, suffix, onChange }: { label: string; value: number; min: number; max: number; suffix: string; onChange: (value: number) => void }) {
   return <label className="mt-3 block text-[10px] text-muted-foreground"><span className="flex justify-between"><span>{label}</span><span className="font-mono-num text-foreground">{value}{suffix}</span></span><input type="range" className="w-full mt-1 h-1 accent-[var(--mdata)]" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
+}
+
+function FloatingFlowWindow({ symbol, trades, cvd, tickSize, onClose }: { symbol: string; trades: { timestamp: number; price: number; quantity: number; side: string; sequence: number }[]; cvd: ReturnType<typeof calculateCVD>; tickSize: number; onClose: () => void }) {
+  const prints = trades.slice(-6).reverse();
+  const buyVolume = prints.filter((trade) => trade.side === "buy").reduce((total, trade) => total + trade.quantity, 0);
+  const sellVolume = prints.filter((trade) => trade.side === "sell").reduce((total, trade) => total + trade.quantity, 0);
+  const totalVolume = Math.max(1, buyVolume + sellVolume);
+  const latestCvd = cvd.at(-1)?.value ?? 0;
+
+  return <section className="zt-floating-window zt-flow-window absolute z-30 hidden overflow-hidden sm:flex sm:flex-col" aria-label="Floating order flow window">
+    <header className="zt-window-header"><div><span>ORDER FLOW</span><b>{symbol.replace("_", " / ")} pulse</b></div><button onClick={onClose} aria-label="Close order-flow window"><X className="h-3.5 w-3.5" /></button></header>
+    <div className="zt-window-content">
+      <div className="zt-flow-metrics"><div><span>Window CVD</span><b className={latestCvd >= 0 ? "text-pos" : "text-neg"}>{latestCvd >= 0 ? "+" : ""}{latestCvd.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div><div><span>Prints</span><b>{prints.length}</b></div></div>
+      <div className="zt-flow-balance" aria-label="Recent buy and sell volume"><span className="zt-flow-buy" style={{ width: `${(buyVolume / totalVolume) * 100}%` }} /><span className="zt-flow-sell" style={{ width: `${(sellVolume / totalVolume) * 100}%` }} /></div>
+      <div className="zt-flow-labels"><span className="text-pos">BUY {buyVolume.toLocaleString("en-US", { maximumFractionDigits: 3 })}</span><span className="text-neg">SELL {sellVolume.toLocaleString("en-US", { maximumFractionDigits: 3 })}</span></div>
+      <div className="zt-print-list">{prints.length ? prints.map((trade) => <div key={`${trade.timestamp}-${trade.sequence}`}><span>{new Date(trade.timestamp).toISOString().slice(11, 19)}</span><b className={trade.side === "buy" ? "text-pos" : "text-neg"}>{fmtPrice(trade.price, tickSize)}</b><em>{trade.side === "buy" ? "+" : "−"}{trade.quantity.toLocaleString("en-US", { maximumFractionDigits: 3 })}</em></div>) : <p>Awaiting observed public prints.</p>}</div>
+      <footer>Observed public tape · read only</footer>
+    </div>
+  </section>;
 }
 
 function ContextPanel({ symbol, contract, quote, trades, markets, onClose }: { symbol: string; contract: ReturnType<typeof getContract>; quote: { bid: number; ask: number; bidSize: number; askSize: number } | null; trades: { timestamp: number; price: number; quantity: number; side: string; sequence: number }[]; markets: MarketRow[]; onClose: () => void }) {
