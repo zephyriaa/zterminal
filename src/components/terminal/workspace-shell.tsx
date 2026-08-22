@@ -8,7 +8,7 @@ import { useWorkspace, type ViewId } from "@/stores/workspace";
 
 import { ChartView } from "@/components/views/chart-view";
 import { MarketsView } from "@/components/views/markets-view";
-import { StrategyView } from "@/components/views/strategy-view";
+import { PythonStrategyView } from "@/components/views/python-strategy-view";
 import { BacktesterView } from "@/components/views/backtester-view";
 import { OrderFlowView } from "@/components/views/orderflow-view";
 import {
@@ -25,7 +25,7 @@ import {
 const REGISTRY: Record<ViewId, React.ComponentType> = {
   chart: ChartView,
   markets: MarketsView,
-  strategy: StrategyView,
+  strategy: PythonStrategyView,
   backtester: BacktesterView,
   orderflow: OrderFlowView,
   calendar: CalendarView,

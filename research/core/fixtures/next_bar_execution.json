@@ -1,0 +1,31 @@
+{
+  "schema_version": "research.v2.0",
+  "fixture_version": "1.0.0",
+  "name": "next_bar_execution",
+  "bars": [
+    {"t": 1, "o": "100", "h": "101", "l": "99", "c": "100", "v": "1"},
+    {"t": 2, "o": "101", "h": "103", "l": "100", "c": "102", "v": "1"},
+    {"t": 3, "o": "103", "h": "104", "l": "101", "c": "102", "v": "1"}
+  ],
+  "intents": [
+    {"bar_index": 0, "action": "EnterLong", "quantity": "1", "reason": "entry"},
+    {"bar_index": 1, "action": "Close", "quantity": "1", "reason": "exit"}
+  ],
+  "policy": {
+    "fill_model": "next_bar_open",
+    "commission_per_contract": "0",
+    "slippage_ticks": "0",
+    "spread_ticks": "0",
+    "tick_size": "1",
+    "multiplier": "1"
+  },
+  "expected": {
+    "entry_price": "101",
+    "exit_price": "103",
+    "final_equity": "1002",
+    "trade_count": 1
+  },
+  "negative_cases": [
+    {"name": "future_bar", "intent": {"bar_index": 2, "action": "EnterLong", "quantity": "1"}, "error": "FutureBarIntent"}
+  ]
+}

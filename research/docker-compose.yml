@@ -1,0 +1,26 @@
+services:
+  research-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: zterminal_research
+      POSTGRES_USER: zterminal
+      POSTGRES_PASSWORD: development-only-change-me
+    ports:
+      - "54329:5432"
+    volumes:
+      - research-postgres:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001-research.sql:ro
+
+  research-api:
+    build:
+      context: ./api
+    environment:
+      RESEARCH_DATABASE_URL: postgresql://zterminal:development-only-change-me@research-db:5432/zterminal_research
+      RESEARCH_WORKER_ISOLATED: "0"
+    depends_on:
+      - research-db
+    ports:
+      - "8000:8000"
+
+volumes:
+  research-postgres:

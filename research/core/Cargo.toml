@@ -1,0 +1,18 @@
+[package]
+name = "zterminal-research-core"
+version = "0.1.0"
+edition = "2021"
+license = "UNLICENSED"
+publish = false
+
+[lib]
+name = "research_core"
+path = "src/lib.rs"
+
+[dependencies]
+rust_decimal = { version = "=1.36.0", features = ["serde"] }
+serde = { version = "=1.0.203", features = ["derive"] }
+serde_json = "=1.0.117"
+sha2 = "=0.10.8"
+thiserror = "=2.0.3"
+rust_decimal_macros = "=1.36.0"

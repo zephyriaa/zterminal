@@ -29,7 +29,7 @@ import { simulateTradeSequence, type MonteCarloSummary } from "@/domain/validati
 export type DockTab = "script" | "tester" | "research" | "data" | "alerts" | "trading";
 
 const TABS: { id: DockTab; label: string; icon: typeof Code2 }[] = [
-  { id: "script", label: "Script Editor", icon: Code2 },
+  { id: "script", label: "Python Research", icon: Code2 },
   { id: "tester", label: "Strategy Tester", icon: FlaskConical },
   { id: "research", label: "Research", icon: StickyNote },
   { id: "data", label: "Data", icon: Database },
@@ -39,7 +39,7 @@ const TABS: { id: DockTab; label: string; icon: typeof Code2 }[] = [
 
 const DEFAULT_RESEARCH_STAGES = [
   { label: "Hypothesis", detail: "Momentum continuation above session VWAP", state: "active" },
-  { label: "Data", detail: "Gate.io · verified candles · 5m", state: "ready" },
+  { label: "Data", detail: "Active provider · verified manifest required", state: "ready" },
   { label: "Chart evidence", detail: "EMA 20 / EMA 50 crossover", state: "ready" },
   { label: "Model", detail: "EMA Cross + VWAP Filter", state: "ready" },
   { label: "Backtest", detail: "Run strategy to attach evidence", state: "pending" },
@@ -63,8 +63,8 @@ export function BottomDock() {
   const [log, setLog] = useState<string[]>(["ready · local workspace initialized"]);
   const [search, setSearch] = useState("");
   const dragState = useRef<{ startY: number; startHeight: number } | null>(null);
-  const { source, setSource, lastCompile, setLastCompile, params, setParams, config, lastResult, setLastResult } = useStrategy();
-  const { symbol, timeframe, setSymbol } = useWorkspace();
+  const { source, setSource, lastCompile, setLastCompile, lastResult } = useStrategy();
+  const { symbol, timeframe } = useWorkspace();
 
   useEffect(() => {
     const openTab = (event: Event) => {
@@ -99,53 +99,40 @@ export function BottomDock() {
   const validate = async () => {
     setBusy("validate");
     try {
-      const response = await fetch("/api/strategy", {
+      const response = await fetch("/api/research/artifacts/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ src: source }),
+        body: JSON.stringify({ schema_version: "research.v2.0", kind: "strategy", language: "python", source, runtime_lock: "python-3.12/research-sdk-0.1.0", rights_attestation: "I own or am authorized to use this research source.", origin: { kind: "native_python" } }),
       });
       const result = await response.json();
-      setLastCompile(result);
-      const nextParams: Record<string, number | string | boolean> = {};
-      for (const input of result.inputs ?? []) nextParams[input.name] = params[input.name] ?? input.default;
-      setParams(nextParams);
-      appendLog(result.ok ? `compile ok · ${result.name ?? "strategy"}` : `compile failed · ${result.diagnostics?.length ?? 0} diagnostic(s)`);
-    } catch (error) {
-      appendLog(`compile error · ${error instanceof Error ? error.message : "request failed"}`);
+      setLastCompile({ status: result.status ?? "UNSUPPORTED", diagnostics: result.diagnostics ?? [{ code: result.code ?? "RESEARCH_API_UNAVAILABLE", level: "ERROR", message: result.error ?? "Python research API unavailable" }], sourceHash: result.source_hash, artifactId: result.artifact_id });
+      appendLog(`${result.status ?? "UNSUPPORTED"} · Python artifact validation`);
+    } catch {
+      setLastCompile({ status: "UNSUPPORTED", diagnostics: [{ code: "RESEARCH_API_UNAVAILABLE", level: "ERROR", message: "No Python research service is configured." }] });
+      appendLog("UNSUPPORTED · no Python research service configured");
     } finally {
       setBusy(null);
     }
   };
 
   const runBacktest = async () => {
+    if (!lastCompile?.artifactId) {
+      appendLog("BLOCKED · validate a Python artifact before requesting a research job");
+      return;
+    }
     setBusy("run");
-    const to = Date.now();
     try {
-      const response = await fetch("/api/backtest", {
+      const now = Date.now();
+      const response = await fetch("/api/research/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          src: source,
-          symbol: config.symbol || symbol,
-          timeframe: config.timeframe || timeframe,
-          from: to - config.days * 86_400_000,
-          to,
-          initialCapital: config.initialCapital,
-          commissionPerContract: config.commissionPerContract,
-          slippageTicks: config.slippageTicks,
-          spreadTicks: config.spreadTicks,
-          positionSize: config.positionSize,
-          params,
-        }),
+        body: JSON.stringify({ schema_version: "research.v2.0", kind: "strategy_backtest", artifact_id: lastCompile.artifactId, dataset_manifest: { provider: "binance", native_symbol: symbol, timeframe, from_ms: now - 30 * 86_400_000, to_ms: now, quality_status: "UNAVAILABLE" }, execution_policy: { fill_model: "next_bar_open", commission_per_contract: 0, slippage_ticks: 0, spread_ticks: 0, position_size: 1 } }),
       });
       const result = await response.json();
-      if (!response.ok || result.error) throw new Error(result.error ?? "backtest unavailable");
-      setLastResult(result);
-      setSymbol(config.symbol || symbol);
+      appendLog(`${result.status ?? "UNSUPPORTED"} · ${result.diagnostics?.[0]?.message ?? result.error ?? "research job withheld"}`);
       setTab("tester");
-      appendLog(`backtest complete · ${result.metrics?.totalTrades ?? 0} trades · hash ${result.hash ?? "—"}`);
-    } catch (error) {
-      appendLog(`backtest error · ${error instanceof Error ? error.message : "request failed"}`);
+    } catch {
+      appendLog("UNSUPPORTED · no durable Python/Rust research queue is configured");
     } finally {
       setBusy(null);
     }
@@ -182,13 +169,13 @@ export function BottomDock() {
 }
 
 function ScriptPanel({ source, setSource, lastCompile, busy, validate, runBacktest, log }: { source: string; setSource: (value: string) => void; lastCompile: ReturnType<typeof useStrategy.getState>["lastCompile"]; busy: "validate" | "run" | null; validate: () => void; runBacktest: () => void; log: string[] }) {
-  const errors = lastCompile?.diagnostics?.filter((item) => item.severity === "error") ?? [];
+  const errors = lastCompile?.diagnostics?.filter((item) => item.level === "ERROR") ?? [];
   return <div className="h-full flex flex-col">
     <div className="h-8 shrink-0 border-b hairline flex items-center gap-2 px-2.5">
-      <span className="text-[10px] text-muted-foreground font-mono-num">strategy.zs</span>
+      <span className="text-[10px] text-muted-foreground font-mono-num">strategy.py</span>
       <span className="text-[10px] text-muted-foreground/60">·</span>
-      <span className="text-[10px] text-muted-foreground">ZS runtime</span>
-      <a href="/docs/zscript" target="_blank" rel="noreferrer" className="ml-1 inline-flex h-6 items-center gap-1 rounded-[3px] px-1.5 text-[10px] text-mdata hover:bg-mdata/10"><BookOpen className="h-3 w-3" />ZS docs</a>
+      <span className="text-[10px] text-muted-foreground">Python Research API</span>
+      <a href="/docs/python-research" target="_blank" rel="noreferrer" className="ml-1 inline-flex h-6 items-center gap-1 rounded-[3px] px-1.5 text-[10px] text-mdata hover:bg-mdata/10"><BookOpen className="h-3 w-3" />Python docs</a>
       <div className="ml-auto flex items-center gap-1">
         <button onClick={() => window.dispatchEvent(new Event("zterminal:saved"))} className="dock-action"><Save className="w-3 h-3" />Save</button>
         <button onClick={validate} disabled={busy !== null} className="dock-action"><CheckCircle2 className="w-3 h-3" />{busy === "validate" ? "Validating" : "Validate"}</button>
@@ -202,8 +189,8 @@ function ScriptPanel({ source, setSource, lastCompile, busy, validate, runBackte
         <div className="min-h-0 flex-1 overflow-y-auto scroll-thin p-2.5">
           <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-2">Diagnostics</div>
           {!lastCompile && <div className="text-[10px] text-muted-foreground">Validate to inspect the script.</div>}
-          {lastCompile?.ok && <div className="flex items-center gap-1.5 text-[10px] text-pos"><CheckCircle2 className="w-3 h-3" />No errors · {lastCompile.inputs.length} inputs</div>}
-          {errors.map((error, index) => <div key={index} className="mt-1 flex gap-1.5 text-[10px] text-neg"><AlertCircle className="w-3 h-3 shrink-0" />L{error.line}:{error.col} {error.message}</div>)}
+          {lastCompile?.status === "VALID" && <div className="flex items-center gap-1.5 text-[10px] text-pos"><CheckCircle2 className="w-3 h-3" />Python artifact validated</div>}
+          {errors.map((error, index) => <div key={index} className="mt-1 flex gap-1.5 text-[10px] text-neg"><AlertCircle className="w-3 h-3 shrink-0" />L{error.line ?? "—"} {error.message}</div>)}
         </div>
         <div className="h-16 shrink-0 border-t hairline p-2 overflow-y-auto scroll-thin"><div className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground mb-1">Output</div>{log.slice(0, 2).map((line) => <div key={line} className="text-[10px] text-muted-foreground font-mono-num truncate">{line}</div>)}</div>
       </div>
@@ -222,8 +209,8 @@ function TesterPanel({ result, log }: { result: ReturnType<typeof useStrategy.ge
     ["Trades", String(metrics.totalTrades), "text-foreground"],
   ] : [];
   return <div className="h-full flex flex-col">
-    <div className="h-8 shrink-0 border-b hairline flex items-center px-2.5 gap-2"><span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Backtest evidence</span>{result && <><span className="text-[10px] text-muted-foreground/50">·</span><span className="text-[10px] font-mono-num text-mdata">{result.config.symbol} · {result.config.timeframe}</span><span className="text-[10px] text-pos ml-auto">verified runtime</span></>}</div>
-    {!result ? <div className="flex-1 grid place-items-center text-center"><div><FlaskConical className="mx-auto w-5 h-5 text-muted-foreground/60 mb-2" /><div className="text-[11px] text-muted-foreground">Run the active script to attach trades to the chart.</div><div className="text-[10px] text-muted-foreground/60 mt-1">No performance values are shown until a deterministic run exists.</div></div></div> : <div className="tester-grid min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_280px]">
+    <div className="h-8 shrink-0 border-b hairline flex items-center px-2.5 gap-2"><span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Backtest evidence</span>{result && <><span className="text-[10px] text-muted-foreground/50">·</span><span className="text-[10px] font-mono-num text-mdata">{result.config.symbol} · {result.config.timeframe}</span><span className="text-[10px] text-pos ml-auto">archived result</span></>}</div>
+    {!result ? <div className="flex-1 grid place-items-center text-center"><div><FlaskConical className="mx-auto w-5 h-5 text-muted-foreground/60 mb-2" /><div className="text-[11px] text-muted-foreground">Queue a validated Python research job to attach reviewed trades to the chart.</div><div className="text-[10px] text-muted-foreground/60 mt-1">No performance values are shown until a deterministic run exists.</div></div></div> : <div className="tester-grid min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0 min-h-0 overflow-y-auto scroll-thin"><table className="w-full text-[10.5px] tnum"><thead><tr className="border-b hairline text-[9px] uppercase tracking-[0.14em] text-muted-foreground"><th className="px-3 py-2 text-left font-medium">Trade</th><th className="px-3 py-2 text-left font-medium">Side</th><th className="px-3 py-2 text-right font-medium">Entry</th><th className="px-3 py-2 text-right font-medium">Exit</th><th className="px-3 py-2 text-right font-medium">P&amp;L</th></tr></thead><tbody>{result.trades.slice(-12).reverse().map((trade) => <tr key={trade.id} className="border-b hairline/60"><td className="px-3 py-1.5 text-muted-foreground">#{trade.id}</td><td className={cn("px-3 py-1.5 uppercase", trade.side === "long" ? "text-pos" : "text-neg")}>{trade.side}</td><td className="px-3 py-1.5 text-right text-muted-foreground">{trade.entryPrice.toLocaleString()}</td><td className="px-3 py-1.5 text-right text-muted-foreground">{trade.exitPrice.toLocaleString()}</td><td className={cn("px-3 py-1.5 text-right", trade.pnl >= 0 ? "text-pos" : "text-neg")}>{trade.pnl >= 0 ? "+" : "−"}{Math.abs(trade.pnl).toFixed(2)}</td></tr>)}</tbody></table></div>
       <div className="tester-metrics min-h-0 overflow-y-auto scroll-thin border-l hairline bg-surface/30 p-2.5"><div className="grid grid-cols-2 content-start gap-x-4 gap-y-2">{rows.map(([label, value, tone]) => <div key={label}><div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div><div className={cn("mt-0.5 text-[12px] font-mono-num", tone)}>{value}</div></div>)}<div className="col-span-2 pt-2 border-t hairline text-[9px] text-muted-foreground font-mono-num truncate">{result.barsProcessed} bars · {result.hash}</div></div><MonteCarloPanel result={result} /></div>
     </div>}
