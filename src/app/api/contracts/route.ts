@@ -1,39 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
-import { listContracts } from "@/lib/market/contracts";
-import { GATEIO_REST_URL, GateContractSchema, gateContractToMetadata } from "@/lib/market/gateio";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** Read-only contract metadata from the selected provider. */
-export async function GET(request: NextRequest) {
-  const provider = request.nextUrl.searchParams.get("provider") === "mock" ? "mock" : "gateio";
-  if (provider === "mock") {
-    return NextResponse.json({
-      provider: "mock",
-      environment: "simulation",
-      dataStatus: "SIMULATED",
-      contracts: listContracts(),
-    });
-  }
+const MARKET_GATEWAY_URL = process.env.MARKET_GATEWAY_URL
+  ?? `http://127.0.0.1:${process.env.MARKET_DATA_PORT ?? "3003"}`;
 
+/**
+ * A browser-safe projection of the active read-only market provider's discovered
+ * catalogue. This intentionally has no static or cross-venue fallback: a symbol
+ * is selectable only when its provider adapter has validated it for this service.
+ */
+export async function GET() {
   try {
-    const response = await fetch(`${GATEIO_REST_URL}/futures/usdt/contracts`, {
+    const upstream = await fetch(`${MARKET_GATEWAY_URL}/contracts`, {
+      cache: "no-store",
       headers: { Accept: "application/json" },
-      next: { revalidate: 60 },
     });
-    if (!response.ok) throw new Error(`Gate.io contracts unavailable (${response.status})`);
-    const raw = await response.json();
-    if (!Array.isArray(raw)) throw new Error("invalid Gate.io contracts response");
-    const contracts = raw.flatMap((value) => {
-      const result = GateContractSchema.safeParse(value);
-      return result.success && !result.data.in_delisting ? [gateContractToMetadata(result.data)] : [];
+    const body = await upstream.json();
+    return NextResponse.json(body, {
+      status: upstream.status,
+      headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" },
     });
-    return NextResponse.json({ provider: "gateio", environment: "live", dataStatus: "LIVE", contracts });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Gate.io contracts unavailable" },
-      { status: 503 }
+      {
+        error: error instanceof Error ? error.message : "Active provider catalogue unavailable",
+        contracts: [],
+      },
+      { status: 503, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
 }

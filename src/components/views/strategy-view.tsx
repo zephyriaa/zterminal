@@ -4,6 +4,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   CheckCircle2,
@@ -22,7 +23,6 @@ import { useWorkspace } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Timeframe } from "@/lib/market/types";
 import type { BacktestResult } from "@/lib/strategy/zs-runtime";
 import { useInstitutionalProtocol } from "@/stores/institutional-protocol";
@@ -30,8 +30,6 @@ import { ProtocolStrategyPanel } from "./protocol-strategy-panel";
 import { assessSampleAdequacy, baselineFingerprint } from "@/domain/protocol/policy";
 import { buildSingleVariableSource } from "@/domain/protocol/generation";
 
-const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
-const HISTORICAL_GATEIO_SYMBOLS = ["QQQX_USDT"];
 
 export function StrategyView() {
   const {
@@ -41,7 +39,7 @@ export function StrategyView() {
     config, setConfig,
     lastResult, setLastResult,
   } = useStrategy();
-  const { setView, setSymbol } = useWorkspace();
+  const { symbol: workspaceSymbol, timeframe: workspaceTimeframe } = useWorkspace();
   const { projects, activeProjectId, addRun, completeIncrementalRun } = useInstitutionalProtocol();
   const activeProtocol = projects.find((project) => project.id === activeProjectId) ?? null;
   const lockedArtifact = activeProtocol?.artifacts.at(-1);
@@ -107,7 +105,8 @@ export function StrategyView() {
     }
     if (existingBaseline) {
       setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] baseline reused — fingerprint ${fingerprint}. Changed settings require a one-variable incremental experiment.`, ...current].slice(0, 50));
-      setView("backtester");
+      setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] baseline already exists — review the retained run below before starting a declared incremental experiment.`, ...current].slice(0, 50));
+      setTab("console");
       return;
     }
     if (activeProtocol && protocolBaselineLocked && !baseInput) {
@@ -129,8 +128,8 @@ export function StrategyView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           src: executionSource,
-          symbol: config.symbol,
-          timeframe: config.timeframe,
+          symbol: workspaceSymbol,
+          timeframe: workspaceTimeframe,
           from,
           to,
           initialCapital: config.initialCapital,
@@ -168,8 +167,7 @@ export function StrategyView() {
       } else {
         setLog((l) => [`[${new Date().toISOString().slice(11, 19)}] standard backtest complete — ${j.metrics.totalTrades} trades · net ${(j.metrics.netProfit >= 0 ? "+" : "") + j.metrics.netProfit.toFixed(0)} · PF ${j.metrics.profitFactor.toFixed(2)} · DD ${j.metrics.maxDrawdownPct.toFixed(1)}% · hash ${j.hash}`, ...l].slice(0, 50));
       }
-      setSymbol(config.symbol);
-      setView("backtester");
+      setLog((current) => [`[${new Date().toISOString().slice(11, 19)}] chart context retained — ${workspaceSymbol} · ${workspaceTimeframe}. Historical-provider provenance is attached to the run.`, ...current].slice(0, 50));
     } finally {
       setBusy(null);
     }
@@ -204,7 +202,8 @@ export function StrategyView() {
           <Pill tone={lastCompile?.ok ? "pos" : "default"}>
             {lastCompile?.ok ? <><CheckCircle2 className="w-3 h-3" />Compiled</> : lastCompile ? <><AlertCircle className="w-3 h-3" />{errs.length} error{errs.length === 1 ? "" : "s"}</> : "Not compiled"}
           </Pill>
-          <Pill tone="pos">Gate.io historical</Pill>
+          <Pill tone="pos">Research only</Pill>
+          <Link href="/docs/zscript" className="rounded-[3px] border hairline px-2 py-1 text-[10px] text-mdata hover:bg-hover hover:text-foreground">ZScript docs</Link>
         </div>
       </div>
 
@@ -257,18 +256,17 @@ export function StrategyView() {
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Configuration</span>
           </div>
           <div className="overflow-y-auto scroll-thin p-2.5 space-y-2">
-            <CfgSelect label="Instrument" value={config.symbol} onChange={(v) => setConfig({ symbol: v })} options={HISTORICAL_GATEIO_SYMBOLS} disabled={protocolBaselineLocked} />
-            <CfgSelect label="Timeframe" value={config.timeframe} onChange={(v) => setConfig({ timeframe: v })} options={TIMEFRAMES} disabled={protocolBaselineLocked} />
+            <MarketContextField symbol={workspaceSymbol} timeframe={workspaceTimeframe as Timeframe} />
             <Field label="Lookback (days)"><Input type="number" min="1" max="60" value={String(config.days)} onChange={(e) => setConfig({ days: Math.max(1, Math.min(60, Number(e.target.value) || 1)) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
             <Field label="Initial capital (USDT)"><Input type="number" min="1" value={String(config.initialCapital)} onChange={(e) => setConfig({ initialCapital: Math.max(1, Number(e.target.value) || 1) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
             <Field label="Native contract quantity"><Input type="number" min="1" step="1" value={String(config.positionSize)} onChange={(e) => setConfig({ positionSize: Math.max(1, Math.floor(Number(e.target.value) || 1)) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
             <Field label="Commission / native contract (USDT)"><Input type="number" min="0" step="0.0001" value={String(config.commissionPerContract)} onChange={(e) => setConfig({ commissionPerContract: Math.max(0, Number(e.target.value) || 0) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
             <Field label="Slippage (ticks)"><Input type="number" min="0" step="0.1" value={String(config.slippageTicks)} onChange={(e) => setConfig({ slippageTicks: Math.max(0, Number(e.target.value) || 0) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
             <Field label="Spread (ticks)"><Input type="number" min="0" step="0.1" value={String(config.spreadTicks)} onChange={(e) => setConfig({ spreadTicks: Math.max(0, Number(e.target.value) || 0) })} disabled={protocolBaselineLocked} className="h-7 text-[12px] tnum bg-surface" /></Field>
-            <div className="text-[9.5px] text-muted-foreground leading-relaxed">{protocolBaselineLocked ? "Baseline code and configuration are frozen. Any changed setting must be created as one declared downstream variable, never rerun as a baseline." : "Lookback is capped at 60 days in the interface; the API separately enforces the verified Gate.io page limit for each selected timeframe."}</div>
+            <div className="text-[9.5px] text-muted-foreground leading-relaxed">{protocolBaselineLocked ? "Baseline code and configuration are frozen. Any changed setting must be created as one declared downstream variable, never rerun as a baseline." : "The chart’s active verified provider supplies the historical request. If it is unavailable, the run is withheld rather than substituted."}</div>
             <div className="pt-2 border-t hairline">
               <StatRow label="Execution" value="next-bar open" tone="muted" hint="Anti look-ahead: signals on bar[i] fill at bar[i+1].open" />
-              <StatRow label="Data" value="GATE.IO · HISTORICAL" tone="pos" hint="Public USDT-perpetual candles with range and provider provenance attached to each run." />
+              <StatRow label="Data" value="ACTIVE PROVIDER · HISTORICAL" tone="pos" hint="Public candles and source provenance are attached to each successful run." />
             </div>
           </div>
         </div>
@@ -339,16 +337,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function CfgSelect({ label, value, onChange, options, disabled = false }: { label: string; value: string; onChange: (v: string) => void; options: string[]; disabled?: boolean }) {
-  return (
-    <label className="block">
-      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{label}</span>
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="h-7 text-[12px] bg-surface"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-        </SelectContent>
-      </Select>
-    </label>
-  );
+function MarketContextField({ symbol, timeframe }: { symbol: string; timeframe: Timeframe }) {
+  return <div className="rounded-[3px] border hairline bg-surface p-2"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Chart context</div><div className="mt-1 flex items-center justify-between gap-2 font-mono-num text-[11px] text-foreground"><span>{symbol}</span><span className="rounded bg-research/15 px-1.5 py-0.5 text-[9px] text-research">{timeframe}</span></div><p className="mt-1 text-[9px] leading-relaxed text-muted-foreground">Backtests use this selected market only when the active provider returns verified historical bars.</p></div>;
 }

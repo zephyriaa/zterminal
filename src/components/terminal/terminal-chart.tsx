@@ -184,7 +184,7 @@ export function TerminalChart({
   const priceView = useRef({ offset: 0, zoom: 1 });
   const priceMetrics = useRef({ autoCenter: 0, autoRange: 1, priceHeight: 1 });
   const cross = useRef<{ x: number; y: number } | null>(null);
-  const dragging = useRef<{ mode: "time" | "price"; x: number; y: number; right: number; priceZoom: number } | null>(null);
+  const dragging = useRef<{ mode: "time" | "price-zoom" | "price-pan"; x: number; y: number; right: number; priceZoom: number; priceOffset: number } | null>(null);
   const touchPoints = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ mode: "time" | "price"; distance: number; count: number; right: number; priceZoom: number; clientY: number } | null>(null);
   const raf = useRef(0);
@@ -611,9 +611,23 @@ export function TerminalChart({
 
   // pointer handlers
   const maxFutureBars = Math.max(settings.futureBars * 5, 160);
-  const minRightOffset = -Math.max(0, bars.length - 1);
+  // Retain at least a small visible history rather than allowing an all-empty
+  // canvas at the oldest boundary. The value is still derived only from loaded
+  // provider candles, never from padded or manufactured bars.
+  const minRightOffset = -Math.max(0, bars.length - Math.min(view.current.count, 24));
   const clampRight = (right: number) => Math.max(minRightOffset, Math.min(maxFutureBars, right));
   const invalidateViewport = () => setViewVersion((version) => version + 1);
+  const clampPriceOffset = (offset: number) => Math.max(-3, Math.min(3, offset));
+  const panTimeByPixels = (pixels: number, plotWidth: number, originRight: number) => {
+    const slotShift = pixels * (view.current.count / Math.max(1, plotWidth));
+    view.current.right = clampRight(originRight - slotShift);
+    invalidateViewport();
+  };
+  const panPriceByPixels = (pixels: number, originOffset: number) => {
+    const height = Math.max(1, priceMetrics.current.priceHeight);
+    priceView.current = { ...priceView.current, offset: clampPriceOffset(originOffset - pixels / height) };
+    invalidateViewport();
+  };
   const resetViewport = () => {
     view.current.right = settings.futureBars;
     view.current.count = 120;
@@ -656,13 +670,14 @@ export function TerminalChart({
     };
     dragging.current = null;
   };
-  const beginSingleTouchDrag = (point: { x: number; y: number }, rect: DOMRect) => {
+  const beginSingleTouchDrag = (point: { x: number; y: number }, rect: DOMRect, mode?: "time" | "price-pan") => {
     dragging.current = {
-      mode: point.x - rect.left >= rect.width - PRICE_AXIS_W ? "price" : "time",
+      mode: mode ?? (point.x - rect.left >= rect.width - PRICE_AXIS_W ? "price-zoom" : "time"),
       x: point.x,
       y: point.y,
       right: view.current.right,
       priceZoom: priceView.current.zoom,
+      priceOffset: priceView.current.offset,
     };
   };
   const onPointerMove = (e: React.PointerEvent) => {
@@ -696,29 +711,29 @@ export function TerminalChart({
       }
     }
     if (dragging.current) {
-      if (dragging.current.mode === "price") {
+      if (dragging.current.mode === "price-zoom") {
         // Dragging the price scale stretches or compresses candle height around the pointer.
         const deltaY = e.clientY - dragging.current.y;
         const nextZoom = dragging.current.priceZoom * Math.exp(-deltaY * 0.01);
         zoomPriceScaleAtPointer(nextZoom, e.clientY, rect);
+      } else if (dragging.current.mode === "price-pan") {
+        panPriceByPixels(e.clientY - dragging.current.y, dragging.current.priceOffset);
       } else {
-        const dx = e.clientX - dragging.current.x;
-        const plotWidth = Math.max(1, rect.width - PRICE_AXIS_W);
-        const shifted = Math.round(dx * (view.current.count / plotWidth));
-        const nextRight = clampRight(dragging.current.right - shifted);
-        if (nextRight !== view.current.right) {
-          view.current.right = nextRight;
-          invalidateViewport();
-        }
+        // Fractional slot movement avoids the inert feeling caused by rounding
+        // small pointer deltas before the canvas has visibly shifted.
+        panTimeByPixels(e.clientX - dragging.current.x, rect.width - PRICE_AXIS_W, dragging.current.right);
       }
     }
     cross.current = { x, y };
     scheduleDraw();
   };
   const onPointerDown = (e: React.PointerEvent) => {
+    // The chart body always owns a plot gesture. Floating-window movement is
+    // reserved for its title bar and resize handles.
     e.preventDefault();
+    e.stopPropagation();
     canvasRef.current?.focus();
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    canvasRef.current?.setPointerCapture?.(e.pointerId);
     const rect = canvasRef.current!.getBoundingClientRect();
     if (e.pointerType === "touch") {
       touchPoints.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -726,9 +741,11 @@ export function TerminalChart({
       else beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect);
       return;
     }
-    beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect);
+    const plotMode = e.button === 1 || e.altKey ? "price-pan" : "time";
+    beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect, plotMode);
   };
   const onPointerUp = (e: React.PointerEvent) => {
+    canvasRef.current?.releasePointerCapture?.(e.pointerId);
     if (e.pointerType !== "touch") {
       dragging.current = null;
       return;
@@ -753,19 +770,22 @@ export function TerminalChart({
   };
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const rect = canvasRef.current!.getBoundingClientRect();
     const isPriceAxis = e.clientX - rect.left >= rect.width - PRICE_AXIS_W;
+    // Normalize line/page wheel devices and high-resolution trackpads into one
+    // bounded exponential curve so both feel responsive without sudden jumps.
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? rect.height : 1;
+    const normalized = Math.max(-180, Math.min(180, e.deltaY * unit));
+    const factor = Math.exp(-normalized * 0.0016);
     if (isPriceAxis) {
-      const factor = e.deltaY > 0 ? 0.87 : 1.15;
       zoomPriceScaleAtPointer(priceView.current.zoom * factor, e.clientY, rect);
       return;
     }
     const pivot = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width - PRICE_AXIS_W)));
     const previousCount = view.current.count;
-    const delta = e.deltaY > 0 ? 1.15 : 0.87;
-    const nextCount = Math.max(30, Math.min(400, Math.round(previousCount * delta)));
-    // Preserve the candle under the cursor while zooming, matching the
-    // expected charting-terminal behaviour rather than jumping to the edge.
+    const nextCount = Math.max(30, Math.min(400, Math.round(previousCount / factor)));
+    // Preserve the candle beneath the pointer while changing density.
     view.current.right = clampRight(view.current.right + (nextCount - previousCount) * (1 - pivot));
     view.current.count = nextCount;
     invalidateViewport();
@@ -800,7 +820,7 @@ export function TerminalChart({
     <div ref={wrapRef} className="relative h-full w-full bg-background">
       <canvas
         ref={canvasRef}
-        className="block h-full w-full touch-none cursor-crosshair"
+        className="block h-full w-full touch-none cursor-grab active:cursor-grabbing"
         onPointerMove={onPointerMove}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
@@ -816,9 +836,9 @@ export function TerminalChart({
           }
         }}
         tabIndex={0}
-        aria-label={`${symbol} ${timeframe} chart; drag to pan time, pinch the plot to change candle density, pinch or drag the price scale to stretch or compress candle height, double click to reset`}
+        aria-label={`${symbol} ${timeframe} chart; drag to pan time, use middle mouse or Alt-drag to pan the price range, pinch the plot to change candle density, pinch or drag the price scale to stretch or compress candle height, double click to reset`}
       />
-      <div className="mobile-chart-gesture-hint pointer-events-none absolute right-2 top-2 rounded-[3px] border hairline bg-panel/80 px-1.5 py-1 text-[8px] text-muted-foreground backdrop-blur">Drag to pan · pinch to scale</div>
+      <div className="mobile-chart-gesture-hint pointer-events-none absolute right-2 top-2 rounded-[3px] border hairline bg-panel/80 px-1.5 py-1 text-[8px] text-muted-foreground backdrop-blur">Drag to pan · Alt-drag price · pinch to scale</div>
       <div className="pointer-events-none absolute bottom-7 left-2 flex items-center gap-1.5">
         <button
           type="button"

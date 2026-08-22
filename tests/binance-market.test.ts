@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { BinanceOrderBook } from "../mini-services/market-data/binance-order-book";
+import { fetchBinanceHistoricalBars } from "../src/lib/market/binance";
 
 test("bridges a Binance snapshot using the first depth range that covers the next update id", () => {
   const book = new BinanceOrderBook();
@@ -33,4 +34,24 @@ test("does not mark a book live when no buffered diff can bridge the snapshot", 
   book.apply({ U: 80, u: 90, pu: 79, E: 1, b: [], a: [] });
   assert.equal(book.bootstrap({ lastUpdateId: 100, bids: [], asks: [] }), false);
   assert.equal(book.isReady(), false);
+});
+
+test("normalizes verified Binance historical klines without padding missing candles", async () => {
+  const requested: string[] = [];
+  const bars = await fetchBinanceHistoricalBars("BTCUSDT", "1m", 60_000, 180_000, async (input) => {
+    requested.push(String(input));
+    return new Response(JSON.stringify([
+      [60_000, "100", "103", "99", "102", "12"],
+      [120_000, "102", "104", "101", "103", "18"],
+      [120_000, "102", "105", "100", "104", "19"],
+      [180_000, "104", "106", "103", "105", "14"],
+    ]), { status: 200 });
+  });
+  assert.equal(requested.length, 1);
+  assert.match(requested[0], /symbol=BTCUSDT/);
+  assert.deepEqual(bars, [
+    { t: 60_000, o: 100, h: 103, l: 99, c: 102, v: 12 },
+    { t: 120_000, o: 102, h: 105, l: 100, c: 104, v: 19 },
+    { t: 180_000, o: 104, h: 106, l: 103, c: 105, v: 14 },
+  ]);
 });
