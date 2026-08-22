@@ -39,6 +39,21 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        // A historic Vite PWA used this scope. Keep the retirement script fresh
+        // so browsers with that old controller promptly receive the cleanup.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0, must-revalidate",
+          },
+          {
+            key: "Service-Worker-Allowed",
+            value: "/",
+          },
+        ],
+      },
     ];
   },
 };
