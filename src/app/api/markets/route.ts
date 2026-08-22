@@ -19,8 +19,11 @@ export async function GET() {
     const changePct = parseGateDecimal(data.change_percentage ?? "0", "ticker change percentage");
     const previous = changePct === -100 ? price : price / (1 + changePct / 100);
     const rows = [{
-      symbol: GATEIO_DEFAULT_SYMBOL,
-      description: "QQQX / USDT Perpetual",
+      // The workspace uses the canonical BTCUSDT display symbol. The request
+      // remains explicitly labelled Gate.io and uses BTC_USDT upstream.
+      symbol: "BTCUSDT",
+      upstreamSymbol: GATEIO_DEFAULT_SYMBOL,
+      description: "BTC / USDT Perpetual",
       exchange: "GATEIO",
       product: "perpetual",
       price,

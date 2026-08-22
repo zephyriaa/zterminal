@@ -5,9 +5,12 @@ import { TIMEFRAME_SECONDS, type Bar, type ContractMetadata, type Timeframe } fr
 export const GATEIO_REST_URL = "https://api.gateio.ws/api/v4";
 export const GATEIO_WS_URL = "wss://fx-ws.gateio.ws/v4/ws/usdt";
 export const GATEIO_PROVIDER = "gateio" as const;
-export const GATEIO_DEFAULT_SYMBOL = "QQQX_USDT";
+export const GATEIO_DEFAULT_SYMBOL = "BTC_USDT";
 
 const ALIASES: Record<string, string> = {
+  BTC_USDT: "BTC_USDT",
+  BTCUSDT: "BTC_USDT",
+  "BINANCE:BTCUSDT": "BTC_USDT",
   QQQX_USDT: "QQQX_USDT",
   QQQXUSDT: "QQQX_USDT",
   "QQQXUSDT.P": "QQQX_USDT",
@@ -20,6 +23,7 @@ export function normalizeGateioSymbol(input: string | null | undefined): string 
   if (!input) return null;
   const normalized = input.trim().toUpperCase();
   if (ALIASES[normalized]) return ALIASES[normalized];
+  if (/^[A-Z0-9]+USDT$/.test(normalized)) return `${normalized.slice(0, -4)}_USDT`;
   return /^[A-Z0-9]+_USDT$/.test(normalized) ? normalized : null;
 }
 
