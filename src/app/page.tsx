@@ -1,5 +1,5 @@
-import { WorkspaceShell } from "@/components/terminal/workspace-shell";
+import { LandingPage } from "@/components/landing/landing-page";
 
 export default function Home() {
-  return <WorkspaceShell />;
+  return <LandingPage />;
 }
