@@ -19,9 +19,19 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
-        // The public homepage has changed routes before. Keep its HTML fresh so
-        // a visitor cannot be held on an earlier terminal page after a release.
+        // The route split is intentional: the landing page lives at / and the
+        // floating research workstation at /terminal. Do not retain an older
+        // HTML shell after either route is released.
         source: "/",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0, must-revalidate",
+          },
+        ],
+      },
+      {
+        source: "/terminal",
         headers: [
           {
             key: "Cache-Control",
