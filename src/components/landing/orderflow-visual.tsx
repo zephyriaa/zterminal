@@ -36,16 +36,37 @@ const overlayController = `
   if (!shell || !body || !divider || shell.dataset.bound === 'true') return;
   shell.dataset.bound = 'true';
   let dragging = false;
+  let activePointerId = null;
   const apply = (clientX) => {
     const rect = body.getBoundingClientRect();
     const next = Math.max(8, Math.min(92, ((clientX - rect.left) / rect.width) * 100));
     shell.style.setProperty('--split', next.toFixed(1) + '%');
     divider.setAttribute('aria-valuenow', String(Math.round(next)));
   };
-  divider.addEventListener('pointerdown', (event) => { dragging = true; divider.setPointerCapture?.(event.pointerId); apply(event.clientX); });
-  divider.addEventListener('pointermove', (event) => { if (dragging) apply(event.clientX); });
-  divider.addEventListener('pointerup', () => { dragging = false; });
-  divider.addEventListener('pointercancel', () => { dragging = false; });
+  const move = (event) => {
+    if (!dragging || event.pointerId !== activePointerId) return;
+    event.preventDefault?.();
+    apply(event.clientX);
+  };
+  const end = (event) => {
+    if (activePointerId !== null && event.pointerId !== activePointerId) return;
+    dragging = false;
+    activePointerId = null;
+  };
+  divider.addEventListener('pointerdown', (event) => {
+    event.preventDefault?.();
+    dragging = true;
+    activePointerId = event.pointerId;
+    divider.focus?.({ preventScroll: true });
+    divider.setPointerCapture?.(event.pointerId);
+    apply(event.clientX);
+  });
+  divider.addEventListener('pointermove', move, { passive: false });
+  divider.addEventListener('pointerup', end);
+  divider.addEventListener('pointercancel', end);
+  window.addEventListener('pointermove', move, { passive: false });
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
   divider.addEventListener('keydown', (event) => {
     const current = Number.parseFloat(getComputedStyle(shell).getPropertyValue('--split')) || 50;
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
