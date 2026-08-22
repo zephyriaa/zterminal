@@ -1,5 +1,5 @@
-import { WorkspaceShell } from "@/components/terminal/workspace-shell";
+import { FloatingWorkstationShell } from "@/components/terminal/floating-workstation-shell";
 
 export default function TerminalPage() {
-  return <WorkspaceShell />;
+  return <FloatingWorkstationShell />;
 }

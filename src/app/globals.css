@@ -612,3 +612,183 @@
   .zt-floating-workspace { background: linear-gradient(160deg, #130722, #0d0818) !important; }
   .zt-floating-workspace::before { opacity: 0.18; }
 }
+
+/* Restored public workstation: derived from the archived chart-first interface.
+   Scope is intentionally limited to `/terminal` so the landing page remains independent. */
+.zt-legacy-terminal {
+  --background: #080b14;
+  --panel: #0e1220;
+  --surface: #151a2b;
+  --elevated: #1a2035;
+  --hover: #222944;
+  --foreground: #e2e8fa;
+  --muted-foreground: #91a0bd;
+  --mdata: #4de0d0;
+  --research: #a78bfa;
+  --border: rgba(137, 156, 203, 0.22);
+  position: relative;
+  isolation: isolate;
+  padding: 8px;
+  background:
+    radial-gradient(circle at 76% -18%, rgba(91, 62, 177, 0.20), transparent 34rem),
+    radial-gradient(circle at 4% 96%, rgba(11, 123, 129, 0.12), transparent 30rem),
+    #070a13;
+}
+
+.zt-legacy-terminal > header[aria-label="Terminal navigation"] {
+  position: relative;
+  z-index: 20;
+  height: 46px;
+  min-height: 46px;
+  border: 1px solid rgba(137, 156, 203, 0.24);
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(100deg, rgba(8, 11, 21, 0.98), rgba(17, 20, 36, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 12px 28px rgba(0, 0, 0, 0.24);
+}
+
+.zt-legacy-terminal > header [aria-label="Open chart workspace"] {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(77, 224, 208, 0.24);
+  background: rgba(77, 224, 208, 0.07);
+}
+
+.zt-legacy-terminal > header button:hover {
+  border-color: rgba(167, 139, 250, 0.46);
+  background: rgba(140, 109, 242, 0.12);
+}
+
+.zt-legacy-terminal > header [aria-label^="Search instruments"] {
+  border-color: rgba(147, 164, 207, 0.22);
+  background: rgba(3, 6, 14, 0.56);
+}
+
+.zt-legacy-terminal > header [aria-pressed="true"] {
+  color: #f5f3ff;
+  border: 1px solid rgba(167, 139, 250, 0.52);
+  background: rgba(140, 109, 242, 0.18);
+}
+
+.zt-legacy-workstation {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 7px;
+  height: calc(100dvh - 62px);
+  margin-top: 7px;
+}
+
+.zt-legacy-toolrail {
+  position: relative;
+  z-index: 24;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 5px;
+  border: 1px solid rgba(137, 156, 203, 0.22);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(17, 23, 38, 0.95), rgba(8, 11, 20, 0.97));
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+}
+
+.zt-legacy-toolrail button {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #98a6c5;
+  background: transparent;
+}
+
+.zt-legacy-toolrail button:hover,
+.zt-legacy-toolrail button.is-active {
+  border-color: rgba(77, 224, 208, 0.35);
+  color: #4de0d0;
+  background: rgba(62, 208, 197, 0.11);
+}
+
+.zt-legacy-rail-divider {
+  width: 18px;
+  height: 1px;
+  margin: 2px 0;
+  background: rgba(137, 156, 203, 0.22);
+}
+
+.zt-legacy-terminal .floating-research-canvas {
+  height: 100%;
+  min-height: 0;
+  border: 1px solid rgba(125, 143, 190, 0.16);
+  border-radius: 8px;
+  background-color: #080b14 !important;
+  background-image:
+    linear-gradient(rgba(131, 148, 186, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(131, 148, 186, 0.032) 1px, transparent 1px),
+    radial-gradient(circle at 58% 20%, rgba(98, 67, 183, 0.11), transparent 32rem) !important;
+  background-size: 24px 24px, 24px 24px, auto !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022);
+}
+
+.zt-legacy-terminal .floating-research-canvas::before,
+.zt-legacy-terminal .floating-research-canvas::after {
+  display: none;
+}
+
+.zt-legacy-terminal .zt-floating-window {
+  border-color: rgba(137, 156, 203, 0.32) !important;
+  background: linear-gradient(145deg, rgba(13, 18, 31, 0.98), rgba(8, 12, 22, 0.99)) !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+  backdrop-filter: blur(16px);
+}
+
+.zt-legacy-terminal .zt-chart-window::before {
+  position: absolute;
+  top: 0;
+  right: 12%;
+  left: 12%;
+  z-index: 5;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(196, 181, 253, 0.72), transparent);
+  box-shadow: 0 0 14px rgba(167, 139, 250, 0.72);
+  pointer-events: none;
+}
+
+.zt-legacy-terminal .zt-chart-window > header {
+  min-height: 36px;
+  border-bottom-color: rgba(137, 156, 203, 0.16) !important;
+  background: linear-gradient(90deg, rgba(91, 33, 182, 0.30), rgba(20, 14, 42, 0.86)) !important;
+}
+
+.zt-legacy-terminal .zt-chart-window .mobile-chart-toolbar,
+.zt-legacy-terminal .zt-chart-window .bg-background {
+  background-color: rgba(7, 10, 19, 0.72) !important;
+}
+
+.zt-legacy-terminal .zt-chart-window .mobile-chart-toolbar {
+  border-bottom-color: rgba(137, 156, 203, 0.12) !important;
+}
+
+.zt-legacy-terminal .zt-chart-window .font-mono-num {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 639px) {
+  .zt-legacy-terminal { padding: 0; }
+  .zt-legacy-terminal > header[aria-label="Terminal navigation"] {
+    height: 44px;
+    min-height: 44px;
+    border: 0;
+    border-bottom: 1px solid rgba(137, 156, 203, 0.18);
+    border-radius: 0;
+  }
+  .zt-legacy-workstation {
+    display: block;
+    height: calc(100dvh - 44px);
+    margin-top: 0;
+  }
+  .zt-legacy-terminal .floating-research-canvas {
+    border: 0;
+    border-radius: 0;
+  }
+}

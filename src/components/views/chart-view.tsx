@@ -45,6 +45,8 @@ const LAYERS = [
   { id: "structure", label: "Market structure", short: "Structure", tone: "muted" },
 ] as const;
 
+const EMPTY_CUSTOM_STUDIES: ChartStudy[] = [];
+
 type LayerId = typeof LAYERS[number]["id"];
 type WindowMode = "normal" | "maximized" | "minimized";
 type WindowBounds = { x: number; y: number; width: number; height: number };
@@ -119,7 +121,8 @@ export function ChartView() {
   const [replay, setReplay] = useState(false);
   const [replayIdx, setReplayIdx] = useState<number | null>(null);
   const [orderFlowPane, setOrderFlowPane] = useState<"cvd" | "footprint" | null>(null);
-  const [windowMode, setWindowMode] = useState<WindowMode>("normal");
+  // The restored workstation is chart-first: use the entire floating canvas until the researcher deliberately restores or minimizes it.
+  const [windowMode, setWindowMode] = useState<WindowMode>("maximized");
   const persistedBounds = useSyncExternalStore(
     subscribeToBrowserPreference,
     getStoredBounds,
@@ -137,7 +140,7 @@ export function ChartView() {
   );
   const [manualChartSettings, setChartSettings] = useState<ChartSettings | null>(null);
   const chartSettings = manualChartSettings ?? persistedChartSettings;
-  const persistedStudies = useSyncExternalStore(subscribeToBrowserPreference, getStoredStudies, () => [] as ChartStudy[]);
+  const persistedStudies = useSyncExternalStore(subscribeToBrowserPreference, getStoredStudies, () => EMPTY_CUSTOM_STUDIES);
   const [manualStudies, setManualStudies] = useState<ChartStudy[] | null>(null);
   const customStudies = manualStudies ?? persistedStudies;
   const { quote, lastTrade, trades, dataStatus, provider, derivatives } = useMarketStream(symbol, { trades: 600, depth: false });
