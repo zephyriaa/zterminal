@@ -112,8 +112,10 @@ export function ChartView() {
   const [chartType, setChartType] = useState<ChartType>("candles");
   const [layers, setLayers] = useState<Record<LayerId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true, profile: false, structure: false });
   const [studiesOpen, setStudiesOpen] = useState(false);
-  const [rightOpen, setRightOpen] = useState(true);
-  const [flowOpen, setFlowOpen] = useState(true);
+  // Preserve the original chart-first workstation: contextual tools remain available,
+  // but do not compete with the canvas until a researcher explicitly opens them.
+  const [rightOpen, setRightOpen] = useState(false);
+  const [flowOpen, setFlowOpen] = useState(false);
   const [replay, setReplay] = useState(false);
   const [replayIdx, setReplayIdx] = useState<number | null>(null);
   const [orderFlowPane, setOrderFlowPane] = useState<"cvd" | "footprint" | null>(null);
