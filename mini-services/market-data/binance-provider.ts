@@ -342,7 +342,9 @@ export class BinanceFuturesProvider {
     };
     this.touch(symbol);
     this.emit({ type: "trade", data: trade });
-    this.setStatus("live");
+    // Trade-tape availability cannot certify the L2 feed. Keep the provider
+    // degraded or synchronizing until the sequence-safe snapshot bridge is ready.
+    if (this.books.get(symbol)?.isReady()) this.setStatus("live");
   }
 
   private handleBookTicker(message: RawRecord) {
