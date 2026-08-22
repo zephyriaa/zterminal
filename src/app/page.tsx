@@ -1,9 +1,6 @@
-import { WorkspaceShell } from "@/components/terminal/workspace-shell";
+import { LandingPage } from "@/components/landing/landing-page";
 
-/**
- * Primary ZTerminal research workstation entry point.
- * The legacy /terminal URL renders this same workspace for saved links.
- */
+/** Public ZTerminal landing page. The research workstation remains at /terminal. */
 export default function Home() {
-  return <WorkspaceShell />;
+  return <LandingPage />;
 }
