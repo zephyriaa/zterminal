@@ -150,3 +150,27 @@
 /* Single-circle order flow: remove the dim secondary ring layer behind each event. */
 .terminalChartPanel .flowMarker::after,
 .terminalChartPanel .markerMicro::after { display: none; }
+
+/* Touch-first comparison handle: keep a crisp divider while giving fingers a dependable target. */
+.terminalChartPanel .terminalDivide {
+  width: 48px;
+  min-width: 48px;
+  margin-left: -24px;
+  background: transparent;
+  box-shadow: none;
+  cursor: ew-resize;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.terminalChartPanel .terminalDivide::before {
+  display: block;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(to bottom, #d6bcfa, #7c3aed, #d6bcfa);
+  box-shadow: 0 0 29px rgba(124,58,237,.8);
+  transform: translateX(-50%);
+}
