@@ -18,6 +18,17 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      {
+        // The public homepage has changed routes before. Keep its HTML fresh so
+        // a visitor cannot be held on an earlier terminal page after a release.
+        source: "/",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0, must-revalidate",
+          },
+        ],
+      },
     ];
   },
 };
