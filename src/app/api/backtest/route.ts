@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContract } from "@/lib/market/contracts";
 import { fetchGateioHistoricalBars, isGateioTimeframe, normalizeGateioSymbol } from "@/lib/market/gateio";
+import { fetchBinanceHistoricalBars, normalizeBinanceSymbol } from "@/lib/market/binance";
 import { runStrategy, type BacktestConfig, type StrategyParams } from "@/lib/strategy/zs-runtime";
 import { compileStrategy } from "@/lib/strategy/zs-compiler";
 import { TIMEFRAME_SECONDS } from "@/lib/market/types";
@@ -12,12 +13,14 @@ export const dynamic = "force-dynamic";
  *
  * Identical inputs (source, symbol, timeframe, range, costs, params)
  * always produce an identical result (same hash + trades). No
- * randomness in the engine. Candles are fetched from Gate.io’s public historical endpoint and provenance is returned with every successful run.
+ * randomness enters the engine. Candles are fetched only from the configured
+ * public provider and provenance is returned with every successful run.
  */
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
+  const provider = process.env.MARKET_PROVIDER === "binance" ? "binance" : "gateio";
   const src: string = body?.src ?? "";
-  const symbol: string = (body?.symbol ?? "QQQX_USDT").toUpperCase();
+  const symbol: string = (body?.symbol ?? (provider === "binance" ? "BTCUSDT" : "QQQX_USDT")).toUpperCase();
   const tf = String(body?.timeframe ?? "5m");
   const from = Number(body?.from ?? Date.now() - 30 * 86400_000);
   const to = Number(body?.to ?? Date.now());
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest) {
   const params: StrategyParams = body?.params ?? {};
   const executionModel: "next_bar_open" = "next_bar_open";
 
-  if (!isGateioTimeframe(tf)) return NextResponse.json({ error: "unsupported Gate.io historical timeframe" }, { status: 400 });
+  if (!isGateioTimeframe(tf)) return NextResponse.json({ error: `unsupported ${provider === "binance" ? "Binance" : "Gate.io"} historical timeframe` }, { status: 400 });
   if (![from, to, initialCapital, commissionPerContract, slippageTicks, spreadTicks, positionSize].every(Number.isFinite)) {
     return NextResponse.json({ error: "backtest configuration must contain finite numeric values" }, { status: 400 });
   }
@@ -39,15 +42,14 @@ export async function POST(req: NextRequest) {
   }
   const maxHistoricalRangeMs = TIMEFRAME_SECONDS[tf] * 1_000 * 2_000 * 48;
   if (to - from > maxHistoricalRangeMs) {
-    return NextResponse.json({ error: "requested historical range exceeds the verified Gate.io pagination limit for this timeframe" }, { status: 400 });
+    return NextResponse.json({ error: `requested historical range exceeds the verified ${provider === "binance" ? "Binance" : "Gate.io"} pagination limit for this timeframe` }, { status: 400 });
   }
 
   const c = getContract(symbol);
-  if (!c) return NextResponse.json({ error: "unknown symbol" }, { status: 400 });
-  const gateSymbol = normalizeGateioSymbol(symbol);
-  if (!gateSymbol) {
+  const nativeSymbol = provider === "binance" ? normalizeBinanceSymbol(symbol) : normalizeGateioSymbol(symbol);
+  if (!nativeSymbol) {
     return NextResponse.json({
-      error: `historical data is currently available only for supported Gate.io USDT perpetual contracts; ${symbol} is not mapped`,
+      error: `historical data is currently unavailable for ${symbol} on the active ${provider === "binance" ? "Binance" : "Gate.io"} provider`,
       dataStatus: "UNAVAILABLE",
     }, { status: 400 });
   }
@@ -59,7 +61,9 @@ export async function POST(req: NextRequest) {
 
   let bars;
   try {
-    bars = await fetchGateioHistoricalBars(gateSymbol, tf, from, to);
+    bars = provider === "binance"
+      ? await fetchBinanceHistoricalBars(nativeSymbol, tf as keyof typeof TIMEFRAME_SECONDS, from, to)
+      : await fetchGateioHistoricalBars(nativeSymbol, tf as keyof typeof TIMEFRAME_SECONDS, from, to);
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : "historical market data is unavailable",
@@ -98,8 +102,8 @@ export async function POST(req: NextRequest) {
     diagnostics: compiled.diagnostics,
     dataStatus: "HISTORICAL",
     dataProvenance: {
-      provider: "gateio",
-      nativeSymbol: gateSymbol,
+      provider,
+      nativeSymbol,
       range: { from, to },
       timeframe: tf,
       fetchedAt: Date.now(),

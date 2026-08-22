@@ -87,13 +87,29 @@ export const CONTRACTS: Record<string, ContractDef> = {
   },
 };
 
+const runtimeContracts = new Map<string, ContractDef>();
+
+/** Registers contracts emitted by the active provider adapter after schema validation. */
+export function registerRuntimeContracts(contracts: ContractMetadata[]) {
+  for (const contract of contracts) {
+    if (!contract?.symbol || !Number.isFinite(contract.tickSize) || contract.tickSize <= 0) continue;
+    runtimeContracts.set(contract.symbol.toUpperCase(), {
+      ...contract,
+      // These mock-only values never provide or replace live market data. They
+      // keep shared chart typing intact when a verified runtime symbol is chosen.
+      basePrice: 100,
+      dailyVolPct: 0.03,
+    });
+  }
+}
+
 export function getContract(symbol: string): ContractDef {
   const s = symbol.toUpperCase();
-  return CONTRACTS[s] ?? CONTRACTS.NQ;
+  return runtimeContracts.get(s) ?? CONTRACTS[s] ?? CONTRACTS.BTCUSDT;
 }
 
 export function listContracts(): ContractDef[] {
-  return Object.values(CONTRACTS);
+  return [...Object.values(CONTRACTS), ...runtimeContracts.values()];
 }
 
 /**

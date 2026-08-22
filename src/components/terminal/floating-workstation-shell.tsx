@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Activity,
-  ChartNoAxesCombined,
   FlaskConical,
   Layers3,
   RotateCcw,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { InstrumentPicker } from "./instrument-picker";
 import { ReferenceChartWorkspace } from "./reference-chart-workspace";
+import { AccountPanel } from "./account-panel";
 import { useWorkspace } from "@/stores/workspace";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ function formatPrice(value: number | undefined | null) {
 export function FloatingWorkstationShell() {
   const { symbol } = useWorkspace();
   const { lastTrade, derivatives, provider, dataStatus } = useMarketStream(symbol, { trades: 1, depth: false });
+  const [accountOpen, setAccountOpen] = useState(false);
   const price = lastTrade?.price ?? derivatives?.markPrice;
 
   useEffect(() => {
@@ -61,15 +62,15 @@ export function FloatingWorkstationShell() {
         <div className="ml-auto flex items-center gap-1.5">
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><SlidersHorizontal /></button>
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-settings"))} aria-label="Terminal settings" title="Terminal settings"><Settings2 /></button>
-          <div className="zt-research-account"><span>R</span><div className="hidden sm:block"><b>Research mode</b><small>Read only</small></div></div>
+          <button type="button" className="zt-research-account" onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} aria-label="Open research account information"><span>R</span><div className="hidden sm:block"><b>Research mode</b><small>Read only</small></div></button>
+          {accountOpen && <AccountPanel symbol={symbol} provider={provider} dataStatus={dataStatus} onClose={() => setAccountOpen(false)} />}
         </div>
       </header>
       <div className="zt-reference-body">
         <nav className="zt-reference-toolrail" aria-label="Research tools">
-          <RailButton label="Studies" onClick={() => window.dispatchEvent(new Event("zterminal:open-studies"))}><Layers3 /></RailButton>
+          <RailButton label="Indicators" onClick={() => window.dispatchEvent(new Event("zterminal:open-indicators"))}><Layers3 /></RailButton>
           <RailButton label="Strategy and backtesting" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))}><FlaskConical /></RailButton>
           <RailButton label="Market context" onClick={() => window.dispatchEvent(new Event("zterminal:open-context"))}><SlidersHorizontal /></RailButton>
-          <RailButton label="Observed order flow" onClick={() => window.dispatchEvent(new Event("zterminal:open-flow"))}><ChartNoAxesCombined /></RailButton>
           <span className="zt-rail-divider" aria-hidden="true" />
           <RailButton label="Reset workspace layout" onClick={() => window.dispatchEvent(new Event("zterminal:reset-layout"))}><RotateCcw /></RailButton>
           <RailButton label="Feed details" onClick={() => window.dispatchEvent(new Event("zterminal:open-context"))}><Activity /></RailButton>

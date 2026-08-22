@@ -87,6 +87,22 @@ const httpServer = createServer((request, response) => {
     response.end(JSON.stringify({ ready, provider: PROVIDER_MODE, state: providerStatus, reason: providerReason, at: Date.now() }));
     return;
   }
+  if (url.pathname === "/contracts") {
+    // The browser catalogue is a direct projection of contracts accepted by the
+    // active provider adapter. A discovery failure remains visible and never
+    // falls back to a different venue or a guessed static universe.
+    const ready = providerInitialized && liveContracts.length > 0;
+    response.writeHead(ready ? 200 : 503, { "content-type": "application/json", "cache-control": "no-store" });
+    response.end(JSON.stringify({
+      provider: PROVIDER_MODE,
+      environment: PROVIDER_MODE === "mock" ? "simulation" : "live",
+      state: providerStatus,
+      reason: providerReason,
+      contracts: liveContracts,
+      at: Date.now(),
+    }));
+    return;
+  }
   response.writeHead(404, { "content-type": "application/json" });
   response.end(JSON.stringify({ error: "not found" }));
 });

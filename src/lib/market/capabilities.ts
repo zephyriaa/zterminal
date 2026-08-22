@@ -53,9 +53,9 @@ export const PROVIDER_CATALOG: readonly ProviderCatalogEntry[] = [
     canonicalExample: "BTC_USDT_PERP",
     nativeExample: "BTCUSDT",
     capabilities: ["candles", "ticker", "best_bid_offer", "depth", "trades", "aggregate_trades", "mark_price", "index_price", "funding_rate", "open_interest"],
-    streamIntegration: "catalogued",
+    streamIntegration: "active",
     aggregation: "eligible-after-symbol-validation",
-    notice: "Public market-data catalogued. Streaming activation requires symbol, region, rate-limit, and reconnect validation.",
+    notice: "Public read-only adapter active. Each contract remains selectable only after live catalogue, regional availability, and reconnect validation pass.",
   },
   {
     id: "bybit",

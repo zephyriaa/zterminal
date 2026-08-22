@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   BarChart3,
@@ -21,12 +21,11 @@ import {
   type ChartStudy,
   type ChartType,
 } from "./terminal-chart";
-import { StudiesPanel, type BuiltInStudyId } from "./studies-panel";
+import { IndicatorsBrowser, type IndicatorToggleId } from "./indicators-browser";
 import { useWorkspace } from "@/stores/workspace";
 import { StrategyView } from "@/components/views/strategy-view";
 import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
-import { buildFootprint, calculateCVD } from "@/lib/market/order-flow";
 import type { Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 
@@ -40,14 +39,6 @@ const TIMEFRAMES: { value: Timeframe; label: string }[] = [
   { value: "1d", label: "D" },
 ];
 
-type LayerId = "vwap" | "ema20" | "ema50" | "volume";
-const BUILT_INS: Array<{ id: LayerId; name: string; category: "Trend" | "Volume"; description: string; color: string }> = [
-  { id: "vwap", name: "Session VWAP", category: "Trend", description: "Session-anchored price-volume reference", color: "#f59e0b" },
-  { id: "ema20", name: "EMA 20", category: "Trend", description: "Fast exponential moving average", color: "#38bdf8" },
-  { id: "ema50", name: "EMA 50", category: "Trend", description: "Slow exponential moving average", color: "#a78bfa" },
-  { id: "volume", name: "Volume", category: "Volume", description: "Observed trade-volume pane", color: "#94a3b8" },
-];
-
 function formatSymbol(symbol: string) {
   return symbol.endsWith("USDT") ? `${symbol.slice(0, -4)} / USDT` : symbol.replace("_", " / ");
 }
@@ -59,21 +50,18 @@ function formatPrice(value: number | undefined | null, tick: number) {
 }
 
 export function ReferenceChartWorkspace() {
-  const { symbol, timeframe, setTimeframe, setView } = useWorkspace();
+  const { symbol, timeframe, setTimeframe } = useWorkspace();
   const contract = getContract(symbol);
   const [chartType, setChartType] = useState<ChartType>("candles");
   const [replay, setReplay] = useState(false);
-  const [studiesOpen, setStudiesOpen] = useState(false);
+  const [indicatorsOpen, setIndicatorsOpen] = useState(false);
   const [strategyOpen, setStrategyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
-  const [flowOpen, setFlowOpen] = useState(false);
-  const [layers, setLayers] = useState<Record<LayerId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true });
+  const [layers, setLayers] = useState<Record<IndicatorToggleId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true });
   const [customStudies, setCustomStudies] = useState<ChartStudy[]>([]);
   const [settings, setSettings] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
   const { quote, trades, lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 600, depth: false });
-  const cvd = useMemo(() => calculateCVD(trades, 1_000), [trades]);
-  const footprint = useMemo(() => buildFootprint(trades, contract.tickSize, 60_000).at(-1), [trades, contract.tickSize]);
   const indicators: ChartIndicators = {
     vwap: layers.vwap,
     ema20: layers.ema20,
@@ -83,27 +71,24 @@ export function ReferenceChartWorkspace() {
   };
   const livePrice = lastTrade?.price ?? derivatives?.markPrice ?? null;
 
-  const toggleBuiltIn = (id: BuiltInStudyId) => {
-    if (id in layers) setLayers((current) => ({ ...current, [id as LayerId]: !current[id as LayerId] }));
+  const toggleBuiltIn = (id: IndicatorToggleId) => {
+    setLayers((current) => ({ ...current, [id]: !current[id] }));
   };
 
   useEffect(() => {
-    const openStudies = () => setStudiesOpen(true);
+    const openIndicators = () => setIndicatorsOpen(true);
     const openStrategy = () => setStrategyOpen(true);
     const openSettings = () => setSettingsOpen(true);
     const openContext = () => setContextOpen(true);
-    const openFlow = () => setFlowOpen(true);
-    window.addEventListener("zterminal:open-studies", openStudies);
+    window.addEventListener("zterminal:open-indicators", openIndicators);
     window.addEventListener("zterminal:open-strategy", openStrategy);
     window.addEventListener("zterminal:open-settings", openSettings);
     window.addEventListener("zterminal:open-context", openContext);
-    window.addEventListener("zterminal:open-flow", openFlow);
     return () => {
-      window.removeEventListener("zterminal:open-studies", openStudies);
+      window.removeEventListener("zterminal:open-indicators", openIndicators);
       window.removeEventListener("zterminal:open-strategy", openStrategy);
       window.removeEventListener("zterminal:open-settings", openSettings);
       window.removeEventListener("zterminal:open-context", openContext);
-      window.removeEventListener("zterminal:open-flow", openFlow);
     };
   }, []);
 
@@ -116,11 +101,11 @@ export function ReferenceChartWorkspace() {
           {TIMEFRAMES.map((item) => <button key={item.value} type="button" onClick={() => setTimeframe(item.value)} className={cn(timeframe === item.value && "is-active")} aria-pressed={timeframe === item.value}>{item.label}</button>)}
         </div>
         <span className="zt-strip-divider hidden sm:block" aria-hidden="true" />
-        <button type="button" className="zt-strip-tool hidden sm:inline-flex" onClick={() => setContextOpen(true)}><SlidersHorizontal />Market</button>
-        <button type="button" className="zt-strip-tool hidden sm:inline-flex" onClick={() => setFlowOpen(true)}><Activity />Order flow</button>
+        <button type="button" className="zt-strip-tool hidden sm:inline-flex" onClick={() => setContextOpen(true)}><Activity />Market</button>
+        <button type="button" className="zt-strip-tool" onClick={() => setIndicatorsOpen(true)}><Layers3 />Indicators</button>
         <div className="ml-auto flex items-center gap-2">
           <span className={cn("zt-feed-indicator", dataStatus === "LIVE" && "is-live")} title={reason ?? health?.reason ?? "Research feed status"}><i />{dataStatus === "LIVE" ? "LIVE" : "RESEARCH"}</span>
-          <button type="button" className="zt-strip-icon" onClick={() => setView("settings")} aria-label="Terminal settings"><SlidersHorizontal /></button>
+          <button type="button" className="zt-strip-icon" onClick={() => setSettingsOpen(true)} aria-label="Terminal settings"><SlidersHorizontal /></button>
         </div>
       </div>
 
@@ -144,8 +129,7 @@ export function ReferenceChartWorkspace() {
           <div className="zt-chart-toolbar">
             <div className="zt-chart-price"><b>{formatPrice(livePrice, contract.tickSize)}</b><span className={dataStatus === "LIVE" ? "text-pos" : "text-muted-foreground"}>{provider?.toUpperCase() ?? "BINANCE"} · {dataStatus}</span></div>
             <span className="zt-toolbar-divider" />
-            <button type="button" className={cn("zt-chart-toolbar-button", studiesOpen && "is-active")} onClick={() => setStudiesOpen(true)}><Layers3 />Studies</button>
-            <button type="button" className={cn("zt-chart-toolbar-button", flowOpen && "is-active")} onClick={() => setFlowOpen(true)}><ChartNoAxesCombined />Flow</button>
+            <button type="button" className={cn("zt-chart-toolbar-button", indicatorsOpen && "is-active")} onClick={() => setIndicatorsOpen(true)}><Layers3 />Indicators</button>
             <div className="ml-auto flex items-center gap-1">
               <ChartTypeButton active={chartType === "candles"} label="Candles" onClick={() => setChartType("candles")}><CandlestickChart /></ChartTypeButton>
               <ChartTypeButton active={chartType === "bars"} label="Bars" onClick={() => setChartType("bars")}><BarChart3 /></ChartTypeButton>
@@ -161,7 +145,7 @@ export function ReferenceChartWorkspace() {
         </div>
       </DesktopWindow>
 
-      {studiesOpen && <DesktopWindow id="studies" title="Studies" subtitle="CHART RESEARCH" initialBounds={{ x: 968, y: 30, width: 360, height: 520 }} minWidth={320} minHeight={360} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setStudiesOpen(false)}><StudiesPanel builtIns={BUILT_INS.map((study) => ({ ...study, active: layers[study.id] }))} customStudies={customStudies} onToggleBuiltIn={toggleBuiltIn} onCreate={(study) => setCustomStudies((current) => [...current, study])} onUpdate={(study) => setCustomStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => setCustomStudies((current) => current.filter((item) => item.id !== id))} /></DesktopWindow>}
+      {indicatorsOpen && <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser layers={layers} customStudies={customStudies} onToggleLayer={toggleBuiltIn} onCreate={(study) => setCustomStudies((current) => [...current, study])} onUpdate={(study) => setCustomStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => setCustomStudies((current) => current.filter((item) => item.id !== id))} /></DesktopWindow>}
 
       {strategyOpen && <DesktopWindow id="strategy" title="Strategy developer" subtitle="RESEARCH RULES" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={480} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><div className="h-full overflow-auto scroll-thin"><StrategyView /></div></DesktopWindow>}
 
@@ -169,7 +153,6 @@ export function ReferenceChartWorkspace() {
 
       {contextOpen && <DesktopWindow id="context" title="Market context" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 972, y: 50, width: 330, height: 420 }} minWidth={300} minHeight={280} icon={<Activity className="h-3.5 w-3.5" />} onClose={() => setContextOpen(false)}><ContextWindow symbol={symbol} tickSize={contract.tickSize} quote={quote} lastPrice={livePrice} derivatives={derivatives} dataStatus={dataStatus} provider={provider} healthReason={health?.reason ?? reason} /></DesktopWindow>}
 
-      {flowOpen && <DesktopWindow id="flow" title="Order flow" subtitle="OBSERVED PUBLIC TAPE" initialBounds={{ x: 610, y: 365, width: 410, height: 330 }} minWidth={340} minHeight={240} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setFlowOpen(false)}><FlowWindow cvd={cvd} footprint={footprint} tickSize={contract.tickSize} /></DesktopWindow>}
     </div>
   );
 }
@@ -192,9 +175,4 @@ function ContextWindow({ symbol, tickSize, quote, lastPrice, derivatives, dataSt
     ["Funding", derivatives?.fundingRate === undefined ? "Unavailable" : `${(derivatives.fundingRate * 100).toFixed(4)}%`],
   ];
   return <div className="zt-context-window"><div className="zt-context-contract"><span>{formatSymbol(symbol)}</span><b>{provider?.toUpperCase() ?? "BINANCE"} · PERPETUAL</b></div><div className="zt-context-stats">{rows.map(([label, value]) => <div key={label}><span>{label}</span><b>{value}</b></div>)}</div><div className={cn("zt-context-status", dataStatus === "LIVE" && "is-live")}><i />{dataStatus === "LIVE" ? "Observed public stream" : "Research feed not live"}</div>{healthReason && <p className="zt-context-warning">{healthReason}</p>}<p className="zt-context-footnote">Depth, footprint, and open-interest research remain withheld until their source data is independently available and verified.</p></div>;
-}
-
-function FlowWindow({ cvd, footprint, tickSize }: { cvd: ReturnType<typeof calculateCVD>; footprint: ReturnType<typeof buildFootprint>[number] | undefined; tickSize: number }) {
-  const value = cvd.at(-1)?.value;
-  return <div className="zt-flow-window-content"><div className="zt-flow-summary"><span>Rolling CVD</span><b className={(value ?? 0) >= 0 ? "text-pos" : "text-neg"}>{value === undefined ? "Awaiting prints" : `${value >= 0 ? "+" : ""}${value.toLocaleString("en-US", { maximumFractionDigits: 3 })}`}</b></div><div className="zt-flow-grid"><span>Price</span><span>Buy</span><span>Sell</span>{(footprint?.levels.slice(0, 7) ?? []).map((level) => <><b key={`p-${level.price}`}>{formatPrice(level.price, tickSize)}</b><span key={`b-${level.price}`} className="text-pos">{level.buyVolume.toLocaleString("en-US", { maximumFractionDigits: 3 })}</span><span key={`s-${level.price}`} className="text-neg">{level.sellVolume.toLocaleString("en-US", { maximumFractionDigits: 3 })}</span></>)}</div>{!footprint && <p className="zt-context-footnote">Awaiting observed public trades; no footprint is synthesized.</p>}</div>;
 }

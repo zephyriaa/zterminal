@@ -66,7 +66,10 @@ export function DesktopWindow({
   const initialBoundsRef = useRef(initialBounds);
   const [bounds, setBounds] = useState<DesktopWindowBounds>(initialBounds);
   const [mode, setMode] = useState<"normal" | "maximized" | "minimized">("normal");
-  const [zIndex, setZIndex] = useState(() => ++topWindowZ);
+  // A stable initial value keeps the server and client tree identical. Focus
+  // interactions raise a window only after hydration, when module-local order
+  // is meaningful in the active browser session.
+  const [zIndex, setZIndex] = useState(40);
   const interaction = useRef<Interaction | null>(null);
 
   useEffect(() => {
