@@ -1,20 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { compileStrategy } from "@/lib/strategy/zs-compiler";
-import { defaultParams } from "@/lib/strategy/zs-runtime";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-/** Compile + validate strategy source. Returns inputs + diagnostics. */
-export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const src: string = body?.src ?? "";
-  if (!src.trim()) {
-    return NextResponse.json({ ok: false, inputs: [], diagnostics: [{ line: 0, col: 0, severity: "error", message: "Empty strategy source" }], name: "Untitled", compiledAt: Date.now() });
-  }
-  const result = compileStrategy(src);
-  const params = defaultParams(src);
+/**
+ * ZS compilation is archival only. New code is validated through the Python
+ * Research API, which records runtime locks and applies the worker policy.
+ */
+export async function POST() {
   return NextResponse.json({
-    ...result,
-    params,
-  });
+    error: "ZScript compilation is retired. Use /api/research/artifacts/validate for Python research artifacts.",
+    code: "ZS_COMPILATION_RETIRED",
+  }, { status: 410, headers: { "Cache-Control": "no-store" } });
 }

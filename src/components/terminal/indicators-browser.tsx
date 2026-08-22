@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Check, Eye, EyeOff, Layers3, Plus, Search, Settings2, Trash2, X } from "lucide-react";
 import type { ChartStudy } from "./terminal-chart";
 import { cn } from "@/lib/utils";
+import { useWorkspace } from "@/stores/workspace";
 
 export type IndicatorToggleId = "vwap" | "ema20" | "ema50" | "volume";
 
@@ -30,6 +31,7 @@ export function IndicatorsBrowser({ layers, customStudies, onToggleLayer, onCrea
   const [tab, setTab] = useState<"library" | "chart">("library");
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const setView = useWorkspace((state) => state.setView);
   const filtered = useMemo(() => PRESETS.filter((indicator) => `${indicator.name} ${indicator.category} ${indicator.description}`.toLowerCase().includes(query.trim().toLowerCase())), [query]);
   const active = [
     ...PRESETS.filter((indicator) => indicator.toggleId && layers[indicator.toggleId]),
@@ -44,13 +46,13 @@ export function IndicatorsBrowser({ layers, customStudies, onToggleLayer, onCrea
   };
 
   return <div className="zt-indicators-browser">
-    <header className="zt-indicators-header"><div><span className="zt-window-subtitle">CHART TOOLS</span><h2><Layers3 />Indicators</h2></div><button type="button" className="zt-indicators-create" onClick={() => { setCreating(true); setTab("library"); }}><Plus />Create</button></header>
+    <header className="zt-indicators-header"><div><span className="zt-window-subtitle">RESEARCH INDICATORS</span><h2><Layers3 />Indicators</h2></div><button type="button" className="zt-indicators-create" onClick={() => { setView("strategy"); window.setTimeout(() => window.dispatchEvent(new Event("zterminal:new-python-indicator")), 0); }}><Plus />Python</button></header>
     <div className="zt-indicators-tabs" role="tablist"><button role="tab" aria-selected={tab === "library"} className={cn(tab === "library" && "is-active")} onClick={() => setTab("library")}>Library</button><button role="tab" aria-selected={tab === "chart"} className={cn(tab === "chart" && "is-active")} onClick={() => setTab("chart")}>On chart <span>{active.length}</span></button></div>
     {creating ? <IndicatorCreator onCreate={(study) => { onCreate(study); setCreating(false); setTab("chart"); }} onCancel={() => setCreating(false)} /> : <>
       {tab === "library" && <><div className="zt-indicators-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search indicators" aria-label="Search indicators" /><kbd>⌘ I</kbd></div><div className="zt-indicators-scroll scroll-thin">{(["Trend", "Volume"] as const).map((category) => <section key={category} className="zt-indicator-section"><h3>{category}</h3>{filtered.filter((indicator) => indicator.category === category).map((indicator) => <IndicatorLibraryRow key={indicator.id} indicator={indicator} added={Boolean(indicator.toggleId ? layers[indicator.toggleId] : customStudies.some((study) => study.name === indicator.name && study.kind === indicator.kind && study.period === indicator.period))} onAdd={() => addPreset(indicator)} />)}</section>)}{!filtered.length && <p className="zt-indicators-empty">No supported indicator matches this search.</p>}</div></>}
       {tab === "chart" && <div className="zt-indicators-scroll scroll-thin"><p className="zt-indicators-description">Active indicators use only deterministic native renderer calculations. Visibility and removal update the chart immediately.</p>{active.length ? active.map((indicator) => <ActiveIndicatorRow key={indicator.id} indicator={indicator} builtin={"toggleId" in indicator && Boolean(indicator.toggleId)} onToggle={() => { const preset = PRESETS.find((entry) => entry.id === indicator.id); if (preset?.toggleId) onToggleLayer(preset.toggleId); else { const study = customStudies.find((entry) => entry.id === indicator.id); if (study) onUpdate({ ...study, visible: !study.visible }); } }} onRemove={() => { const study = customStudies.find((entry) => entry.id === indicator.id); if (study) onRemove(study.id); }} />) : <p className="zt-indicators-empty">No indicators are on the chart. Open Library to add a supported calculation.</p>}</div>}
     </>}
-    <footer className="zt-indicators-footer">Indicators are rendered locally from verified chart bars. Imported or protected third-party scripts are not executed.</footer>
+    <footer className="zt-indicators-footer">Built-ins render from verified chart bars. Python and Pine-derived indicators require a validated, isolated research job; protected third-party scripts are never retrieved or executed.</footer>
   </div>;
 }
 

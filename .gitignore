@@ -60,3 +60,10 @@ server.log
 
 # local process artifacts
 *.pid
+
+# Rust research-core build artifacts
+/research/core/target/
+
+# Python research API build/test artifacts
+__pycache__/
+.pytest_cache/

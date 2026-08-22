@@ -2,50 +2,48 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { BacktestResult } from "@/lib/strategy/zs-runtime";
 
-export const DEFAULT_STRATEGY = `# ZS — Z Strategy Language
-# Custom DSL (Pine-like, NOT Pine-compatible). See STRATEGY_LANGUAGE.md.
-strategy("EMA Cross + VWAP Filter", overlay=true)
+export const DEFAULT_STRATEGY = `from zterminal_research import strategy, inputs, ta
 
-input.float("Fast", 8, minval=1, maxval=200, step=1)
-input.float("Slow", 21, minval=1, maxval=400, step=1)
-
-var fastEma = ema(close, Fast)
-var slowEma = ema(close, Slow)
-
-plot(fastEma, "EMA Fast")
-plot(slowEma, "EMA Slow")
-plot(vwap, "VWAP")
-
-if close > vwap
-  if crossover(fastEma, slowEma)
-    strategy.entry("long", strategy.long, qty=1)
-
-if crossunder(fastEma, slowEma)
-  strategy.close("long")
+@strategy(name="EMA cross")
+def ema_cross(ctx, fast=inputs.int(8, min=1, max=200), slow=inputs.int(21, min=2, max=400)):
+    fast_ema = ta.ema(ctx.close, fast)
+    slow_ema = ta.ema(ctx.close, slow)
+    if ta.crossover(fast_ema, slow_ema)[ctx.index]:
+        ctx.enter_long(quantity=1, reason="ema_cross")
+    if ta.crossunder(fast_ema, slow_ema)[ctx.index]:
+        ctx.close_position(reason="ema_cross_down")
 `;
+
+export type ArchivedResearchResult = {
+  runId: string;
+  hash: string;
+  config: { symbol: string; timeframe: string; initialCapital: number; commissionPerContract: number; slippageTicks: number; spreadTicks: number; positionSize: number; from: number; to: number };
+  trades: { id: string; side: "long" | "short"; entryTime: number; entryPrice: number; exitTime: number; exitPrice: number; qty: number; pnl: number; bars: number }[];
+  barsProcessed: number;
+  metrics: { netProfit: number; winRate: number; profitFactor: number; sharpe: number; maxDrawdownPct: number; totalTrades: number };
+  dataStatus?: string;
+  dataProvenance?: { provider: string; nativeSymbol: string };
+};
+
+type ResearchValidation = {
+  status: "VALID" | "INVALID" | "UNSUPPORTED";
+  diagnostics: { code: string; level: string; message: string; line?: number }[];
+  sourceHash?: string;
+  artifactId?: string;
+} | null;
 
 interface StrategyState {
   source: string;
-  setSource: (s: string) => void;
-  lastCompile: {
-    ok: boolean;
-    inputs: { name: string; type: string; default: number | string | boolean; minval?: number; maxval?: number; step?: number }[];
-    diagnostics: { line: number; col: number; severity: string; message: string }[];
-    name: string;
-    compiledAt: number;
-  } | null;
-  setLastCompile: (c: StrategyState["lastCompile"]) => void;
-
+  setSource: (source: string) => void;
+  lastCompile: ResearchValidation;
+  setLastCompile: (result: ResearchValidation) => void;
   params: Record<string, number | string | boolean>;
-  setParam: (k: string, v: number | string | boolean) => void;
-  setParams: (p: Record<string, number | string | boolean>) => void;
-
-  lastResult: BacktestResult | null;
-  setLastResult: (r: BacktestResult | null) => void;
-
-  // backtest config
+  setParam: (key: string, value: number | string | boolean) => void;
+  setParams: (params: Record<string, number | string | boolean>) => void;
+  /** Historical display-only result retained for archived runs; new runs use Research V2 records. */
+  lastResult: ArchivedResearchResult | null;
+  setLastResult: (result: ArchivedResearchResult | null) => void;
   config: {
     symbol: string;
     timeframe: string;
@@ -56,36 +54,27 @@ interface StrategyState {
     spreadTicks: number;
     positionSize: number;
   };
-  setConfig: (c: Partial<StrategyState["config"]>) => void;
+  setConfig: (config: Partial<StrategyState["config"]>) => void;
 }
 
 export const useStrategy = create<StrategyState>()(
   persist(
     (set) => ({
       source: DEFAULT_STRATEGY,
-      setSource: (s) => set({ source: s }),
+      setSource: (source) => set({ source }),
       lastCompile: null,
-      setLastCompile: (c) => set({ lastCompile: c }),
+      setLastCompile: (lastCompile) => set({ lastCompile }),
       params: {},
-      setParam: (k, v) => set((s) => ({ params: { ...s.params, [k]: v } })),
-      setParams: (p) => set({ params: p }),
+      setParam: (key, value) => set((state) => ({ params: { ...state.params, [key]: value } })),
+      setParams: (params) => set({ params }),
       lastResult: null,
-      setLastResult: (r) => set({ lastResult: r }),
-      config: {
-        symbol: "BTCUSDT",
-        timeframe: "5m",
-        days: 30,
-        initialCapital: 100_000,
-        commissionPerContract: 2.5,
-        slippageTicks: 1,
-        spreadTicks: 1,
-        positionSize: 1,
-      },
-      setConfig: (c) => set((s) => ({ config: { ...s.config, ...c } })),
+      setLastResult: (lastResult) => set({ lastResult }),
+      config: { symbol: "BTCUSDT", timeframe: "5m", days: 30, initialCapital: 100_000, commissionPerContract: 2.5, slippageTicks: 1, spreadTicks: 1, positionSize: 1 },
+      setConfig: (config) => set((state) => ({ config: { ...state.config, ...config } })),
     }),
     {
-      name: "zterminal-strategy",
-      partialize: (s) => ({ source: s.source, config: s.config, params: s.params }),
-    }
-  )
+      name: "zterminal-python-research",
+      partialize: (state) => ({ source: state.source, config: state.config, params: state.params }),
+    },
+  ),
 );
