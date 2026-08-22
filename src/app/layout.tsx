@@ -17,15 +17,14 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
+  themeColor: "#060914",
 };
 
 export const metadata: Metadata = {
-  title: "Z TERMINAL — Quantitative Research & Trading Terminal",
+  title: "ZTerminal — Evidence-led market research",
   description:
-    "Professional quantitative market research terminal: charting, order flow, strategy development, and deterministic backtesting.",
+    "Quantitative market research and decision support for traders who want to test ideas, define risk, and keep control of the decision.",
   keywords: [
     "Z Terminal",
     "quantitative trading",
