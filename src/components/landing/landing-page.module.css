@@ -174,3 +174,38 @@
   box-shadow: 0 0 29px rgba(124,58,237,.8);
   transform: translateX(-50%);
 }
+
+/* Windows discovery is informational until a verified release is published. */
+.desktopPreview {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(280px, .88fr);
+  gap: clamp(28px, 6vw, 90px);
+  align-items: end;
+  width: min(1240px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: clamp(42px, 7vw, 84px) 0;
+  border-top: 1px solid rgba(183, 166, 255, .26);
+  border-bottom: 1px solid rgba(183, 166, 255, .18);
+}
+.desktopPreview h2 {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: var(--text);
+  font-size: clamp(2.1rem, 4.4vw, 3.8rem);
+  letter-spacing: -.052em;
+  line-height: .99;
+}
+.desktopPreview h2 em { color: var(--violet); font-style: normal; }
+.desktopPreviewCopy > p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.72; }
+.desktopPreviewCopy > div { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 24px; }
+.desktopPreviewLink { color: var(--text); font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-decoration: none; text-transform: uppercase; }
+.desktopPreviewLink:hover { color: var(--cyan); }
+.desktopPreviewCopy > div > span { color: var(--dim); font-family: var(--mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.finalCtaActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; }
+.finalCta .secondaryButton { align-items: center; }
+@media (max-width: 780px) {
+  .desktopPreview { grid-template-columns: 1fr; gap: 24px; width: min(100% - 40px, 1240px); }
+  .desktopPreviewCopy > div { align-items: flex-start; flex-direction: column; gap: 10px; }
+}
