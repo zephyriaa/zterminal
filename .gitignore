@@ -64,6 +64,9 @@ server.log
 # Rust research-core build artifacts
 /research/core/target/
 
+# Native desktop workspace build artifacts
+/target/
+
 # Python research API build/test artifacts
 __pycache__/
 .pytest_cache/

@@ -1,0 +1,19 @@
+{
+  "fixture_version": 1,
+  "fixture_only": true,
+  "protocol_version": 1,
+  "provider": "fixture",
+  "environment": "simulation",
+  "symbol_id": 9,
+  "interval_ns": 1000000000,
+  "events": [
+    { "sequence": 4, "timestamp_ns": 100, "price_ticks": 10, "quantity": 1 },
+    { "sequence": 6, "timestamp_ns": 200, "price_ticks": 11, "quantity": 1 }
+  ],
+  "expected": {
+    "gap": { "expected_sequence": 5, "received_sequence": 6 },
+    "active_bar_data_status": "gap",
+    "manufactured_events": 0,
+    "manufactured_bars": 0
+  }
+}
