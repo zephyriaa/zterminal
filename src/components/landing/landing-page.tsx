@@ -37,12 +37,23 @@ export function LandingPage() {
           <h1 id="hero-title">Read the market<br />behind the <em>candle.</em></h1>
           <p className={styles.heroLead}>ZTerminal brings market context, strategy research, risk work, alerts, and review into one serious workspace for better-prepared decisions.</p>
           <div className={styles.heroActions}>
-            <Link className={styles.primaryButton} href="/terminal">Open the terminal <span>↗</span></Link>
-            <a className={styles.secondaryButton} href="#platform">Explore the platform <span>↓</span></a>
+            <Link className={styles.primaryButton} href="/download">Explore ZTerminal for Windows <span>↗</span></Link>
+            <Link className={styles.secondaryButton} href="/terminal">Launch web terminal <span>↗</span></Link>
           </div>
           <p className={styles.disclaimer}>Decision support for traders. No broker route. You retain control of execution.</p>
         </div>
         <OrderflowVisual />
+      </section>
+
+      <section className={styles.desktopPreview} aria-labelledby="windows-preview-title">
+        <div>
+          <p className={styles.sectionKicker}>NATIVE WINDOWS APPLICATION</p>
+          <h2 id="windows-preview-title">Professional market analysis,<br /><em>now preparing for Windows.</em></h2>
+        </div>
+        <div className={styles.desktopPreviewCopy}>
+          <p>ZTerminal for Windows is being built as a local-first desktop terminal with a native graphics surface, local data processing, and research-only safeguards. It will be offered here only after Windows validation and signed release verification are complete.</p>
+          <div><Link href="/download" className={styles.desktopPreviewLink}>View Windows release status <span>↗</span></Link><span>Windows x64 · in development</span></div>
+        </div>
       </section>
 
       <section className={styles.proofRail} aria-label="Platform focus areas">
@@ -85,7 +96,7 @@ export function LandingPage() {
         <div className={styles.principleCopy}><p className={styles.sectionKicker}>BUILT FOR THE DECISION</p><h2 id="principles-heading">The terminal should support the trader,<br /><em>not replace them.</em></h2><p>ZTerminal is a quantitative research and decision-support environment. It can help with analysis, calculations, validation, monitoring, alerts, and review. It does not guarantee outcomes and it does not remove responsibility.</p><div className={styles.principleStatements}><span>Evidence over intuition</span><span>Risk before conviction</span><span>Human control over blind automation</span></div></div>
       </section>
 
-      <section className={styles.finalCta} aria-labelledby="cta-heading"><p className={styles.sectionKicker}>OPEN THE WORKSPACE</p><h2 id="cta-heading">Bring more evidence<br />to the <em>decision.</em></h2><p>Explore the actively developing ZTerminal research workspace directly.</p><Link className={styles.primaryButton} href="/terminal">Launch ZTerminal <span>↗</span></Link></section>
+      <section className={styles.finalCta} aria-labelledby="cta-heading"><p className={styles.sectionKicker}>OPEN THE WORKSPACE</p><h2 id="cta-heading">Bring more evidence<br />to the <em>decision.</em></h2><p>Use the browser terminal today, or follow the verified Windows release path as the native application becomes available.</p><div className={styles.finalCtaActions}><Link className={styles.primaryButton} href="/terminal">Launch web terminal <span>↗</span></Link><Link className={styles.secondaryButton} href="/download">Windows release status <span>↗</span></Link></div></section>
 
       <footer className={styles.footer}><div className={styles.brand}><img className={styles.headerLogo} src="/landing/zterminal-logo-mark.png" alt="" /><span>ZTERMINAL</span></div><p>Quantitative market research and decision support. Built in the open.</p><div><a href="https://github.com/zephyriaa/zterminal" target="_blank" rel="noreferrer">GitHub</a><a href="/docs/zscript">ZS documentation</a></div></footer>
     </main>

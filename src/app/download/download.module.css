@@ -1,0 +1,98 @@
+.page {
+  min-height: 100vh;
+  color: #eaf2fb;
+  background:
+    radial-gradient(circle at 82% -4%, rgba(104, 73, 219, .22), transparent 28rem),
+    radial-gradient(circle at 8% 42%, rgba(14, 129, 187, .10), transparent 32rem),
+    #060914;
+  padding: 0 clamp(20px, 5vw, 84px) 72px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 76px;
+  border-bottom: 1px solid rgba(162, 180, 203, .14);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #f3f6fb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-decoration: none;
+}
+
+.brand img { width: 27px; height: 27px; object-fit: contain; }
+
+.header nav { display: flex; align-items: center; gap: 20px; }
+.header nav a, .notesLink, .textLink { color: #aebdd0; font-size: 13px; text-decoration: none; }
+.header nav a:hover, .notesLink:hover, .textLink:hover { color: #fff; }
+
+.hero { max-width: 850px; padding: clamp(72px, 12vw, 146px) 0 58px; }
+.eyebrow, .cardLabel { color: #9e8ff4; font-size: 10px; font-weight: 800; letter-spacing: .16em; }
+.hero h1, .comparison h2, .security h2 { margin: 16px 0; font-size: clamp(38px, 6vw, 74px); line-height: .98; letter-spacing: -.055em; }
+.hero h1 em, .comparison h2 em { color: #c7bbff; font-family: Georgia, serif; font-weight: 400; }
+.lead { max-width: 700px; color: #9fafc0; font-size: clamp(16px, 2vw, 19px); line-height: 1.65; }
+
+.releaseCard, .unavailableCard {
+  max-width: 1040px;
+  display: grid;
+  gap: 26px;
+  padding: clamp(25px, 4vw, 46px);
+  border: 1px solid rgba(173, 160, 255, .35);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(116, 88, 223, .18), rgba(10, 18, 32, .78) 58%);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .25);
+}
+.releaseCard h2, .unavailableCard h2 { margin: 8px 0; font-size: clamp(25px, 3vw, 40px); letter-spacing: -.04em; }
+.releaseCard > div > p:not(.cardLabel), .unavailableCard > p { color: #afbdd0; line-height: 1.6; }
+.unavailableCard { border-color: rgba(214, 166, 104, .38); background: linear-gradient(135deg, rgba(103, 73, 29, .22), rgba(10, 18, 32, .78) 60%); }
+.statusCode { color: #d9c28f !important; font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 12px; letter-spacing: .05em; }
+
+.downloadButton, .secondaryButton {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  border-radius: 8px;
+  background: #e8e1ff;
+  color: #171126;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform .16s ease, background .16s ease;
+}
+.downloadButton:hover, .secondaryButton:hover { transform: translateY(-2px); background: #fff; }
+
+.releaseFacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; margin: 0; padding: 22px 0 0; border-top: 1px solid rgba(190, 203, 223, .16); }
+.releaseFacts div { min-width: 0; }
+.releaseFacts dt { margin-bottom: 5px; color: #8799af; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.releaseFacts dd { margin: 0; color: #e3eaf3; font-size: 13px; overflow-wrap: anywhere; }
+.hash { color: #b6c5d8 !important; font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 11px !important; }
+
+.comparison { max-width: 1120px; padding: 120px 0 82px; }
+.comparison h2 { font-size: clamp(31px, 4.4vw, 58px); }
+.comparisonGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 35px; }
+.comparisonGrid article { min-height: 246px; display: flex; flex-direction: column; align-items: flex-start; padding: 28px; border: 1px solid rgba(159, 178, 203, .16); border-radius: 13px; background: rgba(13, 22, 36, .62); }
+.comparisonGrid h3 { margin: 13px 0 8px; font-size: 23px; letter-spacing: -.035em; }
+.comparisonGrid article > p:not(.cardLabel) { color: #98aabd; line-height: 1.55; }
+.comparisonGrid a { margin-top: auto; }
+
+.security { max-width: 780px; padding: 48px 0 20px; border-top: 1px solid rgba(159, 178, 203, .16); }
+.security h2 { font-size: clamp(28px, 3.5vw, 46px); }
+.security > p:last-child { max-width: 700px; color: #9cacbf; line-height: 1.65; }
+
+@media (max-width: 680px) {
+  .page { padding-inline: 20px; }
+  .header { min-height: 66px; }
+  .header nav { gap: 14px; }
+  .releaseFacts, .comparisonGrid { grid-template-columns: 1fr; }
+  .comparison { padding-top: 80px; }
+}
