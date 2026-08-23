@@ -3,6 +3,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# Auth.js imports the Prisma adapter while Next.js collects route configuration.
+# Generate the client from the checked-in schema before the production build.
+RUN npx prisma generate
 RUN npm run build
 
 FROM node:20-alpine AS runner
