@@ -1000,3 +1000,24 @@
 .zt-economic-calendar-row b { color:#cbd6e8; font-size:9px; }
 .zt-economic-calendar-footnote { margin-top:auto; color:#71809c; font-size:9px; }
 @media (max-width:767px) { .zt-terminal-preference-note { grid-template-columns:1fr; gap:3px; } .zt-terminal-preferences,.zt-economic-calendar { padding:10px; } }
+
+/* Authenticated research account and cloud workspace controls. */
+.zt-account-panel-auth { border-color:rgba(102,208,190,.34); }
+.zt-account-identity,.zt-account-signin-card { padding:12px; }
+.zt-account-identity { display:flex; align-items:center; gap:9px; background:linear-gradient(90deg,rgba(77,207,188,.11),transparent 72%); border-bottom:1px solid var(--zt-line); }
+.zt-account-identity > img,.zt-account-identity > span { display:grid; width:34px; height:34px; flex:0 0 auto; place-items:center; border:1px solid rgba(70,214,194,.44); border-radius:50%; background:#172837; color:#80ead9; object-fit:cover; }
+.zt-account-identity b { display:block; max-width:196px; overflow:hidden; color:#e5f5f2; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.zt-account-identity p { max-width:196px; margin-top:3px; overflow:hidden; color:#88a0ad; font-size:8.5px; text-overflow:ellipsis; white-space:nowrap; }
+.zt-account-signout { display:grid; width:26px; height:26px; margin-left:auto; place-items:center; border:1px solid rgba(142,114,232,.25); border-radius:3px; color:#9c91c9; }
+.zt-account-signout:hover { border-color:rgba(235,103,120,.5); color:#ff9eab; }
+.zt-account-signout svg { width:13px; height:13px; }
+.zt-account-signin-card { display:grid; grid-template-columns:30px 1fr; gap:9px; border-bottom:1px solid var(--zt-line); }
+.zt-account-google-mark { display:grid; width:30px; height:30px; place-items:center; border:1px solid rgba(255,255,255,.2); border-radius:50%; background:#f4f7fb; color:#334155; font-family:Arial,sans-serif; font-size:14px; font-weight:700; }
+.zt-account-signin-card b { color:#e3edf7; font-size:10px; }
+.zt-account-signin-card p { margin-top:3px; color:#8492aa; font-size:8.5px; line-height:1.38; }
+.zt-account-google-button { grid-column:1 / -1; display:flex; min-height:32px; align-items:center; justify-content:center; gap:7px; border:1px solid rgba(126,181,240,.42); border-radius:3px; background:linear-gradient(90deg,rgba(92,147,216,.22),rgba(125,93,200,.18)); color:#e7f0fc; font-size:9px; font-weight:600; }
+.zt-account-google-button:hover:not(:disabled) { border-color:rgba(136,207,240,.76); filter:brightness(1.13); }
+.zt-account-google-button:disabled { cursor:not-allowed; opacity:.58; }
+.zt-account-google-button svg { width:13px; height:13px; }
+.zt-account-facts .zt-cloud-pending { color:#f0d697; }
+.zt-account-facts .zt-cloud-pending svg { color:#edc768; }

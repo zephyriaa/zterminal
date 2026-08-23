@@ -18,6 +18,7 @@ import { ReferenceChartWorkspace } from "./reference-chart-workspace";
 import { AccountPanel } from "./account-panel";
 import { useWorkspace } from "@/stores/workspace";
 import { useMarketStream } from "@/hooks/use-market-stream";
+import { CloudSyncBridge } from "@/components/auth/cloud-sync-bridge";
 
 /**
  * The public terminal uses one reference-led windowed workstation. Existing P0
@@ -44,6 +45,7 @@ export function FloatingWorkstationShell() {
 
   return (
     <div className="zt-reference-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
+      <CloudSyncBridge />
       <header className="zt-reference-header" aria-label="Terminal header">
         <button type="button" className="zt-reference-mark" onClick={() => window.dispatchEvent(new Event("zterminal:focus-chart"))} aria-label="Focus chart workspace" title="Chart workspace">
           <Image src="/brand/zterminal-mark-v2.png" alt="" width={24} height={24} priority />
