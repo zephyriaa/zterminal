@@ -11,11 +11,12 @@ export type IndicatorToggleId = "vwap" | "ema20" | "ema50" | "volume";
 type IndicatorPreset = {
   id: string;
   name: string;
-  category: "Trend" | "Volume" | "Custom";
+  category: "Trend" | "Volatility" | "Volume" | "Custom";
   description: string;
   color: string;
   kind: ChartStudy["kind"] | "volume";
   period?: number;
+  multiplier?: number;
   toggleId?: IndicatorToggleId;
 };
 
@@ -24,8 +25,14 @@ const PRESETS: IndicatorPreset[] = [
   { id: "ema20", name: "Moving Average Exponential", category: "Trend", description: "Exponential moving average · 20", color: "#38bdf8", kind: "ema", period: 20, toggleId: "ema20" },
   { id: "ema50", name: "Moving Average Exponential", category: "Trend", description: "Exponential moving average · 50", color: "#a78bfa", kind: "ema", period: 50, toggleId: "ema50" },
   { id: "sma20", name: "Moving Average Simple", category: "Trend", description: "Simple moving average · 20", color: "#f97316", kind: "sma", period: 20 },
+  { id: "wma20", name: "Moving Average Weighted", category: "Trend", description: "Linear weighted moving average · 20", color: "#22d3ee", kind: "wma", period: 20 },
+  { id: "vwma20", name: "Volume Weighted Moving Average", category: "Trend", description: "Rolling volume-weighted average · 20", color: "#f472b6", kind: "vwma", period: 20 },
+  { id: "bollinger20", name: "Bollinger Bands", category: "Volatility", description: "20-period SMA · 2 standard deviations", color: "#c4b5fd", kind: "bollinger", period: 20, multiplier: 2 },
+  { id: "donchian20", name: "Donchian Channels", category: "Volatility", description: "Rolling highest high / lowest low · 20", color: "#67e8f9", kind: "donchian", period: 20 },
   { id: "volume", name: "Volume", category: "Volume", description: "Observed exchange trade volume", color: "#94a3b8", kind: "volume", toggleId: "volume" },
 ];
+
+const LIBRARY_CATEGORIES: IndicatorPreset["category"][] = ["Trend", "Volatility", "Volume"];
 
 export function IndicatorsBrowser({ layers, customStudies, onToggleLayer, onCreate, onUpdate, onRemove }: { layers: Record<IndicatorToggleId, boolean>; customStudies: ChartStudy[]; onToggleLayer: (id: IndicatorToggleId) => void; onCreate: (study: ChartStudy) => void; onUpdate: (study: ChartStudy) => void; onRemove: (id: string) => void }) {
   const [tab, setTab] = useState<"library" | "chart">("library");
@@ -35,13 +42,13 @@ export function IndicatorsBrowser({ layers, customStudies, onToggleLayer, onCrea
   const filtered = useMemo(() => PRESETS.filter((indicator) => `${indicator.name} ${indicator.category} ${indicator.description}`.toLowerCase().includes(query.trim().toLowerCase())), [query]);
   const active = [
     ...PRESETS.filter((indicator) => indicator.toggleId && layers[indicator.toggleId]),
-    ...customStudies.filter((indicator) => indicator.visible).map((study) => ({ id: study.id, name: study.name, category: "Custom" as const, description: `${study.kind.toUpperCase()}${study.period ? ` · ${study.period}` : ""}`, color: study.color, kind: study.kind, period: study.period })),
+    ...customStudies.filter((indicator) => indicator.visible).map((study) => ({ id: study.id, name: study.name, category: "Custom" as const, description: `${study.kind.toUpperCase()}${study.period ? ` · ${study.period}` : ""}${study.multiplier ? ` · ${study.multiplier}σ` : ""}`, color: study.color, kind: study.kind, period: study.period, multiplier: study.multiplier })),
   ];
 
   const addPreset = (preset: IndicatorPreset) => {
     if (preset.toggleId) { if (!layers[preset.toggleId]) onToggleLayer(preset.toggleId); return; }
     if (customStudies.some((study) => study.name === preset.name && study.kind === preset.kind && study.period === preset.period)) return;
-    onCreate({ id: `indicator-${preset.id}-${Date.now()}`, name: preset.name, kind: preset.kind as ChartStudy["kind"], period: preset.period, color: preset.color, visible: true, source: "native" });
+    onCreate({ id: `indicator-${preset.id}-${Date.now()}`, name: preset.name, kind: preset.kind as ChartStudy["kind"], period: preset.period, multiplier: preset.multiplier, color: preset.color, visible: true, source: "native" });
     setTab("chart");
   };
 
@@ -49,7 +56,7 @@ export function IndicatorsBrowser({ layers, customStudies, onToggleLayer, onCrea
     <header className="zt-indicators-header"><div><span className="zt-window-subtitle">RESEARCH INDICATORS</span><h2><Layers3 />Indicators</h2></div><button type="button" className="zt-indicators-create" onClick={() => { setView("strategy"); window.setTimeout(() => window.dispatchEvent(new Event("zterminal:new-python-indicator")), 0); }}><Plus />Python</button></header>
     <div className="zt-indicators-tabs" role="tablist"><button role="tab" aria-selected={tab === "library"} className={cn(tab === "library" && "is-active")} onClick={() => setTab("library")}>Library</button><button role="tab" aria-selected={tab === "chart"} className={cn(tab === "chart" && "is-active")} onClick={() => setTab("chart")}>On chart <span>{active.length}</span></button></div>
     {creating ? <IndicatorCreator onCreate={(study) => { onCreate(study); setCreating(false); setTab("chart"); }} onCancel={() => setCreating(false)} /> : <>
-      {tab === "library" && <><div className="zt-indicators-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search indicators" aria-label="Search indicators" /><kbd>⌘ I</kbd></div><div className="zt-indicators-scroll scroll-thin">{(["Trend", "Volume"] as const).map((category) => <section key={category} className="zt-indicator-section"><h3>{category}</h3>{filtered.filter((indicator) => indicator.category === category).map((indicator) => <IndicatorLibraryRow key={indicator.id} indicator={indicator} added={Boolean(indicator.toggleId ? layers[indicator.toggleId] : customStudies.some((study) => study.name === indicator.name && study.kind === indicator.kind && study.period === indicator.period))} onAdd={() => addPreset(indicator)} />)}</section>)}{!filtered.length && <p className="zt-indicators-empty">No supported indicator matches this search.</p>}</div></>}
+      {tab === "library" && <><div className="zt-indicators-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search indicators" aria-label="Search indicators" /><kbd>⌘ I</kbd></div><div className="zt-indicators-scroll scroll-thin">{LIBRARY_CATEGORIES.map((category) => <section key={category} className="zt-indicator-section"><h3>{category}</h3>{filtered.filter((indicator) => indicator.category === category).map((indicator) => <IndicatorLibraryRow key={indicator.id} indicator={indicator} added={Boolean(indicator.toggleId ? layers[indicator.toggleId] : customStudies.some((study) => study.name === indicator.name && study.kind === indicator.kind && study.period === indicator.period && study.multiplier === indicator.multiplier))} onAdd={() => addPreset(indicator)} />)}</section>)}{!filtered.length && <p className="zt-indicators-empty">No supported indicator matches this search.</p>}</div></>}
       {tab === "chart" && <div className="zt-indicators-scroll scroll-thin"><p className="zt-indicators-description">Active indicators use only deterministic native renderer calculations. Visibility and removal update the chart immediately.</p>{active.length ? active.map((indicator) => <ActiveIndicatorRow key={indicator.id} indicator={indicator} builtin={"toggleId" in indicator && Boolean(indicator.toggleId)} onToggle={() => { const preset = PRESETS.find((entry) => entry.id === indicator.id); if (preset?.toggleId) onToggleLayer(preset.toggleId); else { const study = customStudies.find((entry) => entry.id === indicator.id); if (study) onUpdate({ ...study, visible: !study.visible }); } }} onRemove={() => { const study = customStudies.find((entry) => entry.id === indicator.id); if (study) onRemove(study.id); }} />) : <p className="zt-indicators-empty">No indicators are on the chart. Open Library to add a supported calculation.</p>}</div>}
     </>}
     <footer className="zt-indicators-footer">Built-ins render from verified chart bars. Python and Pine-derived indicators require a validated, isolated research job; protected third-party scripts are never retrieved or executed.</footer>
@@ -68,7 +75,8 @@ function IndicatorCreator({ onCreate, onCancel }: { onCreate: (study: ChartStudy
   const [name, setName] = useState("Custom Moving Average");
   const [kind, setKind] = useState<ChartStudy["kind"]>("ema");
   const [period, setPeriod] = useState(34);
+  const [multiplier, setMultiplier] = useState(2);
   const [color, setColor] = useState("#67e8f9");
-  const create = () => onCreate({ id: `custom-indicator-${Date.now()}`, name: name.trim() || "Custom indicator", kind, period: kind === "vwap" ? undefined : Math.max(1, Math.min(1000, period)), color, visible: true, source: "native" });
-  return <div className="zt-indicator-creator"><div className="zt-indicator-creator-top"><div><span className="zt-window-subtitle">INDICATOR SETTINGS</span><h3>Create indicator</h3></div><button type="button" onClick={onCancel} aria-label="Close creator"><X /></button></div><div className="zt-indicator-form-tabs"><span className="is-active">Inputs</span><span>Style</span><span>Visibility</span></div><label>Name<input value={name} onChange={(event) => setName(event.target.value)} /></label><label>Calculation<select value={kind} onChange={(event) => setKind(event.target.value as ChartStudy["kind"])}><option value="ema">Moving Average Exponential</option><option value="sma">Moving Average Simple</option><option value="vwap">Session VWAP</option></select></label>{kind !== "vwap" && <label>Length<input type="number" min={1} max={1000} value={period} onChange={(event) => setPeriod(Number(event.target.value))} /></label>}<label>Line color<input type="color" value={color} onChange={(event) => setColor(event.target.value)} /></label><p>Only supported native calculations can be added. Source is close; the selected chart timeframe provides the bars.</p><div><button type="button" onClick={onCancel}>Cancel</button><button type="button" onClick={create}>Add to chart</button></div></div>;
+  const create = () => onCreate({ id: `custom-indicator-${Date.now()}`, name: name.trim() || "Custom indicator", kind, period: kind === "vwap" ? undefined : Math.max(1, Math.min(1000, period)), multiplier: kind === "bollinger" ? Math.max(0.1, Math.min(10, multiplier)) : undefined, color, visible: true, source: "native" });
+  return <div className="zt-indicator-creator"><div className="zt-indicator-creator-top"><div><span className="zt-window-subtitle">INDICATOR SETTINGS</span><h3>Create indicator</h3></div><button type="button" onClick={onCancel} aria-label="Close creator"><X /></button></div><div className="zt-indicator-form-tabs"><span className="is-active">Inputs</span><span>Style</span><span>Visibility</span></div><label>Name<input value={name} onChange={(event) => setName(event.target.value)} /></label><label>Calculation<select value={kind} onChange={(event) => setKind(event.target.value as ChartStudy["kind"])}><option value="ema">Moving Average Exponential</option><option value="sma">Moving Average Simple</option><option value="wma">Moving Average Weighted</option><option value="vwma">Volume Weighted Moving Average</option><option value="vwap">Session VWAP</option><option value="bollinger">Bollinger Bands</option><option value="donchian">Donchian Channels</option></select></label>{kind !== "vwap" && <label>Length<input type="number" min={1} max={1000} value={period} onChange={(event) => setPeriod(Number(event.target.value))} /></label>}{kind === "bollinger" && <label>Standard deviations<input type="number" min={0.1} max={10} step={0.1} value={multiplier} onChange={(event) => setMultiplier(Number(event.target.value))} /></label>}<label>Line color<input type="color" value={color} onChange={(event) => setColor(event.target.value)} /></label><p>Only supported native calculations can be added. Source is close; the selected chart timeframe provides the bars.</p><div><button type="button" onClick={onCancel}>Cancel</button><button type="button" onClick={create}>Add to chart</button></div></div>;
 }

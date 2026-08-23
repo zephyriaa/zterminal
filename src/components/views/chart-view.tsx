@@ -93,7 +93,7 @@ function getStoredStudies() {
   cachedStudiesRaw = raw;
   try {
     const candidate = JSON.parse(raw ?? "[]");
-    cachedStudies = Array.isArray(candidate) ? candidate.filter((study): study is ChartStudy => study && typeof study.id === "string" && typeof study.name === "string" && ["ema", "sma", "vwap"].includes(study.kind)).map((study) => ({ ...study, visible: Boolean(study.visible), color: typeof study.color === "string" ? study.color : "#38bdf8" })) : [];
+    cachedStudies = Array.isArray(candidate) ? candidate.filter((study): study is ChartStudy => study && typeof study.id === "string" && typeof study.name === "string" && ["ema", "sma", "wma", "vwma", "vwap", "bollinger", "donchian"].includes(study.kind)).map((study) => ({ ...study, visible: Boolean(study.visible), color: typeof study.color === "string" ? study.color : "#38bdf8" })) : [];
   } catch { cachedStudies = []; }
   return cachedStudies;
 }
