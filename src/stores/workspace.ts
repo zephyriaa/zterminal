@@ -27,6 +27,7 @@ export interface SavedWorkspace {
   view: ViewId;
   symbol: string;
   timeframe: string;
+  timezone: ChartTimezone;
   createdAt: number;
 }
 
@@ -62,6 +63,7 @@ interface WorkspaceState {
   workspaces: SavedWorkspace[];
   saveWorkspace: (name: string) => void;
   loadWorkspace: (id: string) => void;
+  mergeCloudWorkspaces: (workspaces: SavedWorkspace[]) => void;
 
   lastBacktestId: string | null;
   setLastBacktest: (id: string | null) => void;
@@ -93,6 +95,7 @@ function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
         ...workspace,
         symbol: P0_DEFAULT_SYMBOL,
         timeframe: P0_TIMEFRAMES.has(workspace.timeframe) ? workspace.timeframe : "5m",
+        timezone: SUPPORTED_TIMEZONES.has(workspace.timezone as ChartTimezone) ? workspace.timezone : timezone,
       }))
     : [];
   return { ...persisted, symbol: P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
@@ -138,9 +141,17 @@ export const useWorkspace = create<WorkspaceState>()(
           view: s.activeView,
           symbol: s.symbol,
           timeframe: s.timeframe,
+          timezone: s.timezone,
           createdAt: Date.now(),
         };
         set({ workspaces: [...s.workspaces, ws] });
+        // The server still returns 503 until verified Google OAuth and durable storage are enabled.
+        // Fail silently here so local/offline workspace saving never pretends a cloud write succeeded.
+        void fetch("/api/cloud/workspaces", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(ws),
+        }).catch(() => undefined);
       },
       loadWorkspace: (id) => {
         const ws = get().workspaces.find((w) => w.id === id);
@@ -149,7 +160,14 @@ export const useWorkspace = create<WorkspaceState>()(
           activeView: ws.view,
           symbol: ws.symbol,
           timeframe: ws.timeframe,
+          timezone: ws.timezone,
         });
+      },
+      mergeCloudWorkspaces: (cloudWorkspaces) => {
+        const local = get().workspaces;
+        const merged = new Map(local.map((workspace) => [workspace.id, workspace]));
+        for (const workspace of cloudWorkspaces) merged.set(workspace.id, workspace);
+        set({ workspaces: [...merged.values()].sort((a, b) => b.createdAt - a.createdAt) });
       },
 
       lastBacktestId: null,

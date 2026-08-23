@@ -12,12 +12,60 @@ datasource db {
  * relationship so the schema can be introduced without fabricating an auth mechanism.
  */
 model User {
-  id         String      @id @default(cuid())
-  email      String      @unique
-  name       String?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  workspaces Workspace[]
+  id            String      @id @default(cuid())
+  email         String?     @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  workspaces    Workspace[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+/**
+ * Google OAuth accounts are persisted only by the server-side Auth.js adapter.
+ * The application never exposes provider tokens to the browser or stores broker credentials.
+ */
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+/**
+ * Server-side session records; browser code receives only an opaque secure cookie.
+ */
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 /**
@@ -35,12 +83,12 @@ model Post {
 }
 
 model Workspace {
-  id                String             @id @default(cuid())
+  id                String               @id @default(cuid())
   ownerId           String?
   name              String
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  owner             User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  owner             User?                @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   datasets          Dataset[]
   strategies        Strategy[]
   riskPlans         RiskPlan[]
@@ -52,8 +100,24 @@ model Workspace {
   ruleSpecs         RuleSpec[]
   protocolDecisions ProtocolDecision[]
   datasetImports    DatasetImport[]
+  cloudState        CloudWorkspaceState?
 
   @@index([ownerId])
+}
+
+/**
+ * Versioned terminal preferences synchronized for one authenticated workspace.
+ * The JSON envelope is validated at the API boundary and excludes credentials,
+ * market-provider secrets, orders, balances, and any execution authority.
+ */
+model CloudWorkspaceState {
+  id            String    @id @default(cuid())
+  workspaceId   String    @unique
+  schemaVersion Int       @default(1)
+  payload       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
 /**
