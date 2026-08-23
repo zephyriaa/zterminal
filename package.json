@@ -12,6 +12,8 @@
     "market-data": "tsx mini-services/market-data/index.ts",
     "desktop:dev": "vite --config desktop/vite.config.ts",
     "desktop:build": "vite build --config desktop/vite.config.ts",
+    "desktop:hosted-preview:build": "tauri build --config src-tauri/tauri.internal-hosted-preview.conf.json --bundles nsis",
+    "desktop:hosted-preview:dev": "tauri dev --config src-tauri/tauri.internal-hosted-preview.conf.json",
     "tauri": "tauri",
     "test": "tsx --test tests/*.test.ts",
     "db:push": "prisma db push --accept-data-loss",

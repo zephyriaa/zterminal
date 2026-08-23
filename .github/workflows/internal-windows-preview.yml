@@ -1,4 +1,4 @@
-name: Internal Windows Preview (Dry Build)
+name: Internal ZTerminal Workstation Preview (Dry Build)
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   dry-build:
-    name: Build unsigned internal NSIS preview
+    name: Build unsigned hosted ZTerminal workstation preview
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
@@ -51,11 +51,20 @@ jobs:
           npm run typecheck
           npm run lint
 
-      - name: Build desktop frontend
-        run: npm run desktop:build
+      - name: Verify hosted ZTerminal workstation is available
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $response = Invoke-WebRequest -Uri "https://zterminal.onrender.com/terminal" -MaximumRedirection 0 -TimeoutSec 45
+          if ($response.StatusCode -ne 200) {
+            throw "Hosted ZTerminal terminal returned HTTP $($response.StatusCode); no installer will be created."
+          }
+          if ($response.Content -notmatch "zt-reference-terminal") {
+            throw "Hosted ZTerminal terminal response did not contain the workstation marker; no installer will be created."
+          }
 
-      - name: Build unsigned NSIS internal preview
-        run: npm run tauri build -- --bundles nsis
+      - name: Build unsigned hosted ZTerminal workstation preview
+        run: npm run desktop:hosted-preview:build
 
       - name: Assemble private dry-build artifact
         shell: pwsh
@@ -71,17 +80,22 @@ jobs:
 
           $installer = $installers[0]
           $hash = (Get-FileHash -Path $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          $artifactRoot = Join-Path $env:RUNNER_TEMP "zterminal-internal-preview-dry"
-          $artifactInstaller = Join-Path $artifactRoot "ZTerminal-Internal-Preview-Unsigned.exe"
+          $artifactRoot = Join-Path $env:RUNNER_TEMP "zterminal-internal-hosted-preview-dry"
+          $artifactInstaller = Join-Path $artifactRoot "ZTerminal-Hosted-Workstation-Preview-Internal.exe"
           New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
           Copy-Item -Path $installer.FullName -Destination $artifactInstaller -Force
-          Set-Content -Path "$artifactInstaller.sha256" -Value "$hash  ZTerminal-Internal-Preview-Unsigned.exe" -NoNewline
+          Set-Content -Path "$artifactInstaller.sha256" -Value "$hash  ZTerminal-Hosted-Workstation-Preview-Internal.exe" -NoNewline
 
           $manifest = [ordered]@{
             schema_version = 1
-            artifact_kind = "internal-tauri-nsis-dry-build"
+            artifact_kind = "internal-tauri-hosted-workstation-preview"
             internal_only = $true
             public_release_eligible = $false
+            product_scope = "Remote-hosted wrapper for the verified ZTerminal /terminal workstation; not the future native Track B client."
+            hosted_terminal = [ordered]@{
+              url = "https://zterminal.onrender.com/terminal"
+              online_connection_required = $true
+            }
             signing = [ordered]@{
               status = "not-requested"
               reason = "Dry build: no certificate, private key, signing secret, timestamp credential, or publication operation is used."
@@ -92,7 +106,7 @@ jobs:
               workflow_run = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
             }
             installer = [ordered]@{
-              file = "ZTerminal-Internal-Preview-Unsigned.exe"
+              file = "ZTerminal-Hosted-Workstation-Preview-Internal.exe"
               bytes = (Get-Item $artifactInstaller).Length
               sha256 = $hash
             }
@@ -103,13 +117,13 @@ jobs:
       - name: Upload private dry-build artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: zterminal-internal-preview-dry-${{ github.run_number }}
-          path: ${{ runner.temp }}/zterminal-internal-preview-dry
+          name: zterminal-internal-hosted-preview-dry-${{ github.run_number }}
+          path: ${{ runner.temp }}/zterminal-internal-hosted-preview-dry
           if-no-files-found: error
           retention-days: 14
 
       - name: Record public-release safety boundary
         shell: pwsh
         run: |
-          Write-Host "Internal dry build complete. This artifact is unsigned, private to Actions, and ineligible for public download or automatic updates."
-          Write-Host "No certificate, PFX, signing password, timestamp credential, release manifest, CDN upload, website release variable, or Render configuration was used."
+          Write-Host "Internal hosted-workstation preview build complete. This artifact loads the verified ZTerminal /terminal route, remains unsigned and private to Actions, and is ineligible for public download or automatic updates."
+          Write-Host "This is a connected remote-hosted proof, not the future native Track B client. No certificate, PFX, signing password, timestamp credential, release manifest, CDN upload, website release variable, or Render configuration was changed."
