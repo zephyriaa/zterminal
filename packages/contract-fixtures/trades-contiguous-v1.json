@@ -1,0 +1,25 @@
+{
+  "fixture_version": 1,
+  "fixture_only": true,
+  "protocol_version": 1,
+  "provider": "fixture",
+  "environment": "simulation",
+  "symbol_id": 9,
+  "interval_ns": 1000000000,
+  "events": [
+    { "sequence": 1, "timestamp_ns": 100, "price_ticks": 10, "quantity": 2 },
+    { "sequence": 2, "timestamp_ns": 500, "price_ticks": 12, "quantity": 3 },
+    { "sequence": 3, "timestamp_ns": 1000000001, "price_ticks": 11, "quantity": 1 }
+  ],
+  "expected_completed_bars": [
+    {
+      "open_time_ns": 0,
+      "open_ticks": 10,
+      "high_ticks": 12,
+      "low_ticks": 10,
+      "close_ticks": 12,
+      "volume": 5,
+      "data_status": "live"
+    }
+  ]
+}

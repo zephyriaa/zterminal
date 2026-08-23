@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/zt-protocol",
+  "crates/zt-core",
+  "crates/zt-storage",
+  "apps/desktop-phase0-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "UNLICENSED"
+authors = ["ZTerminal"]
+repository = "https://github.com/zephyriaa/zterminal"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

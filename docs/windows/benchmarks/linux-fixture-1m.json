@@ -1,0 +1,13 @@
+{
+  "fixture_only": true,
+  "events": 1000000,
+  "ingest_elapsed_ms": 7.751,
+  "ingest_events_per_second": 129012648.14,
+  "completed_bars": 10,
+  "gaps_detected": 0,
+  "rejected_events": 0,
+  "cache_elapsed_ms": 34.825,
+  "cache_retained_bytes": 33554432,
+  "cache_entries": 65536,
+  "cache_evictions": 34464
+}
