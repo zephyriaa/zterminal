@@ -1,0 +1,193 @@
+name: Internal Windows Preview (Test-Signed)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Reviewed Git ref to build; only main is accepted for this protected test-signing path"
+        required: true
+        default: "main"
+        type: string
+      confirm_internal_test_signing:
+        description: "I confirm this creates a self-signed test artifact only, never a public or production release"
+        required: true
+        default: false
+        type: boolean
+      internal_notes:
+        description: "Optional test-only release note for the artifact manifest"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: internal-windows-preview-test-signing-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  test-sign:
+    name: Build private self-signed NSIS preview
+    if: inputs.confirm_internal_test_signing && inputs.ref == 'main'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    environment:
+      name: internal-test-signing
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Generate Prisma client for type checks
+        run: npm run db:generate
+
+      - name: Run web regression checks
+        run: |
+          npm test
+          npm run typecheck
+          npm run lint
+
+      - name: Build desktop frontend
+        run: npm run desktop:build
+
+      - name: Build NSIS installer before internal test signing
+        run: npm run tauri build -- --bundles nsis
+
+      - name: Import test certificate and self-sign installer
+        shell: pwsh
+        env:
+          TEST_SIGNING_PFX_BASE64: ${{ secrets.ZTERMINAL_TEST_SIGNING_PFX_BASE64 }}
+          TEST_SIGNING_PFX_PASSWORD: ${{ secrets.ZTERMINAL_TEST_SIGNING_PFX_PASSWORD }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installerDirectory = Join-Path $PWD "src-tauri/target/release/bundle/nsis"
+          $installers = @(Get-ChildItem -Path $installerDirectory -Filter "*.exe" -File)
+          if ($installers.Count -ne 1) {
+            throw "Expected exactly one NSIS setup executable, found $($installers.Count)."
+          }
+          if ([string]::IsNullOrWhiteSpace($env:TEST_SIGNING_PFX_BASE64) -or [string]::IsNullOrWhiteSpace($env:TEST_SIGNING_PFX_PASSWORD)) {
+            throw "The protected internal-test-signing environment must supply both test-signing secrets."
+          }
+
+          $temporaryDirectory = Join-Path $env:RUNNER_TEMP "zterminal-test-signing"
+          $pfxPath = Join-Path $temporaryDirectory "internal-test-signing.pfx"
+          $cerPath = Join-Path $temporaryDirectory "internal-test-signing.cer"
+          New-Item -ItemType Directory -Force -Path $temporaryDirectory | Out-Null
+          $certificateThumbprint = $null
+
+          try {
+            [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String($env:TEST_SIGNING_PFX_BASE64))
+            $password = ConvertTo-SecureString -String $env:TEST_SIGNING_PFX_PASSWORD -AsPlainText -Force
+            $certificate = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation "Cert:\CurrentUser\My" -Password $password
+            if ($null -eq $certificate -or [string]::IsNullOrWhiteSpace($certificate.Thumbprint)) {
+              throw "The protected PFX could not be imported into the ephemeral runner certificate store."
+            }
+
+            $certificateThumbprint = $certificate.Thumbprint
+            Export-Certificate -Cert "Cert:\CurrentUser\My\$certificateThumbprint" -FilePath $cerPath -Force | Out-Null
+            Import-Certificate -FilePath $cerPath -CertStoreLocation "Cert:\CurrentUser\Root" | Out-Null
+
+            $signToolCandidates = @(
+              (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
+              (Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Filter "signtool.exe" -Recurse -File -ErrorAction SilentlyContinue |
+                Sort-Object -Property FullName -Descending |
+                Select-Object -ExpandProperty FullName)
+            ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+            if ($signToolCandidates.Count -eq 0) {
+              throw "SignTool was not found on the Windows runner."
+            }
+
+            $installer = $installers[0]
+            & $signToolCandidates[0] sign /fd SHA256 /sha1 $certificateThumbprint /s My $installer.FullName
+            if ($LASTEXITCODE -ne 0) {
+              throw "SignTool did not complete the test-only signing operation."
+            }
+
+            $signature = Get-AuthenticodeSignature -FilePath $installer.FullName
+            if ($signature.Status -ne "Valid") {
+              throw "Self-signed test certificate verification failed in the ephemeral runner: $($signature.Status)."
+            }
+
+            "TEST_SIGNING_THUMBPRINT=$certificateThumbprint" | Add-Content -Path $env:GITHUB_ENV
+          }
+          finally {
+            if (-not [string]::IsNullOrWhiteSpace($certificateThumbprint)) {
+              Remove-Item -Path "Cert:\CurrentUser\Root\$certificateThumbprint" -Force -ErrorAction SilentlyContinue
+              Remove-Item -Path "Cert:\CurrentUser\My\$certificateThumbprint" -Force -ErrorAction SilentlyContinue
+            }
+            Remove-Item -Path $pfxPath -Force -ErrorAction SilentlyContinue
+            Remove-Item -Path $cerPath -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Assemble private test-signed artifact
+        shell: pwsh
+        env:
+          INTERNAL_NOTES: ${{ inputs.internal_notes }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installerDirectory = Join-Path $PWD "src-tauri/target/release/bundle/nsis"
+          $installers = @(Get-ChildItem -Path $installerDirectory -Filter "*.exe" -File)
+          if ($installers.Count -ne 1) {
+            throw "Expected exactly one NSIS setup executable, found $($installers.Count)."
+          }
+
+          $installer = $installers[0]
+          $hash = (Get-FileHash -Path $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $artifactRoot = Join-Path $env:RUNNER_TEMP "zterminal-internal-preview-test-signed"
+          $artifactInstaller = Join-Path $artifactRoot "ZTerminal-Internal-Test-Signed.exe"
+          New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
+          Copy-Item -Path $installer.FullName -Destination $artifactInstaller -Force
+          Set-Content -Path "$artifactInstaller.sha256" -Value "$hash  ZTerminal-Internal-Test-Signed.exe" -NoNewline
+
+          $manifest = [ordered]@{
+            schema_version = 1
+            artifact_kind = "internal-tauri-nsis-test-signed"
+            internal_only = $true
+            public_release_eligible = $false
+            signing = [ordered]@{
+              status = "self-signed-test-only"
+              certificate_thumbprint = $env:TEST_SIGNING_THUMBPRINT
+              verification = "Get-AuthenticodeSignature returned Valid in the isolated runner after importing the test root."
+              timestamp = "not-requested"
+              reason = "Self-signed certificate for controlled internal test only; it is not a trusted public Authenticode identity."
+            }
+            source = [ordered]@{
+              git_sha = $env:GITHUB_SHA
+              git_ref = "${{ inputs.ref }}"
+              workflow_run = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            }
+            installer = [ordered]@{
+              file = "ZTerminal-Internal-Test-Signed.exe"
+              bytes = (Get-Item $artifactInstaller).Length
+              sha256 = $hash
+            }
+            notes = $env:INTERNAL_NOTES
+          }
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $artifactRoot "internal-release.json")
+
+      - name: Upload private test-signed artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: zterminal-internal-preview-test-signed-${{ github.run_number }}
+          path: ${{ runner.temp }}/zterminal-internal-preview-test-signed
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Record public-release safety boundary
+        shell: pwsh
+        run: |
+          Write-Host "Internal test signing complete. This artifact is self-signed, private to Actions, and ineligible for public download or automatic updates."
+          Write-Host "No trusted CA certificate, timestamp service, GitHub Release, CDN upload, website release variable, or Render configuration was used."
+          Write-Host "The PFX and password were loaded only from the approved internal-test-signing environment and removed from the ephemeral runner after verification."
