@@ -6,6 +6,9 @@ members = [
   "crates/zt-storage",
   "apps/desktop-phase0-cli",
 ]
+# The legacy Tauri/NSIS preview is deliberately separate from the future native
+# client workspace. It remains a standalone Cargo package for Track A.
+exclude = ["src-tauri"]
 
 [workspace.package]
 version = "0.1.0"
