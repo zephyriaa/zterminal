@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Activity,
   BarChart3,
+  CalendarDays,
   CandlestickChart,
   ChartNoAxesCombined,
   Layers3,
@@ -11,6 +12,7 @@ import {
   Play,
   RefreshCw,
   SlidersHorizontal,
+  Settings2,
 } from "lucide-react";
 import { DesktopWindow } from "./desktop-window";
 import {
@@ -22,7 +24,7 @@ import {
   type ChartType,
 } from "./terminal-chart";
 import { IndicatorsBrowser, type IndicatorToggleId } from "./indicators-browser";
-import { useWorkspace } from "@/stores/workspace";
+import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
 import { StrategyView } from "@/components/views/strategy-view";
 import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
@@ -50,7 +52,7 @@ function formatPrice(value: number | undefined | null, tick: number) {
 }
 
 export function ReferenceChartWorkspace() {
-  const { symbol, timeframe, setTimeframe } = useWorkspace();
+  const { symbol, timeframe, setTimeframe, timezone, setTimezone } = useWorkspace();
   const contract = getContract(symbol);
   const [chartType, setChartType] = useState<ChartType>("candles");
   const [replay, setReplay] = useState(false);
@@ -58,6 +60,8 @@ export function ReferenceChartWorkspace() {
   const [strategyOpen, setStrategyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [terminalSettingsOpen, setTerminalSettingsOpen] = useState(false);
   const [layers, setLayers] = useState<Record<IndicatorToggleId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true });
   const [customStudies, setCustomStudies] = useState<ChartStudy[]>([]);
   const [settings, setSettings] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
@@ -80,15 +84,21 @@ export function ReferenceChartWorkspace() {
     const openStrategy = () => setStrategyOpen(true);
     const openSettings = () => setSettingsOpen(true);
     const openContext = () => setContextOpen(true);
+    const openCalendar = () => setCalendarOpen(true);
+    const openTerminalSettings = () => setTerminalSettingsOpen(true);
     window.addEventListener("zterminal:open-indicators", openIndicators);
     window.addEventListener("zterminal:open-strategy", openStrategy);
     window.addEventListener("zterminal:open-settings", openSettings);
     window.addEventListener("zterminal:open-context", openContext);
+    window.addEventListener("zterminal:open-calendar", openCalendar);
+    window.addEventListener("zterminal:open-terminal-settings", openTerminalSettings);
     return () => {
       window.removeEventListener("zterminal:open-indicators", openIndicators);
       window.removeEventListener("zterminal:open-strategy", openStrategy);
       window.removeEventListener("zterminal:open-settings", openSettings);
       window.removeEventListener("zterminal:open-context", openContext);
+      window.removeEventListener("zterminal:open-calendar", openCalendar);
+      window.removeEventListener("zterminal:open-terminal-settings", openTerminalSettings);
     };
   }, []);
 
@@ -105,7 +115,7 @@ export function ReferenceChartWorkspace() {
         className="zt-reference-chart-window"
         headerActions={
           <>
-            <button type="button" className={cn("zt-window-action", replay && "is-active")} onClick={() => setReplay((value) => !value)} aria-label="Toggle replay" title="Replay"><Play /></button>
+            <button type="button" className={cn("zt-window-action", replay && "is-active")} onClick={() => setReplay((value) => !value)} aria-label={replay ? "Exit replay" : "Enter replay"} title={replay ? "Exit replay" : "Bar replay"}><Play /></button>
             <button type="button" className="zt-window-action" onClick={() => window.dispatchEvent(new Event("zterminal:refresh-chart"))} aria-label="Refresh chart viewport" title="Refresh chart"><RefreshCw /></button>
           </>
         }
@@ -134,7 +144,7 @@ export function ReferenceChartWorkspace() {
           <div className="zt-chart-stage">
             <div className="zt-chart-readout"><span>O <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>H <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>L <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>C <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>V <b>—</b></span></div>
             <div className="zt-chart-overlays"><span className={layers.vwap ? "text-warn" : "hidden"}>VWAP</span><span className={layers.ema20 ? "text-mdata" : "hidden"}>EMA 20</span><span className={layers.volume ? "text-muted-foreground" : "hidden"}>Volume</span></div>
-            <TerminalChart symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={settings} replayIndex={replay ? Math.max(0, trades.length - 120) : null} markPrice={derivatives?.markPrice} />
+            <TerminalChart symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={settings} replayEnabled={replay} timezone={timezone} markPrice={derivatives?.markPrice} />
           </div>
         </div>
       </DesktopWindow>
@@ -146,6 +156,8 @@ export function ReferenceChartWorkspace() {
       {settingsOpen && <DesktopWindow id="settings" title="Chart preferences" subtitle="WORKSPACE" initialBounds={{ x: 840, y: 170, width: 330, height: 330 }} minWidth={300} minHeight={260} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><div className="p-3 text-[10px]"><p className="text-muted-foreground">Preferences are stored only in this browser.</p><PreferenceRange label="Future chart space" value={settings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => setSettings((current) => ({ ...current, futureBars }))} /><PreferenceRange label="Grid intensity" value={Math.round(settings.gridOpacity * 100)} min={0} max={18} suffix="%" onChange={(value) => setSettings((current) => ({ ...current, gridOpacity: value / 100 }))} /><label className="mt-4 flex items-center justify-between border-t hairline pt-3 text-muted-foreground">Show crosshair<input type="checkbox" checked={settings.showCrosshair} onChange={(event) => setSettings((current) => ({ ...current, showCrosshair: event.target.checked }))} /></label><button type="button" className="mt-4 text-[9px] uppercase tracking-[.12em] text-mdata hover:text-foreground" onClick={() => setSettings(DEFAULT_CHART_SETTINGS)}>Reset preferences</button></div></DesktopWindow>}
 
       {contextOpen && <DesktopWindow id="context" title="Market context" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 972, y: 50, width: 330, height: 420 }} minWidth={300} minHeight={280} icon={<Activity className="h-3.5 w-3.5" />} onClose={() => setContextOpen(false)}><ContextWindow symbol={symbol} tickSize={contract.tickSize} quote={quote} lastPrice={livePrice} derivatives={derivatives} dataStatus={dataStatus} provider={provider} healthReason={health?.reason ?? reason} /></DesktopWindow>}
+      {calendarOpen && <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 96, width: 390, height: 320 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow timezone={timezone} /></DesktopWindow>}
+      {terminalSettingsOpen && <DesktopWindow id="terminal-settings" title="Terminal preferences" subtitle="WORKSTATION" initialBounds={{ x: 850, y: 120, width: 340, height: 330 }} minWidth={300} minHeight={260} icon={<Settings2 className="h-3.5 w-3.5" />} onClose={() => setTerminalSettingsOpen(false)}><TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} /></DesktopWindow>}
 
     </div>
   );
@@ -169,4 +181,19 @@ function ContextWindow({ symbol, tickSize, quote, lastPrice, derivatives, dataSt
     ["Funding", derivatives?.fundingRate === undefined ? "Unavailable" : `${(derivatives.fundingRate * 100).toFixed(4)}%`],
   ];
   return <div className="zt-context-window"><div className="zt-context-contract"><span>{formatSymbol(symbol)}</span><b>{provider?.toUpperCase() ?? "BINANCE"} · PERPETUAL</b></div><div className="zt-context-stats">{rows.map(([label, value]) => <div key={label}><span>{label}</span><b>{value}</b></div>)}</div><div className={cn("zt-context-status", dataStatus === "LIVE" && "is-live")}><i />{dataStatus === "LIVE" ? "Observed public stream" : "Research feed not live"}</div>{healthReason && <p className="zt-context-warning">{healthReason}</p>}<p className="zt-context-footnote">Depth, footprint, and open-interest research remain withheld until their source data is independently available and verified.</p></div>;
+}
+
+const TIMEZONE_OPTIONS: { value: ChartTimezone; label: string }[] = [
+  { value: "America/New_York", label: "New York (ET)" },
+  { value: "UTC", label: "UTC" },
+  { value: "Europe/London", label: "London" },
+  { value: "Asia/Dubai", label: "Dubai" },
+];
+
+function TerminalPreferencesWindow({ timezone, onTimezoneChange }: { timezone: ChartTimezone; onTimezoneChange: (timezone: ChartTimezone) => void }) {
+  return <div className="zt-terminal-preferences"><p>These preferences change this terminal only. Cloud account synchronization is not configured on the public deployment.</p><label><span>Chart timezone</span><select value={timezone} onChange={(event) => onTimezoneChange(event.target.value as ChartTimezone)}>{TIMEZONE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><div className="zt-terminal-preference-note"><b>Time-axis behavior</b><span>Use the lower time scale to widen or narrow candle spacing. Use the right price scale to stretch or compress candle height.</span></div><div className="zt-terminal-preference-note"><b>Session VWAP</b><span>Its daily reset follows the selected chart timezone so its session boundary is visible and controlled.</span></div></div>;
+}
+
+function EconomicCalendarWindow({ timezone }: { timezone: ChartTimezone }) {
+  return <div className="zt-economic-calendar"><div className="zt-economic-calendar-status"><CalendarDays /><div><b>Calendar source unavailable</b><p>No verified economic-news provider is connected to this public research deployment, so ZTerminal does not fabricate events, release times, or impact scores.</p></div></div><div className="zt-economic-calendar-row"><span>Display timezone</span><b>{TIMEZONE_OPTIONS.find((option) => option.value === timezone)?.label ?? timezone}</b></div><p className="zt-economic-calendar-footnote">Connect a licensed, provider-backed economic calendar before live event scheduling is enabled.</p></div>;
 }

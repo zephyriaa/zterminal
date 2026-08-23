@@ -4,19 +4,22 @@
 /* eslint-disable react-hooks/refs, react-hooks/set-state-in-effect, react-hooks/immutability */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { getContract } from "@/lib/market/contracts";
 import type { Bar } from "@/lib/market/types";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
+import type { ChartTimezone } from "@/stores/workspace";
 
 export type ChartType = "candles" | "bars" | "line" | "area";
 
 export interface ChartStudy {
   id: string;
   name: string;
-  kind: "ema" | "sma" | "vwap";
+  kind: "ema" | "sma" | "wma" | "vwma" | "vwap" | "bollinger" | "donchian";
   period?: number;
+  multiplier?: number;
   color: string;
   visible: boolean;
   source?: "native" | "migration";
@@ -65,11 +68,13 @@ interface ChartProps {
   timeframe: Timeframe;
   chartType: ChartType;
   indicators: ChartIndicators;
-  replayIndex?: number | null; // when in replay, show bars up to this index
+  replayIndex?: number | null; // optional externally controlled replay cutoff
+  replayEnabled?: boolean;
   markers?: TradeMarker[];
   settings?: ChartSettings;
   /** Provider-normalized mark price. Omit it when the venue does not supply one. */
   markPrice?: number | null;
+  timezone?: ChartTimezone;
   onCrosshair?: (b: Bar | null) => void;
 }
 
@@ -101,18 +106,65 @@ function sma(values: number[], period: number): (number | null)[] {
   return out;
 }
 
-/** Session-anchored VWAP, reset each ET trading day (approx via UTC day). */
-function sessionVWAP(bars: Bar[]): (number | null)[] {
+function wma(values: number[], period: number): (number | null)[] {
+  const out: (number | null)[] = new Array(values.length).fill(null);
+  const denominator = (period * (period + 1)) / 2;
+  for (let i = period - 1; i < values.length; i++) {
+    let sum = 0;
+    for (let offset = 0; offset < period; offset++) sum += values[i - period + 1 + offset] * (offset + 1);
+    out[i] = sum / denominator;
+  }
+  return out;
+}
+
+function vwma(bars: Bar[], period: number): (number | null)[] {
+  const out: (number | null)[] = new Array(bars.length).fill(null);
+  let priceVolume = 0;
+  let volume = 0;
+  for (let i = 0; i < bars.length; i++) {
+    priceVolume += bars[i].c * bars[i].v;
+    volume += bars[i].v;
+    if (i >= period) {
+      priceVolume -= bars[i - period].c * bars[i - period].v;
+      volume -= bars[i - period].v;
+    }
+    if (i >= period - 1) out[i] = volume > 0 ? priceVolume / volume : null;
+  }
+  return out;
+}
+
+function standardDeviation(values: number[], period: number, average: (number | null)[]): (number | null)[] {
+  const out: (number | null)[] = new Array(values.length).fill(null);
+  for (let i = period - 1; i < values.length; i++) {
+    const mean = average[i];
+    if (mean == null) continue;
+    let squared = 0;
+    for (let offset = 0; offset < period; offset++) squared += (values[i - offset] - mean) ** 2;
+    out[i] = Math.sqrt(squared / period);
+  }
+  return out;
+}
+
+function rollingExtrema(values: number[], period: number, mode: "max" | "min"): (number | null)[] {
+  const out: (number | null)[] = new Array(values.length).fill(null);
+  for (let i = period - 1; i < values.length; i++) {
+    let result = values[i - period + 1];
+    for (let offset = 1; offset < period; offset++) result = mode === "max" ? Math.max(result, values[i - period + 1 + offset]) : Math.min(result, values[i - period + 1 + offset]);
+    out[i] = result;
+  }
+  return out;
+}
+
+/** Session-anchored VWAP, reset at the selected chart-timezone day boundary. */
+function sessionVWAP(bars: Bar[], timezone: ChartTimezone): (number | null)[] {
   const out: (number | null)[] = new Array(bars.length).fill(null);
   let cumPV = 0;
   let cumV = 0;
   let dayKey = "";
   for (let i = 0; i < bars.length; i++) {
     const b = bars[i];
-    const d = new Date(b.t);
-    // ET-ish day key (subtract 5h)
-    const et = new Date(d.getTime() - 5 * 3600_000);
-    const key = et.toISOString().slice(0, 10);
+    const parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(b.t));
+    const key = `${parts.find((part) => part.type === "year")?.value ?? "0000"}-${parts.find((part) => part.type === "month")?.value ?? "00"}-${parts.find((part) => part.type === "day")?.value ?? "00"}`;
     if (key !== dayKey) {
       dayKey = key;
       cumPV = 0;
@@ -152,11 +204,12 @@ function fmtPrice(p: number, tick: number): string {
   return p.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-function fmtTime(t: number, tf: Timeframe): string {
-  const d = new Date(t);
-  const et = new Date(t - 5 * 3600_000);
-  if (tf === "1d" || tf === "1w") return et.toISOString().slice(5, 10);
-  return et.toISOString().slice(11, 16);
+function fmtTime(t: number, tf: Timeframe, timezone: ChartTimezone): string {
+  const daily = tf === "1d" || tf === "1w";
+  return new Intl.DateTimeFormat("en-GB", daily
+    ? { timeZone: timezone, month: "2-digit", day: "2-digit" }
+    : { timeZone: timezone, hour: "2-digit", minute: "2-digit", hour12: false }
+  ).format(new Date(t));
 }
 
 export function TerminalChart({
@@ -165,9 +218,11 @@ export function TerminalChart({
   chartType,
   indicators,
   replayIndex,
+  replayEnabled = false,
   markers,
   settings = DEFAULT_CHART_SETTINGS,
   markPrice,
+  timezone = "America/New_York",
   onCrosshair,
 }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -176,6 +231,8 @@ export function TerminalChart({
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [viewVersion, setViewVersion] = useState(0);
+  const [internalReplayIndex, setInternalReplayIndex] = useState<number | null>(null);
+  const [replayPlaying, setReplayPlaying] = useState(false);
 
   // right is the number of time slots reserved after the latest candle.
   // Keeping it in a ref gives pointer events immediate feedback, while the
@@ -184,7 +241,7 @@ export function TerminalChart({
   const priceView = useRef({ offset: 0, zoom: 1 });
   const priceMetrics = useRef({ autoCenter: 0, autoRange: 1, priceHeight: 1 });
   const cross = useRef<{ x: number; y: number } | null>(null);
-  const dragging = useRef<{ mode: "time" | "price-zoom" | "price-pan"; x: number; y: number; right: number; priceZoom: number; priceOffset: number } | null>(null);
+  const dragging = useRef<{ mode: "time" | "time-zoom" | "price-zoom" | "price-pan"; x: number; y: number; right: number; count: number; priceZoom: number; priceOffset: number } | null>(null);
   const touchPoints = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ mode: "time" | "price"; distance: number; count: number; right: number; priceZoom: number; clientY: number } | null>(null);
   const raf = useRef(0);
@@ -192,6 +249,7 @@ export function TerminalChart({
 
   const contract = getContract(symbol);
   const tfSec = TIMEFRAME_SECONDS[timeframe];
+  const effectiveReplayIndex = replayIndex ?? (replayEnabled ? internalReplayIndex : null);
 
   // live trade stream -> update last candle
   const { lastTrade } = useMarketStream(symbol, { trades: 1, depth: false });
@@ -228,6 +286,31 @@ export function TerminalChart({
       cancelled = true;
     };
   }, [symbol, timeframe, tfSec, settings.futureBars]);
+
+  useEffect(() => {
+    if (!replayEnabled) {
+      setInternalReplayIndex(null);
+      setReplayPlaying(false);
+      return;
+    }
+    if (bars.length) {
+      setInternalReplayIndex((current) => Math.min(bars.length - 1, current ?? Math.max(0, bars.length - Math.min(120, bars.length))));
+    }
+  }, [bars.length, replayEnabled]);
+
+  useEffect(() => {
+    if (!replayEnabled || !replayPlaying || internalReplayIndex == null || internalReplayIndex >= bars.length - 1) return;
+    const timer = window.setInterval(() => {
+      setInternalReplayIndex((current) => {
+        if (current == null || current >= bars.length - 1) {
+          setReplayPlaying(false);
+          return current;
+        }
+        return current + 1;
+      });
+    }, 350);
+    return () => window.clearInterval(timer);
+  }, [bars.length, internalReplayIndex, replayEnabled, replayPlaying]);
 
   // live update last candle from trade stream
   useEffect(() => {
@@ -290,16 +373,16 @@ export function TerminalChart({
       raf.current = 0;
       draw();
     });
-  }, [bars, chartType, indicators, replayIndex, markers, settings, markPrice, viewVersion]);
+  }, [bars, chartType, indicators, effectiveReplayIndex, markers, settings, markPrice, viewVersion]);
 
   // redraw when data/view changes
   useEffect(() => {
     scheduleDraw();
-  }, [bars, chartType, indicators, replayIndex, markers, settings, viewVersion, scheduleDraw]);
+  }, [bars, chartType, indicators, effectiveReplayIndex, markers, settings, viewVersion, scheduleDraw]);
 
   const viewport = useMemo(() => {
     const count = view.current.count;
-    const availableBars = replayIndex == null ? bars.length : Math.min(bars.length, replayIndex + 1);
+    const availableBars = effectiveReplayIndex == null ? bars.length : Math.min(bars.length, effectiveReplayIndex + 1);
     // A positive right offset intentionally projects the timeline beyond the
     // latest market candle. A negative offset pans backward through history.
     const virtualEnd = availableBars + view.current.right;
@@ -307,7 +390,7 @@ export function TerminalChart({
     const start = Math.max(0, Math.ceil(virtualStart));
     const end = Math.max(start, Math.min(availableBars, Math.floor(virtualEnd)));
     return { bars: bars.slice(start, end), count, start, virtualStart, availableBars };
-  }, [bars, replayIndex, viewVersion]);
+  }, [bars, effectiveReplayIndex, viewVersion]);
 
   // ----- drawing -----
   const draw = useCallback(() => {
@@ -352,11 +435,29 @@ export function TerminalChart({
     const closes = vb.map((b) => b.c);
     const ema20 = indicators.ema20 ? ema(closes, 20) : [];
     const ema50 = indicators.ema50 ? ema(closes, 50) : [];
-    const vwap = indicators.vwap ? sessionVWAP(vb) : [];
-    const customLines = (indicators.customStudies ?? []).filter((study) => study.visible).map((study) => ({
-      study,
-      values: study.kind === "ema" ? ema(closes, Math.max(1, study.period ?? 20)) : study.kind === "sma" ? sma(closes, Math.max(1, study.period ?? 20)) : sessionVWAP(vb),
-    }));
+    const vwap = indicators.vwap ? sessionVWAP(vb, timezone) : [];
+    const customLines = (indicators.customStudies ?? []).filter((study) => study.visible).flatMap((study) => {
+      const period = Math.max(1, study.period ?? 20);
+      if (study.kind === "ema") return [{ study, values: ema(closes, period), color: study.color, dash: [] as number[] }];
+      if (study.kind === "sma") return [{ study, values: sma(closes, period), color: study.color, dash: [] as number[] }];
+      if (study.kind === "wma") return [{ study, values: wma(closes, period), color: study.color, dash: [] as number[] }];
+      if (study.kind === "vwma") return [{ study, values: vwma(vb, period), color: study.color, dash: [] as number[] }];
+      if (study.kind === "vwap") return [{ study, values: sessionVWAP(vb, timezone), color: study.color, dash: [4, 3] }];
+      if (study.kind === "bollinger") {
+        const middle = sma(closes, period);
+        const deviation = standardDeviation(closes, period, middle);
+        const multiplier = Math.max(0.1, study.multiplier ?? 2);
+        return [
+          { study, values: middle, color: study.color, dash: [] as number[] },
+          { study, values: middle.map((value, index) => value == null || deviation[index] == null ? null : value + deviation[index]! * multiplier), color: study.color, dash: [3, 3] },
+          { study, values: middle.map((value, index) => value == null || deviation[index] == null ? null : value - deviation[index]! * multiplier), color: study.color, dash: [3, 3] },
+        ];
+      }
+      return [
+        { study, values: rollingExtrema(vb.map((bar) => bar.h), period, "max"), color: study.color, dash: [5, 3] },
+        { study, values: rollingExtrema(vb.map((bar) => bar.l), period, "min"), color: study.color, dash: [5, 3] },
+      ];
+    });
     for (const v of [...ema20, ...ema50, ...vwap, ...customLines.flatMap((line) => line.values)]) if (typeof v === "number") { hi = Math.max(hi, v); lo = Math.min(lo, v); }
     if (typeof markPrice === "number" && Number.isFinite(markPrice)) { hi = Math.max(hi, markPrice); lo = Math.min(lo, markPrice); }
     const pad = (hi - lo) * 0.08 || hi * 0.01;
@@ -405,7 +506,7 @@ export function TerminalChart({
       ctx.lineTo(x, priceH);
       ctx.stroke();
       ctx.fillStyle = c.axisText;
-      ctx.fillText(fmtTime(vb[i].t, timeframe), x, h - 6);
+      ctx.fillText(fmtTime(vb[i].t, timeframe, timezone), x, h - 6);
     }
 
     // volume pane
@@ -496,7 +597,7 @@ export function TerminalChart({
     if (indicators.vwap) drawLine(vwap, c.warn, [4, 3]);
     if (indicators.ema20) drawLine(ema20, c.mdata);
     if (indicators.ema50) drawLine(ema50, c.research);
-    for (const line of customLines) drawLine(line.values, line.study.color, line.study.kind === "vwap" ? [4, 3] : []);
+    for (const line of customLines) drawLine(line.values, line.color, line.dash);
 
     // trade markers
     if (markers?.length) {
@@ -607,7 +708,7 @@ export function TerminalChart({
         onCrosshair(null);
       }
     }
-  }, [viewport, chartType, indicators, contract.tickSize, markers, timeframe, markPrice, onCrosshair, settings]);
+  }, [viewport, chartType, indicators, contract.tickSize, markers, timeframe, markPrice, onCrosshair, settings, timezone]);
 
   // pointer handlers
   const maxFutureBars = Math.max(settings.futureBars * 5, 160);
@@ -626,6 +727,19 @@ export function TerminalChart({
   const panPriceByPixels = (pixels: number, originOffset: number) => {
     const height = Math.max(1, priceMetrics.current.priceHeight);
     priceView.current = { ...priceView.current, offset: clampPriceOffset(originOffset - pixels / height) };
+    invalidateViewport();
+  };
+  const zoomTimeScaleAtPointer = (nextCount: number, clientX: number, rect: DOMRect, originRight = view.current.right, originCount = view.current.count) => {
+    const boundedCount = Math.max(30, Math.min(400, Math.round(nextCount)));
+    const plotWidth = Math.max(1, rect.width - PRICE_AXIS_W);
+    const pivot = Math.max(0, Math.min(1, (clientX - rect.left) / plotWidth));
+    view.current.right = clampRight(originRight + (boundedCount - originCount) * (1 - pivot));
+    view.current.count = boundedCount;
+    invalidateViewport();
+  };
+  const resetTimeScale = () => {
+    view.current.right = settings.futureBars;
+    view.current.count = 120;
     invalidateViewport();
   };
   const resetViewport = () => {
@@ -670,12 +784,15 @@ export function TerminalChart({
     };
     dragging.current = null;
   };
-  const beginSingleTouchDrag = (point: { x: number; y: number }, rect: DOMRect, mode?: "time" | "price-pan") => {
+  const beginSingleTouchDrag = (point: { x: number; y: number }, rect: DOMRect, mode?: "time" | "time-zoom" | "price-pan") => {
+    const inPriceAxis = point.x - rect.left >= rect.width - PRICE_AXIS_W;
+    const inTimeAxis = point.y - rect.top >= rect.height - TIME_AXIS_H;
     dragging.current = {
-      mode: mode ?? (point.x - rect.left >= rect.width - PRICE_AXIS_W ? "price-zoom" : "time"),
+      mode: mode ?? (inPriceAxis ? "price-zoom" : inTimeAxis ? "time-zoom" : "time"),
       x: point.x,
       y: point.y,
       right: view.current.right,
+      count: view.current.count,
       priceZoom: priceView.current.zoom,
       priceOffset: priceView.current.offset,
     };
@@ -716,6 +833,11 @@ export function TerminalChart({
         const deltaY = e.clientY - dragging.current.y;
         const nextZoom = dragging.current.priceZoom * Math.exp(-deltaY * 0.01);
         zoomPriceScaleAtPointer(nextZoom, e.clientY, rect);
+      } else if (dragging.current.mode === "time-zoom") {
+        // Dragging across the lower time scale expands or contracts candle spacing around the pointer.
+        const deltaX = e.clientX - dragging.current.x;
+        const nextCount = dragging.current.count * Math.exp(-deltaX * 0.01);
+        zoomTimeScaleAtPointer(nextCount, e.clientX, rect, dragging.current.right, dragging.current.count);
       } else if (dragging.current.mode === "price-pan") {
         panPriceByPixels(e.clientY - dragging.current.y, dragging.current.priceOffset);
       } else {
@@ -741,7 +863,7 @@ export function TerminalChart({
       else beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect);
       return;
     }
-    const plotMode = e.button === 1 || e.altKey ? "price-pan" : "time";
+    const plotMode = e.button === 1 || e.altKey ? "price-pan" : undefined;
     beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect, plotMode);
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -782,13 +904,10 @@ export function TerminalChart({
       zoomPriceScaleAtPointer(priceView.current.zoom * factor, e.clientY, rect);
       return;
     }
-    const pivot = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width - PRICE_AXIS_W)));
     const previousCount = view.current.count;
-    const nextCount = Math.max(30, Math.min(400, Math.round(previousCount / factor)));
-    // Preserve the candle beneath the pointer while changing density.
-    view.current.right = clampRight(view.current.right + (nextCount - previousCount) * (1 - pivot));
-    view.current.count = nextCount;
-    invalidateViewport();
+    // Wheel over the chart plot changes density; wheel over the time scale has the same
+    // horizontal result while keeping the rest of the chart gesture model explicit.
+    zoomTimeScaleAtPointer(previousCount / factor, e.clientX, rect);
   };
 
   // keyboard pan/zoom
@@ -829,16 +948,17 @@ export function TerminalChart({
         onWheel={onWheel}
         onDoubleClick={(event) => {
           const rect = canvasRef.current!.getBoundingClientRect();
-          if (event.clientX - rect.left >= rect.width - PRICE_AXIS_W) {
-            resetPriceScale();
-          } else {
-            resetViewport();
-          }
+          const inPriceAxis = event.clientX - rect.left >= rect.width - PRICE_AXIS_W;
+          const inTimeAxis = event.clientY - rect.top >= rect.height - TIME_AXIS_H;
+          if (inPriceAxis) resetPriceScale();
+          else if (inTimeAxis) resetTimeScale();
+          else resetViewport();
         }}
         tabIndex={0}
-        aria-label={`${symbol} ${timeframe} chart; drag to pan time, use middle mouse or Alt-drag to pan the price range, pinch the plot to change candle density, pinch or drag the price scale to stretch or compress candle height, double click to reset`}
+        aria-label={`${symbol} ${timeframe} chart; drag the plot to pan time, use middle mouse or Alt-drag to pan the price range, use the lower time scale to widen or narrow candles, use the right price scale to stretch or compress candle height, and double click an axis to reset that axis`}
       />
       <div className="mobile-chart-gesture-hint pointer-events-none absolute right-2 top-2 rounded-[3px] border hairline bg-panel/80 px-1.5 py-1 text-[8px] text-muted-foreground backdrop-blur">Drag to pan · Alt-drag price · pinch to scale</div>
+      {replayEnabled && internalReplayIndex != null && <div className="absolute bottom-7 right-2 flex items-center gap-1 border hairline bg-panel/95 p-1 shadow-sm backdrop-blur"><button type="button" onClick={() => { setReplayPlaying(false); setInternalReplayIndex((current) => Math.max(0, (current ?? 0) - 1)); }} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground" aria-label="Previous replay bar" title="Previous bar"><ChevronLeft className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setReplayPlaying((playing) => !playing)} className="grid h-6 w-6 place-items-center rounded bg-research/15 text-research hover:bg-research/25" aria-label={replayPlaying ? "Pause replay" : "Play replay"} title={replayPlaying ? "Pause replay" : "Play replay"}>{replayPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</button><button type="button" onClick={() => { setReplayPlaying(false); setInternalReplayIndex((current) => Math.min(Math.max(0, bars.length - 1), (current ?? 0) + 1)); }} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground" aria-label="Next replay bar" title="Next bar"><ChevronRight className="h-3.5 w-3.5" /></button><span className="px-1 font-mono-num text-[9px] text-muted-foreground">Replay {internalReplayIndex + 1}/{bars.length}</span></div>}
       <div className="pointer-events-none absolute bottom-7 left-2 flex items-center gap-1.5">
         <button
           type="button"

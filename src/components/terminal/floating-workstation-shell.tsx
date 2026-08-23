@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Activity,
+  CalendarDays,
+  Code2,
   FlaskConical,
   Layers3,
   RotateCcw,
+  Search,
   Settings2,
   SlidersHorizontal,
 } from "lucide-react";
@@ -15,11 +18,6 @@ import { ReferenceChartWorkspace } from "./reference-chart-workspace";
 import { AccountPanel } from "./account-panel";
 import { useWorkspace } from "@/stores/workspace";
 import { useMarketStream } from "@/hooks/use-market-stream";
-import { cn } from "@/lib/utils";
-
-function formatPrice(value: number | undefined | null) {
-  return value == null || !Number.isFinite(value) ? "—" : value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
 
 /**
  * The public terminal uses one reference-led windowed workstation. Existing P0
@@ -28,9 +26,8 @@ function formatPrice(value: number | undefined | null) {
  */
 export function FloatingWorkstationShell() {
   const { symbol } = useWorkspace();
-  const { lastTrade, derivatives, provider, dataStatus } = useMarketStream(symbol, { trades: 1, depth: false });
+  const { provider, dataStatus } = useMarketStream(symbol, { trades: 1, depth: false });
   const [accountOpen, setAccountOpen] = useState(false);
-  const price = lastTrade?.price ?? derivatives?.markPrice;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -53,15 +50,12 @@ export function FloatingWorkstationShell() {
         </button>
         <span className="zt-header-separator" aria-hidden="true" />
         <InstrumentPicker />
-        <div className="zt-header-market hidden md:flex">
-          <span>{provider?.toUpperCase() ?? "BINANCE"} · USDⓈ-M</span>
-          <b>{formatPrice(price)}</b>
-          <em className={cn(dataStatus === "LIVE" ? "is-positive" : "")}>{dataStatus === "LIVE" ? "OBSERVED" : "RESEARCH"}</em>
-        </div>
         <div className="zt-workspace-label hidden lg:block"><b>FLOATING WORKSTATION</b><span>Drag windows to arrange</span></div>
         <div className="ml-auto flex items-center gap-1.5">
-          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><SlidersHorizontal /></button>
-          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-settings"))} aria-label="Terminal settings" title="Terminal settings"><Settings2 /></button>
+          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-calendar"))} aria-label="Open economic calendar" title="Economic calendar"><CalendarDays /></button>
+          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))} aria-label="Open Python strategy developer" title="Python strategy developer"><Code2 /></button>
+          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><Search /></button>
+          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-terminal-settings"))} aria-label="Terminal preferences" title="Terminal preferences"><Settings2 /></button>
           <button type="button" className="zt-research-account" onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} aria-label="Open research account information"><span>R</span><div className="hidden sm:block"><b>Research mode</b><small>Read only</small></div></button>
           {accountOpen && <AccountPanel symbol={symbol} provider={provider} dataStatus={dataStatus} onClose={() => setAccountOpen(false)} />}
         </div>

@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DataStatus, Environment, ProviderId } from "@/lib/market/types";
 
+export type ChartTimezone = "America/New_York" | "UTC" | "Europe/London" | "Asia/Dubai";
+
 export type ViewId =
   | "markets"
   | "calendar"
@@ -42,6 +44,9 @@ interface WorkspaceState {
   timeframe: string;
   setTimeframe: (tf: string) => void;
 
+  timezone: ChartTimezone;
+  setTimezone: (timezone: ChartTimezone) => void;
+
   commandOpen: boolean;
   setCommandOpen: (o: boolean) => void;
 
@@ -65,7 +70,9 @@ interface WorkspaceState {
 const P0_DEFAULT_SYMBOL = "BTCUSDT";
 const P0_TIMEFRAMES = new Set(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]);
 
-type PersistedWorkspace = Partial<Pick<WorkspaceState, "sidebarCollapsed" | "symbol" | "timeframe" | "workspaces">>;
+type PersistedWorkspace = Partial<Pick<WorkspaceState, "sidebarCollapsed" | "symbol" | "timeframe" | "timezone" | "workspaces">>;
+
+const SUPPORTED_TIMEZONES = new Set<ChartTimezone>(["America/New_York", "UTC", "Europe/London", "Asia/Dubai"]);
 
 /**
  * Previous releases persisted Gate.io and legacy venue selections in browsers.
@@ -78,6 +85,9 @@ function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
   const timeframe = typeof persisted.timeframe === "string" && P0_TIMEFRAMES.has(persisted.timeframe)
     ? persisted.timeframe
     : "5m";
+  const timezone = typeof persisted.timezone === "string" && SUPPORTED_TIMEZONES.has(persisted.timezone as ChartTimezone)
+    ? persisted.timezone as ChartTimezone
+    : "America/New_York";
   const workspaces = Array.isArray(persisted.workspaces)
     ? persisted.workspaces.map((workspace) => ({
         ...workspace,
@@ -85,7 +95,7 @@ function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
         timeframe: P0_TIMEFRAMES.has(workspace.timeframe) ? workspace.timeframe : "5m",
       }))
     : [];
-  return { ...persisted, symbol: P0_DEFAULT_SYMBOL, timeframe, workspaces };
+  return { ...persisted, symbol: P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
 }
 
 export const useWorkspace = create<WorkspaceState>()(
@@ -103,6 +113,9 @@ export const useWorkspace = create<WorkspaceState>()(
 
       timeframe: "5m",
       setTimeframe: (tf) => set({ timeframe: tf }),
+
+      timezone: "America/New_York",
+      setTimezone: (timezone) => set({ timezone }),
 
       commandOpen: false,
       setCommandOpen: (o) => set({ commandOpen: o }),
@@ -150,6 +163,7 @@ export const useWorkspace = create<WorkspaceState>()(
         sidebarCollapsed: s.sidebarCollapsed,
         symbol: s.symbol,
         timeframe: s.timeframe,
+        timezone: s.timezone,
         workspaces: s.workspaces,
       }),
     }
