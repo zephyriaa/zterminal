@@ -32,6 +32,11 @@ const packageManifest = JSON.parse(
   readFileSync(resolve(process.cwd(), "package.json"), "utf8"),
 ) as { scripts: Record<string, string> };
 
+const localFirstBoundary = readFileSync(
+  resolve(process.cwd(), "docs/windows/LOCAL_FIRST_PRODUCT_BOUNDARY.md"),
+  "utf8",
+);
+
 function assertManualOnly(workflow: string) {
   assert.match(workflow, /workflow_dispatch:/);
   assert.doesNotMatch(workflow, /\npush:/);
@@ -47,6 +52,13 @@ function assertHostedWorkstationPreview(workflow: string) {
   assert.doesNotMatch(workflow, /npm run desktop:build/);
   assert.doesNotMatch(workflow, /npm run tauri build -- --bundles nsis/);
 }
+
+test("local-first product boundary excludes the hosted wrapper as a desktop runtime", () => {
+  assert.match(localFirstBoundary, /native local-first terminal/i);
+  assert.match(localFirstBoundary, /must not receive new terminal capabilities/i);
+  assert.match(localFirstBoundary, /No rendering, visual streaming, or browser-WebView product runtime/i);
+  assert.match(localFirstBoundary, /No feature work should be added to the hosted wrapper/i);
+});
 
 test("internal ZTerminal workstation preview remains manually dispatched and requires the live workstation", () => {
   assertManualOnly(dryWorkflow);
