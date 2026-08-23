@@ -1,0 +1,115 @@
+name: Internal Windows Preview (Dry Build)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Reviewed Git ref to build"
+        required: true
+        default: "main"
+        type: string
+      internal_notes:
+        description: "Optional internal-only release note for the artifact manifest"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: internal-windows-preview-dry-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  dry-build:
+    name: Build unsigned internal NSIS preview
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Generate Prisma client for type checks
+        run: npm run db:generate
+
+      - name: Run web regression checks
+        run: |
+          npm test
+          npm run typecheck
+          npm run lint
+
+      - name: Build desktop frontend
+        run: npm run desktop:build
+
+      - name: Build unsigned NSIS internal preview
+        run: npm run tauri build -- --bundles nsis
+
+      - name: Assemble private dry-build artifact
+        shell: pwsh
+        env:
+          INTERNAL_NOTES: ${{ inputs.internal_notes }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installerDirectory = Join-Path $PWD "src-tauri/target/release/bundle/nsis"
+          $installers = @(Get-ChildItem -Path $installerDirectory -Filter "*.exe" -File)
+          if ($installers.Count -ne 1) {
+            throw "Expected exactly one NSIS setup executable, found $($installers.Count)."
+          }
+
+          $installer = $installers[0]
+          $hash = (Get-FileHash -Path $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $artifactRoot = Join-Path $env:RUNNER_TEMP "zterminal-internal-preview-dry"
+          $artifactInstaller = Join-Path $artifactRoot "ZTerminal-Internal-Preview-Unsigned.exe"
+          New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
+          Copy-Item -Path $installer.FullName -Destination $artifactInstaller -Force
+          Set-Content -Path "$artifactInstaller.sha256" -Value "$hash  ZTerminal-Internal-Preview-Unsigned.exe" -NoNewline
+
+          $manifest = [ordered]@{
+            schema_version = 1
+            artifact_kind = "internal-tauri-nsis-dry-build"
+            internal_only = $true
+            public_release_eligible = $false
+            signing = [ordered]@{
+              status = "not-requested"
+              reason = "Dry build: no certificate, private key, signing secret, timestamp credential, or publication operation is used."
+            }
+            source = [ordered]@{
+              git_sha = $env:GITHUB_SHA
+              git_ref = "${{ inputs.ref }}"
+              workflow_run = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            }
+            installer = [ordered]@{
+              file = "ZTerminal-Internal-Preview-Unsigned.exe"
+              bytes = (Get-Item $artifactInstaller).Length
+              sha256 = $hash
+            }
+            notes = $env:INTERNAL_NOTES
+          }
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $artifactRoot "internal-release.json")
+
+      - name: Upload private dry-build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: zterminal-internal-preview-dry-${{ github.run_number }}
+          path: ${{ runner.temp }}/zterminal-internal-preview-dry
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Record public-release safety boundary
+        shell: pwsh
+        run: |
+          Write-Host "Internal dry build complete. This artifact is unsigned, private to Actions, and ineligible for public download or automatic updates."
+          Write-Host "No certificate, PFX, signing password, timestamp credential, release manifest, CDN upload, website release variable, or Render configuration was used."
