@@ -94,21 +94,6 @@ export function ReferenceChartWorkspace() {
 
   return (
     <div className="zt-reference-canvas" aria-label="Floating research workstation">
-      <div className="zt-workstation-strip">
-        <span className="zt-strip-contract">{formatSymbol(symbol)} <small>PERPETUAL</small></span>
-        <span className="zt-strip-divider" aria-hidden="true" />
-        <div className="zt-timeframes" aria-label="Chart timeframe">
-          {TIMEFRAMES.map((item) => <button key={item.value} type="button" onClick={() => setTimeframe(item.value)} className={cn(timeframe === item.value && "is-active")} aria-pressed={timeframe === item.value}>{item.label}</button>)}
-        </div>
-        <span className="zt-strip-divider hidden sm:block" aria-hidden="true" />
-        <button type="button" className="zt-strip-tool hidden sm:inline-flex" onClick={() => setContextOpen(true)}><Activity />Market</button>
-        <button type="button" className="zt-strip-tool" onClick={() => setIndicatorsOpen(true)}><Layers3 />Indicators</button>
-        <div className="ml-auto flex items-center gap-2">
-          <span className={cn("zt-feed-indicator", dataStatus === "LIVE" && "is-live")} title={reason ?? health?.reason ?? "Research feed status"}><i />{dataStatus === "LIVE" ? "LIVE" : "RESEARCH"}</span>
-          <button type="button" className="zt-strip-icon" onClick={() => setSettingsOpen(true)} aria-label="Terminal settings"><SlidersHorizontal /></button>
-        </div>
-      </div>
-
       <DesktopWindow
         id="chart"
         title={`${formatSymbol(symbol)} · ${timeframe.toUpperCase()}`}
@@ -126,15 +111,24 @@ export function ReferenceChartWorkspace() {
         }
       >
         <div className="zt-chart-content">
-          <div className="zt-chart-toolbar">
-            <div className="zt-chart-price"><b>{formatPrice(livePrice, contract.tickSize)}</b><span className={dataStatus === "LIVE" ? "text-pos" : "text-muted-foreground"}>{provider?.toUpperCase() ?? "BINANCE"} · {dataStatus}</span></div>
-            <span className="zt-toolbar-divider" />
+          <div className="zt-chart-toolbar" aria-label="Chart controls">
+            <span className="zt-chart-contract">{formatSymbol(symbol)} <small>PERPETUAL</small></span>
+            <span className="zt-toolbar-divider" aria-hidden="true" />
+            <div className="zt-chart-timeframes" aria-label="Chart timeframe">
+              {TIMEFRAMES.map((item) => <button key={item.value} type="button" onClick={() => setTimeframe(item.value)} className={cn(timeframe === item.value && "is-active")} aria-pressed={timeframe === item.value}>{item.label}</button>)}
+            </div>
+            <span className="zt-toolbar-divider" aria-hidden="true" />
+            <button type="button" className="zt-chart-toolbar-button hidden sm:inline-flex" onClick={() => setContextOpen(true)}><Activity />Market</button>
             <button type="button" className={cn("zt-chart-toolbar-button", indicatorsOpen && "is-active")} onClick={() => setIndicatorsOpen(true)}><Layers3 />Indicators</button>
+            <span className="zt-toolbar-divider hidden md:block" aria-hidden="true" />
+            <div className="zt-chart-price"><b>{formatPrice(livePrice, contract.tickSize)}</b><span className={dataStatus === "LIVE" ? "text-pos" : "text-muted-foreground"}>{provider?.toUpperCase() ?? "BINANCE"} · {dataStatus}</span></div>
+            <span className={cn("zt-chart-feed-indicator", dataStatus === "LIVE" && "is-live")} title={reason ?? health?.reason ?? "Research feed status"}><i />{dataStatus === "LIVE" ? "LIVE" : "RESEARCH"}</span>
             <div className="ml-auto flex items-center gap-1">
               <ChartTypeButton active={chartType === "candles"} label="Candles" onClick={() => setChartType("candles")}><CandlestickChart /></ChartTypeButton>
               <ChartTypeButton active={chartType === "bars"} label="Bars" onClick={() => setChartType("bars")}><BarChart3 /></ChartTypeButton>
               <ChartTypeButton active={chartType === "line"} label="Line" onClick={() => setChartType("line")}><LineChart /></ChartTypeButton>
-              <button type="button" className="zt-chart-toolbar-button is-icon" onClick={() => setContextOpen(true)} aria-label="Open market context"><SlidersHorizontal /></button>
+              <button type="button" className="zt-chart-toolbar-button is-icon" onClick={() => setContextOpen(true)} aria-label="Open market context" title="Market context"><Activity /></button>
+              <button type="button" className="zt-chart-toolbar-button is-icon" onClick={() => setSettingsOpen(true)} aria-label="Open chart preferences" title="Chart preferences"><SlidersHorizontal /></button>
             </div>
           </div>
           <div className="zt-chart-stage">
