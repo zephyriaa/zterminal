@@ -1,8 +1,8 @@
-# Internal Test Signing for the Legacy Tauri/NSIS Preview
+# Internal Test Signing for the Hosted ZTerminal Workstation Preview
 
 ## Purpose and scope
 
-This runbook describes an **internal test-only** signing path for the legacy Tauri/NSIS packaging proof in Track A. It exists solely to check that the private Actions artifact can carry and verify a self-signed Authenticode signature in a controlled test environment.
+This runbook describes an **internal test-only** signing path for the hosted ZTerminal workstation preview in Track A. It exists solely to check that the private Actions artifact can carry and verify a self-signed Authenticode signature in a controlled test environment. The preview loads the verified deployed `/terminal` workstation and requires an online connection; it is not the future local-first Track B client.
 
 > A self-signed certificate is not a public software-signing identity. A test-signed artifact must never be described as an official ZTerminal installer, uploaded to a release, linked from the website, published through Render, copied to object storage or a CDN, or used by an updater.
 
@@ -62,14 +62,14 @@ GitHub must mask these values. Do not paste either into terminal logs, workflow 
 
 ## Run the internal test-signed preview
 
-After the environment reviewer has approved the requested deployment and both secrets exist, open **Actions → Internal Windows Preview (Test-Signed) → Run workflow**. Set the ref to `main`, check the explicit internal-test-signing acknowledgement, and enter only non-sensitive internal notes.
+After the environment reviewer has approved the requested deployment and both secrets exist, open **Actions → Internal ZTerminal Workstation Preview (Test-Signed) → Run workflow**. Set the ref to `main`, check the explicit internal-test-signing acknowledgement, and enter only non-sensitive internal notes.
 
-The workflow rebuilds the current legacy Tauri NSIS installer, imports the environment-scoped PFX on the disposable Windows runner, signs with SHA-256, verifies `Get-AuthenticodeSignature` as `Valid` in that runner, and removes the imported certificate and temporary PFX before artifact upload. It creates the private artifact files below.
+The workflow first verifies the deployed `/terminal` workstation before it builds the dedicated hosted-workstation NSIS flavor. It then imports the environment-scoped PFX on the disposable Windows runner, signs with SHA-256, verifies `Get-AuthenticodeSignature` as `Valid` in that runner, and removes the imported certificate and temporary PFX before artifact upload. It creates the private artifact files below.
 
 | Artifact file | Meaning |
 |---|---|
-| `ZTerminal-Internal-Test-Signed.exe` | Self-signed test installer; not public-safe |
-| `ZTerminal-Internal-Test-Signed.exe.sha256` | SHA-256 checksum for internal integrity verification |
+| `ZTerminal-Hosted-Workstation-Preview-Test-Signed.exe` | Self-signed private installer that opens the hosted ZTerminal workstation; not public-safe and requires an internet connection. |
+| `ZTerminal-Hosted-Workstation-Preview-Test-Signed.exe.sha256` | SHA-256 checksum for internal integrity verification |
 | `internal-release.json` | Internal manifest declaring `internal_only: true`, `public_release_eligible: false`, `self-signed-test-only`, and `timestamp: not-requested` |
 
 Verify the SHA-256 checksum before a controlled internal test. On a Windows test machine, Windows may show warnings because this certificate is self-signed and untrusted by the public trust ecosystem. That expected warning does not make the artifact suitable for external users.
@@ -82,6 +82,6 @@ The test workflow must never be extended to do any of the following without a se
 - Create a GitHub Release, upload a release asset, push to a CDN or object store, or set any public Windows release environment variable.
 - Change `/download`, `/download/windows`, `/api/releases/windows`, or the public release resolver state.
 - Connect the artifact to automatic updates, remote configuration, Render, customer telemetry, cloud sync, broker access, or order execution.
-- Treat the legacy Tauri preview as the future native Win32/Direct3D client.
+- Treat the hosted Tauri preview as an offline local-first app or as the future native Win32/Direct3D client.
 
 If trustworthy public distribution is required, stop here and begin the separately reviewed Track B production release process with a trusted Authenticode signing identity, timestamping, controlled distribution infrastructure, native-client acceptance testing, and rollback design.
