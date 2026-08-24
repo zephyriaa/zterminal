@@ -17,6 +17,7 @@ constexpr unsigned long kCommandSchemaVersion = 1;
 constexpr std::size_t kMaximumSimulations = 10'000;
 constexpr std::size_t kMaximumHorizonBars = 1'000;
 constexpr std::size_t kMaximumWorkItems = 1'000'000;
+constexpr std::size_t kMaximumHistorySegments = 16;
 constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
 
 [[nodiscard]] Result bridge_failure(std::wstring diagnostic) {
@@ -161,6 +162,7 @@ constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
 
     std::uint64_t algorithm_version{};
     std::uint64_t seed{};
+    std::uint64_t source_segments{};
     std::uint64_t source_bars{};
     std::uint64_t source_returns{};
     std::uint64_t simulations{};
@@ -171,6 +173,7 @@ constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
     std::int64_t p95_return_bps{};
     std::int64_t maximum_return_bps{};
     std::int64_t mean_return_bps{};
+    std::size_t source_segments_size{};
     std::size_t source_bars_size{};
     std::size_t source_returns_size{};
     std::size_t simulations_size{};
@@ -178,6 +181,7 @@ constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
     if (!json_u64(output, "algorithm_version", algorithm_version)
         || algorithm_version == 0 || algorithm_version > std::numeric_limits<std::uint16_t>::max()
         || !json_u64(output, "seed", seed) || seed == 0
+        || !json_u64(output, "source_segments", source_segments) || !representable_size(source_segments, source_segments_size)
         || !json_u64(output, "source_bars", source_bars) || !representable_size(source_bars, source_bars_size)
         || !json_u64(output, "source_returns", source_returns) || !representable_size(source_returns, source_returns_size)
         || !json_u64(output, "simulations", simulations) || !representable_size(simulations, simulations_size)
@@ -193,6 +197,7 @@ constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
     if (simulations_size == 0 || simulations_size > kMaximumSimulations
         || horizon_bars_size == 0 || horizon_bars_size > kMaximumHorizonBars
         || simulations_size > kMaximumWorkItems / horizon_bars_size
+        || source_segments_size == 0 || source_segments_size > kMaximumHistorySegments
         || source_bars_size < 2 || source_bars_size > 100'000
         || source_returns_size + 1 != source_bars_size
         || minimum_return_bps > p05_return_bps || p05_return_bps > median_return_bps
@@ -205,6 +210,7 @@ constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
         .age_ns = age_ns,
         .algorithm_version = static_cast<std::uint16_t>(algorithm_version),
         .seed = seed,
+        .source_segments = source_segments_size,
         .source_bars = source_bars_size,
         .source_returns = source_returns_size,
         .simulations = simulations_size,
@@ -231,6 +237,7 @@ Result load(const Request& request) {
     if (request.root.empty() || request.interval_ns == 0 || request.simulations == 0
         || request.simulations > kMaximumSimulations || request.horizon_bars == 0
         || request.horizon_bars > kMaximumHorizonBars || request.seed == 0
+        || request.history_segments == 0 || request.history_segments > kMaximumHistorySegments
         || request.simulations > kMaximumWorkItems / request.horizon_bars) {
         return bridge_failure(L"local Monte Carlo request is outside its bounded contract");
     }
@@ -269,7 +276,8 @@ Result load(const Request& request) {
             << L" --freshness-budget-ns " << request.freshness_budget_ns
             << L" --simulations " << request.simulations
             << L" --horizon-bars " << request.horizon_bars
-            << L" --seed " << request.seed;
+            << L" --seed " << request.seed
+            << L" --history-segments " << request.history_segments;
     std::wstring command_text = command.str();
     STARTUPINFOW startup{};
     startup.cb = sizeof(startup);
@@ -305,7 +313,11 @@ Result load(const Request& request) {
     if (wait_result != WAIT_OBJECT_0 || exit_code != 0) {
         return bridge_failure(L"local Monte Carlo command rejected the requested local research");
     }
-    return parse_command_output(response);
+    Result result = parse_command_output(response);
+    if (result.kind == Kind::Complete && result.source_segments != request.history_segments) {
+        return bridge_failure(L"local Monte Carlo command returned a history segment count different from the explicit request");
+    }
+    return result;
 }
 
 const wchar_t* kind_label(Kind kind) {
