@@ -291,5 +291,5 @@ ZTerminal is software for market analysis, research and decision support. It doe
 
 <p align="center">
 <strong>ZTerminal</strong><br />
-<sub>Quantitative market intelligence — evolving into a lightweight Windows terminal.</sub>
+<sub>Quantitative market intelligence / a lightweight analysis terminal.</sub>
 </p>
