@@ -15,6 +15,8 @@ set(ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}/cargo")
 set(ZT_LOCAL_SCENE_BRIDGE_EXE "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}/release/zt-local-scene-bridge.exe")
 set(ZT_LOCAL_MONTE_CARLO_MANIFEST "${ZT_REPOSITORY_ROOT}/apps/zt-local-monte-carlo/Cargo.toml")
 set(ZT_LOCAL_MONTE_CARLO_EXE "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}/release/zt-local-monte-carlo.exe")
+set(ZT_LOCAL_SEGMENT_CATALOG_MANIFEST "${ZT_REPOSITORY_ROOT}/apps/zt-local-segment-catalog/Cargo.toml")
+set(ZT_LOCAL_SEGMENT_CATALOG_EXE "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}/release/zt-local-segment-catalog.exe")
 set(ZT_OFFLINE_PROVIDER_IMPORT_MANIFEST "${ZT_REPOSITORY_ROOT}/apps/zt-offline-provider-import/Cargo.toml")
 set(ZT_OFFLINE_PROVIDER_IMPORT_EXE "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}/release/zt-offline-provider-import.exe")
 set(ZT_DIRECT_PUBLIC_INGEST_MANIFEST "${ZT_REPOSITORY_ROOT}/apps/zt-direct-public-ingest/Cargo.toml")
@@ -59,6 +61,23 @@ add_custom_command(
 add_custom_target(ZTerminalLocalMonteCarlo DEPENDS "${ZT_LOCAL_MONTE_CARLO_EXE}")
 
 add_custom_command(
+  OUTPUT "${ZT_LOCAL_SEGMENT_CATALOG_EXE}"
+  COMMAND "${CARGO_EXECUTABLE}" build --manifest-path "${ZT_LOCAL_SEGMENT_CATALOG_MANIFEST}" --release --target-dir "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}"
+  WORKING_DIRECTORY "${ZT_REPOSITORY_ROOT}"
+  DEPENDS
+    "${ZT_LOCAL_SEGMENT_CATALOG_MANIFEST}"
+    "${ZT_REPOSITORY_ROOT}/apps/zt-local-segment-catalog/src/main.rs"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-storage/src/lib.rs"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-storage/Cargo.toml"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-protocol/src/lib.rs"
+    "${ZT_REPOSITORY_ROOT}/Cargo.lock"
+    "${ZT_REPOSITORY_ROOT}/Cargo.toml"
+  COMMENT "Building internal local segment catalog command"
+  VERBATIM
+)
+add_custom_target(ZTerminalLocalSegmentCatalog DEPENDS "${ZT_LOCAL_SEGMENT_CATALOG_EXE}")
+
+add_custom_command(
   OUTPUT "${ZT_OFFLINE_PROVIDER_IMPORT_EXE}"
   COMMAND "${CARGO_EXECUTABLE}" build --manifest-path "${ZT_OFFLINE_PROVIDER_IMPORT_MANIFEST}" --release --target-dir "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}"
   WORKING_DIRECTORY "${ZT_REPOSITORY_ROOT}"
@@ -97,7 +116,7 @@ add_custom_command(
 add_custom_target(ZTerminalDirectPublicIngest DEPENDS "${ZT_DIRECT_PUBLIC_INGEST_EXE}")
 
 add_executable(ZTerminalWindowsHost WIN32 src/main.cpp src/local_scene_bridge.cpp src/local_monte_carlo_bridge.cpp)
-add_dependencies(ZTerminalWindowsHost ZTerminalLocalSceneBridge ZTerminalLocalMonteCarlo ZTerminalOfflineProviderImport ZTerminalDirectPublicIngest)
+add_dependencies(ZTerminalWindowsHost ZTerminalLocalSceneBridge ZTerminalLocalMonteCarlo ZTerminalLocalSegmentCatalog ZTerminalOfflineProviderImport ZTerminalDirectPublicIngest)
 target_compile_features(ZTerminalWindowsHost PRIVATE cxx_std_20)
 target_compile_definitions(ZTerminalWindowsHost PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_link_libraries(ZTerminalWindowsHost PRIVATE d3d11 d3dcompiler dxgi d2d1 dwrite)
@@ -106,6 +125,7 @@ add_custom_command(
   TARGET ZTerminalWindowsHost POST_BUILD
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_LOCAL_SCENE_BRIDGE_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-local-scene-bridge.exe"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_LOCAL_MONTE_CARLO_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-local-monte-carlo.exe"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_LOCAL_SEGMENT_CATALOG_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-local-segment-catalog.exe"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_OFFLINE_PROVIDER_IMPORT_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-offline-provider-import.exe"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_DIRECT_PUBLIC_INGEST_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-direct-public-ingest.exe"
   COMMENT "Copying internal bounded Rust tools beside native host"
