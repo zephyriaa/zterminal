@@ -96,7 +96,7 @@ add_custom_command(
 )
 add_custom_target(ZTerminalDirectPublicIngest DEPENDS "${ZT_DIRECT_PUBLIC_INGEST_EXE}")
 
-add_executable(ZTerminalWindowsHost WIN32 src/main.cpp src/local_scene_bridge.cpp)
+add_executable(ZTerminalWindowsHost WIN32 src/main.cpp src/local_scene_bridge.cpp src/local_monte_carlo_bridge.cpp)
 add_dependencies(ZTerminalWindowsHost ZTerminalLocalSceneBridge ZTerminalLocalMonteCarlo ZTerminalOfflineProviderImport ZTerminalDirectPublicIngest)
 target_compile_features(ZTerminalWindowsHost PRIVATE cxx_std_20)
 target_compile_definitions(ZTerminalWindowsHost PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
