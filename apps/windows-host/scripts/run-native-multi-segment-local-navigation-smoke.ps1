@@ -128,7 +128,7 @@ try {
         throw "Native multi-segment navigation failed with exit code $($hostProcess.exit_code): $($hostProcess.stderr.Trim())"
     }
     $native = Get-Content -Raw $diagnostic | ConvertFrom-Json
-    if ($native.fixture_only -or $native.chart_source -ne 'local_scene' -or ($native.local_availability -ne 'LOCAL LIVE' -and $native.local_availability -ne 'LOCAL CACHED') -or $native.fixture_candles -ne 2 -or $native.local_total_bars -ne 6 -or $native.local_first_bar -ne 0 -or $native.local_navigation_reloads -ne 2 -or $native.local_segment_switches -ne 1 -or $native.local_history_diagnostic -ne '' -or $native.local_monte_carlo_kind -ne 'RESEARCH NOT REQUESTED' -or $native.renderer_resize_failures -ne 0 -or $native.renderer_present_failures -ne 0) {
+    if ($native.fixture_only -or $native.chart_source -ne 'local_scene' -or ($native.local_availability -ne 'LOCAL LIVE' -and $native.local_availability -ne 'LOCAL CACHED') -or $native.fixture_candles -ne 2 -or $native.local_total_bars -ne 6 -or $native.local_first_bar -ne 0 -or $native.local_navigation_reloads -ne 2 -or $native.local_segment_switches -ne 1 -or $native.local_history_diagnostic -ne 'LOCAL SEGMENT SWITCHED | CONTINUITY NOT ASSERTED' -or $native.local_monte_carlo_kind -ne 'RESEARCH NOT REQUESTED' -or $native.renderer_resize_failures -ne 0 -or $native.renderer_present_failures -ne 0) {
         throw "Native multi-segment local navigation did not meet the bounded catalog contract: $($native | ConvertTo-Json -Compress)"
     }
 

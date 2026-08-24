@@ -681,7 +681,7 @@ void reload_adjacent_local_segment(HWND window, bool forward) {
     request.start_ns = *adjacent_start;
     request.first_bar = 0;
     local_monte_carlo_result = {};
-    local_history_diagnostic.clear();
+    local_history_diagnostic = L"LOCAL SEGMENT SWITCHED | CONTINUITY NOT ASSERTED";
     const zterminal::local_scene::Result result = zterminal::local_scene::load(request);
     if (local_navigation_reloads < std::numeric_limits<std::uint64_t>::max()) {
         ++local_navigation_reloads;
