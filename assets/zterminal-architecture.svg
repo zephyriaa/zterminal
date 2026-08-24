@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">ZTerminal architecture: one platform, two experiences</title>
+  <desc id="desc">Web Terminal and Windows Application connect to a shared ZTerminal platform with market data, analytics, research, risk, alerts, decision, execution and journal capabilities, supported by local-first computing and lightweight centralized services.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#58a6ff"/>
+      <stop offset="100%" stop-color="#a371f7"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <style>
+      .title{font:600 34px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#f0f6fc}
+      .subtitle{font:400 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#8b949e}
+      .head{font:600 18px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#f0f6fc}
+      .body{font:400 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#c9d1d9}
+      .small{font:400 12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#8b949e}
+      .accent{font:600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#58a6ff;letter-spacing:.5px}
+      .box{fill:#161b22;stroke:#30363d;stroke-width:1.5}
+      .soft{fill:#0d1117;stroke:#30363d;stroke-width:1.5}
+      .line{stroke:#484f58;stroke-width:2;fill:none}
+      .lineA{stroke:url(#accent);stroke-width:3;fill:none}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" rx="28" fill="url(#bg)"/>
+
+  <text x="800" y="62" text-anchor="middle" class="title">One platform. Two experiences.</text>
+  <text x="800" y="91" text-anchor="middle" class="subtitle">Web accessibility with a local-first Windows terminal.</text>
+
+  <!-- top connectors -->
+  <path d="M800 110 V150 M800 150 H400 V172 M800 150 H1200 V172" class="lineA"/>
+
+  <!-- web -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="172" width="450" height="220" rx="18" class="box"/>
+    <circle cx="135" cy="217" r="28" fill="#0d1117" stroke="#58a6ff"/>
+    <text x="135" y="224" text-anchor="middle" style="font:700 21px sans-serif;fill:#58a6ff">◎</text>
+    <text x="180" y="218" class="head">WEB TERMINAL</text>
+    <text x="180" y="247" class="body">Accessible anywhere</text>
+    <text x="180" y="274" class="body">No installation</text>
+    <text x="180" y="301" class="body">Real-time synchronization</text>
+    <text x="180" y="328" class="body">Shared workspace &amp; cloud</text>
+    <line x1="180" y1="347" x2="495" y2="347" stroke="#30363d"/>
+    <text x="180" y="371" class="small">Browser-based access to the shared platform.</text>
+  </g>
+
+  <!-- shared -->
+  <g filter="url(#shadow)">
+    <rect x="590" y="172" width="420" height="220" rx="18" class="box"/>
+    <circle cx="640" cy="217" r="28" fill="#0d1117" stroke="#a371f7"/>
+    <text x="640" y="225" text-anchor="middle" style="font:700 20px sans-serif;fill:#a371f7">◉</text>
+    <text x="684" y="218" class="head">SHARED PLATFORM</text>
+    <text x="684" y="248" class="body">One account. One product.</text>
+    <text x="684" y="275" class="body">Shared market data &amp; services.</text>
+    <text x="684" y="302" class="body">Cloud state and entitlements.</text>
+    <text x="684" y="329" class="body">Web ↔ Windows continuity.</text>
+    <text x="684" y="369" class="small">Centralize what must be shared; localize what can be computed.</text>
+  </g>
+
+  <!-- windows -->
+  <g filter="url(#shadow)">
+    <rect x="1060" y="172" width="450" height="220" rx="18" class="box"/>
+    <circle cx="1105" cy="217" r="28" fill="#0d1117" stroke="#3fb950"/>
+    <text x="1105" y="224" text-anchor="middle" style="font:700 17px sans-serif;fill:#3fb950">⊞</text>
+    <text x="1150" y="218" class="head">WINDOWS APPLICATION</text>
+    <text x="1150" y="247" class="body">Local-first processing</text>
+    <text x="1150" y="274" class="body">Native rendering direction</text>
+    <text x="1150" y="301" class="body">CPU / GPU utilization</text>
+    <text x="1150" y="328" class="body">Local persistence</text>
+    <text x="1150" y="355" class="body">Background monitoring</text>
+  </g>
+
+  <!-- shared line -->
+  <path d="M315 392 V430 H800 M1285 392 V430 H800 M800 392 V430" class="lineA"/>
+
+  <!-- capabilities panel -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="430" width="1460" height="265" rx="18" class="soft"/>
+    <text x="800" y="461" text-anchor="middle" class="accent">SHARED CAPABILITIES</text>
+
+    <!-- cards -->
+    <g>
+      <rect x="95" y="485" width="170" height="175" rx="12" class="box"/>
+      <text x="115" y="516" class="head" style="font-size:16px">Market Data</text>
+      <text x="115" y="546" class="body">Order Flow</text><text x="115" y="571" class="body">Volume</text><text x="115" y="596" class="body">Liquidity</text><text x="115" y="621" class="body">Sessions</text>
+    </g>
+    <g>
+      <rect x="280" y="485" width="170" height="175" rx="12" class="box"/>
+      <text x="300" y="516" class="head" style="font-size:16px">Analytics</text>
+      <text x="300" y="546" class="body">Profiles</text><text x="300" y="571" class="body">Regimes</text><text x="300" y="596" class="body">Volatility</text><text x="300" y="621" class="body">Context</text>
+    </g>
+    <g>
+      <rect x="465" y="485" width="170" height="175" rx="12" class="box"/>
+      <text x="485" y="516" class="head" style="font-size:16px">Research</text>
+      <text x="485" y="546" class="body">Backtests</text><text x="485" y="571" class="body">Monte Carlo</text><text x="485" y="596" class="body">Walk-Forward</text><text x="485" y="621" class="body">OOS Testing</text>
+    </g>
+    <g>
+      <rect x="650" y="485" width="170" height="175" rx="12" class="box"/>
+      <text x="670" y="516" class="head" style="font-size:16px">Risk</text>
+      <text x="670" y="546" class="body">Position sizing</text><text x="670" y="571" class="body">Exposure</text><text x="670" y="596" class="body">Limits</text><text x="670" y="621" class="body">Drawdown control</text>
+    </g>
+    <g>
+      <rect x="835" y="485" width="170" height="175" rx="12" class="box"/>
+      <text x="855" y="516" class="head" style="font-size:16px">Alerts</text>
+      <text x="855" y="546" class="body">Real-time alerts</text><text x="855" y="571" class="body">Conditions</text><text x="855" y="596" class="body">Notifications</text><text x="855" y="621" class="body">Multi-channel</text>
+    </g>
+    <g>
+      <rect x="1020" y="485" width="170" height="175" rx="12" class="box"/>
+      <text x="1040" y="516" class="head" style="font-size:16px">Decision</text>
+      <text x="1040" y="546" class="body">Context-aware</text><text x="1040" y="571" class="body">Trade plans</text><text x="1040" y="596" class="body">Market view</text><text x="1040" y="621" class="body">Confluence</text>
+    </g>
+    <g>
+      <rect x="1205" y="485" width="145" height="175" rx="12" class="box"/>
+      <text x="1225" y="516" class="head" style="font-size:16px">Execution</text>
+      <text x="1225" y="546" class="body">Brokers</text><text x="1225" y="571" class="body">Routing</text><text x="1225" y="596" class="body">Precision</text>
+    </g>
+    <g>
+      <rect x="1365" y="485" width="145" height="175" rx="12" class="box"/>
+      <text x="1385" y="516" class="head" style="font-size:16px">Journal</text>
+      <text x="1385" y="546" class="body">Trades</text><text x="1385" y="571" class="body">Performance</text><text x="1385" y="596" class="body">Review</text>
+    </g>
+  </g>
+
+  <!-- bottom strategy -->
+  <path d="M800 695 V725" class="lineA"/>
+  <g filter="url(#shadow)">
+    <rect x="70" y="725" width="1460" height="190" rx="18" class="box"/>
+    <text x="800" y="758" text-anchor="middle" class="accent">DESIGN PRINCIPLES</text>
+    <g>
+      <text x="115" y="800" class="head" style="font-size:16px">Local-first engine</text>
+      <text x="115" y="827" class="body">Heavy work on the user's machine.</text>
+      <text x="115" y="851" class="small">Less centralized compute.</text>
+    </g>
+    <g>
+      <text x="380" y="800" class="head" style="font-size:16px">Lightweight</text>
+      <text x="380" y="827" class="body">Designed for efficient CPU / GPU use.</text>
+      <text x="380" y="851" class="small">Responsive terminal experience.</text>
+    </g>
+    <g>
+      <text x="700" y="800" class="head" style="font-size:16px">Automatic updates</text>
+      <text x="700" y="827" class="body">Signed releases and staged rollout.</text>
+      <text x="700" y="851" class="small">Safe restart and rollback path.</text>
+    </g>
+    <g>
+      <text x="1010" y="800" class="head" style="font-size:16px">Offline tolerant</text>
+      <text x="1010" y="827" class="body">Cached data and local capabilities.</text>
+      <text x="1010" y="851" class="small">Graceful degradation when offline.</text>
+    </g>
+    <g>
+      <text x="1280" y="800" class="head" style="font-size:16px">Secure &amp; scalable</text>
+      <text x="1280" y="827" class="body">Central trust, local compute.</text>
+      <text x="1280" y="851" class="small">Built to reduce cost per user.</text>
+    </g>
+  </g>
+
+  <text x="800" y="955" text-anchor="middle" class="small">ZTerminal · Web + Windows · Local-first where practical · Built for traders</text>
+</svg>
