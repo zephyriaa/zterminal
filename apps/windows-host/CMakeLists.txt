@@ -13,6 +13,8 @@ set(ZT_REPOSITORY_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
 set(ZT_LOCAL_SCENE_BRIDGE_MANIFEST "${ZT_REPOSITORY_ROOT}/apps/zt-local-scene-bridge/Cargo.toml")
 set(ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}/cargo")
 set(ZT_LOCAL_SCENE_BRIDGE_EXE "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}/release/zt-local-scene-bridge.exe")
+set(ZT_OFFLINE_PROVIDER_IMPORT_MANIFEST "${ZT_REPOSITORY_ROOT}/apps/zt-offline-provider-import/Cargo.toml")
+set(ZT_OFFLINE_PROVIDER_IMPORT_EXE "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}/release/zt-offline-provider-import.exe")
 
 add_custom_command(
   OUTPUT "${ZT_LOCAL_SCENE_BRIDGE_EXE}"
@@ -20,6 +22,7 @@ add_custom_command(
   WORKING_DIRECTORY "${ZT_REPOSITORY_ROOT}"
   DEPENDS
     "${ZT_LOCAL_SCENE_BRIDGE_MANIFEST}"
+    "${ZT_REPOSITORY_ROOT}/apps/zt-local-scene-bridge/src/main.rs"
     "${ZT_REPOSITORY_ROOT}/crates/zt-core/src/lib.rs"
     "${ZT_REPOSITORY_ROOT}/crates/zt-core/Cargo.toml"
     "${ZT_REPOSITORY_ROOT}/crates/zt-storage/src/lib.rs"
@@ -32,8 +35,27 @@ add_custom_command(
 )
 add_custom_target(ZTerminalLocalSceneBridge DEPENDS "${ZT_LOCAL_SCENE_BRIDGE_EXE}")
 
+add_custom_command(
+  OUTPUT "${ZT_OFFLINE_PROVIDER_IMPORT_EXE}"
+  COMMAND "${CARGO_EXECUTABLE}" build --manifest-path "${ZT_OFFLINE_PROVIDER_IMPORT_MANIFEST}" --release --target-dir "${ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR}"
+  WORKING_DIRECTORY "${ZT_REPOSITORY_ROOT}"
+  DEPENDS
+    "${ZT_OFFLINE_PROVIDER_IMPORT_MANIFEST}"
+    "${ZT_REPOSITORY_ROOT}/apps/zt-offline-provider-import/src/main.rs"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-adapters/src/lib.rs"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-adapters/Cargo.toml"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-core/src/lib.rs"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-storage/src/lib.rs"
+    "${ZT_REPOSITORY_ROOT}/crates/zt-protocol/src/lib.rs"
+    "${ZT_REPOSITORY_ROOT}/Cargo.lock"
+    "${ZT_REPOSITORY_ROOT}/Cargo.toml"
+  COMMENT "Building internal offline provider importer"
+  VERBATIM
+)
+add_custom_target(ZTerminalOfflineProviderImport DEPENDS "${ZT_OFFLINE_PROVIDER_IMPORT_EXE}")
+
 add_executable(ZTerminalWindowsHost WIN32 src/main.cpp src/local_scene_bridge.cpp)
-add_dependencies(ZTerminalWindowsHost ZTerminalLocalSceneBridge)
+add_dependencies(ZTerminalWindowsHost ZTerminalLocalSceneBridge ZTerminalOfflineProviderImport)
 target_compile_features(ZTerminalWindowsHost PRIVATE cxx_std_20)
 target_compile_definitions(ZTerminalWindowsHost PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_link_libraries(ZTerminalWindowsHost PRIVATE d3d11 d3dcompiler dxgi d2d1 dwrite)
@@ -41,7 +63,8 @@ target_link_libraries(ZTerminalWindowsHost PRIVATE d3d11 d3dcompiler dxgi d2d1 d
 add_custom_command(
   TARGET ZTerminalWindowsHost POST_BUILD
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_LOCAL_SCENE_BRIDGE_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-local-scene-bridge.exe"
-  COMMENT "Copying local-only Rust scene bridge beside native host"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_OFFLINE_PROVIDER_IMPORT_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-offline-provider-import.exe"
+  COMMENT "Copying internal local-only Rust tools beside native host"
 )
 
 if(MSVC)

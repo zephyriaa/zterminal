@@ -1,6 +1,8 @@
 {
-    "schema_version":  1,
+    "schema_version":  2,
     "test_only_offline_frames":  true,
+    "packaged_importer":  true,
+    "execution_uses_cargo":  false,
     "network_opened":  false,
     "importer":  {
                      "schema_version":  1,
@@ -33,18 +35,18 @@
                         "driver":  "hardware",
                         "adapter":  "NVIDIA GeForce 710M",
                         "feature_level":  "11_0",
-                        "launch_to_visible_ms":  138.239,
-                        "frame_samples":  119,
-                        "frame_average_ms":  16.817,
-                        "frame_p95_ms":  17.174,
-                        "frame_maximum_ms":  27.138,
+                        "launch_to_visible_ms":  169.648,
+                        "frame_samples":  120,
+                        "frame_average_ms":  16.774,
+                        "frame_p95_ms":  17.272,
+                        "frame_maximum_ms":  30.124,
                         "renderer_resize_successes":  1,
                         "renderer_resize_failures":  0,
                         "renderer_device_recoveries":  0,
                         "renderer_unrecoverable_device_failures":  0,
                         "renderer_present_failures":  0,
                         "renderer_last_error_hr":  0,
-                        "working_set_bytes":  29773824,
-                        "private_usage_bytes":  34304000
+                        "working_set_bytes":  29761536,
+                        "private_usage_bytes":  34328576
                     }
 }
