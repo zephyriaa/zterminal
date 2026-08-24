@@ -396,6 +396,13 @@ private:
 Renderer* renderer = nullptr;
 ChartView chart_view;
 std::vector<FixtureCandle> chart_candles;
+bool render_requested = true;
+bool continuous_benchmark_rendering = false;
+
+void request_frame(HWND window) {
+    render_requested = true;
+    InvalidateRect(window, nullptr, FALSE);
+}
 
 void update_title(HWND window) {
     std::wstringstream title;
@@ -430,6 +437,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         chart_view.cursor = {GET_X_LPARAM(l_param), GET_Y_LPARAM(l_param)};
         chart_view.has_cursor = true;
         pan_from_drag(window, chart_view.cursor.x);
+        request_frame(window);
         return 0;
     case WM_MOUSEWHEEL: {
         const int delta = GET_WHEEL_DELTA_WPARAM(w_param);
@@ -441,6 +449,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         if (chart_view.visible != prior) {
             chart_view.first = std::min(chart_view.first, chart_candles.size() - chart_view.visible);
             update_title(window);
+            request_frame(window);
         }
         return 0;
     }
@@ -449,15 +458,14 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         chart_view.drag_start_x = GET_X_LPARAM(l_param);
         chart_view.drag_start_first = chart_view.first;
         SetCapture(window);
+        request_frame(window);
         return 0;
     case WM_LBUTTONUP:
         chart_view.dragging = false;
         ReleaseCapture();
+        request_frame(window);
         return 0;
     case WM_PAINT:
-        if (renderer != nullptr) {
-            renderer->render(chart_candles, chart_view);
-        }
         ValidateRect(window, nullptr);
         return 0;
     case WM_KEYDOWN:
@@ -569,6 +577,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
     UpdateWindow(window);
     const double launch_ms = std::chrono::duration<double, std::milli>(Clock::now() - process_started).count();
     const unsigned long auto_close_after_seconds = benchmark_seconds(command_line);
+    continuous_benchmark_rendering = auto_close_after_seconds > 0;
     const auto benchmark_deadline = Clock::now() + std::chrono::seconds(auto_close_after_seconds);
 
     MSG message{};
@@ -576,11 +585,16 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
         if (PeekMessage(&message, nullptr, 0, 0, PM_REMOVE) != FALSE) {
             TranslateMessage(&message);
             DispatchMessage(&message);
-        } else {
+        } else if (render_requested || continuous_benchmark_rendering) {
             native_renderer.render(chart_candles, chart_view);
+            render_requested = false;
             if (auto_close_after_seconds > 0 && Clock::now() >= benchmark_deadline) {
                 DestroyWindow(window);
             }
+        } else {
+            // A local static workstation should not spin a render loop while idle.
+            // Input, resize, or future verified local-data arrival requests the next frame.
+            WaitMessage();
         }
     }
     write_diagnostics(native_renderer, launch_ms);
