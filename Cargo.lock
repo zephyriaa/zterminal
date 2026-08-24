@@ -856,6 +856,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "zt-local-workspace"
+version = "0.1.0"
+dependencies = [
+ "zt-storage",
+]
+
+[[package]]
 name = "zt-offline-provider-import"
 version = "0.1.0"
 dependencies = [
