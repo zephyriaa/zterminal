@@ -2,6 +2,7 @@
 param(
     [string]$RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path,
     [string]$HostExecutable = (Join-Path $PSScriptRoot '..\..\..\out\windows-host\Release\ZTerminalWindowsHost.exe'),
+    [string]$ImporterExecutable = (Join-Path $PSScriptRoot '..\..\..\out\windows-host\Release\zt-offline-provider-import.exe'),
     [ValidateRange(1, 10)]
     [int]$BenchmarkSeconds = 2
 )
@@ -10,6 +11,9 @@ $ErrorActionPreference = 'Stop'
 
 if (-not (Test-Path $HostExecutable)) {
     throw "Native host executable was not found: $HostExecutable"
+}
+if (-not (Test-Path $ImporterExecutable)) {
+    throw "Packaged offline importer executable was not found: $ImporterExecutable"
 }
 
 $workRoot = Join-Path $RepositoryRoot 'out\offline-import-local-scene-smoke'
@@ -32,7 +36,6 @@ try {
 
     $capturedAtNs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() * 1000000
     $importArguments = @(
-        'run', '-q', '-p', 'zt-offline-provider-import', '--',
         '--provider=binance-spot-aggtrade',
         "--frame-file=$frames",
         "--root=$store",
@@ -47,7 +50,7 @@ try {
         '--access-time=9',
         '--flush'
     )
-    $importText = (& cargo @importArguments) -join [Environment]::NewLine
+    $importText = (& $ImporterExecutable @importArguments) -join [Environment]::NewLine
     if ($LASTEXITCODE -ne 0) {
         throw "The test-only offline importer exited with code $LASTEXITCODE."
     }
@@ -81,8 +84,10 @@ try {
     }
 
     [pscustomobject]@{
-        schema_version = 1
+        schema_version = 2
         test_only_offline_frames = $true
+        packaged_importer = $true
+        execution_uses_cargo = $false
         network_opened = $false
         importer = $import
         native_host = $native
