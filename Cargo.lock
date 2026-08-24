@@ -830,6 +830,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "zt-offline-provider-import"
+version = "0.1.0"
+dependencies = [
+ "zt-adapters",
+ "zt-core",
+ "zt-storage",
+]
+
+[[package]]
 name = "zt-protocol"
 version = "0.1.0"
 
