@@ -288,6 +288,332 @@ pub struct EmaResearchResult {
     pub halted_status: Option<DataStatus>,
 }
 
+/// Version of the deterministic local Monte Carlo return-resampling algorithm.
+pub const LOCAL_MONTE_CARLO_ALGORITHM_VERSION: u16 = 1;
+/// Maximum verified local bars considered by one Monte Carlo calculation.
+pub const MAXIMUM_LOCAL_MONTE_CARLO_SOURCE_BARS: usize = 100_000;
+/// Maximum retained scenario results in one local Monte Carlo calculation.
+pub const MAXIMUM_LOCAL_MONTE_CARLO_SIMULATIONS: usize = 10_000;
+/// Maximum historical-return draws per scenario.
+pub const MAXIMUM_LOCAL_MONTE_CARLO_HORIZON_BARS: usize = 1_000;
+/// Maximum return draws across every scenario in one request.
+pub const MAXIMUM_LOCAL_MONTE_CARLO_WORK_ITEMS: usize = 1_000_000;
+
+/// An explicit bounded request for deterministic local Monte Carlo research.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LocalMonteCarloRequest {
+    simulations: usize,
+    horizon_bars: usize,
+    seed: u64,
+}
+
+impl LocalMonteCarloRequest {
+    /// Creates a request that is bounded before a scenario buffer is allocated.
+    pub fn new(
+        simulations: usize,
+        horizon_bars: usize,
+        seed: u64,
+    ) -> Result<Self, MonteCarloResearchError> {
+        if simulations == 0 || simulations > MAXIMUM_LOCAL_MONTE_CARLO_SIMULATIONS {
+            return Err(MonteCarloResearchError::InvalidRequest(
+                "simulation count is outside the local bound",
+            ));
+        }
+        if horizon_bars == 0 || horizon_bars > MAXIMUM_LOCAL_MONTE_CARLO_HORIZON_BARS {
+            return Err(MonteCarloResearchError::InvalidRequest(
+                "horizon is outside the local bound",
+            ));
+        }
+        if seed == 0 {
+            return Err(MonteCarloResearchError::InvalidRequest(
+                "seed must be non-zero",
+            ));
+        }
+        let work_items = simulations.checked_mul(horizon_bars).ok_or(
+            MonteCarloResearchError::InvalidRequest("simulation work item count overflowed"),
+        )?;
+        if work_items > MAXIMUM_LOCAL_MONTE_CARLO_WORK_ITEMS {
+            return Err(MonteCarloResearchError::InvalidRequest(
+                "simulation work item count exceeds the local bound",
+            ));
+        }
+        Ok(Self {
+            simulations,
+            horizon_bars,
+            seed,
+        })
+    }
+
+    /// Returns the exact number of independent local scenarios.
+    #[must_use]
+    pub fn simulations(self) -> usize {
+        self.simulations
+    }
+
+    /// Returns the exact number of historical return draws per scenario.
+    #[must_use]
+    pub fn horizon_bars(self) -> usize {
+        self.horizon_bars
+    }
+
+    /// Returns the deterministic local PRNG seed recorded with the result.
+    #[must_use]
+    pub fn seed(self) -> u64 {
+        self.seed
+    }
+}
+
+/// An invalid bounded Monte Carlo request or unsupported local numeric state.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MonteCarloResearchError {
+    /// A caller supplied a zero, excessive, or overflow-prone request.
+    InvalidRequest(&'static str),
+    /// The supplied local source exceeds the bounded engine input budget.
+    SourceBarsExceeded,
+}
+
+impl Display for MonteCarloResearchError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidRequest(reason) => {
+                write!(formatter, "invalid local Monte Carlo request: {reason}")
+            }
+            Self::SourceBarsExceeded => write!(
+                formatter,
+                "local Monte Carlo source bar count exceeds the bounded engine input"
+            ),
+        }
+    }
+}
+
+impl Error for MonteCarloResearchError {}
+
+/// Truthful reason local history could not support a Monte Carlo result.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MonteCarloWithheldReason {
+    /// Fewer than two verified local bars cannot derive an observed return.
+    InsufficientSourceBars,
+    /// A source bar was marked unavailable, stale, or gap-degraded.
+    DataStatus(DataStatus),
+    /// Source bars do not describe exactly one local symbol and interval.
+    MixedStream,
+    /// An expected consecutive open timestamp is absent from the local source.
+    NonContiguous {
+        /// Expected local bar open timestamp.
+        expected_open_ns: u64,
+        /// Observed local bar open timestamp.
+        received_open_ns: u64,
+    },
+    /// A source bar declared a zero-length interval, so continuity is undefined.
+    InvalidInterval,
+    /// A source close was not positive, so no bounded basis-point return exists.
+    InvalidClose,
+    /// A local return or scenario sum could not be represented exactly as i64 basis points.
+    NumericOverflow,
+}
+
+/// A non-result that preserves the amount of verified local history inspected.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MonteCarloWithheld {
+    /// Number of bars inspected before the source was withheld.
+    pub inspected_bars: usize,
+    /// The truthful condition preventing local scenario analysis.
+    pub reason: MonteCarloWithheldReason,
+}
+
+/// Deterministic summaries of return-resampling scenarios calculated locally.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LocalMonteCarloResult {
+    /// Fixed algorithm version defining the return and percentile conventions.
+    pub algorithm_version: u16,
+    /// Caller-selected non-zero seed used for the deterministic local PRNG.
+    pub seed: u64,
+    /// Count of contiguous verified bars supplied to the calculation.
+    pub source_bars: usize,
+    /// Count of observed close-to-close returns derived from `source_bars`.
+    pub source_returns: usize,
+    /// Number of scenarios completed without provider interaction.
+    pub simulations: usize,
+    /// Return draws with replacement in each scenario.
+    pub horizon_bars: usize,
+    /// Lowest retained scenario sum, in additive integer basis points.
+    pub minimum_return_bps: i64,
+    /// Sorted index `floor((n - 1) * 5 / 100)`, in additive integer basis points.
+    pub p05_return_bps: i64,
+    /// Lower median sorted scenario sum, in additive integer basis points.
+    pub median_return_bps: i64,
+    /// Sorted index `floor((n - 1) * 95 / 100)`, in additive integer basis points.
+    pub p95_return_bps: i64,
+    /// Highest retained scenario sum, in additive integer basis points.
+    pub maximum_return_bps: i64,
+    /// Arithmetic mean scenario sum, truncated toward zero in integer basis points.
+    pub mean_return_bps: i64,
+}
+
+/// Terminal result of a bounded local Monte Carlo request.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LocalMonteCarloOutcome {
+    /// A reproducible local scenario summary was calculated from verified history.
+    Complete(LocalMonteCarloResult),
+    /// Source history was insufficient or degraded, so no scenario summary exists.
+    Withheld(MonteCarloWithheld),
+}
+
+/// Runs bounded, deterministic return-resampling research over local bars only.
+///
+/// The function neither reads a provider nor synthesizes missing history. Every
+/// input must be a `Live`, contiguous bar stream for exactly one symbol and
+/// interval. It is research infrastructure, not execution, forecasting, or
+/// investment-advice functionality.
+pub fn run_local_monte_carlo(
+    bars: &[Bar],
+    request: LocalMonteCarloRequest,
+) -> Result<LocalMonteCarloOutcome, MonteCarloResearchError> {
+    if bars.len() > MAXIMUM_LOCAL_MONTE_CARLO_SOURCE_BARS {
+        return Err(MonteCarloResearchError::SourceBarsExceeded);
+    }
+    if bars.len() < 2 {
+        return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+            inspected_bars: bars.len(),
+            reason: MonteCarloWithheldReason::InsufficientSourceBars,
+        }));
+    }
+
+    let first = bars[0];
+    if first.data_status != DataStatus::Live {
+        return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+            inspected_bars: 1,
+            reason: MonteCarloWithheldReason::DataStatus(first.data_status),
+        }));
+    }
+    if first.interval_ns == 0 {
+        return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+            inspected_bars: 1,
+            reason: MonteCarloWithheldReason::InvalidInterval,
+        }));
+    }
+    if first.close_ticks <= 0 {
+        return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+            inspected_bars: 1,
+            reason: MonteCarloWithheldReason::InvalidClose,
+        }));
+    }
+
+    let mut observed_returns = Vec::with_capacity(bars.len().saturating_sub(1));
+    let mut previous = first;
+    for (index, bar) in bars.iter().copied().enumerate().skip(1) {
+        if bar.data_status != DataStatus::Live {
+            return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: index.saturating_add(1),
+                reason: MonteCarloWithheldReason::DataStatus(bar.data_status),
+            }));
+        }
+        if bar.symbol_id != first.symbol_id || bar.interval_ns != first.interval_ns {
+            return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: index.saturating_add(1),
+                reason: MonteCarloWithheldReason::MixedStream,
+            }));
+        }
+        let expected_open_ns = match previous.open_time_ns.checked_add(first.interval_ns) {
+            Some(value) => value,
+            None => {
+                return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                    inspected_bars: index.saturating_add(1),
+                    reason: MonteCarloWithheldReason::NumericOverflow,
+                }));
+            }
+        };
+        if bar.open_time_ns != expected_open_ns {
+            return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: index.saturating_add(1),
+                reason: MonteCarloWithheldReason::NonContiguous {
+                    expected_open_ns,
+                    received_open_ns: bar.open_time_ns,
+                },
+            }));
+        }
+        if bar.close_ticks <= 0 {
+            return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: index.saturating_add(1),
+                reason: MonteCarloWithheldReason::InvalidClose,
+            }));
+        }
+        let change = i128::from(bar.close_ticks) - i128::from(previous.close_ticks);
+        let basis_points = change * 10_000 / i128::from(previous.close_ticks);
+        let Ok(basis_points) = i64::try_from(basis_points) else {
+            return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: index.saturating_add(1),
+                reason: MonteCarloWithheldReason::NumericOverflow,
+            }));
+        };
+        observed_returns.push(basis_points);
+        previous = bar;
+    }
+
+    let mut prng = LocalMonteCarloPrng::new(request.seed);
+    let mut scenario_returns = Vec::with_capacity(request.simulations);
+    for _ in 0..request.simulations {
+        let mut scenario_return_bps = 0_i64;
+        for _ in 0..request.horizon_bars {
+            let index = prng.index(observed_returns.len());
+            let Some(next) = scenario_return_bps.checked_add(observed_returns[index]) else {
+                return Ok(LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                    inspected_bars: bars.len(),
+                    reason: MonteCarloWithheldReason::NumericOverflow,
+                }));
+            };
+            scenario_return_bps = next;
+        }
+        scenario_returns.push(scenario_return_bps);
+    }
+    scenario_returns.sort_unstable();
+    let last_index = scenario_returns.len().saturating_sub(1);
+    let p05_index = last_index.saturating_mul(5) / 100;
+    let p95_index = last_index.saturating_mul(95) / 100;
+    let median_index = last_index / 2;
+    let total_return_bps = scenario_returns
+        .iter()
+        .fold(0_i128, |total, value| total + i128::from(*value));
+    let scenario_count = i128::try_from(scenario_returns.len())
+        .expect("non-zero bounded scenario length is representable as i128");
+    let mean_return_bps = i64::try_from(total_return_bps / scenario_count)
+        .expect("mean of i64 scenario values remains representable");
+    Ok(LocalMonteCarloOutcome::Complete(LocalMonteCarloResult {
+        algorithm_version: LOCAL_MONTE_CARLO_ALGORITHM_VERSION,
+        seed: request.seed,
+        source_bars: bars.len(),
+        source_returns: observed_returns.len(),
+        simulations: request.simulations,
+        horizon_bars: request.horizon_bars,
+        minimum_return_bps: scenario_returns[0],
+        p05_return_bps: scenario_returns[p05_index],
+        median_return_bps: scenario_returns[median_index],
+        p95_return_bps: scenario_returns[p95_index],
+        maximum_return_bps: scenario_returns[last_index],
+        mean_return_bps,
+    }))
+}
+
+#[derive(Clone, Copy, Debug)]
+struct LocalMonteCarloPrng {
+    state: u64,
+}
+
+impl LocalMonteCarloPrng {
+    fn new(seed: u64) -> Self {
+        Self { state: seed }
+    }
+
+    fn index(&mut self, upper_exclusive: usize) -> usize {
+        self.state ^= self.state << 13;
+        self.state ^= self.state >> 7;
+        self.state ^= self.state << 17;
+        let upper_exclusive = u64::try_from(upper_exclusive)
+            .expect("non-zero bounded return count is representable as u64");
+        usize::try_from(self.state % upper_exclusive).expect("bounded return index must fit usize")
+    }
+}
+
 impl ReplaySession {
     /// Creates a replay session with an explicit maximum retained bar count.
     ///
@@ -866,6 +1192,121 @@ mod tests {
         assert_eq!(ema.update(10.0), 10.0);
         assert_eq!(ema.update(14.0), 12.0);
         assert_eq!(ema.update(14.0), 13.0);
+    }
+
+    #[test]
+    fn local_monte_carlo_is_deterministic_and_records_its_exact_local_inputs() {
+        let bars = vec![
+            bar(0, 100, DataStatus::Live),
+            bar(SECOND, 110, DataStatus::Live),
+            bar(SECOND * 2, 99, DataStatus::Live),
+            bar(SECOND * 3, 120, DataStatus::Live),
+            bar(SECOND * 4, 102, DataStatus::Live),
+        ];
+        let request = LocalMonteCarloRequest::new(32, 8, 0x5eed).expect("bounded request");
+        let first = run_local_monte_carlo(&bars, request).expect("verified local result");
+        let second = run_local_monte_carlo(&bars, request).expect("same verified local result");
+        assert_eq!(first, second);
+        let LocalMonteCarloOutcome::Complete(result) = first else {
+            panic!("contiguous live local bars must produce an outcome")
+        };
+        assert_eq!(
+            result.algorithm_version,
+            LOCAL_MONTE_CARLO_ALGORITHM_VERSION
+        );
+        assert_eq!(result.seed, request.seed());
+        assert_eq!(result.source_bars, bars.len());
+        assert_eq!(result.source_returns, bars.len() - 1);
+        assert_eq!(result.simulations, request.simulations());
+        assert_eq!(result.horizon_bars, request.horizon_bars());
+        assert!(result.minimum_return_bps <= result.p05_return_bps);
+        assert!(result.p05_return_bps <= result.median_return_bps);
+        assert!(result.median_return_bps <= result.p95_return_bps);
+        assert!(result.p95_return_bps <= result.maximum_return_bps);
+    }
+
+    #[test]
+    fn local_monte_carlo_withholds_gap_and_degraded_local_history() {
+        let request = LocalMonteCarloRequest::new(4, 2, 7).expect("bounded request");
+        let gap = run_local_monte_carlo(
+            &[
+                bar(0, 100, DataStatus::Live),
+                bar(SECOND * 2, 105, DataStatus::Live),
+            ],
+            request,
+        )
+        .expect("a gap must be reported without a scenario result");
+        assert_eq!(
+            gap,
+            LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: 2,
+                reason: MonteCarloWithheldReason::NonContiguous {
+                    expected_open_ns: SECOND,
+                    received_open_ns: SECOND * 2,
+                },
+            })
+        );
+        let stale = run_local_monte_carlo(
+            &[
+                bar(0, 100, DataStatus::Live),
+                bar(SECOND, 105, DataStatus::Stale),
+            ],
+            request,
+        )
+        .expect("degraded history must be reported without a scenario result");
+        assert_eq!(
+            stale,
+            LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: 2,
+                reason: MonteCarloWithheldReason::DataStatus(DataStatus::Stale),
+            })
+        );
+        let mut zero_interval = bar(0, 100, DataStatus::Live);
+        zero_interval.interval_ns = 0;
+        let invalid_interval = run_local_monte_carlo(
+            &[zero_interval, bar(SECOND, 105, DataStatus::Live)],
+            request,
+        )
+        .expect("zero-length local intervals must be withheld");
+        assert_eq!(
+            invalid_interval,
+            LocalMonteCarloOutcome::Withheld(MonteCarloWithheld {
+                inspected_bars: 1,
+                reason: MonteCarloWithheldReason::InvalidInterval,
+            })
+        );
+    }
+
+    #[test]
+    fn local_monte_carlo_rejects_invalid_bounds_before_simulation() {
+        assert_eq!(
+            LocalMonteCarloRequest::new(0, 1, 1),
+            Err(MonteCarloResearchError::InvalidRequest(
+                "simulation count is outside the local bound"
+            ))
+        );
+        assert_eq!(
+            LocalMonteCarloRequest::new(1, 0, 1),
+            Err(MonteCarloResearchError::InvalidRequest(
+                "horizon is outside the local bound"
+            ))
+        );
+        assert_eq!(
+            LocalMonteCarloRequest::new(1, 1, 0),
+            Err(MonteCarloResearchError::InvalidRequest(
+                "seed must be non-zero"
+            ))
+        );
+        assert_eq!(
+            LocalMonteCarloRequest::new(
+                MAXIMUM_LOCAL_MONTE_CARLO_SIMULATIONS,
+                MAXIMUM_LOCAL_MONTE_CARLO_HORIZON_BARS,
+                1,
+            ),
+            Err(MonteCarloResearchError::InvalidRequest(
+                "simulation work item count exceeds the local bound"
+            ))
+        );
     }
 
     fn bar(open_time_ns: u64, close_ticks: i64, data_status: DataStatus) -> Bar {
