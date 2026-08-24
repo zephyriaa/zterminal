@@ -816,6 +816,7 @@ name = "zt-core"
 version = "0.1.0"
 dependencies = [
  "zt-protocol",
+ "zt-storage",
 ]
 
 [[package]]
