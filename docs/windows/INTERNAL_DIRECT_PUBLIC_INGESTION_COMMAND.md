@@ -15,6 +15,7 @@ The local engine already has an opt-in bounded public Binance aggregate-trade pr
 | Credentials | No API key, private channel, account, balance, position, order, or broker action is accepted. |
 | Request | Requires exact symbol ID, provider symbol, integer scales, stream ID, bar interval, finite event cap, local batch cap, local root, capture time, access time, and an explicit flush flag. |
 | Event cap | Non-zero and no greater than the adapter’s `MAXIMUM_PUBLIC_INGESTION_EVENTS`. The WebSocket closes after the cap or an early stream end/error. |
+| Connection deadline | A non-zero explicit `--connection-timeout-ms` is required and capped at 60,000 milliseconds. The deadline covers handshake and receiving; expiry drops the local task with no retry or fallback. |
 | Persistence | Only completed contiguous `Live` bars can become an immutable local segment. The final flush is explicit and conflict-preserving. |
 | Failure | Invalid input, transport failure, adapter gap, malformed frame, storage failure, existing key, or withheld batch never triggers retry, repair, fallback, or another provider. |
 | Process lifetime | The process exits after one terminal result. It creates no daemon, listener, scheduler, reconnect loop, or background task. |
@@ -29,6 +30,7 @@ The local engine already has an opt-in bounded public Binance aggregate-trade pr
 | `withheld` | A gap or degraded result invalidated the batch. |
 | `existing_segment` | The same immutable key already existed and was preserved. |
 | `error` | Configuration, direct public transport, or local I/O failure stopped the action. |
+| `connection_deadline_exceeded` | The required finite handshake-and-receive deadline expired; the local task was dropped with no reconnect, alternate provider, or retry. |
 
 ## Explicit exclusions and remaining gates
 
@@ -38,4 +40,4 @@ This internal command does not authorize unattended ingestion, automatic reconne
 
 The connected Windows reference device compiled the feature-gated executable into the private native build output as `zt-direct-public-ingest.exe`. The package guard then invoked it with **no arguments**. It returned the expected exit code 2 and `missing required argument: --provider` before the transport stage. The raw record declares `provider_connection_attempted: false` and `network_opened: false` at this strict no-request boundary and is retained at `docs/windows/benchmarks/windows-direct-public-ingest-guard.json`.
 
-No live provider sample was run for this milestone. The build and guard evidence verify the opt-in boundary, not provider availability, market freshness, geographic access, entitlement, persistence success, or a production transport service.
+No completed live provider sample is claimed for this milestone. The pre-deadline Windows sample supervision shell overran, was manually terminated to enforce its finite boundary, and produced neither an evidence file nor a local segment. It was **not retried**. The deterministic pending-future test now verifies that the new internal deadline maps to the terminal `ConnectionDeadlineExceeded` state without opening a provider connection. The build and guard evidence verify the opt-in boundary and timeout handling, not provider availability, market freshness, geographic access, entitlement, persistence success, or a production transport service.

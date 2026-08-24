@@ -12,6 +12,7 @@ use std::process::ExitCode;
 use zt_adapters::live_public::{
     ingest_binance_aggregate_trade_probe_locally, BoundedLocalIngestionRequest,
     LocalIngestionError, LocalIngestionFlushOutcome, MAXIMUM_PUBLIC_INGESTION_EVENTS,
+    MAXIMUM_PUBLIC_INGESTION_TIMEOUT_MS,
 };
 use zt_adapters::{PublicProvider, PublicTradeSubscription};
 use zt_storage::SegmentStore;
@@ -27,6 +28,7 @@ struct Request {
     interval_ns: u64,
     maximum_bars: usize,
     maximum_events: usize,
+    connection_timeout_ms: u64,
     captured_at_ns: u64,
     access_time: u64,
     flush: bool,
@@ -85,6 +87,7 @@ fn parse_request(arguments: Vec<String>) -> Result<Request, String> {
         interval_ns: parse_number(&mut values, "--interval-ns")?,
         maximum_bars: parse_number(&mut values, "--maximum-bars")?,
         maximum_events: parse_number(&mut values, "--maximum-events")?,
+        connection_timeout_ms: parse_number(&mut values, "--connection-timeout-ms")?,
         captured_at_ns: parse_number(&mut values, "--captured-at-ns")?,
         access_time: parse_number(&mut values, "--access-time")?,
         flush,
@@ -100,6 +103,8 @@ fn parse_request(arguments: Vec<String>) -> Result<Request, String> {
         || request.maximum_bars == 0
         || request.maximum_events == 0
         || request.maximum_events > MAXIMUM_PUBLIC_INGESTION_EVENTS
+        || request.connection_timeout_ms == 0
+        || request.connection_timeout_ms > MAXIMUM_PUBLIC_INGESTION_TIMEOUT_MS
     {
         return Err("direct ingestion bounds are invalid".to_owned());
     }
@@ -147,6 +152,7 @@ async fn run_request(
             interval_ns: request.interval_ns,
             maximum_bars: request.maximum_bars,
             maximum_events: request.maximum_events,
+            connection_timeout_ms: request.connection_timeout_ms,
             captured_at_ns: request.captured_at_ns,
             access_time: request.access_time,
             flush_at_end: request.flush,
@@ -163,6 +169,9 @@ fn ingestion_error(error: LocalIngestionError) -> String {
         LocalIngestionError::InvalidBounds => "direct ingestion bounds are invalid".to_owned(),
         LocalIngestionError::Probe(_) => {
             "selected public provider sample failed without fallback or retry".to_owned()
+        }
+        LocalIngestionError::ConnectionDeadlineExceeded => {
+            "finite direct public connection deadline expired without retry or fallback".to_owned()
         }
         LocalIngestionError::Storage(_) => "local immutable segment operation failed".to_owned(),
     }
@@ -193,6 +202,7 @@ fn print_result(request: &Request, result: zt_adapters::live_public::BoundedLoca
             "  \"network_opened\": true,\n",
             "  \"provider\": \"binance-spot-aggtrade\",\n",
             "  \"finite_event_cap\": {event_cap},\n",
+            "  \"connection_timeout_ms\": {connection_timeout_ms},\n",
             "  \"observed_events\": {observed_events},\n",
             "  \"flush_requested\": {flush_requested},\n",
             "  \"flush_outcome\": \"{flush_outcome}\",\n",
@@ -201,6 +211,7 @@ fn print_result(request: &Request, result: zt_adapters::live_public::BoundedLoca
             "}}"
         ),
         event_cap = request.maximum_events,
+        connection_timeout_ms = request.connection_timeout_ms,
         observed_events = result.observed_events,
         flush_requested = request.flush,
         flush_outcome = flush_name(result.flush_outcome),
@@ -241,6 +252,7 @@ mod tests {
             "--interval-ns=1000000".to_owned(),
             "--maximum-bars=10".to_owned(),
             "--maximum-events=3".to_owned(),
+            "--connection-timeout-ms=1000".to_owned(),
             "--captured-at-ns=3000000".to_owned(),
             "--access-time=9".to_owned(),
         ]
@@ -250,6 +262,7 @@ mod tests {
     fn strict_arguments_configure_a_finite_request_without_opening_a_connection() {
         let request = parse_request(valid_arguments()).expect("complete request should parse");
         assert_eq!(request.maximum_events, 3);
+        assert_eq!(request.connection_timeout_ms, 1_000);
         assert!(!request.flush);
         assert_eq!(request.provider_symbol, "btcusdt");
     }

@@ -700,7 +700,11 @@ mod tests {
 /// and never use a ZTerminal server as a proxy. Production connection lifecycle
 /// management and entitlement checks remain a later native-host concern.
 pub mod live_public {
+    use std::future::Future;
+    use std::time::Duration;
+
     use futures_util::StreamExt;
+    use tokio::time::timeout;
     use tokio_tungstenite::connect_async;
     use tokio_tungstenite::tungstenite::Message;
 
@@ -771,6 +775,9 @@ pub mod live_public {
 
     /// Maximum provider events a finite foreground ingestion request may read.
     pub const MAXIMUM_PUBLIC_INGESTION_EVENTS: usize = 10_000;
+    /// Maximum total handshake-and-receive deadline for a finite foreground request.
+    /// The local task is dropped when this deadline expires; it never reconnects.
+    pub const MAXIMUM_PUBLIC_INGESTION_TIMEOUT_MS: u64 = 60_000;
 
     /// Explicit configuration for one finite public ingestion action.
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -783,6 +790,9 @@ pub mod live_public {
         pub maximum_bars: usize,
         /// Maximum received adapter events before the direct connection exits.
         pub maximum_events: usize,
+        /// Total handshake-and-receive deadline. Expiry drops the local transport
+        /// task and returns a terminal timeout without retry or fallback.
+        pub connection_timeout_ms: u64,
         /// Captured-at time recorded in an optional immutable local segment.
         pub captured_at_ns: u64,
         /// Caller-defined local access time stored in segment metadata.
@@ -824,6 +834,9 @@ pub mod live_public {
         InvalidBounds,
         /// The direct selected-provider probe failed without fallback or retry.
         Probe(ProbeError),
+        /// The explicit finite handshake-and-receive deadline expired. No reconnect
+        /// or alternate provider is attempted.
+        ConnectionDeadlineExceeded,
         /// A local filesystem write failed; prior immutable data remains unchanged.
         Storage(LocalPersistenceError),
     }
@@ -836,11 +849,22 @@ pub mod live_public {
         store: &SegmentStore,
     ) -> Result<BoundedLocalIngestionResult, LocalIngestionError> {
         validate_ingestion_request(request)?;
-        let adapter_events =
-            collect_binance_aggregate_trade_probe(request.subscription, request.maximum_events)
-                .await
-                .map_err(LocalIngestionError::Probe)?;
+        let adapter_events = enforce_connection_deadline(
+            request.connection_timeout_ms,
+            collect_binance_aggregate_trade_probe(request.subscription, request.maximum_events),
+        )
+        .await?;
         finish_adapter_events(request, store, adapter_events)
+    }
+
+    async fn enforce_connection_deadline<T>(
+        connection_timeout_ms: u64,
+        probe: impl Future<Output = Result<T, ProbeError>>,
+    ) -> Result<T, LocalIngestionError> {
+        timeout(Duration::from_millis(connection_timeout_ms), probe)
+            .await
+            .map_err(|_| LocalIngestionError::ConnectionDeadlineExceeded)?
+            .map_err(LocalIngestionError::Probe)
     }
 
     fn validate_ingestion_request(
@@ -848,6 +872,8 @@ pub mod live_public {
     ) -> Result<(), LocalIngestionError> {
         if request.maximum_events == 0
             || request.maximum_events > MAXIMUM_PUBLIC_INGESTION_EVENTS
+            || request.connection_timeout_ms == 0
+            || request.connection_timeout_ms > MAXIMUM_PUBLIC_INGESTION_TIMEOUT_MS
             || request.interval_ns == 0
             || request.maximum_bars == 0
             || request.maximum_bars > zt_core::MAXIMUM_LOCAL_SEGMENT_BARS
@@ -935,6 +961,7 @@ pub mod live_public {
                 interval_ns: 100,
                 maximum_bars: 10,
                 maximum_events: 3,
+                connection_timeout_ms: 1_000,
                 captured_at_ns: 300,
                 access_time: 9,
                 flush_at_end,
@@ -1006,12 +1033,31 @@ pub mod live_public {
             let _ = fs::remove_dir_all(root);
         }
 
+        #[tokio::test]
+        async fn connection_deadline_expires_without_retry_or_fallback() {
+            let result = enforce_connection_deadline(
+                1,
+                std::future::pending::<Result<Vec<AdapterEvent>, ProbeError>>(),
+            )
+            .await;
+            assert!(matches!(
+                result,
+                Err(LocalIngestionError::ConnectionDeadlineExceeded)
+            ));
+        }
+
         #[test]
         fn invalid_bounds_are_rejected_before_any_direct_connection_attempt() {
             let root = temporary_root("invalid-bounds");
             let store = SegmentStore::open(&root).expect("local store should open");
             let mut invalid = request(true);
             invalid.maximum_events = MAXIMUM_PUBLIC_INGESTION_EVENTS + 1;
+            assert!(matches!(
+                finish_adapter_events(invalid, &store, Vec::new()),
+                Err(LocalIngestionError::InvalidBounds)
+            ));
+            invalid.maximum_events = 3;
+            invalid.connection_timeout_ms = 0;
             assert!(matches!(
                 finish_adapter_events(invalid, &store, Vec::new()),
                 Err(LocalIngestionError::InvalidBounds)
