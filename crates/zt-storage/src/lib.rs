@@ -19,6 +19,10 @@ const SEGMENT_METADATA_VERSION: u16 = 1;
 const WORKSPACE_JOURNAL_VERSION: u16 = 1;
 const FNV_OFFSET_BASIS: u64 = 14_695_981_039_346_656_037;
 const FNV_PRIME: u64 = 1_099_511_628_211;
+/// Maximum verified immutable entries returned by one local catalog request.
+pub const MAXIMUM_LOCAL_SEGMENT_CATALOG_ENTRIES: usize = 256;
+const MAXIMUM_LOCAL_SEGMENT_CATALOG_METADATA_SCANS: usize = 1_024;
+const MAXIMUM_LOCAL_SEGMENT_CATALOG_VERIFICATIONS: usize = 256;
 
 /// Identifies a local immutable market-data segment.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -44,6 +48,22 @@ pub struct SegmentMetadata {
     pub data_status: DataStatus,
     /// Stable FNV-1a content hash recorded when the payload was written.
     pub content_hash: u64,
+}
+
+/// Bounded result of discovering immutable local segment records for one series.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LocalSegmentCatalog {
+    /// Individually integrity-checked immutable records, ordered by segment key.
+    pub entries: Vec<SegmentMetadata>,
+    /// More matching metadata was left unexamined after a local scan, verification,
+    /// or requested-return bound; callers must not infer complete history.
+    pub truncated: bool,
+    /// Unsupported, malformed, or non-canonical metadata files omitted locally.
+    pub malformed_metadata_entries: usize,
+    /// Matching metadata files whose payload file was absent.
+    pub missing_payload_entries: usize,
+    /// Matching records whose payload length or hash failed verification.
+    pub corrupt_payload_entries: usize,
 }
 
 /// Configurable local cache budget. Zero is deliberately invalid.
@@ -232,6 +252,8 @@ pub enum StorageError {
     WorkspaceBudgetExceeded,
     /// A workspace journal row is malformed or uses an unknown schema.
     InvalidWorkspaceRecord,
+    /// A local segment catalog request used a zero interval or exceeded its bound.
+    InvalidCatalogRequest,
 }
 
 impl Display for StorageError {
@@ -251,6 +273,9 @@ impl Display for StorageError {
             }
             Self::InvalidWorkspaceRecord => {
                 write!(formatter, "local workspace journal record is invalid")
+            }
+            Self::InvalidCatalogRequest => {
+                write!(formatter, "local segment catalog request is invalid")
             }
         }
     }
@@ -390,6 +415,91 @@ impl SegmentStore {
         }
         metadata.sort_by_key(|entry| entry.key);
         Ok(metadata)
+    }
+
+    /// Discovers a bounded, ordered set of integrity-checked immutable local
+    /// segments for one explicit symbol and interval.
+    ///
+    /// This method is read-only. Each returned entry passed `read` verification,
+    /// but the catalog never claims the retained segments are contiguous, fresh, or
+    /// exhaustive. Candidate metadata and payload verification are independently
+    /// bounded so local history discovery cannot expand into an unbounded scan.
+    pub fn catalog(
+        &self,
+        symbol_id: u32,
+        interval_ns: u64,
+        maximum_entries: usize,
+    ) -> Result<LocalSegmentCatalog, StorageError> {
+        if interval_ns == 0
+            || maximum_entries == 0
+            || maximum_entries > MAXIMUM_LOCAL_SEGMENT_CATALOG_ENTRIES
+        {
+            return Err(StorageError::InvalidCatalogRequest);
+        }
+
+        let mut candidates = Vec::new();
+        let mut malformed_metadata_entries = 0;
+        let mut truncated = false;
+        let mut metadata_scans = 0;
+        for entry in fs::read_dir(self.root.join("metadata"))? {
+            let entry = entry?;
+            if entry
+                .path()
+                .extension()
+                .is_none_or(|extension| extension != "meta")
+            {
+                continue;
+            }
+            if metadata_scans == MAXIMUM_LOCAL_SEGMENT_CATALOG_METADATA_SCANS {
+                truncated = true;
+                break;
+            }
+            metadata_scans += 1;
+            let encoded = fs::read_to_string(entry.path())?;
+            let Some(metadata) = SegmentMetadata::decode(&encoded) else {
+                malformed_metadata_entries += 1;
+                continue;
+            };
+            if entry.path().file_stem().and_then(|stem| stem.to_str())
+                != Some(segment_stem(metadata.key).as_str())
+            {
+                malformed_metadata_entries += 1;
+                continue;
+            }
+            if metadata.key.symbol_id == symbol_id && metadata.key.interval_ns == interval_ns {
+                candidates.push(metadata);
+            }
+        }
+        candidates.sort_by_key(|metadata| metadata.key);
+
+        let mut entries = Vec::new();
+        let mut missing_payload_entries = 0;
+        let mut corrupt_payload_entries = 0;
+        for (verification_index, candidate) in candidates.into_iter().enumerate() {
+            if entries.len() == maximum_entries
+                || verification_index == MAXIMUM_LOCAL_SEGMENT_CATALOG_VERIFICATIONS
+            {
+                truncated = true;
+                break;
+            }
+            match self.read(candidate.key) {
+                Ok((verified, _)) if verified == candidate => entries.push(verified),
+                Ok(_)
+                | Err(StorageError::CorruptSegment(_))
+                | Err(StorageError::InvalidMetadata) => {
+                    corrupt_payload_entries += 1;
+                }
+                Err(StorageError::SegmentMissing(_)) => missing_payload_entries += 1,
+                Err(error) => return Err(error),
+            }
+        }
+        Ok(LocalSegmentCatalog {
+            entries,
+            truncated,
+            malformed_metadata_entries,
+            missing_payload_entries,
+            corrupt_payload_entries,
+        })
     }
 
     /// Deletes a payload and metadata record after cache eviction or explicit user action.
@@ -897,6 +1007,138 @@ mod tests {
         fs::write(path, b"modified-without-metadata").expect("test corruption should write");
         assert!(
             matches!(store.read(key), Err(StorageError::CorruptSegment(corrupt_key)) if corrupt_key == key)
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn catalogs_only_verified_matching_local_segments_in_start_order() {
+        let root = temporary_root("catalog");
+        let store = SegmentStore::open(&root).expect("store should open");
+        let key_at_30 = SegmentKey {
+            symbol_id: 7,
+            interval_ns: 60,
+            start_ns: 30,
+        };
+        let key_at_10 = SegmentKey {
+            symbol_id: 7,
+            interval_ns: 60,
+            start_ns: 10,
+        };
+        let key_at_20 = SegmentKey {
+            symbol_id: 7,
+            interval_ns: 60,
+            start_ns: 20,
+        };
+        let corrupt_key = SegmentKey {
+            symbol_id: 7,
+            interval_ns: 60,
+            start_ns: 40,
+        };
+        let missing_key = SegmentKey {
+            symbol_id: 7,
+            interval_ns: 60,
+            start_ns: 50,
+        };
+        for key in [key_at_30, key_at_10, key_at_20, corrupt_key, missing_key] {
+            store
+                .write(
+                    key,
+                    format!("verified-{}", key.start_ns).as_bytes(),
+                    1,
+                    DataStatus::Live,
+                )
+                .expect("test immutable segment should persist");
+        }
+        store
+            .write(
+                SegmentKey {
+                    symbol_id: 8,
+                    interval_ns: 60,
+                    start_ns: 10,
+                },
+                b"other-symbol",
+                1,
+                DataStatus::Live,
+            )
+            .expect("other symbol should persist");
+        fs::write(
+            root.join("segments")
+                .join(segment_stem(corrupt_key))
+                .with_extension("bin"),
+            b"corrupt-after-write",
+        )
+        .expect("test corruption should write");
+        fs::remove_file(
+            root.join("segments")
+                .join(segment_stem(missing_key))
+                .with_extension("bin"),
+        )
+        .expect("test payload removal should succeed");
+        fs::write(
+            root.join("metadata").join("malformed.meta"),
+            b"not-metadata",
+        )
+        .expect("malformed test metadata should write");
+
+        let catalog = store.catalog(7, 60, 8).expect("catalog should succeed");
+        assert_eq!(
+            catalog
+                .entries
+                .iter()
+                .map(|entry| entry.key)
+                .collect::<Vec<_>>(),
+            vec![key_at_10, key_at_20, key_at_30]
+        );
+        assert!(!catalog.truncated);
+        assert_eq!(catalog.malformed_metadata_entries, 1);
+        assert_eq!(catalog.missing_payload_entries, 1);
+        assert_eq!(catalog.corrupt_payload_entries, 1);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn catalog_enforces_request_bounds_and_reports_truncation() {
+        let root = temporary_root("catalog-bounds");
+        let store = SegmentStore::open(&root).expect("store should open");
+        for start_ns in [30, 10, 20] {
+            let key = SegmentKey {
+                symbol_id: 7,
+                interval_ns: 60,
+                start_ns,
+            };
+            store
+                .write(
+                    key,
+                    format!("verified-{start_ns}").as_bytes(),
+                    1,
+                    DataStatus::Live,
+                )
+                .expect("test immutable segment should persist");
+        }
+        assert!(matches!(
+            store.catalog(7, 0, 1),
+            Err(StorageError::InvalidCatalogRequest)
+        ));
+        assert!(matches!(
+            store.catalog(7, 60, 0),
+            Err(StorageError::InvalidCatalogRequest)
+        ));
+        assert!(matches!(
+            store.catalog(7, 60, MAXIMUM_LOCAL_SEGMENT_CATALOG_ENTRIES + 1),
+            Err(StorageError::InvalidCatalogRequest)
+        ));
+        let catalog = store
+            .catalog(7, 60, 2)
+            .expect("bounded catalog should succeed");
+        assert!(catalog.truncated);
+        assert_eq!(
+            catalog
+                .entries
+                .iter()
+                .map(|entry| entry.key.start_ns)
+                .collect::<Vec<_>>(),
+            vec![10, 20]
         );
         let _ = fs::remove_dir_all(root);
     }
