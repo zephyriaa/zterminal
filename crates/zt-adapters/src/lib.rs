@@ -705,9 +705,11 @@ pub mod live_public {
     use tokio_tungstenite::tungstenite::Message;
 
     use super::{
-        AdapterError, AdapterEvent, BinanceAggregateTradeAdapter, PublicProvider,
+        AdapterError, AdapterEvent, BinanceAggregateTradeAdapter, LocalPersistenceError,
+        LocalPersistenceEvent, LocalProviderPersistenceSession, PublicProvider,
         PublicTradeSubscription,
     };
+    use zt_storage::{SegmentMetadata, SegmentStore};
 
     /// Transport-level failure for a bounded local public probe.
     #[derive(Debug)]
@@ -765,5 +767,256 @@ pub mod live_public {
             }
         }
         Err(ProbeError::EndedEarly)
+    }
+
+    /// Maximum provider events a finite foreground ingestion request may read.
+    pub const MAXIMUM_PUBLIC_INGESTION_EVENTS: usize = 10_000;
+
+    /// Explicit configuration for one finite public ingestion action.
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub struct BoundedLocalIngestionRequest {
+        /// User-selected credential-free public subscription.
+        pub subscription: PublicTradeSubscription,
+        /// Fixed local bar interval used only for observed trade aggregation.
+        pub interval_ns: u64,
+        /// Maximum complete bars retained before an explicit flush is required.
+        pub maximum_bars: usize,
+        /// Maximum received adapter events before the direct connection exits.
+        pub maximum_events: usize,
+        /// Captured-at time recorded in an optional immutable local segment.
+        pub captured_at_ns: u64,
+        /// Caller-defined local access time stored in segment metadata.
+        pub access_time: u64,
+        /// Whether this finite action may perform one final explicit local flush.
+        pub flush_at_end: bool,
+    }
+
+    /// Terminal storage outcome for one bounded public ingestion action.
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum LocalIngestionFlushOutcome {
+        /// The caller did not permit an automatic final local write.
+        NotRequested,
+        /// A healthy non-empty batch became one immutable local segment.
+        Persisted(SegmentMetadata),
+        /// No complete bars arrived before the finite action ended.
+        Empty,
+        /// A gap or degraded input made the in-memory batch ineligible for persistence.
+        Withheld,
+        /// An existing immutable local segment key was preserved.
+        ExistingSegment,
+    }
+
+    /// Summary of one finite opt-in direct public ingestion action.
+    #[derive(Clone, Debug, Eq, PartialEq)]
+    pub struct BoundedLocalIngestionResult {
+        /// Number of provider adapter events observed before the explicit stop.
+        pub observed_events: usize,
+        /// Persistence transitions corresponding to each observed adapter event.
+        pub persistence_events: Vec<LocalPersistenceEvent>,
+        /// Explicit final local storage outcome.
+        pub flush_outcome: LocalIngestionFlushOutcome,
+    }
+
+    /// Error that prevents completion of a finite local ingestion action.
+    #[derive(Debug)]
+    pub enum LocalIngestionError {
+        /// Request bounds are invalid before any connection attempt.
+        InvalidBounds,
+        /// The direct selected-provider probe failed without fallback or retry.
+        Probe(ProbeError),
+        /// A local filesystem write failed; prior immutable data remains unchanged.
+        Storage(LocalPersistenceError),
+    }
+
+    /// Performs one finite, opt-in public Binance sample and optionally flushes a
+    /// healthy local completed-bar batch. This routine never reconnects, starts a
+    /// background task, chooses a fallback provider, or performs broker actions.
+    pub async fn ingest_binance_aggregate_trade_probe_locally(
+        request: BoundedLocalIngestionRequest,
+        store: &SegmentStore,
+    ) -> Result<BoundedLocalIngestionResult, LocalIngestionError> {
+        validate_ingestion_request(request)?;
+        let adapter_events =
+            collect_binance_aggregate_trade_probe(request.subscription, request.maximum_events)
+                .await
+                .map_err(LocalIngestionError::Probe)?;
+        finish_adapter_events(request, store, adapter_events)
+    }
+
+    fn validate_ingestion_request(
+        request: BoundedLocalIngestionRequest,
+    ) -> Result<(), LocalIngestionError> {
+        if request.maximum_events == 0
+            || request.maximum_events > MAXIMUM_PUBLIC_INGESTION_EVENTS
+            || request.interval_ns == 0
+            || request.maximum_bars == 0
+            || request.maximum_bars > zt_core::MAXIMUM_LOCAL_SEGMENT_BARS
+        {
+            return Err(LocalIngestionError::InvalidBounds);
+        }
+        Ok(())
+    }
+
+    fn finish_adapter_events(
+        request: BoundedLocalIngestionRequest,
+        store: &SegmentStore,
+        adapter_events: Vec<AdapterEvent>,
+    ) -> Result<BoundedLocalIngestionResult, LocalIngestionError> {
+        validate_ingestion_request(request)?;
+        if adapter_events.len() > request.maximum_events {
+            return Err(LocalIngestionError::InvalidBounds);
+        }
+        let mut session = LocalProviderPersistenceSession::new(
+            request.subscription.symbol_id,
+            request.interval_ns,
+            request.maximum_bars,
+        )
+        .map_err(|_| LocalIngestionError::InvalidBounds)?;
+        let persistence_events: Vec<_> = adapter_events
+            .into_iter()
+            .map(|event| session.ingest_adapter_event(event))
+            .collect();
+        let flush_outcome = if !request.flush_at_end {
+            LocalIngestionFlushOutcome::NotRequested
+        } else {
+            match session.flush(store, request.captured_at_ns, request.access_time) {
+                Ok(metadata) => LocalIngestionFlushOutcome::Persisted(metadata),
+                Err(LocalPersistenceError::EmptyBatch) => LocalIngestionFlushOutcome::Empty,
+                Err(LocalPersistenceError::DegradedBatch) => LocalIngestionFlushOutcome::Withheld,
+                Err(LocalPersistenceError::ExistingSegment(_)) => {
+                    LocalIngestionFlushOutcome::ExistingSegment
+                }
+                Err(error @ LocalPersistenceError::Encode(_))
+                | Err(error @ LocalPersistenceError::Storage(_)) => {
+                    return Err(LocalIngestionError::Storage(error));
+                }
+            }
+        };
+        Ok(BoundedLocalIngestionResult {
+            observed_events: persistence_events.len(),
+            persistence_events,
+            flush_outcome,
+        })
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use std::fs;
+        use std::path::PathBuf;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        use super::*;
+        use zt_protocol::{
+            AggressorSide, DataStatus, Environment, EventHeader, Provider, TradeEvent,
+        };
+
+        fn temporary_root(label: &str) -> PathBuf {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system time should be after epoch")
+                .as_nanos();
+            std::env::temp_dir().join(format!("zt-public-ingestion-{label}-{nonce}"))
+        }
+
+        fn subscription() -> PublicTradeSubscription {
+            PublicTradeSubscription {
+                provider: PublicProvider::BinanceSpot,
+                symbol_id: 1,
+                provider_symbol: "btcusdt",
+                price_scale: 100,
+                quantity_scale: 1_000,
+                stream_id: 7,
+            }
+        }
+
+        fn request(flush_at_end: bool) -> BoundedLocalIngestionRequest {
+            BoundedLocalIngestionRequest {
+                subscription: subscription(),
+                interval_ns: 100,
+                maximum_bars: 10,
+                maximum_events: 3,
+                captured_at_ns: 300,
+                access_time: 9,
+                flush_at_end,
+            }
+        }
+
+        fn observed_trade(sequence: u64, timestamp_ns: u64) -> AdapterEvent {
+            AdapterEvent::Trade(TradeEvent {
+                header: EventHeader::new(
+                    7,
+                    sequence,
+                    timestamp_ns,
+                    Provider::Binance,
+                    Environment::Live,
+                    DataStatus::Live,
+                ),
+                symbol_id: 1,
+                timestamp_ns,
+                price_ticks: 100 + i64::try_from(sequence).expect("small deterministic sequence"),
+                quantity: 1,
+                aggressor_side: AggressorSide::Buy,
+            })
+        }
+
+        #[test]
+        fn finite_supplied_events_stop_without_flush_when_not_explicitly_requested() {
+            let root = temporary_root("no-flush");
+            let store = SegmentStore::open(&root).expect("local store should open");
+            let result = finish_adapter_events(
+                request(false),
+                &store,
+                vec![
+                    observed_trade(1, 1),
+                    observed_trade(2, 101),
+                    observed_trade(3, 201),
+                ],
+            )
+            .expect("finite local event sequence should complete");
+            assert_eq!(result.observed_events, 3);
+            assert_eq!(
+                result.flush_outcome,
+                LocalIngestionFlushOutcome::NotRequested
+            );
+            let _ = fs::remove_dir_all(root);
+        }
+
+        #[test]
+        fn supplied_gap_withholds_final_flush_without_provider_fallback() {
+            let root = temporary_root("gap");
+            let store = SegmentStore::open(&root).expect("local store should open");
+            let result = finish_adapter_events(
+                request(true),
+                &store,
+                vec![
+                    observed_trade(1, 1),
+                    AdapterEvent::Gap {
+                        expected: 2,
+                        observed: 4,
+                    },
+                ],
+            )
+            .expect("gap should complete as a withheld local outcome");
+            assert_eq!(result.observed_events, 2);
+            assert_eq!(result.flush_outcome, LocalIngestionFlushOutcome::Withheld);
+            assert!(matches!(
+                result.persistence_events.last(),
+                Some(LocalPersistenceEvent::Withheld { .. })
+            ));
+            let _ = fs::remove_dir_all(root);
+        }
+
+        #[test]
+        fn invalid_bounds_are_rejected_before_any_direct_connection_attempt() {
+            let root = temporary_root("invalid-bounds");
+            let store = SegmentStore::open(&root).expect("local store should open");
+            let mut invalid = request(true);
+            invalid.maximum_events = MAXIMUM_PUBLIC_INGESTION_EVENTS + 1;
+            assert!(matches!(
+                finish_adapter_events(invalid, &store, Vec::new()),
+                Err(LocalIngestionError::InvalidBounds)
+            ));
+            let _ = fs::remove_dir_all(root);
+        }
     }
 }
