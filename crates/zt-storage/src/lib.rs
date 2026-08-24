@@ -557,6 +557,76 @@ impl WorkspaceJournal {
         }
         Ok(latest)
     }
+
+    /// Rewrites the journal with only the latest local snapshot per workspace.
+    ///
+    /// This is an explicit local maintenance operation. It makes no network
+    /// request, preserves every retained sync state, and refuses to emit a file
+    /// exceeding the configured local journal budget.
+    pub fn compact(&self) -> Result<(), StorageError> {
+        let mut snapshots: Vec<_> = self.latest()?.into_values().collect();
+        snapshots.sort_by_key(|snapshot| snapshot.workspace_id);
+        let encoded: String = snapshots.iter().map(encode_workspace_snapshot).collect();
+        let encoded_bytes =
+            u64::try_from(encoded.len()).map_err(|_| StorageError::WorkspaceBudgetExceeded)?;
+        if encoded_bytes > self.budget.max_bytes {
+            return Err(StorageError::WorkspaceBudgetExceeded);
+        }
+        let temporary_path = self.path.with_extension("journal.next");
+        fs::write(&temporary_path, encoded)?;
+        OpenOptions::new()
+            .write(true)
+            .open(&temporary_path)?
+            .sync_all()?;
+        replace_local_file(&temporary_path, &self.path)?;
+        Ok(())
+    }
+}
+
+#[cfg(not(windows))]
+fn replace_local_file(temporary_path: &Path, destination_path: &Path) -> Result<(), StorageError> {
+    fs::rename(temporary_path, destination_path)?;
+    Ok(())
+}
+
+#[cfg(windows)]
+fn replace_local_file(temporary_path: &Path, destination_path: &Path) -> Result<(), StorageError> {
+    // Windows compaction uses a recoverable in-place local rewrite. Retain the
+    // current journal bytes in memory so an I/O failure can attempt restoration.
+    // No cloud request or unsafe system API is used on this path.
+    let replacement = fs::read(temporary_path).map_err(|error| {
+        StorageError::Io(std::io::Error::new(
+            error.kind(),
+            format!("read replacement journal: {error}"),
+        ))
+    })?;
+    let prior = fs::read(destination_path).ok();
+    let write_result = (|| -> Result<(), std::io::Error> {
+        let mut destination = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(destination_path)?;
+        destination.write_all(&replacement)?;
+        destination.sync_all()?;
+        Ok(())
+    })();
+    if let Err(error) = write_result {
+        if let Some(previous) = prior {
+            let _ = fs::write(destination_path, previous);
+        }
+        return Err(StorageError::Io(std::io::Error::new(
+            error.kind(),
+            format!("replace local workspace journal: {error}"),
+        )));
+    }
+    fs::remove_file(temporary_path).map_err(|error| {
+        StorageError::Io(std::io::Error::new(
+            error.kind(),
+            format!("remove replacement journal: {error}"),
+        ))
+    })?;
+    Ok(())
 }
 
 fn segment_stem(key: SegmentKey) -> String {
@@ -862,6 +932,42 @@ mod tests {
         assert_eq!(
             latest.get(&1).expect("workspace should exist").sync_state,
             WorkspaceSyncState::Queued
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn compacts_workspace_journal_locally_without_losing_latest_snapshot() {
+        let root = temporary_root("workspace-compact");
+        let journal = WorkspaceJournal::open(&root, WorkspaceJournalBudget::new(1_024))
+            .expect("journal should open");
+        for revision in 1..=3 {
+            journal
+                .append(&WorkspaceSnapshot {
+                    workspace_id: 4,
+                    revision,
+                    saved_at_ns: revision,
+                    sync_state: WorkspaceSyncState::LocalOnly,
+                    payload: format!("revision-{revision}").into_bytes(),
+                })
+                .expect("snapshot should persist");
+        }
+        let before = fs::metadata(root.join("workspace.journal"))
+            .expect("journal should exist")
+            .len();
+        journal.compact().expect("local compaction should succeed");
+        let after = fs::metadata(root.join("workspace.journal"))
+            .expect("compacted journal should exist")
+            .len();
+        assert!(after < before);
+        assert_eq!(
+            journal
+                .latest()
+                .expect("latest snapshot should replay")
+                .get(&4)
+                .expect("workspace should remain")
+                .payload,
+            b"revision-3"
         );
         let _ = fs::remove_dir_all(root);
     }
