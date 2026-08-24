@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#161b22"/></linearGradient>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#58a6ff"/><stop offset="1" stop-color="#79c0ff"/></linearGradient>
+  <linearGradient id="purple" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#a371f7"/><stop offset="1" stop-color="#d2a8ff"/></linearGradient>
+  <linearGradient id="green" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#3fb950"/><stop offset="1" stop-color="#56d364"/></linearGradient>
+  <filter id="shadow"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".35"/></filter>
+</defs>
+<rect width="1200" height="560" rx="26" fill="url(#bg)"/>
+<text x="70" y="70" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="700">Local-first by design</text>
+<text x="70" y="105" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="17">Put expensive work on the user's machine when it is efficient and safe to do so.</text>
+
+<rect x="60" y="145" width="635" height="340" rx="24" fill="#0b1220" stroke="#30363d" filter="url(#shadow)"/>
+<rect x="85" y="170" width="280" height="290" rx="18" fill="#111827" stroke="#1f6feb"/>
+<circle cx="125" cy="212" r="18" fill="#1f6feb"/>
+<text x="158" y="220" fill="#58a6ff" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="700">USER PC</text>
+<text x="110" y="270" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Chart rendering</text>
+<text x="110" y="304" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Order-flow visualization</text>
+<text x="110" y="338" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Local analytics</text>
+<text x="110" y="372" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Workspace state</text>
+<text x="110" y="406" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">CPU / GPU compute</text>
+
+<rect x="415" y="170" width="250" height="290" rx="18" fill="#111827" stroke="#238636"/>
+<circle cx="455" cy="212" r="18" fill="#238636"/>
+<text x="488" y="220" fill="#56d364" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="700">LOCAL STATE</text>
+<text x="440" y="270" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Local cache</text>
+<text x="440" y="304" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Local settings</text>
+<text x="440" y="338" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Persistent workspaces</text>
+<text x="440" y="372" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Offline capabilities</text>
+<text x="440" y="406" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Fast local reads</text>
+
+<path d="M365 315 H405" stroke="url(#purple)" stroke-width="5"/>
+<path d="M394 305 L408 315 L394 325" fill="none" stroke="#c297ff" stroke-width="4"/>
+
+<rect x="745" y="145" width="395" height="340" rx="24" fill="#111827" stroke="#30363d" filter="url(#shadow)"/>
+<text x="780" y="195" fill="#d2a8ff" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="700">CENTRAL SERVICES</text>
+<text x="780" y="235" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Authentication</text>
+<text x="780" y="267" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Entitlements</text>
+<text x="780" y="299" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Shared market data</text>
+<text x="780" y="331" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Cloud synchronization</text>
+<text x="780" y="363" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Remote configuration</text>
+<text x="780" y="395" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="17">Release distribution</text>
+
+<path d="M705 300 H745" stroke="#58a6ff" stroke-width="5" stroke-dasharray="10 10"/>
+<path d="M734 290 L748 300 L734 310" fill="none" stroke="#79c0ff" stroke-width="4"/>
+
+<rect x="60" y="505" width="1080" height="1" fill="#30363d"/>
+<text x="70" y="538" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="16">Local when practical • Server when necessary • Measured through benchmarks</text>
+</svg>
