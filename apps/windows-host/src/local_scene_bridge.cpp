@@ -15,6 +15,7 @@ namespace {
 
 constexpr std::size_t kMaximumVisibleCandles = 2'000;
 constexpr unsigned long kBridgeSchemaVersion = 1;
+constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
 
 [[nodiscard]] Result bridge_failure(std::wstring diagnostic) {
     return {
@@ -232,7 +233,11 @@ Result load(const Request& request) {
         std::filesystem::remove(output_path, error);
         return bridge_failure(L"could not start local scene bridge process");
     }
-    (void)WaitForSingleObject(process.hProcess, INFINITE);
+    const DWORD wait_result = WaitForSingleObject(process.hProcess, kMaximumBridgeWaitMilliseconds);
+    if (wait_result == WAIT_TIMEOUT) {
+        (void)TerminateProcess(process.hProcess, 2);
+        (void)WaitForSingleObject(process.hProcess, 1'000);
+    }
     DWORD exit_code{};
     (void)GetExitCodeProcess(process.hProcess, &exit_code);
     CloseHandle(process.hThread);
@@ -240,7 +245,10 @@ Result load(const Request& request) {
     const std::string response = read_text_file(output_path);
     std::error_code error;
     std::filesystem::remove(output_path, error);
-    if (exit_code != 0) {
+    if (wait_result == WAIT_TIMEOUT) {
+        return bridge_failure(L"local scene bridge exceeded its 15-second local process bound");
+    }
+    if (wait_result != WAIT_OBJECT_0 || exit_code != 0) {
         return bridge_failure(L"local scene bridge rejected the requested local scene");
     }
     return parse_bridge_output(response);
