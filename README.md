@@ -5,15 +5,17 @@
 <h1 align="center">ZTerminal</h1>
 
 <p align="center">
-  <strong>Quantitative market intelligence for better trading decisions.</strong>
+  <strong>Quantitative market intelligence evolving into a lightweight Windows trading terminal.</strong>
 </p>
 
 <p align="center">
-  Research · Market Context · Risk · Alerts · Journaling
+  Research · Market Context · Order Flow · Risk · Alerts · Journaling
 </p>
 
 <p align="center">
-  <a href="https://zterminal.onrender.com">Live App</a>
+  <a href="https://zterminal.onrender.com">Web App</a>
+  &nbsp;·&nbsp;
+  <a href="#windows-desktop">Windows Desktop</a>
   &nbsp;·&nbsp;
   <a href="#roadmap">Roadmap</a>
   &nbsp;·&nbsp;
@@ -22,12 +24,10 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-in%20development-111827?style=flat-square" />
-  <img src="https://img.shields.io/badge/platform-web-111827?style=flat-square" />
-  <img src="https://img.shields.io/badge/desktop-Windows-111827?style=flat-square" />
+  <img src="https://img.shields.io/badge/web-live%20development-111827?style=flat-square" />
+  <img src="https://img.shields.io/badge/desktop-Windows%2010%2F11-111827?style=flat-square" />
   <img src="https://img.shields.io/badge/focus-quant%20research-111827?style=flat-square" />
 </p>
-
-<br>
 
 <p align="center">
   <img src="assets/dashboard.png" alt="ZTerminal dashboard" width="900" />
@@ -37,13 +37,13 @@
 
 ## What is ZTerminal?
 
-ZTerminal is a **quantitative market research and decision-support terminal** built for traders who want more than charts and disconnected indicators.
+ZTerminal is a **quantitative market research, decision-support, and trading terminal project** for traders who want more than charts and disconnected indicators.
 
 It brings market context, strategy research, statistical validation, risk analysis, alerts and trade review into one workflow.
 
 > **Don't trade because a chart looks right. Trade because you understand the setup.**
 
-ZTerminal is designed around a simple loop:
+The core workflow is:
 
 **Research → Validate → Monitor → Decide → Execute → Review**
 
@@ -51,82 +51,86 @@ The final decision stays with the trader.
 
 ---
 
-## Why ZTerminal?
+## The ZTerminal strategy
 
-Trading workflows are usually fragmented.
+ZTerminal is evolving from a primarily web-based application into a **web + lightweight Windows terminal platform**.
 
-```text
-Charting
-   +
-Market Data
-   +
-Volume / Order Flow
-   +
-Backtesting
-   +
-Risk Calculator
-   +
-Alerts
-   +
-Trade Journal
-        ↓
-   7 different tools
-```
-
-ZTerminal is built around bringing those pieces together.
+The web application remains the accessible, cross-platform experience. The Windows client is being designed as the high-performance environment where appropriate computation and rendering can happen locally on the user's computer instead of requiring every heavy workload to run on shared infrastructure.
 
 ```text
-                    ZTERMINAL
-
-   ┌────────────┬────────────┬────────────┐
-   │   Markets  │  Research  │    Risk    │
-   └────────────┴────────────┴────────────┘
-                     │
-                  Alerts
-                     │
-                  Decision
-                     │
-               Manual Execution
-                     │
-                   Review
+                         ZTERMINAL
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+             WEB                       WINDOWS DESKTOP
+              │                             │
+       Accessible anywhere          Local-first processing
+       Shared platform              Native rendering direction
+       Account / cloud sync         CPU / GPU utilization
+                                    Local persistence
+                                    Background monitoring
+              └──────────────┬──────────────┘
+                             │
+                      SHARED PLATFORM
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+    MARKET DATA          ANALYTICS            RESEARCH
+        │                    │                    │
+    Order Flow            Profiles            Backtests
+    Volume                Regimes             Monte Carlo
+    Liquidity             Volatility           Walk-Forward
+    Sessions              Context              OOS Testing
+        └────────────────────┼────────────────────┘
+                             │
+                            RISK
+                             │
+                           ALERTS
+                             │
+                         DECISION
+                             │
+                         EXECUTION
+                             │
+                          JOURNAL
 ```
 
-Less context switching.
-
-More context.
+The goal is **not** to put the website inside an `.exe`. The goal is to build a proper lightweight desktop terminal around the same ZTerminal platform.
 
 ---
 
-## Built for the decision, not the signal
+## Why local-first Windows?
 
-A trading system shouldn't stop at:
+A browser-based product can place substantial rendering, analytics and data-processing workloads on shared infrastructure. As the user base grows, avoiding unnecessary centralized computation becomes increasingly valuable.
 
-> **BUY**
+The Windows strategy is therefore **local-first where practical**:
 
-It should help answer:
+```text
+USER PC
+ ├─ Chart rendering
+ ├─ Order-flow visualization
+ ├─ Local analytics
+ ├─ Workspace state
+ ├─ Background monitoring
+ └─ CPU / GPU compute
+          │
+          ▼
+   Lightweight server services
+          │
+   ├─ Authentication
+   ├─ Entitlements
+   ├─ Shared data / services
+   ├─ Cloud synchronization
+   ├─ Remote configuration
+   └─ Release distribution
+```
 
-* Where is price relative to value?
-* What regime are we in?
-* Where is liquidity?
-* What does volume say?
-* Has this setup worked historically?
-* How stable is the result?
-* How much am I risking?
-* Does the current environment resemble the conditions where the idea actually worked?
-
-That's the direction ZTerminal is being built toward.
+This does not mean eliminating servers. Central infrastructure remains responsible for functionality that genuinely requires centralized coordination. The local/server boundary will be refined through benchmarking and implementation.
 
 ---
 
 ## Core capabilities
 
-<table>
-<tr>
-<td width="50%">
-
 ### Market Intelligence
-
-Understand the market before acting.
 
 * VWAP
 * Opening Range
@@ -138,12 +142,7 @@ Understand the market before acting.
 * Market Regimes
 * Session Context
 
-</td>
-<td width="50%">
-
 ### Quantitative Research
-
-Turn ideas into measurable hypotheses.
 
 * Strategy rules
 * Historical backtesting
@@ -155,15 +154,7 @@ Turn ideas into measurable hypotheses.
 * Walk-forward testing
 * Out-of-sample analysis
 
-</td>
-</tr>
-
-<tr>
-<td>
-
 ### Risk & Decision Support
-
-Know the risk before the trade.
 
 * Position sizing
 * Stop / target planning
@@ -173,12 +164,7 @@ Know the risk before the trade.
 * Drawdown monitoring
 * Risk limits
 
-</td>
-<td>
-
 ### Monitoring & Review
-
-Close the loop after the trade.
 
 * Context-aware alerts
 * Setup monitoring
@@ -188,261 +174,180 @@ Close the loop after the trade.
 * Trader performance
 * Historical comparisons
 
-</td>
-</tr>
-</table>
-
 ---
 
-# One workflow
+## Windows Desktop
 
-<p align="center">
-  <strong>DATA → CONTEXT → RESEARCH → VALIDATION → RISK → ALERT → DECISION → REVIEW</strong>
-</p>
+The long-term Windows application is being designed as a **lightweight native terminal**, not as a browser wrapper.
 
-### 01 — Understand the market
+The native direction is centered around **Rust + native Windows technologies such as Win32/Direct3D**, with local-first computation and rendering where it provides a meaningful performance benefit.
 
-Price is only one piece of the puzzle.
+The intended desktop experience includes:
 
-ZTerminal is designed to combine price with:
-
-`VWAP` · `Volume` · `Profile` · `Liquidity` · `Volatility` · `Regime`
-
-### 02 — Test the idea
-
-Turn a trading idea into objective rules.
-
-Then test it against historical data.
-
-### 03 — Try to break it
-
-A strategy is more interesting when it survives:
-
-`Out-of-Sample` · `Walk-Forward` · `Monte Carlo` · `Parameter Sensitivity` · `Slippage`
-
-### 04 — Define the risk
-
-Before execution:
-
-`Entry → Stop → Position Size → Risk → Target`
-
-### 05 — Let the terminal watch
-
-Instead of staring at charts all day, let ZTerminal monitor predefined conditions and surface relevant setups.
-
-### 06 — Decide yourself
-
-The platform provides the context.
-
-**You decide whether to take the trade.**
-
-### 07 — Learn from the result
-
-Every trade can become another data point.
-
-That creates the feedback loop:
-
-**Trade → Data → Analysis → Improvement**
-
----
-
-# Quant research without the spreadsheet maze
-
-The objective isn't to find the prettiest equity curve.
-
-It's to understand whether an idea has a **repeatable, measurable and sufficiently robust behavior**.
-
-A research workflow can look like:
-
-```text
-Idea
-  ↓
-Hypothesis
-  ↓
-Objective Rules
-  ↓
-Historical Data
-  ↓
-Backtest
-  ↓
-Statistical Analysis
-  ↓
-Robustness
-  ↓
-Out-of-Sample
-  ↓
-Risk Model
-  ↓
-Live Monitoring
-```
-
-The uncomfortable questions matter:
-
-> Does it still work outside the sample?
-
-> How sensitive is it to parameters?
-
-> What happens when volatility changes?
-
-> How bad can the drawdown get?
-
-> What happens after costs and slippage?
-
-> Is there an actual edge — or just a good-looking backtest?
-
----
-
-# A different approach to automation
-
-ZTerminal is being designed around **human-in-the-loop trading**.
-
-The system can automate the repetitive work:
-
-```text
-Research
-Analysis
-Calculations
-Backtesting
-Validation
-Monitoring
-Risk calculations
-Alerts
-Journaling
-```
-
-The trader retains control of:
-
-```text
-TAKE
-or
-SKIP
-```
-
-and the actual order execution.
-
-The goal is not:
-
-> **Replace the trader.**
-
-It's:
-
-> **Reduce the work around the decision so the trader can focus on the decision itself.**
-
----
-
-# Built for context
-
-A breakout by itself doesn't tell you much.
-
-A breakout with context does.
-
-ZTerminal is designed to combine things such as:
-
-```text
-Price
- + VWAP
- + Volume
- + Profile
- + Volatility
- + Market Regime
- + Session Structure
- + Historical Statistics
-```
-
-The result should be a **decision environment**, not another pile of indicators.
-
----
-
-# Designed for serious workflows
-
-The long-term product is being built toward two experiences.
-
-### Web
-
-Fast, accessible and cross-platform.
-
-### Windows Desktop
-
-A dedicated terminal experience with plans for:
-
-* Persistent workspaces
-* Multi-window layouts
+* Native high-performance rendering
+* CPU/GPU utilization on the user's machine
+* Local chart and order-flow processing where practical
+* Persistent local workspaces
+* Multi-window and multi-monitor workflows
 * Native notifications
 * Global shortcuts
 * Background monitoring
-* Local persistence
-* Faster terminal-style workflows
+* Lower dependence on centralized compute
+* A dedicated Windows terminal experience
 
-The objective is not to put the website inside an `.exe`.
+The current Tauri-based Windows build is treated as an **internal packaging/proof track**, not as the final native architecture. Early installer/package validation is deliberately separated from the longer-term native terminal implementation.
 
-The objective is to build a proper desktop client around the same ZTerminal platform.
+### Web + Windows, not Web vs. Windows
+
+**Web** provides instant, cross-platform access without installation.
+
+**Windows** provides the dedicated high-performance terminal environment with local-first processing and deeper desktop integration.
+
+Both are intended to use the same ZTerminal account and shared platform rather than becoming separate products.
 
 ---
 
-# Product direction
+## Desktop distribution and automatic updates
+
+A core part of the Windows strategy is to make the desktop client behave like a continuously maintained product.
+
+Users should **not** have to return to the website and manually reinstall ZTerminal for every release.
 
 ```text
-                     ZTERMINAL
-                         │
-          ┌──────────────┴──────────────┐
-          │                             │
-        WEB                         WINDOWS
-                                      │
-                                    TAURI
-          │                             │
-          └──────────────┬──────────────┘
-                         │
-                  SHARED PLATFORM
-                         │
-       ┌─────────────────┼─────────────────┐
-       │                 │                 │
-   MARKET DATA       ANALYTICS         RESEARCH
-       │                 │                 │
-       │            VWAP / ORB        BACKTEST
-       │            PROFILE           MONTE CARLO
-       │            ORDER FLOW        WALK-FORWARD
-       │            REGIME            OOS
-       │
-       └─────────────────┬─────────────────┘
-                         │
-                       RISK
-                         │
-                      ALERTS
-                         │
-                     DECISION
-                         │
-                    EXECUTION
-                         │
-                      JOURNAL
+Developer
+   ↓
+Git / CI
+   ↓
+Build + Tests
+   ↓
+Code Signing
+   ↓
+Release Artifact
+   ↓
+Canonical Release Metadata
+   ├───────────────┐
+   ↓               ↓
+Website        Windows Updater
+   ↓               ↓
+Download       Background Update
+                   ↓
+              Safe Restart
 ```
 
----
+There will be **one release source of truth** for the website and Windows updater.
 
-# What we're building toward
+The release architecture is designed around:
 
-### Market research
+* Signed releases
+* Versioned artifacts
+* Signed release manifests
+* CDN / object-storage distribution
+* Background update checks
+* Staged rollouts
+* Release pause / rollback
+* Separation of application binaries from user data
 
-A place to understand what's happening.
-
-### Quantitative validation
-
-A place to test whether an idea actually has evidence behind it.
-
-### Risk intelligence
-
-A place to understand exactly what the trade costs if it goes wrong.
-
-### Decision support
-
-A place where the important information appears together.
-
-### Continuous improvement
-
-A place where historical trades become future research.
+The production distribution system is being implemented incrementally.
 
 ---
 
-# Roadmap
+## Versioned Windows installation
+
+The intended installation model separates application versions from user data:
+
+```text
+%LOCALAPPDATA%\\ZTerminal\\
+  launcher\\
+  versions\\
+    <version>\\
+  state\\
+  user-data\\
+```
+
+This provides a path for safer upgrades and rollback without unnecessarily touching user workspaces, settings or other persistent data.
+
+---
+
+## Remote configuration
+
+Not every safe product change should require a full binary release.
+
+ZTerminal is therefore being designed to support **validated remote configuration** for explicitly approved behavior.
+
+```text
+Windows Client
+      ↓
+Remote Config
+      ↓
+Feature / behavior configuration
+```
+
+Remote configuration is not intended to become a mechanism for downloading or executing arbitrary code.
+
+---
+
+## Scalable by design
+
+The Windows strategy is also a scalability strategy.
+
+Instead of assuming every user's expensive workload must be processed centrally:
+
+```text
+User 1 ──> Local CPU/GPU ──┐
+User 2 ──> Local CPU/GPU ──┤
+User 3 ──> Local CPU/GPU ──┤
+User N ──> Local CPU/GPU ──┼──> Lightweight shared services
+                           ┘
+```
+
+The objective is to use each user's hardware for work it can perform efficiently while keeping centralized services focused on identity, shared data, entitlements, synchronization, releases and other server-side responsibilities.
+
+---
+
+## Development strategy
+
+### Track A — Windows packaging proof
+
+Validate:
+
+* Windows builds
+* Installer behavior
+* Test signing
+* Artifact verification
+* Controlled internal distribution
+
+This is an engineering proof track, not the final native terminal.
+
+### Track B — Native Windows terminal
+
+Build toward:
+
+* Rust
+* Native Windows APIs
+* Direct3D / native rendering
+* Local-first computation
+* High-performance charting
+* Order-flow visualization
+* Persistent workspaces
+* Desktop integration
+
+### Shared release spine
+
+Both tracks follow the same direction for:
+
+* Versioning
+* Release metadata
+* Signing
+* Distribution
+* Update strategy
+* Rollback
+* Remote configuration
+
+Public Windows distribution should only be enabled when the appropriate production gates have passed.
+
+---
+
+## Roadmap
 
 ### Research
 
@@ -476,58 +381,75 @@ A place where historical trades become future research.
 * [ ] Strategy vs. trader performance
 * [ ] Performance attribution
 
-### Desktop
+### Windows Desktop
 
-* [ ] Tauri Windows client
+* [ ] Internal Windows packaging validation
+* [ ] Signed installer pipeline
+* [ ] Native Windows client foundation
+* [ ] Rust / native rendering architecture
+* [ ] Direct3D charting foundation
+* [ ] Local-first analytics
+* [ ] Persistent workspaces
+* [ ] Multi-window / multi-monitor workflows
 * [ ] Native notifications
 * [ ] Global shortcuts
-* [ ] Multi-window workspaces
 * [ ] Background monitoring
-* [ ] Persistent local workspace
+* [ ] Windows auto-update system
+* [ ] Canonical release manifest
+* [ ] CDN / object-storage distribution
+* [ ] Staged releases and rollback
+* [ ] Public Windows download
 
-> The roadmap is intentionally iterative. Features are prioritized by usefulness rather than feature count.
+### Platform
+
+* [ ] Shared web/desktop account architecture
+* [ ] Remote configuration
+* [ ] Cloud synchronization where appropriate
+* [ ] Release management tooling
+* [ ] Production observability
+
+> The roadmap is intentionally iterative. Architecture and features are prioritized by usefulness, performance, reliability and research quality rather than feature count.
 
 ---
 
-# Philosophy
+## Philosophy
 
 ### Evidence over intuition
-
 A compelling chart is not evidence by itself.
 
 ### Context over isolated indicators
-
 A number without context is just another number.
 
 ### Risk before conviction
-
 Know what you're risking before thinking about what you might make.
 
 ### Robustness over optimization
-
 A stable strategy is more interesting than a perfectly optimized backtest.
 
-### Human control over blind automation
+### Local compute where it makes sense
+Use the user's hardware for work that can be performed efficiently and safely on the client rather than sending everything to centralized infrastructure.
 
+### Human control over blind automation
 Automation should remove repetitive work, not remove responsibility.
 
 ### Signal over noise
-
 Every component should earn its place.
 
 ---
 
-# Status
+## Status
 
 ZTerminal is an **actively developing project**.
 
-The current platform is a foundation for a much broader terminal and research environment. Architecture, analytics, integrations and workflows are still evolving.
+The web application is the current accessible product experience. The Windows architecture is being developed toward a lightweight, native, local-first terminal designed to reduce unnecessary server-side computation and provide a deeper desktop workflow.
+
+The native Windows client, public desktop distribution and automatic-update infrastructure are being developed incrementally and should not be interpreted as fully production-ready merely because they appear in the roadmap.
 
 This repository should be treated as a work in progress rather than a finished institutional trading product.
 
 ---
 
-# Contributing
+## Contributing
 
 ZTerminal is being developed with a focus on:
 
@@ -535,14 +457,13 @@ ZTerminal is being developed with a focus on:
 * reliable market data
 * research integrity
 * risk management
-* performance
+* local and server-side performance
 * useful UX
 * security
-* maintainable architecture
+* scalable architecture
+* maintainability
 
-Contributions that improve those areas are especially valuable.
-
-Before proposing a large feature, consider one question:
+Before proposing a large feature, ask:
 
 > **Does this make the trading research and decision workflow meaningfully better?**
 
@@ -550,17 +471,11 @@ If not, it probably doesn't belong.
 
 ---
 
-# Disclaimer
+## Disclaimer
 
 ZTerminal is software for market analysis, research and decision support.
 
-It does not guarantee profitability or future performance.
-
-Backtested results are hypothetical and do not guarantee future results.
-
-Market data may be delayed, incomplete or inaccurate.
-
-Trading involves substantial risk. Users are responsible for their own decisions and losses.
+It does not guarantee profitability or future performance. Backtested results are hypothetical and do not guarantee future results. Market data may be delayed, incomplete or inaccurate. Trading involves substantial risk. Users are responsible for their own decisions and losses.
 
 ---
 
@@ -570,6 +485,8 @@ Trading involves substantial risk. Users are responsible for their own decisions
 
 ## Validate the idea.
 
+## Use your hardware.
+
 ## Know the risk.
 
 ## Make the decision.
@@ -578,6 +495,6 @@ Trading involves substantial risk. Users are responsible for their own decisions
 
 <strong>ZTerminal</strong>
 
-<sub>Quantitative market intelligence — built around the trader.</sub>
+<sub>Quantitative market intelligence — evolving into a lightweight Windows terminal.</sub>
 
 </p>
