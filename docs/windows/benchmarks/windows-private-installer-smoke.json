@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "private_artifact": "ZTerminal-Private-Setup.exe",
+  "bytes": 1206272,
+  "sha256": "CC4FCCED95D92CA25A5861EEFD79671931A2D974EE2F252F0033EAFA60091170",
+  "signature_status": "NotSigned",
+  "authorized_code_signing_identity_available": false,
+  "network_opened": false,
+  "public_release_created": false,
+  "isolated_payload_smoke": {
+    "required_files_present": true,
+    "installation_scope": "CurrentUser",
+    "shortcut_created": true,
+    "manifest_network_opened": false,
+    "manifest_signed": false
+  },
+  "isolated_uninstaller_smoke": {
+    "installed_app_removed": true,
+    "shortcut_removed": true,
+    "separate_local_data_retained": true
+  },
+  "note": "IExpress quiet-mode wrapper returned a nonzero process status while the isolated payload, manifest, shortcut, and uninstaller boundaries were independently verified. The installer is private and unsigned pending a real authorized code-signing certificate."
+}
