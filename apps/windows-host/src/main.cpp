@@ -7,6 +7,7 @@
 // local SegmentStore before any local scene can be rendered.
 //
 
+#include "local_monte_carlo_bridge.h"
 #include "local_scene_bridge.h"
 
 #include <windows.h>
@@ -520,6 +521,7 @@ std::size_t local_first_bar{};
 std::uint64_t local_age_ns{};
 std::uint64_t local_navigation_reloads{};
 std::optional<zterminal::local_scene::Request> active_local_scene_request;
+zterminal::local_monte_carlo::Result local_monte_carlo_result;
 bool render_requested = true;
 bool continuous_benchmark_rendering = false;
 bool unsynchronised_benchmark_present = false;
@@ -548,6 +550,14 @@ void update_title(HWND window) {
         if (!local_diagnostic.empty()) {
             title << L" | " << local_diagnostic;
         }
+    }
+    if (local_monte_carlo_result.kind == zterminal::local_monte_carlo::Kind::Complete) {
+        title << L" | " << zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind)
+              << L" | median " << local_monte_carlo_result.median_return_bps
+              << L" bps | p05 " << local_monte_carlo_result.p05_return_bps
+              << L" | p95 " << local_monte_carlo_result.p95_return_bps;
+    } else if (local_monte_carlo_result.kind != zterminal::local_monte_carlo::Kind::NotRequested) {
+        title << L" | " << zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind);
     }
     title << L" | wheel zoom, drag pan, PgUp/PgDn page, Home/End bounds, Esc close";
     SetWindowText(window, title.str().c_str());
@@ -777,6 +787,46 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     return std::nullopt;
 }
 
+[[nodiscard]] bool has_local_monte_carlo_option(PWSTR command_line) {
+    return has_option(command_line, L"--local-monte-carlo-simulations=")
+        || has_option(command_line, L"--local-monte-carlo-horizon-bars=")
+        || has_option(command_line, L"--local-monte-carlo-seed=");
+}
+
+[[nodiscard]] std::optional<zterminal::local_monte_carlo::Request> requested_local_monte_carlo(
+    PWSTR command_line,
+    const zterminal::local_scene::Request& local_scene_request
+) {
+    constexpr wchar_t simulations_option[] = L"--local-monte-carlo-simulations=";
+    constexpr wchar_t horizon_option[] = L"--local-monte-carlo-horizon-bars=";
+    constexpr wchar_t seed_option[] = L"--local-monte-carlo-seed=";
+    const std::optional<std::uint64_t> simulations = unsigned_option_value(command_line, simulations_option);
+    const std::optional<std::uint64_t> horizon_bars = unsigned_option_value(command_line, horizon_option);
+    const std::optional<std::uint64_t> seed = unsigned_option_value(command_line, seed_option);
+    if (!simulations.has_value() || !horizon_bars.has_value() || !seed.has_value()
+        || *simulations == 0 || *horizon_bars == 0 || *seed == 0
+        || *simulations > 10'000 || *horizon_bars > 1'000
+        || *simulations > std::numeric_limits<std::size_t>::max()
+        || *horizon_bars > std::numeric_limits<std::size_t>::max()) {
+        return std::nullopt;
+    }
+    const std::size_t simulations_size = static_cast<std::size_t>(*simulations);
+    const std::size_t horizon_bars_size = static_cast<std::size_t>(*horizon_bars);
+    if (simulations_size > 1'000'000 / horizon_bars_size) {
+        return std::nullopt;
+    }
+    return zterminal::local_monte_carlo::Request{
+        .root = local_scene_request.root,
+        .symbol_id = local_scene_request.symbol_id,
+        .interval_ns = local_scene_request.interval_ns,
+        .start_ns = local_scene_request.start_ns,
+        .freshness_budget_ns = local_scene_request.freshness_budget_ns,
+        .simulations = simulations_size,
+        .horizon_bars = horizon_bars_size,
+        .seed = *seed,
+    };
+}
+
 [[nodiscard]] std::optional<std::size_t> requested_fixture_candle_count(PWSTR command_line) {
     constexpr wchar_t option[] = L"--fixture-candles=";
     const std::optional<std::uint64_t> count = unsigned_option_value(command_line, option);
@@ -821,6 +871,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
 
 void select_chart_source(PWSTR command_line) {
     active_local_scene_request.reset();
+    local_monte_carlo_result = {};
     if (const std::optional<std::size_t> fixture_count = requested_fixture_candle_count(command_line); fixture_count.has_value()) {
         chart_source = ChartSource::FixtureDiagnostic;
         chart_candles = fixture_candles(*fixture_count);
@@ -840,7 +891,20 @@ void select_chart_source(PWSTR command_line) {
         return;
     }
     const zterminal::local_scene::Result result = zterminal::local_scene::load(*request);
-    (void)apply_local_scene_result(*request, result);
+    if (!apply_local_scene_result(*request, result)) {
+        return;
+    }
+    if (!has_local_monte_carlo_option(command_line)) {
+        return;
+    }
+    const std::optional<zterminal::local_monte_carlo::Request> research_request = requested_local_monte_carlo(command_line, *request);
+    if (!research_request.has_value()) {
+        local_monte_carlo_result.kind = zterminal::local_monte_carlo::Kind::BridgeFailure;
+        local_monte_carlo_result.availability = zterminal::local_scene::Availability::BridgeFailure;
+        local_monte_carlo_result.diagnostic = L"invalid explicit local Monte Carlo request";
+        return;
+    }
+    local_monte_carlo_result = zterminal::local_monte_carlo::load(*research_request);
 }
 
 void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
@@ -873,6 +937,12 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"local_total_bars\": " << local_total_bars << ",\n";
     output << "  \"local_first_bar\": " << local_first_bar << ",\n";
     output << "  \"local_navigation_reloads\": " << local_navigation_reloads << ",\n";
+    output << "  \"local_monte_carlo_kind\": \"" << json_escape(utf8_from_wide(zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind))) << "\",\n";
+    output << "  \"local_monte_carlo_availability\": \"" << json_escape(utf8_from_wide(zterminal::local_scene::availability_label(local_monte_carlo_result.availability))) << "\",\n";
+    output << "  \"local_monte_carlo_source_bars\": " << local_monte_carlo_result.source_bars << ",\n";
+    output << "  \"local_monte_carlo_simulations\": " << local_monte_carlo_result.simulations << ",\n";
+    output << "  \"local_monte_carlo_horizon_bars\": " << local_monte_carlo_result.horizon_bars << ",\n";
+    output << "  \"local_monte_carlo_median_return_bps\": " << local_monte_carlo_result.median_return_bps << ",\n";
     output << "  \"fixture_candles\": " << chart_candles.size() << ",\n";
     output << "  \"benchmark_unsynchronised_present\": " << (unsynchronised_benchmark_present ? "true" : "false") << ",\n";
     output << "  \"benchmark_resize_once\": " << (benchmark_resize_once ? "true" : "false") << ",\n";
