@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "product": "ZTerminal Native Fixture Candle Slice",
+  "fixture_only": true,
+  "fixture_candles": 100000,
+  "benchmark_unsynchronised_present": true,
+  "driver": "hardware",
+  "adapter": "NVIDIA GeForce 710M",
+  "feature_level": "11_0",
+  "launch_to_visible_ms": 106.882,
+  "frame_samples": 1141,
+  "frame_average_ms": 4.376,
+  "frame_p95_ms": 6.126,
+  "frame_maximum_ms": 22.882,
+  "working_set_bytes": 30605312,
+  "private_usage_bytes": 34074624
+}

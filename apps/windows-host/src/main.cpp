@@ -276,7 +276,7 @@ public:
         }
     }
 
-    void render(const std::vector<FixtureCandle>& candles, const ChartView& view) {
+    void render(const std::vector<FixtureCandle>& candles, const ChartView& view, bool unsynchronised_present) {
         if (!context_ || !render_target_ || !swap_chain_ || !vertex_buffer_) {
             return;
         }
@@ -306,7 +306,7 @@ public:
             }
         }
 
-        if (SUCCEEDED(swap_chain_->Present(1, 0))) {
+        if (SUCCEEDED(swap_chain_->Present(unsynchronised_present ? 0U : 1U, 0))) {
             frame_stats_.add(std::chrono::duration<double, std::milli>(Clock::now() - frame_started).count());
         }
     }
@@ -434,6 +434,7 @@ ChartView chart_view;
 std::vector<FixtureCandle> chart_candles;
 bool render_requested = true;
 bool continuous_benchmark_rendering = false;
+bool unsynchronised_benchmark_present = false;
 
 void request_frame(HWND window) {
     render_requested = true;
@@ -517,6 +518,10 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     }
 }
 
+[[nodiscard]] bool has_option(PWSTR command_line, const wchar_t* option) {
+    return wcsstr(command_line, option) != nullptr;
+}
+
 [[nodiscard]] unsigned long benchmark_seconds(PWSTR command_line) {
     constexpr wchar_t option[] = L"--benchmark-seconds=";
     const wchar_t* const value = wcsstr(command_line, option);
@@ -567,6 +572,7 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"product\": \"ZTerminal Native Fixture Candle Slice\",\n";
     output << "  \"fixture_only\": true,\n";
     output << "  \"fixture_candles\": " << chart_candles.size() << ",\n";
+    output << "  \"benchmark_unsynchronised_present\": " << (unsynchronised_benchmark_present ? "true" : "false") << ",\n";
     output << "  \"driver\": \"" << (native_renderer.used_warp() ? "warp" : "hardware") << "\",\n";
     output << "  \"adapter\": \"" << json_escape(utf8_from_wide(native_renderer.adapter_description())) << "\",\n";
     output << "  \"feature_level\": \"" << feature_level_name(native_renderer.feature_level()) << "\",\n";
@@ -614,6 +620,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
     const double launch_ms = std::chrono::duration<double, std::milli>(Clock::now() - process_started).count();
     const unsigned long auto_close_after_seconds = benchmark_seconds(command_line);
     continuous_benchmark_rendering = auto_close_after_seconds > 0;
+    unsynchronised_benchmark_present = auto_close_after_seconds > 0
+        && has_option(command_line, L"--benchmark-unsynchronised-present");
     const auto benchmark_deadline = Clock::now() + std::chrono::seconds(auto_close_after_seconds);
 
     MSG message{};
@@ -622,7 +630,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
             TranslateMessage(&message);
             DispatchMessage(&message);
         } else if (render_requested || continuous_benchmark_rendering) {
-            native_renderer.render(chart_candles, chart_view);
+            native_renderer.render(chart_candles, chart_view, unsynchronised_benchmark_present);
             render_requested = false;
             if (auto_close_after_seconds > 0 && Clock::now() >= benchmark_deadline) {
                 DestroyWindow(window);
