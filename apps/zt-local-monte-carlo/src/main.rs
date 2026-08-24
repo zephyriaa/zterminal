@@ -9,9 +9,10 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use zt_core::{
-    load_local_research_source, run_local_monte_carlo, LocalMonteCarloOutcome,
-    LocalMonteCarloRequest, LocalMonteCarloResult, LocalResearchSource, MonteCarloWithheld,
-    MonteCarloWithheldReason,
+    load_contiguous_local_history_research_source, run_local_monte_carlo,
+    LocalHistoryResearchRequest, LocalHistoryResearchSource, LocalHistoryWithheldReason,
+    LocalMonteCarloOutcome, LocalMonteCarloRequest, LocalMonteCarloResult, MonteCarloWithheld,
+    MonteCarloWithheldReason, MAXIMUM_LOCAL_HISTORY_RESEARCH_SEGMENTS,
 };
 use zt_storage::{LocalAvailability, SegmentKey, SegmentStore};
 
@@ -27,6 +28,7 @@ const REQUIRED_FLAGS: [&str; 9] = [
     "--horizon-bars",
     "--seed",
 ];
+const HISTORY_SEGMENTS_FLAG: &str = "--history-segments";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct CommandRequest {
@@ -35,6 +37,7 @@ struct CommandRequest {
     now_ns: u64,
     freshness_budget_ns: u64,
     simulation: LocalMonteCarloRequest,
+    history_segments: usize,
 }
 
 fn main() -> ExitCode {
@@ -56,7 +59,7 @@ fn parse_request(arguments: impl IntoIterator<Item = String>) -> Result<CommandR
     let mut values = BTreeMap::new();
     let mut iterator = arguments.into_iter();
     while let Some(flag) = iterator.next() {
-        if !REQUIRED_FLAGS.contains(&flag.as_str()) {
+        if !REQUIRED_FLAGS.contains(&flag.as_str()) && flag != HISTORY_SEGMENTS_FLAG {
             return Err(format!("unsupported argument: {flag}"));
         }
         let Some(value) = iterator.next() else {
@@ -89,6 +92,22 @@ fn parse_request(arguments: impl IntoIterator<Item = String>) -> Result<CommandR
     if interval_ns == 0 {
         return Err("--interval-ns must be non-zero".to_owned());
     }
+    let history_segments = values
+        .get(HISTORY_SEGMENTS_FLAG)
+        .map(String::as_str)
+        .map(|value| {
+            value.parse::<usize>().map_err(|_| {
+                "--history-segments must be an unsigned platform-sized base-10 integer without a sign or suffix"
+                    .to_owned()
+            })
+        })
+        .transpose()?
+        .unwrap_or(1);
+    if history_segments == 0 || history_segments > MAXIMUM_LOCAL_HISTORY_RESEARCH_SEGMENTS {
+        return Err(format!(
+            "--history-segments must be within 1..={MAXIMUM_LOCAL_HISTORY_RESEARCH_SEGMENTS}"
+        ));
+    }
     let simulation = LocalMonteCarloRequest::new(
         value("--simulations")?.parse::<usize>().map_err(|_| {
             "--simulations must be an unsigned platform-sized base-10 integer without a sign or suffix"
@@ -111,6 +130,7 @@ fn parse_request(arguments: impl IntoIterator<Item = String>) -> Result<CommandR
         now_ns: parse_u64("--now-ns")?,
         freshness_budget_ns: parse_u64("--freshness-budget-ns")?,
         simulation,
+        history_segments,
     })
 }
 
@@ -125,46 +145,59 @@ fn execute(request: CommandRequest) -> Result<String, String> {
         ));
     }
     let store = SegmentStore::open(&request.root).map_err(|error| error.to_string())?;
-    match load_local_research_source(
+    let history_request = LocalHistoryResearchRequest::new(request.key, request.history_segments)
+        .map_err(|error| error.to_string())?;
+    match load_contiguous_local_history_research_source(
         &store,
-        request.key,
+        history_request,
         request.now_ns,
         request.freshness_budget_ns,
     )
     .map_err(|error| error.to_string())?
     {
-        LocalResearchSource::Withheld {
+        LocalHistoryResearchSource::Withheld {
             availability,
             retained_bars,
+            reason,
+            ..
         } => Ok(withheld_json(
             availability,
             retained_bars,
-            availability_reason(availability),
+            local_history_withheld_reason(reason),
         )),
-        LocalResearchSource::Available { availability, bars } => {
-            match run_local_monte_carlo(&bars, request.simulation)
-                .map_err(|error| error.to_string())?
-            {
-                LocalMonteCarloOutcome::Complete(result) => Ok(complete_json(availability, result)),
-                LocalMonteCarloOutcome::Withheld(withheld) => Ok(withheld_json(
-                    availability,
-                    withheld.inspected_bars,
-                    monte_carlo_withheld_reason(withheld),
-                )),
+        LocalHistoryResearchSource::Available {
+            availability,
+            source_segments,
+            bars,
+        } => match run_local_monte_carlo(&bars, request.simulation)
+            .map_err(|error| error.to_string())?
+        {
+            LocalMonteCarloOutcome::Complete(result) => {
+                Ok(complete_json(availability, source_segments, result))
             }
-        }
+            LocalMonteCarloOutcome::Withheld(withheld) => Ok(withheld_json(
+                availability,
+                withheld.inspected_bars,
+                monte_carlo_withheld_reason(withheld),
+            )),
+        },
     }
 }
 
-fn complete_json(availability: LocalAvailability, result: LocalMonteCarloResult) -> String {
+fn complete_json(
+    availability: LocalAvailability,
+    source_segments: usize,
+    result: LocalMonteCarloResult,
+) -> String {
     let (availability, age_ns) = availability_fields(availability);
     format!(
-        "{{\"schema_version\":{},\"kind\":\"complete\",\"availability\":\"{}\",\"age_ns\":{},\"algorithm_version\":{},\"seed\":{},\"source_bars\":{},\"source_returns\":{},\"simulations\":{},\"horizon_bars\":{},\"minimum_return_bps\":{},\"p05_return_bps\":{},\"median_return_bps\":{},\"p95_return_bps\":{},\"maximum_return_bps\":{},\"mean_return_bps\":{}}}",
+        "{{\"schema_version\":{},\"kind\":\"complete\",\"availability\":\"{}\",\"age_ns\":{},\"algorithm_version\":{},\"seed\":{},\"source_segments\":{},\"source_bars\":{},\"source_returns\":{},\"simulations\":{},\"horizon_bars\":{},\"minimum_return_bps\":{},\"p05_return_bps\":{},\"median_return_bps\":{},\"p95_return_bps\":{},\"maximum_return_bps\":{},\"mean_return_bps\":{}}}",
         COMMAND_SCHEMA_VERSION,
         availability,
         age_ns,
         result.algorithm_version,
         result.seed,
+        source_segments,
         result.source_bars,
         result.source_returns,
         result.simulations,
@@ -196,13 +229,16 @@ fn availability_fields(availability: LocalAvailability) -> (&'static str, u64) {
     }
 }
 
-fn availability_reason(availability: LocalAvailability) -> &'static str {
-    match availability {
-        LocalAvailability::Live | LocalAvailability::Cached { .. } => "source_not_withheld",
-        LocalAvailability::Stale { .. } => "source_stale",
-        LocalAvailability::Gap => "source_gap",
-        LocalAvailability::Unavailable => "source_unavailable",
-        LocalAvailability::Corrupt => "source_corrupt",
+fn local_history_withheld_reason(reason: LocalHistoryWithheldReason) -> &'static str {
+    match reason {
+        LocalHistoryWithheldReason::CatalogTruncated => "history_catalog_truncated",
+        LocalHistoryWithheldReason::StartNotCataloged => "history_start_not_cataloged",
+        LocalHistoryWithheldReason::InsufficientCatalogedSegments => {
+            "insufficient_cataloged_segments"
+        }
+        LocalHistoryWithheldReason::SegmentSourceWithheld => "history_segment_source_withheld",
+        LocalHistoryWithheldReason::CrossSegmentGap => "cross_segment_gap",
+        LocalHistoryWithheldReason::SourceBarBoundExceeded => "history_source_bar_bound",
     }
 }
 
@@ -281,6 +317,7 @@ mod tests {
             now_ns: 0,
             freshness_budget_ns: 0,
             simulation: LocalMonteCarloRequest::new(4, 2, 7).expect("bounded request"),
+            history_segments: 1,
         };
         assert_eq!(
             execute(request).expect("missing local layout must fail closed in JSON"),
@@ -349,11 +386,120 @@ mod tests {
             now_ns: 100,
             freshness_budget_ns: 10,
             simulation: LocalMonteCarloRequest::new(4, 2, 7).expect("bounded request"),
+            history_segments: 1,
         })
         .expect("verified local research must complete");
         assert!(output.contains("\"kind\":\"complete\""));
+        assert!(output.contains("\"source_segments\":1"));
         assert!(output.contains("\"source_bars\":3"));
         assert!(output.contains("\"simulations\":4"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn explicit_contiguous_history_segments_produce_a_bounded_complete_result() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time must be after epoch")
+            .as_nanos();
+        let root: PathBuf =
+            std::env::temp_dir().join(format!("zt-local-monte-carlo-history-{nonce}"));
+        let store = SegmentStore::open(&root).expect("local store must open");
+        for (start_ns, closes) in [(0_u64, [100_i64, 110_i64, 105_i64]), (3, [105, 115, 120])] {
+            let key = SegmentKey {
+                symbol_id: 9,
+                interval_ns: 1,
+                start_ns,
+            };
+            let bars: Vec<_> = closes
+                .into_iter()
+                .enumerate()
+                .map(|(index, close_ticks)| Bar {
+                    symbol_id: 9,
+                    open_time_ns: start_ns + u64::try_from(index).expect("small index"),
+                    interval_ns: 1,
+                    open_ticks: close_ticks,
+                    high_ticks: close_ticks,
+                    low_ticks: close_ticks,
+                    close_ticks,
+                    volume: 1,
+                    last_sequence: u64::try_from(index).expect("small index") + 1,
+                    data_status: DataStatus::Live,
+                })
+                .collect();
+            let payload = encode_local_bar_segment(key, 100, &bars).expect("valid local payload");
+            store
+                .write(key, &payload, 1, DataStatus::Live)
+                .expect("immutable local segment must persist");
+        }
+        let output = execute(CommandRequest {
+            root: root.clone(),
+            key: SegmentKey {
+                symbol_id: 9,
+                interval_ns: 1,
+                start_ns: 0,
+            },
+            now_ns: 100,
+            freshness_budget_ns: 10,
+            simulation: LocalMonteCarloRequest::new(8, 2, 7).expect("bounded request"),
+            history_segments: 2,
+        })
+        .expect("contiguous local history research must complete");
+        assert!(output.contains("\"kind\":\"complete\""));
+        assert!(output.contains("\"source_segments\":2"));
+        assert!(output.contains("\"source_bars\":6"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cross_segment_gap_is_withheld_without_partial_monte_carlo_output() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time must be after epoch")
+            .as_nanos();
+        let root: PathBuf = std::env::temp_dir().join(format!("zt-local-monte-carlo-gap-{nonce}"));
+        let store = SegmentStore::open(&root).expect("local store must open");
+        for start_ns in [0_u64, 4] {
+            let key = SegmentKey {
+                symbol_id: 9,
+                interval_ns: 1,
+                start_ns,
+            };
+            let bars: Vec<_> = (0..2_u64)
+                .map(|index| Bar {
+                    symbol_id: 9,
+                    open_time_ns: start_ns + index,
+                    interval_ns: 1,
+                    open_ticks: 100,
+                    high_ticks: 100,
+                    low_ticks: 100,
+                    close_ticks: 100,
+                    volume: 1,
+                    last_sequence: index + 1,
+                    data_status: DataStatus::Live,
+                })
+                .collect();
+            let payload = encode_local_bar_segment(key, 100, &bars).expect("valid local payload");
+            store
+                .write(key, &payload, 1, DataStatus::Live)
+                .expect("immutable local segment must persist");
+        }
+        let output = execute(CommandRequest {
+            root: root.clone(),
+            key: SegmentKey {
+                symbol_id: 9,
+                interval_ns: 1,
+                start_ns: 0,
+            },
+            now_ns: 100,
+            freshness_budget_ns: 10,
+            simulation: LocalMonteCarloRequest::new(8, 2, 7).expect("bounded request"),
+            history_segments: 2,
+        })
+        .expect("gap must be represented without a result");
+        assert!(output.contains("\"kind\":\"withheld\""));
+        assert!(output.contains("\"reason\":\"cross_segment_gap\""));
+        assert!(!output.contains("\"source_segments\""));
         let _ = fs::remove_dir_all(root);
     }
 
@@ -374,8 +520,8 @@ mod tests {
             mean_return_bps: 1,
         };
         assert_eq!(
-            complete_json(LocalAvailability::Cached { age_ns: 23 }, result),
-            "{\"schema_version\":1,\"kind\":\"complete\",\"availability\":\"cached\",\"age_ns\":23,\"algorithm_version\":1,\"seed\":7,\"source_bars\":3,\"source_returns\":2,\"simulations\":4,\"horizon_bars\":2,\"minimum_return_bps\":-10,\"p05_return_bps\":-5,\"median_return_bps\":0,\"p95_return_bps\":5,\"maximum_return_bps\":10,\"mean_return_bps\":1}"
+            complete_json(LocalAvailability::Cached { age_ns: 23 }, 2, result),
+            "{\"schema_version\":1,\"kind\":\"complete\",\"availability\":\"cached\",\"age_ns\":23,\"algorithm_version\":1,\"seed\":7,\"source_segments\":2,\"source_bars\":3,\"source_returns\":2,\"simulations\":4,\"horizon_bars\":2,\"minimum_return_bps\":-10,\"p05_return_bps\":-5,\"median_return_bps\":0,\"p95_return_bps\":5,\"maximum_return_bps\":10,\"mean_return_bps\":1}"
         );
     }
 }

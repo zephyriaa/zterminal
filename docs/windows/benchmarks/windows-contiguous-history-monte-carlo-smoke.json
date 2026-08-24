@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "test_only_offline_frames": true,
+  "packaged_importer": true,
+  "packaged_local_monte_carlo": true,
+  "execution_uses_cargo": false,
+  "network_opened": false,
+  "parser_guard": {
+    "exit_code": 2,
+    "rejected_before_local_read": true
+  },
+  "contiguous_history": {
+    "source_segments": 2,
+    "source_bars": 12,
+    "source_returns": 11,
+    "simulations": 32,
+    "horizon_bars": 4,
+    "seed": 7,
+    "continuity_proven": true
+  },
+  "cross_segment_gap": {
+    "availability": "gap",
+    "reason": "cross_segment_gap",
+    "retained_bars": 6,
+    "result_withheld": true
+  }
+}

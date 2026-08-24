@@ -700,6 +700,9 @@ impl ReplaySession {
     }
 }
 
+/// Maximum immutable local segments one history research request may include.
+pub const MAXIMUM_LOCAL_HISTORY_RESEARCH_SEGMENTS: usize = 16;
+
 /// Maximum candles a local segment decoder accepts before rejecting its payload.
 ///
 /// This bounds retained scene-source memory independently from the renderer's
@@ -781,6 +784,76 @@ pub enum LocalResearchSource {
         availability: LocalAvailability,
         /// Number of decoded bars withheld when the payload was readable.
         retained_bars: usize,
+    },
+}
+
+/// Explicit bounded request for a forward local history chain beginning at one
+/// immutable segment key. It never discovers remote history or fills gaps.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LocalHistoryResearchRequest {
+    /// First explicit immutable segment whose catalog order starts the chain.
+    pub start_key: SegmentKey,
+    /// Exact number of cataloged local segments required for the research source.
+    pub segments: usize,
+}
+
+impl LocalHistoryResearchRequest {
+    /// Validates the exact bounded number of immutable local segments required.
+    pub fn new(start_key: SegmentKey, segments: usize) -> Result<Self, LocalSceneError> {
+        if start_key.interval_ns == 0
+            || segments == 0
+            || segments > MAXIMUM_LOCAL_HISTORY_RESEARCH_SEGMENTS
+        {
+            return Err(LocalSceneError::InvalidRequest);
+        }
+        Ok(Self {
+            start_key,
+            segments,
+        })
+    }
+}
+
+/// Exact terminal reason a bounded local history chain could not supply research bars.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LocalHistoryWithheldReason {
+    /// Catalog discovery left matching local records unexamined at a hard bound.
+    CatalogTruncated,
+    /// The explicit starting immutable record was absent from verified local catalog output.
+    StartNotCataloged,
+    /// Fewer verified local records existed than the exact request required.
+    InsufficientCatalogedSegments,
+    /// A selected immutable record did not pass the individual local source gate.
+    SegmentSourceWithheld,
+    /// Adjacent decoded local bars did not meet exact timestamp continuity.
+    CrossSegmentGap,
+    /// Selected decoded bars exceeded the aggregate local history memory bound.
+    SourceBarBoundExceeded,
+}
+
+/// Integrity-checked exact-contiguity local bars eligible for history research.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum LocalHistoryResearchSource {
+    /// Every requested immutable local segment passed provenance, freshness, and
+    /// exact cross-segment timestamp continuity checks.
+    Available {
+        /// Weakest truthful availability across the accepted local chain.
+        availability: LocalAvailability,
+        /// Exact number of immutable local segments included.
+        source_segments: usize,
+        /// Every validated bar in exact timestamp order.
+        bars: Vec<Bar>,
+    },
+    /// At least one local history requirement was not satisfied; no partial
+    /// multi-segment result may be simulated.
+    Withheld {
+        /// Truthful local availability responsible for withholding.
+        availability: LocalAvailability,
+        /// Bars decoded before the terminal withholding condition, if any.
+        retained_bars: usize,
+        /// Number of cataloged local segment keys inspected before withholding.
+        inspected_segments: usize,
+        /// Exact local chain condition that prevented simulation.
+        reason: LocalHistoryWithheldReason,
     },
 }
 
@@ -922,6 +995,138 @@ pub fn load_local_research_source(
         availability,
         bars: decoded.bars,
     })
+}
+
+/// Reads an exact bounded forward chain of individually verified local segments
+/// for deterministic on-device research.
+///
+/// A catalog ordering is not considered proof of continuity: every selected key
+/// is source-gated and the decoded first bar of each later segment must start
+/// exactly one interval after the prior retained bar. This function makes no
+/// remote request, local write, provider fallback, or synthetic-bar repair.
+pub fn load_contiguous_local_history_research_source(
+    store: &SegmentStore,
+    request: LocalHistoryResearchRequest,
+    now_ns: u64,
+    freshness_budget_ns: u64,
+) -> Result<LocalHistoryResearchSource, LocalSceneError> {
+    let catalog = store
+        .catalog(
+            request.start_key.symbol_id,
+            request.start_key.interval_ns,
+            zt_storage::MAXIMUM_LOCAL_SEGMENT_CATALOG_ENTRIES,
+        )
+        .map_err(LocalSceneError::Storage)?;
+    if catalog.truncated {
+        return Ok(LocalHistoryResearchSource::Withheld {
+            availability: LocalAvailability::Unavailable,
+            retained_bars: 0,
+            inspected_segments: 0,
+            reason: LocalHistoryWithheldReason::CatalogTruncated,
+        });
+    }
+    let Some(start_index) = catalog
+        .entries
+        .iter()
+        .position(|entry| entry.key == request.start_key)
+    else {
+        return Ok(LocalHistoryResearchSource::Withheld {
+            availability: LocalAvailability::Unavailable,
+            retained_bars: 0,
+            inspected_segments: 0,
+            reason: LocalHistoryWithheldReason::StartNotCataloged,
+        });
+    };
+    let end_index = start_index
+        .checked_add(request.segments)
+        .ok_or(LocalSceneError::InvalidRequest)?;
+    if end_index > catalog.entries.len() {
+        return Ok(LocalHistoryResearchSource::Withheld {
+            availability: LocalAvailability::Unavailable,
+            retained_bars: 0,
+            inspected_segments: 0,
+            reason: LocalHistoryWithheldReason::InsufficientCatalogedSegments,
+        });
+    }
+
+    let mut bars: Vec<Bar> = Vec::new();
+    let mut availability = LocalAvailability::Live;
+    for (index, entry) in catalog.entries[start_index..end_index].iter().enumerate() {
+        let source = load_local_research_source(store, entry.key, now_ns, freshness_budget_ns)?;
+        let inspected_segments = index + 1;
+        let (segment_availability, segment_bars) = match source {
+            LocalResearchSource::Available { availability, bars } => (availability, bars),
+            LocalResearchSource::Withheld {
+                availability,
+                retained_bars,
+            } => {
+                return Ok(LocalHistoryResearchSource::Withheld {
+                    availability,
+                    retained_bars: bars.len().saturating_add(retained_bars),
+                    inspected_segments,
+                    reason: LocalHistoryWithheldReason::SegmentSourceWithheld,
+                });
+            }
+        };
+        if let Some(prior) = bars.last() {
+            let expected_open_ns = prior.open_time_ns.checked_add(prior.interval_ns).ok_or(
+                LocalSceneError::InvalidSegment("local history time overflow"),
+            )?;
+            if segment_bars.first().is_none_or(|bar| {
+                bar.symbol_id != prior.symbol_id
+                    || bar.interval_ns != prior.interval_ns
+                    || bar.open_time_ns != expected_open_ns
+            }) {
+                return Ok(LocalHistoryResearchSource::Withheld {
+                    availability: LocalAvailability::Gap,
+                    retained_bars: bars.len(),
+                    inspected_segments,
+                    reason: LocalHistoryWithheldReason::CrossSegmentGap,
+                });
+            }
+        }
+        let updated_length = bars
+            .len()
+            .checked_add(segment_bars.len())
+            .ok_or(LocalSceneError::InvalidRequest)?;
+        if updated_length > MAXIMUM_LOCAL_SEGMENT_BARS {
+            return Ok(LocalHistoryResearchSource::Withheld {
+                availability: LocalAvailability::Unavailable,
+                retained_bars: bars.len(),
+                inspected_segments,
+                reason: LocalHistoryWithheldReason::SourceBarBoundExceeded,
+            });
+        }
+        availability = combine_research_availability(availability, segment_availability);
+        bars.extend(segment_bars);
+    }
+    Ok(LocalHistoryResearchSource::Available {
+        availability,
+        source_segments: request.segments,
+        bars,
+    })
+}
+
+fn combine_research_availability(
+    current: LocalAvailability,
+    next: LocalAvailability,
+) -> LocalAvailability {
+    match (current, next) {
+        (
+            LocalAvailability::Cached { age_ns: left },
+            LocalAvailability::Cached { age_ns: right },
+        ) => LocalAvailability::Cached {
+            age_ns: left.max(right),
+        },
+        (LocalAvailability::Cached { age_ns }, LocalAvailability::Live)
+        | (LocalAvailability::Live, LocalAvailability::Cached { age_ns }) => {
+            LocalAvailability::Cached { age_ns }
+        }
+        (LocalAvailability::Live, LocalAvailability::Live) => LocalAvailability::Live,
+        // Only Live/Cached values reach this internal reducer because source gates
+        // withhold degraded availability before aggregation.
+        (_, availability) => availability,
+    }
 }
 
 /// Reads one integrity-checked local segment and prepares at most 2,000 candles.
@@ -1441,6 +1646,103 @@ mod tests {
             last_sequence: index + 1,
             data_status: status,
         }
+    }
+
+    fn write_history_segment(
+        store: &SegmentStore,
+        start_index: u64,
+        count: u64,
+        status: DataStatus,
+    ) -> SegmentKey {
+        let key = SegmentKey {
+            symbol_id: 9,
+            interval_ns: SECOND,
+            start_ns: start_index * SECOND,
+        };
+        let bars: Vec<_> = (start_index..start_index + count)
+            .map(|index| scene_bar(index, status))
+            .collect();
+        let payload =
+            encode_local_bar_segment(key, 100, &bars).expect("history segment should encode");
+        store
+            .write(key, &payload, 1, DataStatus::Live)
+            .expect("history segment should persist");
+        key
+    }
+
+    #[test]
+    fn contiguous_local_history_research_assembles_only_exact_verified_segments() {
+        let root = temporary_scene_root("history-contiguous");
+        let store = SegmentStore::open(&root).expect("local store should open");
+        let first = write_history_segment(&store, 0, 2, DataStatus::Live);
+        let _ = write_history_segment(&store, 2, 2, DataStatus::Live);
+        let request = LocalHistoryResearchRequest::new(first, 2).expect("bounded history request");
+        let source = load_contiguous_local_history_research_source(&store, request, 100, 10)
+            .expect("verified history should load locally");
+        let LocalHistoryResearchSource::Available {
+            availability,
+            source_segments,
+            bars,
+        } = source
+        else {
+            panic!("exact contiguous verified local segments must be research-available")
+        };
+        assert_eq!(availability, LocalAvailability::Live);
+        assert_eq!(source_segments, 2);
+        assert_eq!(bars.len(), 4);
+        assert_eq!(bars[0].open_time_ns, 0);
+        assert_eq!(bars[3].open_time_ns, 3 * SECOND);
+        assert!(matches!(
+            LocalHistoryResearchRequest::new(first, MAXIMUM_LOCAL_HISTORY_RESEARCH_SEGMENTS + 1),
+            Err(LocalSceneError::InvalidRequest)
+        ));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn local_history_research_withholds_cross_segment_gaps_and_degraded_sources() {
+        let gap_root = temporary_scene_root("history-gap");
+        let gap_store = SegmentStore::open(&gap_root).expect("local store should open");
+        let gap_first = write_history_segment(&gap_store, 0, 2, DataStatus::Live);
+        let _ = write_history_segment(&gap_store, 3, 2, DataStatus::Live);
+        assert_eq!(
+            load_contiguous_local_history_research_source(
+                &gap_store,
+                LocalHistoryResearchRequest::new(gap_first, 2).expect("bounded history request"),
+                100,
+                10,
+            )
+            .expect("gap must withhold without synthetic history"),
+            LocalHistoryResearchSource::Withheld {
+                availability: LocalAvailability::Gap,
+                retained_bars: 2,
+                inspected_segments: 2,
+                reason: LocalHistoryWithheldReason::CrossSegmentGap,
+            }
+        );
+        let _ = fs::remove_dir_all(gap_root);
+
+        let degraded_root = temporary_scene_root("history-degraded");
+        let degraded_store = SegmentStore::open(&degraded_root).expect("local store should open");
+        let degraded_first = write_history_segment(&degraded_store, 0, 2, DataStatus::Live);
+        let _ = write_history_segment(&degraded_store, 2, 2, DataStatus::Gap);
+        assert_eq!(
+            load_contiguous_local_history_research_source(
+                &degraded_store,
+                LocalHistoryResearchRequest::new(degraded_first, 2)
+                    .expect("bounded history request"),
+                100,
+                10,
+            )
+            .expect("degraded segment must withhold entire history"),
+            LocalHistoryResearchSource::Withheld {
+                availability: LocalAvailability::Gap,
+                retained_bars: 4,
+                inspected_segments: 2,
+                reason: LocalHistoryWithheldReason::SegmentSourceWithheld,
+            }
+        );
+        let _ = fs::remove_dir_all(degraded_root);
     }
 
     #[test]
