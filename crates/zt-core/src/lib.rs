@@ -4,7 +4,11 @@
 //! normalized stream, reports sequence faults, and aggregates only observed
 //! events into bars. Missing intervals are never synthesized.
 
+use std::error::Error;
+use std::fmt::{Display, Formatter};
+
 use zt_protocol::{validate_trade, Bar, DataStatus, TradeEvent, ValidationError};
+use zt_storage::{local_availability, LocalAvailability, SegmentKey, SegmentStore, StorageError};
 
 /// Result of stateful sequence validation for one logical subscription stream.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -370,8 +374,416 @@ impl ReplaySession {
     }
 }
 
+/// Maximum candles a local segment decoder accepts before rejecting its payload.
+///
+/// This bounds retained scene-source memory independently from the renderer's
+/// smaller visible-candle budget.
+pub const MAXIMUM_LOCAL_SEGMENT_BARS: usize = 100_000;
+/// Maximum candles a Direct3D scene request may expose for one frame.
+pub const MAXIMUM_LOCAL_SCENE_CANDLES: usize = 2_000;
+
+const LOCAL_BAR_SEGMENT_MAGIC: [u8; 8] = *b"ZTBAR001";
+const LOCAL_BAR_SEGMENT_VERSION: u16 = 1;
+const LOCAL_BAR_SEGMENT_HEADER_BYTES: usize = 22;
+const LOCAL_BAR_SEGMENT_BAR_BYTES: usize = 69;
+
+/// A bounded window requested from one verified local bar segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LocalSceneRequest {
+    /// Zero-based first retained bar in the local segment.
+    pub first_bar: usize,
+    /// Number of candles requested for this frame.
+    pub visible_bars: usize,
+}
+
+impl LocalSceneRequest {
+    /// Validates an explicit visible-candle request before local scene preparation.
+    pub fn new(first_bar: usize, visible_bars: usize) -> Result<Self, LocalSceneError> {
+        if visible_bars == 0 || visible_bars > MAXIMUM_LOCAL_SCENE_CANDLES {
+            return Err(LocalSceneError::InvalidRequest);
+        }
+        Ok(Self {
+            first_bar,
+            visible_bars,
+        })
+    }
+}
+
+/// A renderable subset of verified local bars. The Direct3D host must receive
+/// candles only through this type, never directly from an arbitrary segment.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RenderableLocalScene {
+    /// Segment identity whose bytes were integrity-checked by `SegmentStore`.
+    pub key: SegmentKey,
+    /// Truthful fresh/cache state for the local snapshot.
+    pub availability: LocalAvailability,
+    /// Total decoded bars retained in this local segment.
+    pub total_bars: usize,
+    /// Source index of the first candle in `candles`.
+    pub first_bar: usize,
+    /// Bounded candles safe for the renderer to project into a frame.
+    pub candles: Vec<Bar>,
+}
+
+/// Result of preparing one native chart scene from local storage.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum LocalChartScene {
+    /// Verified `Live` or within-budget `Cached` bars are available for rendering.
+    Renderable(RenderableLocalScene),
+    /// The source range must not be rendered as a continuous candle scene.
+    Withheld {
+        /// Truthful reason that no candles were exposed.
+        availability: LocalAvailability,
+        /// Number of decoded local bars withheld, when decoding succeeded.
+        retained_bars: usize,
+    },
+}
+
+/// Error while decoding or bounding an explicit local scene request.
+#[derive(Debug)]
+pub enum LocalSceneError {
+    /// A verified local file could not be read due to an I/O failure.
+    Storage(StorageError),
+    /// Segment bytes were not a supported, self-consistent local bar payload.
+    InvalidSegment(&'static str),
+    /// The requested visible range was zero, exceeded the draw budget, or fell
+    /// outside the retained source range.
+    InvalidRequest,
+}
+
+impl Display for LocalSceneError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Storage(error) => write!(formatter, "local scene storage failed: {error}"),
+            Self::InvalidSegment(reason) => {
+                write!(formatter, "local bar segment is invalid: {reason}")
+            }
+            Self::InvalidRequest => write!(
+                formatter,
+                "local chart scene request is outside its bounded range"
+            ),
+        }
+    }
+}
+
+impl Error for LocalSceneError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Storage(error) => Some(error),
+            Self::InvalidSegment(_) | Self::InvalidRequest => None,
+        }
+    }
+}
+
+impl From<StorageError> for LocalSceneError {
+    fn from(error: StorageError) -> Self {
+        Self::Storage(error)
+    }
+}
+
+/// Encodes observed bars for a single immutable `SegmentStore` key.
+///
+/// The payload carries its captured-at time because cache access time is not a
+/// truth-preserving substitute for the time at which provider data was verified.
+pub fn encode_local_bar_segment(
+    key: SegmentKey,
+    captured_at_ns: u64,
+    bars: &[Bar],
+) -> Result<Vec<u8>, LocalSceneError> {
+    validate_local_segment_bars(key, bars)?;
+    let count = u32::try_from(bars.len()).map_err(|_| {
+        LocalSceneError::InvalidSegment("bar count exceeds the local payload format")
+    })?;
+    let expected_bytes = LOCAL_BAR_SEGMENT_HEADER_BYTES
+        .checked_add(
+            bars.len()
+                .checked_mul(LOCAL_BAR_SEGMENT_BAR_BYTES)
+                .ok_or(LocalSceneError::InvalidSegment("bar payload size overflow"))?,
+        )
+        .ok_or(LocalSceneError::InvalidSegment("bar payload size overflow"))?;
+    let mut encoded = Vec::with_capacity(expected_bytes);
+    encoded.extend_from_slice(&LOCAL_BAR_SEGMENT_MAGIC);
+    encoded.extend_from_slice(&LOCAL_BAR_SEGMENT_VERSION.to_le_bytes());
+    encoded.extend_from_slice(&captured_at_ns.to_le_bytes());
+    encoded.extend_from_slice(&count.to_le_bytes());
+    for bar in bars {
+        encoded.extend_from_slice(&bar.symbol_id.to_le_bytes());
+        encoded.extend_from_slice(&bar.open_time_ns.to_le_bytes());
+        encoded.extend_from_slice(&bar.interval_ns.to_le_bytes());
+        encoded.extend_from_slice(&bar.open_ticks.to_le_bytes());
+        encoded.extend_from_slice(&bar.high_ticks.to_le_bytes());
+        encoded.extend_from_slice(&bar.low_ticks.to_le_bytes());
+        encoded.extend_from_slice(&bar.close_ticks.to_le_bytes());
+        encoded.extend_from_slice(&bar.volume.to_le_bytes());
+        encoded.extend_from_slice(&bar.last_sequence.to_le_bytes());
+        encoded.push(data_status_code(bar.data_status));
+    }
+    Ok(encoded)
+}
+
+/// Reads one integrity-checked local segment and prepares at most 2,000 candles.
+///
+/// `Gap`, `Unavailable`, `Corrupt`, and `Stale` local ranges are returned as
+/// `Withheld` rather than exposing a continuous scene to the Direct3D renderer.
+/// The function has no network, Render, cloud, or provider fallback behaviour.
+pub fn prepare_local_chart_scene(
+    store: &SegmentStore,
+    key: SegmentKey,
+    request: LocalSceneRequest,
+    now_ns: u64,
+    freshness_budget_ns: u64,
+) -> Result<LocalChartScene, LocalSceneError> {
+    let (metadata, payload) = match store.read(key) {
+        Ok(segment) => segment,
+        Err(StorageError::SegmentMissing(_)) => {
+            return Ok(LocalChartScene::Withheld {
+                availability: LocalAvailability::Unavailable,
+                retained_bars: 0,
+            });
+        }
+        Err(StorageError::CorruptSegment(_) | StorageError::InvalidMetadata) => {
+            return Ok(LocalChartScene::Withheld {
+                availability: LocalAvailability::Corrupt,
+                retained_bars: 0,
+            });
+        }
+        Err(error) => return Err(LocalSceneError::Storage(error)),
+    };
+    let decoded = match decode_local_bar_segment(key, &payload) {
+        Ok(segment) => segment,
+        Err(LocalSceneError::InvalidSegment(_)) => {
+            return Ok(LocalChartScene::Withheld {
+                availability: LocalAvailability::Corrupt,
+                retained_bars: 0,
+            });
+        }
+        Err(error) => return Err(error),
+    };
+    let availability = local_availability(
+        strongest_data_status(metadata.data_status, &decoded.bars),
+        decoded.captured_at_ns,
+        now_ns,
+        freshness_budget_ns,
+    );
+    if !matches!(
+        availability,
+        LocalAvailability::Live | LocalAvailability::Cached { .. }
+    ) {
+        return Ok(LocalChartScene::Withheld {
+            availability,
+            retained_bars: decoded.bars.len(),
+        });
+    }
+    let last_bar = request
+        .first_bar
+        .checked_add(request.visible_bars)
+        .ok_or(LocalSceneError::InvalidRequest)?;
+    if last_bar > decoded.bars.len() {
+        return Err(LocalSceneError::InvalidRequest);
+    }
+    Ok(LocalChartScene::Renderable(RenderableLocalScene {
+        key,
+        availability,
+        total_bars: decoded.bars.len(),
+        first_bar: request.first_bar,
+        candles: decoded.bars[request.first_bar..last_bar].to_vec(),
+    }))
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct DecodedLocalBarSegment {
+    captured_at_ns: u64,
+    bars: Vec<Bar>,
+}
+
+fn decode_local_bar_segment(
+    key: SegmentKey,
+    encoded: &[u8],
+) -> Result<DecodedLocalBarSegment, LocalSceneError> {
+    if encoded.len() < LOCAL_BAR_SEGMENT_HEADER_BYTES {
+        return Err(LocalSceneError::InvalidSegment(
+            "payload is shorter than its header",
+        ));
+    }
+    if encoded[..8] != LOCAL_BAR_SEGMENT_MAGIC {
+        return Err(LocalSceneError::InvalidSegment(
+            "payload magic is not recognized",
+        ));
+    }
+    let mut cursor = 8;
+    if read_u16(encoded, &mut cursor)? != LOCAL_BAR_SEGMENT_VERSION {
+        return Err(LocalSceneError::InvalidSegment(
+            "payload version is unsupported",
+        ));
+    }
+    let captured_at_ns = read_u64(encoded, &mut cursor)?;
+    let count = usize::try_from(read_u32(encoded, &mut cursor)?)
+        .map_err(|_| LocalSceneError::InvalidSegment("bar count is not representable"))?;
+    if count == 0 || count > MAXIMUM_LOCAL_SEGMENT_BARS {
+        return Err(LocalSceneError::InvalidSegment(
+            "bar count is outside the local bound",
+        ));
+    }
+    let expected_bytes = LOCAL_BAR_SEGMENT_HEADER_BYTES
+        .checked_add(
+            count
+                .checked_mul(LOCAL_BAR_SEGMENT_BAR_BYTES)
+                .ok_or(LocalSceneError::InvalidSegment("bar payload size overflow"))?,
+        )
+        .ok_or(LocalSceneError::InvalidSegment("bar payload size overflow"))?;
+    if encoded.len() != expected_bytes {
+        return Err(LocalSceneError::InvalidSegment(
+            "payload length does not match its bar count",
+        ));
+    }
+    let mut bars = Vec::with_capacity(count);
+    for _ in 0..count {
+        let bar = Bar {
+            symbol_id: read_u32(encoded, &mut cursor)?,
+            open_time_ns: read_u64(encoded, &mut cursor)?,
+            interval_ns: read_u64(encoded, &mut cursor)?,
+            open_ticks: read_i64(encoded, &mut cursor)?,
+            high_ticks: read_i64(encoded, &mut cursor)?,
+            low_ticks: read_i64(encoded, &mut cursor)?,
+            close_ticks: read_i64(encoded, &mut cursor)?,
+            volume: read_i64(encoded, &mut cursor)?,
+            last_sequence: read_u64(encoded, &mut cursor)?,
+            data_status: data_status_from_code(read_byte(encoded, &mut cursor)?)?,
+        };
+        bars.push(bar);
+    }
+    validate_local_segment_bars(key, &bars)?;
+    Ok(DecodedLocalBarSegment {
+        captured_at_ns,
+        bars,
+    })
+}
+
+fn validate_local_segment_bars(key: SegmentKey, bars: &[Bar]) -> Result<(), LocalSceneError> {
+    if bars.is_empty() || bars.len() > MAXIMUM_LOCAL_SEGMENT_BARS {
+        return Err(LocalSceneError::InvalidSegment(
+            "bar count is outside the local bound",
+        ));
+    }
+    for (index, bar) in bars.iter().enumerate() {
+        let expected_open_time = key
+            .start_ns
+            .checked_add(
+                u64::try_from(index)
+                    .map_err(|_| LocalSceneError::InvalidSegment("bar index is not representable"))?
+                    .checked_mul(key.interval_ns)
+                    .ok_or(LocalSceneError::InvalidSegment("bar time overflow"))?,
+            )
+            .ok_or(LocalSceneError::InvalidSegment("bar time overflow"))?;
+        if bar.symbol_id != key.symbol_id
+            || bar.interval_ns != key.interval_ns
+            || bar.open_time_ns != expected_open_time
+        {
+            return Err(LocalSceneError::InvalidSegment(
+                "bars are not contiguous for the declared segment key",
+            ));
+        }
+        if bar.volume <= 0
+            || bar.low_ticks > bar.open_ticks
+            || bar.low_ticks > bar.close_ticks
+            || bar.high_ticks < bar.open_ticks
+            || bar.high_ticks < bar.close_ticks
+            || bar.low_ticks > bar.high_ticks
+        {
+            return Err(LocalSceneError::InvalidSegment(
+                "bar OHLCV invariants are invalid",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn strongest_data_status(segment_status: DataStatus, bars: &[Bar]) -> DataStatus {
+    bars.iter().fold(segment_status, |status, bar| {
+        match (status, bar.data_status) {
+            (DataStatus::Gap, _) | (_, DataStatus::Gap) => DataStatus::Gap,
+            (DataStatus::Unavailable, _) | (_, DataStatus::Unavailable) => DataStatus::Unavailable,
+            (DataStatus::Stale, _) | (_, DataStatus::Stale) => DataStatus::Stale,
+            (DataStatus::Live, DataStatus::Live) => DataStatus::Live,
+        }
+    })
+}
+
+fn data_status_code(status: DataStatus) -> u8 {
+    match status {
+        DataStatus::Live => 0,
+        DataStatus::Stale => 1,
+        DataStatus::Gap => 2,
+        DataStatus::Unavailable => 3,
+    }
+}
+
+fn data_status_from_code(code: u8) -> Result<DataStatus, LocalSceneError> {
+    match code {
+        0 => Ok(DataStatus::Live),
+        1 => Ok(DataStatus::Stale),
+        2 => Ok(DataStatus::Gap),
+        3 => Ok(DataStatus::Unavailable),
+        _ => Err(LocalSceneError::InvalidSegment(
+            "bar status code is unsupported",
+        )),
+    }
+}
+
+fn read_byte(encoded: &[u8], cursor: &mut usize) -> Result<u8, LocalSceneError> {
+    let Some(byte) = encoded.get(*cursor).copied() else {
+        return Err(LocalSceneError::InvalidSegment(
+            "payload ended unexpectedly",
+        ));
+    };
+    *cursor = cursor.saturating_add(1);
+    Ok(byte)
+}
+
+fn read_u16(encoded: &[u8], cursor: &mut usize) -> Result<u16, LocalSceneError> {
+    let bytes = read_array::<2>(encoded, cursor)?;
+    Ok(u16::from_le_bytes(bytes))
+}
+
+fn read_u32(encoded: &[u8], cursor: &mut usize) -> Result<u32, LocalSceneError> {
+    let bytes = read_array::<4>(encoded, cursor)?;
+    Ok(u32::from_le_bytes(bytes))
+}
+
+fn read_u64(encoded: &[u8], cursor: &mut usize) -> Result<u64, LocalSceneError> {
+    let bytes = read_array::<8>(encoded, cursor)?;
+    Ok(u64::from_le_bytes(bytes))
+}
+
+fn read_i64(encoded: &[u8], cursor: &mut usize) -> Result<i64, LocalSceneError> {
+    let bytes = read_array::<8>(encoded, cursor)?;
+    Ok(i64::from_le_bytes(bytes))
+}
+
+fn read_array<const N: usize>(
+    encoded: &[u8],
+    cursor: &mut usize,
+) -> Result<[u8; N], LocalSceneError> {
+    let end = cursor
+        .checked_add(N)
+        .ok_or(LocalSceneError::InvalidSegment("payload cursor overflow"))?;
+    let bytes = encoded
+        .get(*cursor..end)
+        .ok_or(LocalSceneError::InvalidSegment(
+            "payload ended unexpectedly",
+        ))?;
+    *cursor = end;
+    bytes
+        .try_into()
+        .map_err(|_| LocalSceneError::InvalidSegment("payload field width is invalid"))
+}
+
 #[cfg(test)]
 mod tests {
+    use std::fs;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
     use super::*;
     use zt_protocol::{AggressorSide, Environment, EventHeader, Provider};
 
@@ -510,5 +922,187 @@ mod tests {
                 data_status: DataStatus::Gap,
             }
         );
+    }
+
+    fn temporary_scene_root(label: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time should be after the epoch")
+            .as_nanos();
+        std::env::temp_dir().join(format!("zt-core-scene-{label}-{nonce}"))
+    }
+
+    fn scene_key() -> SegmentKey {
+        SegmentKey {
+            symbol_id: 9,
+            interval_ns: SECOND,
+            start_ns: 0,
+        }
+    }
+
+    fn scene_bar(index: u64, status: DataStatus) -> Bar {
+        let close_ticks = 100 + i64::try_from(index).expect("small deterministic index");
+        Bar {
+            symbol_id: 9,
+            open_time_ns: index * SECOND,
+            interval_ns: SECOND,
+            open_ticks: close_ticks - 1,
+            high_ticks: close_ticks + 2,
+            low_ticks: close_ticks - 3,
+            close_ticks,
+            volume: 1,
+            last_sequence: index + 1,
+            data_status: status,
+        }
+    }
+
+    #[test]
+    fn local_scene_exposes_only_the_requested_bounded_cached_window() {
+        let root = temporary_scene_root("bounded-cached");
+        let store = SegmentStore::open(&root).expect("local store should open");
+        let key = scene_key();
+        let bars: Vec<_> = (0..3_000)
+            .map(|index| scene_bar(index, DataStatus::Live))
+            .collect();
+        let payload = encode_local_bar_segment(key, 100, &bars).expect("segment should encode");
+        store
+            .write(key, &payload, 1, DataStatus::Live)
+            .expect("verified local segment should write");
+
+        let request = LocalSceneRequest::new(1_000, MAXIMUM_LOCAL_SCENE_CANDLES)
+            .expect("draw-budget request should be valid");
+        let scene = prepare_local_chart_scene(&store, key, request, 105, 10)
+            .expect("verified local scene should prepare");
+        let LocalChartScene::Renderable(scene) = scene else {
+            panic!("within-budget verified local data should be renderable")
+        };
+        assert_eq!(scene.availability, LocalAvailability::Cached { age_ns: 5 });
+        assert_eq!(scene.total_bars, 3_000);
+        assert_eq!(scene.first_bar, 1_000);
+        assert_eq!(scene.candles.len(), MAXIMUM_LOCAL_SCENE_CANDLES);
+        assert_eq!(
+            scene.candles.first().expect("first candle").open_time_ns,
+            1_000 * SECOND
+        );
+        assert_eq!(
+            scene.candles.last().expect("last candle").open_time_ns,
+            2_999 * SECOND
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn local_scene_withholds_gap_and_stale_ranges_without_candles() {
+        let gap_root = temporary_scene_root("gap");
+        let gap_store = SegmentStore::open(&gap_root).expect("local store should open");
+        let key = scene_key();
+        let gap_payload = encode_local_bar_segment(key, 100, &[scene_bar(0, DataStatus::Gap)])
+            .expect("gap segment still has an inspectable payload");
+        gap_store
+            .write(key, &gap_payload, 1, DataStatus::Live)
+            .expect("gap segment should write locally");
+        assert_eq!(
+            prepare_local_chart_scene(
+                &gap_store,
+                key,
+                LocalSceneRequest::new(0, 1).expect("one candle request"),
+                100,
+                10,
+            )
+            .expect("gap status should be surfaced"),
+            LocalChartScene::Withheld {
+                availability: LocalAvailability::Gap,
+                retained_bars: 1,
+            }
+        );
+        let _ = fs::remove_dir_all(gap_root);
+
+        let stale_root = temporary_scene_root("stale");
+        let stale_store = SegmentStore::open(&stale_root).expect("local store should open");
+        let stale_payload = encode_local_bar_segment(key, 100, &[scene_bar(0, DataStatus::Live)])
+            .expect("segment should encode");
+        stale_store
+            .write(key, &stale_payload, 1, DataStatus::Live)
+            .expect("segment should write locally");
+        assert_eq!(
+            prepare_local_chart_scene(
+                &stale_store,
+                key,
+                LocalSceneRequest::new(0, 1).expect("one candle request"),
+                111,
+                10,
+            )
+            .expect("stale status should be surfaced"),
+            LocalChartScene::Withheld {
+                availability: LocalAvailability::Stale { age_ns: 11 },
+                retained_bars: 1,
+            }
+        );
+        let _ = fs::remove_dir_all(stale_root);
+    }
+
+    #[test]
+    fn local_scene_withholds_missing_and_logically_corrupt_segments() {
+        let missing_root = temporary_scene_root("missing");
+        let missing_store = SegmentStore::open(&missing_root).expect("local store should open");
+        let key = scene_key();
+        assert_eq!(
+            prepare_local_chart_scene(
+                &missing_store,
+                key,
+                LocalSceneRequest::new(0, 1).expect("one candle request"),
+                100,
+                10,
+            )
+            .expect("missing local segment should be surfaced"),
+            LocalChartScene::Withheld {
+                availability: LocalAvailability::Unavailable,
+                retained_bars: 0,
+            }
+        );
+        let _ = fs::remove_dir_all(missing_root);
+
+        let corrupt_root = temporary_scene_root("logical-corruption");
+        let corrupt_store = SegmentStore::open(&corrupt_root).expect("local store should open");
+        corrupt_store
+            .write(key, b"not a local bar segment", 1, DataStatus::Live)
+            .expect("integrity-checked bytes should write");
+        assert_eq!(
+            prepare_local_chart_scene(
+                &corrupt_store,
+                key,
+                LocalSceneRequest::new(0, 1).expect("one candle request"),
+                100,
+                10,
+            )
+            .expect("invalid payload should be withheld"),
+            LocalChartScene::Withheld {
+                availability: LocalAvailability::Corrupt,
+                retained_bars: 0,
+            }
+        );
+        let _ = fs::remove_dir_all(corrupt_root);
+    }
+
+    #[test]
+    fn local_scene_refuses_noncontiguous_or_oversized_draw_requests() {
+        let key = scene_key();
+        assert!(matches!(
+            encode_local_bar_segment(
+                key,
+                100,
+                &[
+                    scene_bar(0, DataStatus::Live),
+                    scene_bar(2, DataStatus::Live)
+                ],
+            ),
+            Err(LocalSceneError::InvalidSegment(
+                "bars are not contiguous for the declared segment key"
+            ))
+        ));
+        assert!(matches!(
+            LocalSceneRequest::new(0, MAXIMUM_LOCAL_SCENE_CANDLES + 1),
+            Err(LocalSceneError::InvalidRequest)
+        ));
     }
 }
