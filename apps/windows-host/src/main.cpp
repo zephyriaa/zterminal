@@ -233,6 +233,7 @@ public:
     bool recreate_device_resources() {
         render_target_.Reset();
         vertex_buffer_.Reset();
+        clear_retained_vertices(false);
         input_layout_.Reset();
         vertex_shader_.Reset();
         pixel_shader_.Reset();
@@ -311,7 +312,12 @@ public:
         }
     }
 
-    void render(const std::vector<ChartCandle>& candles, const ChartView& view, bool unsynchronised_present) {
+    void render(
+        const std::vector<ChartCandle>& candles,
+        const ChartView& view,
+        std::uint64_t scene_revision,
+        bool unsynchronised_present
+    ) {
         if (!context_ || !render_target_ || !swap_chain_ || !vertex_buffer_) {
             return;
         }
@@ -321,24 +327,37 @@ public:
         context_->OMSetRenderTargets(1, targets, nullptr);
         context_->ClearRenderTargetView(render_target_.Get(), background);
 
-        if (!candles.empty()) {
-            const std::vector<Vertex> vertices = chart_vertices(candles, view);
-            if (!vertices.empty()) {
+        bool can_draw = false;
+        if (candles.empty()) {
+            clear_retained_vertices(true);
+        } else {
+            const std::uint64_t signature = chart_input_signature(candles, view, scene_revision);
+            if (!retained_signature_.has_value() || *retained_signature_ != signature) {
+                rebuild_retained_vertices(candles, view, signature);
+            }
+            if (retained_upload_required_ && retained_vertex_count_ > 0) {
                 D3D11_MAPPED_SUBRESOURCE mapped{};
                 if (SUCCEEDED(context_->Map(vertex_buffer_.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
-                    std::memcpy(mapped.pData, vertices.data(), vertices.size() * sizeof(Vertex));
+                    std::memcpy(mapped.pData, retained_vertices_.data(), retained_vertices_.size() * sizeof(Vertex));
                     context_->Unmap(vertex_buffer_.Get(), 0);
-                    const UINT stride = sizeof(Vertex);
-                    const UINT offset = 0;
-                    context_->IASetInputLayout(input_layout_.Get());
-                    context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                    ID3D11Buffer* const buffers[] = {vertex_buffer_.Get()};
-                    context_->IASetVertexBuffers(0, 1, buffers, &stride, &offset);
-                    context_->VSSetShader(vertex_shader_.Get(), nullptr, 0);
-                    context_->PSSetShader(pixel_shader_.Get(), nullptr, 0);
-                    context_->Draw(static_cast<UINT>(vertices.size()), 0);
+                    retained_upload_required_ = false;
+                    ++vertex_buffer_uploads_;
                 }
+            } else if (retained_vertex_count_ > 0) {
+                ++retained_draw_reuses_;
             }
+            can_draw = retained_vertex_count_ > 0 && !retained_upload_required_;
+        }
+        if (can_draw) {
+            const UINT stride = sizeof(Vertex);
+            const UINT offset = 0;
+            context_->IASetInputLayout(input_layout_.Get());
+            context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            ID3D11Buffer* const buffers[] = {vertex_buffer_.Get()};
+            context_->IASetVertexBuffers(0, 1, buffers, &stride, &offset);
+            context_->VSSetShader(vertex_shader_.Get(), nullptr, 0);
+            context_->PSSetShader(pixel_shader_.Get(), nullptr, 0);
+            context_->Draw(retained_vertex_count_, 0);
         }
 
         const HRESULT present_result = swap_chain_->Present(unsynchronised_present ? 0U : 1U, 0);
@@ -364,6 +383,9 @@ public:
     [[nodiscard]] std::uint64_t unrecoverable_device_failures() const { return unrecoverable_device_failures_; }
     [[nodiscard]] std::uint64_t present_failures() const { return present_failures_; }
     [[nodiscard]] HRESULT last_renderer_error() const { return last_renderer_error_; }
+    [[nodiscard]] std::uint64_t vertex_buffer_uploads() const { return vertex_buffer_uploads_; }
+    [[nodiscard]] std::uint64_t retained_draw_reuses() const { return retained_draw_reuses_; }
+    [[nodiscard]] std::uint64_t retained_vertex_clears() const { return retained_vertex_clears_; }
 
 private:
     [[nodiscard]] static bool is_device_loss(HRESULT result) {
@@ -425,7 +447,77 @@ private:
         return SUCCEEDED(device_->CreateBuffer(&buffer, nullptr, vertex_buffer_.GetAddressOf()));
     }
 
-    [[nodiscard]] std::vector<Vertex> chart_vertices(const std::vector<ChartCandle>& candles, const ChartView& view) const {
+    void clear_retained_vertices(bool record_clear) {
+        if (retained_vertex_count_ > 0 && record_clear) {
+            ++retained_vertex_clears_;
+        }
+        retained_vertices_.clear();
+        retained_vertex_count_ = 0;
+        retained_signature_.reset();
+        retained_upload_required_ = false;
+    }
+
+    [[nodiscard]] static std::uint64_t hash_u64(std::uint64_t state, std::uint64_t value) {
+        constexpr std::uint64_t prime = 1'099'511'628'211ULL;
+        for (std::size_t byte = 0; byte < sizeof(value); ++byte) {
+            state ^= (value >> (byte * 8)) & 0xFFU;
+            state *= prime;
+        }
+        return state;
+    }
+
+    [[nodiscard]] std::uint64_t chart_input_signature(
+        const std::vector<ChartCandle>& candles,
+        const ChartView& view,
+        std::uint64_t scene_revision
+    ) const {
+        std::uint64_t state = 14'695'981'039'346'656'037ULL;
+        state = hash_u64(state, scene_revision);
+        state = hash_u64(state, static_cast<std::uint64_t>(view.first));
+        state = hash_u64(state, static_cast<std::uint64_t>(view.visible));
+        state = hash_u64(state, view.has_cursor ? 1U : 0U);
+        state = hash_u64(state, static_cast<std::uint64_t>(static_cast<std::int64_t>(view.cursor.x)));
+        state = hash_u64(state, static_cast<std::uint64_t>(static_cast<std::int64_t>(view.cursor.y)));
+        state = hash_u64(state, width_);
+        state = hash_u64(state, height_);
+        const std::size_t visible = std::min({view.visible, kMaximumVisibleCandles, candles.size()});
+        const std::size_t first = visible == 0 ? 0 : std::min(view.first, candles.size() - visible);
+        state = hash_u64(state, static_cast<std::uint64_t>(visible));
+        for (std::size_t index = first; index < first + visible; ++index) {
+            for (const double value : {candles[index].open, candles[index].high, candles[index].low, candles[index].close}) {
+                std::uint64_t bits{};
+                static_assert(sizeof(bits) == sizeof(value));
+                std::memcpy(&bits, &value, sizeof(bits));
+                state = hash_u64(state, bits);
+            }
+        }
+        return state;
+    }
+
+    void rebuild_retained_vertices(
+        const std::vector<ChartCandle>& candles,
+        const ChartView& view,
+        std::uint64_t signature
+    ) {
+        retained_vertices_.clear();
+        if (retained_vertices_.capacity() < kMaximumVertices) {
+            retained_vertices_.reserve(kMaximumVertices);
+        }
+        chart_vertices(candles, view, retained_vertices_);
+        if (retained_vertices_.size() > kMaximumVertices) {
+            clear_retained_vertices(true);
+            return;
+        }
+        retained_vertex_count_ = static_cast<UINT>(retained_vertices_.size());
+        retained_signature_ = signature;
+        retained_upload_required_ = retained_vertex_count_ > 0;
+    }
+
+    void chart_vertices(
+        const std::vector<ChartCandle>& candles,
+        const ChartView& view,
+        std::vector<Vertex>& vertices
+    ) const {
         const std::size_t visible = std::min({view.visible, kMaximumVisibleCandles, candles.size()});
         const std::size_t first = std::min(view.first, candles.size() - visible);
         const std::size_t last = first + visible;
@@ -444,8 +536,7 @@ private:
         const float wick_half_width = std::max(slot * 0.05F, 0.0002F);
         const auto y = [low, range](double price) { return static_cast<float>(1.0 - ((price - low) / range) * 2.0); };
 
-        std::vector<Vertex> vertices;
-        vertices.reserve((visible * kVerticesPerCandle) + 12);
+        vertices.reserve(kMaximumVertices);
         for (std::size_t local_index = 0; local_index < visible; ++local_index) {
             const ChartCandle& candle = candles[first + local_index];
             const float x = -1.0F + (static_cast<float>(local_index) + 0.5F) * slot;
@@ -465,7 +556,6 @@ private:
             append_rectangle(vertices, x - 0.001F, -1.0F, x + 0.001F, 1.0F, crosshair);
             append_rectangle(vertices, -1.0F, y_cursor - 0.001F, 1.0F, y_cursor + 0.001F, crosshair);
         }
-        return vertices;
     }
 
     void populate_adapter_diagnostics() {
@@ -495,6 +585,13 @@ private:
     std::uint64_t unrecoverable_device_failures_{};
     std::uint64_t present_failures_{};
     HRESULT last_renderer_error_{S_OK};
+    std::vector<Vertex> retained_vertices_;
+    std::optional<std::uint64_t> retained_signature_;
+    UINT retained_vertex_count_{};
+    bool retained_upload_required_{};
+    std::uint64_t vertex_buffer_uploads_{};
+    std::uint64_t retained_draw_reuses_{};
+    std::uint64_t retained_vertex_clears_{};
     ComPtr<ID3D11Device> device_;
     ComPtr<ID3D11DeviceContext> context_;
     ComPtr<IDXGISwapChain> swap_chain_;
@@ -514,6 +611,7 @@ enum class ChartSource {
 Renderer* renderer = nullptr;
 ChartView chart_view;
 std::vector<ChartCandle> chart_candles;
+std::uint64_t chart_scene_revision{};
 ChartSource chart_source = ChartSource::Unavailable;
 zterminal::local_scene::Availability local_availability = zterminal::local_scene::Availability::Unavailable;
 std::wstring local_diagnostic;
@@ -583,6 +681,9 @@ bool apply_local_scene_result(
     local_first_bar = result.first_bar;
     local_age_ns = result.age_ns;
     chart_candles.clear();
+    if (chart_scene_revision < std::numeric_limits<std::uint64_t>::max()) {
+        ++chart_scene_revision;
+    }
     chart_view.first = 0;
     chart_view.dragging = false;
     if (result.availability != zterminal::local_scene::Availability::Live
@@ -975,6 +1076,9 @@ void select_chart_source(PWSTR command_line) {
     if (const std::optional<std::size_t> fixture_count = requested_fixture_candle_count(command_line); fixture_count.has_value()) {
         chart_source = ChartSource::FixtureDiagnostic;
         chart_candles = fixture_candles(*fixture_count);
+        if (chart_scene_revision < std::numeric_limits<std::uint64_t>::max()) {
+            ++chart_scene_revision;
+        }
         return;
     }
     if (wcsstr(command_line, L"--local-root=") == nullptr) {
@@ -1062,6 +1166,9 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"renderer_device_recoveries\": " << native_renderer.device_recoveries() << ",\n";
     output << "  \"renderer_unrecoverable_device_failures\": " << native_renderer.unrecoverable_device_failures() << ",\n";
     output << "  \"renderer_present_failures\": " << native_renderer.present_failures() << ",\n";
+    output << "  \"renderer_vertex_buffer_uploads\": " << native_renderer.vertex_buffer_uploads() << ",\n";
+    output << "  \"renderer_retained_draw_reuses\": " << native_renderer.retained_draw_reuses() << ",\n";
+    output << "  \"renderer_retained_vertex_clears\": " << native_renderer.retained_vertex_clears() << ",\n";
     output << "  \"renderer_last_error_hr\": " << static_cast<long>(native_renderer.last_renderer_error()) << ",\n";
     output << "  \"working_set_bytes\": " << (has_memory ? memory.WorkingSetSize : 0) << ",\n";
     output << "  \"private_usage_bytes\": " << (has_memory ? memory.PrivateUsage : 0) << "\n";
@@ -1133,7 +1240,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
             TranslateMessage(&message);
             DispatchMessage(&message);
         } else if (render_requested || continuous_benchmark_rendering) {
-            native_renderer.render(chart_candles, chart_view, unsynchronised_benchmark_present);
+            native_renderer.render(chart_candles, chart_view, chart_scene_revision, unsynchronised_benchmark_present);
             render_requested = false;
             if (auto_close_after_seconds > 0 && Clock::now() >= benchmark_deadline) {
                 DestroyWindow(window);
