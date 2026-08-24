@@ -1,0 +1,16 @@
+[package]
+name = "zt-offline-provider-import"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+zt-adapters = { path = "../../crates/zt-adapters" }
+zt-storage = { path = "../../crates/zt-storage" }
+
+[dev-dependencies]
+zt-core = { path = "../../crates/zt-core" }
