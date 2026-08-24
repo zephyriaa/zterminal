@@ -1,6 +1,6 @@
 # ZTerminal Windows Local-First Desktop — Phase 0 Decision Record
 
-**Status:** Conditional architectural approval. The portable engine, protocol, cache-policy, and benchmark foundations are implemented and validated. The native Windows renderer host is authored but not yet compiled or measured on Windows because the present build environment has no Windows SDK, MSVC toolchain, Direct3D runtime, or Windows target installed.
+**Status:** Conditional architectural approval with first Windows evidence. The portable engine, protocol, cache-policy, and benchmark foundations are implemented and validated. The native Windows renderer host now compiles, launches, and records hardware Direct3D diagnostics on one connected Windows 10 reference machine. It is still a Phase 0 spike rather than a terminal: no candles, local persistence, provider connection, Rust scene contract, Windows App SDK chrome, or production package exists yet.
 
 ## Decision
 
@@ -51,12 +51,30 @@ The current spike presents an empty dark render surface only. Its purpose is to 
 
 | Native-host item | Phase 0 state | Next verification |
 | --- | --- | --- |
-| Actual Win32 window | Authored, Windows-only | Build and launch on Windows 10 1809+ and Windows 11 x64. |
-| Hardware Direct3D 11 device | Authored with WARP fallback | Record selected adapter/feature level and reject WARP as a performance pass. |
-| Swap chain, resize, present loop | Authored | Measure p50/p95 frame time while resizing and while idle. |
+| Actual Win32 window | Built and launched on one Windows 10 x64 machine. | Repeat on declared integrated, mid-range, and discrete-GPU reference tiers. |
+| Hardware Direct3D 11 device | Verified on NVIDIA GeForce 710M at feature level 11.0; WARP was not selected. | Record selected adapter/feature level on every reference tier and reject WARP as a performance pass. |
+| Swap chain, resize, present loop | Idle present-loop benchmark recorded; 20 two-second hardware runs reported median/p95 frame timing. | Add resize, input-to-present, device-reset, and chart-scale workload evidence. |
 | WinUI 3 application chrome | Design decision only | Add after native surface benchmark establishes a viable overhead budget. |
 | Direct3D 12 renderer | Deferred comparator | Prototype only if D3D11 results miss the chart workload budget. |
 | Custom chart primitives | Deferred | Implement after a validated host and engine-to-renderer scene contract. |
+
+## First Windows host evidence
+
+The first real Windows host build used the local MSVC 19.44 toolchain, Windows SDK 10.0.26100, and CMake configuration. The benchmark executable was built from `apps/windows-host`, launched in an automated two-second mode 20 times, and wrote a local JSON diagnostic record for each run. The committed source now includes that diagnostic mode and the reproducible `apps/windows-host/scripts/run-phase0-benchmark.ps1` runner.
+
+| Attribute | Recorded value |
+| --- | --- |
+| Operating system | Windows 10 Home x64, build 19045 |
+| Reference hardware | Intel Core i3-3110M, 2 cores / 4 logical processors, 3.88 GiB installed memory |
+| Active GPU | NVIDIA GeForce 710M, 1 GiB reported adapter memory, driver 21.21.13.7654 |
+| Feature level / driver path | Direct3D 11.0 / hardware; no WARP fallback |
+| Display / power plan | Intel display output at 1366×768, 60 Hz / Revision – Ultra Performance |
+| Launch to visible | 91.039 ms median; 99.501 ms p95 across 20 automated launches |
+| Idle present-loop frame p95 | 17.157 ms median; 17.252 ms worst recorded run |
+| Process working set | 25,812,992 bytes median; 25,841,664 bytes p95 |
+| Process private usage | 31,936,512 bytes median; 31,997,952 bytes p95 |
+
+The result is a **native-host smoke and idle baseline**, not a terminal performance claim. It contains only an empty dark render target; it does not measure input-to-present latency, resize, candles, text, drawings, local storage, engine workers, chart datasets, provider load, or long-session memory pressure. The first maximum frame outlier was 57.264 ms on one run, so even the empty renderer needs deeper frame-histogram and interaction analysis before accepting a 60 FPS user-experience target. The raw 20-run summary is retained in `docs/windows/benchmarks/windows-phase0-summary.json`.
 
 ## Required Windows benchmark protocol
 
@@ -88,12 +106,14 @@ The desktop data contract makes `provider`, `environment`, `data_status`, and se
 | Rust linting | Passed with `cargo clippy --workspace --all-targets -- -D warnings`. |
 | Portable release benchmark | Passed and recorded in `docs/windows/benchmarks/`. |
 | Linux build of Windows host | Not applicable; host is correctly blocked outside Windows. |
-| Windows Direct3D runtime test | Pending a Windows build machine. |
+| Windows Direct3D host build | Passed on the connected Windows 10 x64 machine with MSVC 19.44 and Windows SDK 10.0.26100. |
+| Windows Direct3D runtime test | Passed hardware smoke and 20-run idle baseline on NVIDIA GeForce 710M; resize, input, chart-scale, device-reset, and soak tests remain pending. |
+| Windows benchmark evidence | Saved as `docs/windows/benchmarks/windows-phase0-summary.json`; reproducible runner saved as `apps/windows-host/scripts/run-phase0-benchmark.ps1`. |
 | Web regression suite | Pending final Phase 0 integration check; the existing web app is unchanged by the new Rust workspace. |
 
 ## Immediate next engineering slice
 
-The next slice is not a broad desktop rewrite. It is a Windows-host build and measurement run, followed by a thin Rust FFI scene contract and a 10k/100k candle renderer. In parallel, the existing TypeScript aggregation and deterministic indicator outputs should be converted into shared golden fixtures so each Rust port is verified before the web implementation is retired.
+The Windows-host build and initial idle measurement are complete. The next slice is a thin Rust FFI scene contract and a 10k/100k local candle renderer, with resize/input/device-reset instrumentation and the remaining reference-tier test matrix. In parallel, the existing TypeScript aggregation and deterministic indicator outputs should be converted into shared golden fixtures so each Rust port is verified before the web implementation is retired.
 
 Cloud synchronization remains postponed. The existing production environment has not demonstrated a durable managed database or a provider-correct migration path, and the Windows client must treat local state as the source of truth until server acknowledgement is real and ownership isolation is tested.
 
