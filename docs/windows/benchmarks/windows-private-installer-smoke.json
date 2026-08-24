@@ -1,30 +1,29 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "private_artifact": "ZTerminal-Private-Setup.exe",
   "builder": "self-contained Windows setup executable with embedded bounded payload",
   "bytes": 1621504,
-  "sha256": "789181457E2050B2F12DB2722393350FF4B07854DFB38780ADC909D8E62B23ED",
+  "sha256": "F7772CABC61CB86F7F7FCD35FB8A3FE753A1091E3076E360AA8A7898F131EC54",
   "signature_status": "NotSigned",
   "authorized_code_signing_identity_available": false,
   "network_opened": false,
   "public_release_created": false,
-  "isolated_payload_smoke": {
-    "installer_exit_code": 0,
-    "required_files_present": true,
-    "installation_scope": "CurrentUser",
-    "manifest_network_opened": false,
-    "manifest_signed": false,
-    "shortcut_created": true,
-    "host_launch_suppressed_for_test": true
+  "install_behavior": {
+    "current_user_scope": true,
+    "atomic_payload_deployment": true,
+    "start_menu_shortcut_created": true,
+    "opens_native_host_automatically": false,
+    "completion_feedback": "visible interactive completion dialog"
   },
-  "installed_host_launch": {
-    "current_user_install_present": true,
-    "native_host_process_started": true
+  "build_validation": {
+    "embedded_setup_compiled": true,
+    "bounded_payload_files": 8,
+    "signing_status_checked": true
   },
   "uninstaller_boundary_smoke": {
     "installed_app_removed": true,
     "shortcut_removed": true,
     "separate_local_data_retained": true
   },
-  "note": "The retired IExpress wrapper did not reliably deploy from user launch and is no longer used. The replacement self-contained setup was verified with an explicit isolated installer root; interactive installation launches the installed native host. The installer is private and unsigned pending a real authorized code-signing certificate."
+  "note": "The retired IExpress wrapper is no longer used. The replacement is an install-only private setup executable: it installs the bounded local package and creates the Start Menu shortcut, but does not launch ZTerminal. It remains unsigned pending a real authorized code-signing certificate."
 }
