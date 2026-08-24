@@ -8,10 +8,25 @@ repository.workspace = true
 [lints]
 workspace = true
 
+[features]
+default = []
+# A credential-free direct public WebSocket probe for native development.
+# It is opt-in so ordinary engine and installer builds do not open any socket.
+live-public = ["dep:futures-util", "dep:rustls", "dep:tokio", "dep:tokio-tungstenite"]
+
 [dependencies]
+futures-util = { version = "0.3", optional = true }
+rustls = { version = "0.23", features = ["ring"], optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tokio = { version = "1", features = ["rt", "macros", "time"], optional = true }
+tokio-tungstenite = { version = "0.28", default-features = false, features = ["connect", "rustls-tls-webpki-roots"], optional = true }
 zt-protocol = { path = "../zt-protocol" }
 
 [lib]
 path = "src/lib.rs"
+
+[[example]]
+name = "binance_public_probe"
+path = "examples/binance_public_probe.rs"
+required-features = ["live-public"]

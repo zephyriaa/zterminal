@@ -308,3 +308,78 @@ mod tests {
         );
     }
 }
+
+#[cfg(feature = "live-public")]
+/// Opt-in direct public WebSocket probes for native development.
+///
+/// These routines never accept API keys, never subscribe to private channels,
+/// and never use a ZTerminal server as a proxy. Production connection lifecycle
+/// management and entitlement checks remain a later native-host concern.
+pub mod live_public {
+    use futures_util::StreamExt;
+    use tokio_tungstenite::connect_async;
+    use tokio_tungstenite::tungstenite::Message;
+
+    use super::{
+        AdapterError, AdapterEvent, BinanceAggregateTradeAdapter, PublicProvider,
+        PublicTradeSubscription,
+    };
+
+    /// Transport-level failure for a bounded local public probe.
+    #[derive(Debug)]
+    pub enum ProbeError {
+        /// The subscription is not a supported direct public Binance spot stream.
+        UnsupportedProvider,
+        /// The public WebSocket handshake or stream failed. The text is
+        /// diagnostic only and must never contain a credential.
+        Transport(String),
+        /// A received provider frame was rejected by the strict normalizer.
+        Adapter(AdapterError),
+        /// The provider stream ended before the requested bounded sample arrived.
+        EndedEarly,
+    }
+
+    /// Reads at most `maximum_events` normalized events from Binance's public
+    /// aggregate-trade WebSocket endpoint, directly from the local device.
+    ///
+    /// This is deliberately a bounded probe: it does not perform automatic
+    /// reconnect, provider fallback, persistence, account access, or execution.
+    pub async fn collect_binance_aggregate_trade_probe(
+        subscription: PublicTradeSubscription,
+        maximum_events: usize,
+    ) -> Result<Vec<AdapterEvent>, ProbeError> {
+        if subscription.provider != PublicProvider::BinanceSpot || maximum_events == 0 {
+            return Err(ProbeError::UnsupportedProvider);
+        }
+        // Rustls requires an explicit process-level crypto provider when more
+        // than one compatible implementation is present in the dependency graph.
+        let _ = rustls::crypto::ring::default_provider().install_default();
+        let endpoint = format!(
+            "wss://stream.binance.com:9443/ws/{}@aggTrade",
+            subscription.provider_symbol.to_ascii_lowercase()
+        );
+        let (connection, _) = connect_async(endpoint)
+            .await
+            .map_err(|error| ProbeError::Transport(error.to_string()))?;
+        let (_, mut read) = connection.split();
+        let mut adapter =
+            BinanceAggregateTradeAdapter::new(subscription).map_err(ProbeError::Adapter)?;
+        let mut events = Vec::with_capacity(maximum_events);
+        while let Some(frame) = read.next().await {
+            match frame.map_err(|error| ProbeError::Transport(error.to_string()))? {
+                Message::Text(text) => {
+                    let event = adapter
+                        .decode(text.as_bytes())
+                        .map_err(ProbeError::Adapter)?;
+                    events.push(event);
+                    if events.len() == maximum_events {
+                        return Ok(events);
+                    }
+                }
+                Message::Close(_) => return Err(ProbeError::EndedEarly),
+                _ => {}
+            }
+        }
+        Err(ProbeError::EndedEarly)
+    }
+}
