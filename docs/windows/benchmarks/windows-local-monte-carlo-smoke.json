@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "test_only_offline_frames": true,
+  "packaged_importer": true,
+  "packaged_local_monte_carlo": true,
+  "execution_uses_cargo": false,
+  "network_opened": false,
+  "missing_argument_guard": {
+    "exit_code": 2,
+    "rejected_before_local_read": true
+  },
+  "importer": {
+    "source_frames": 7,
+    "retained_completed_bars": 6,
+    "outcome": "persisted"
+  },
+  "research": {
+    "schema_version": 1,
+    "kind": "complete",
+    "availability": "cached",
+    "age_ns": 301000000,
+    "algorithm_version": 1,
+    "seed": 7,
+    "source_bars": 6,
+    "source_returns": 5,
+    "simulations": 32,
+    "horizon_bars": 8,
+    "minimum_return_bps": 768,
+    "p05_return_bps": 769,
+    "median_return_bps": 776,
+    "p95_return_bps": 784,
+    "maximum_return_bps": 786,
+    "mean_return_bps": 776
+  }
+}

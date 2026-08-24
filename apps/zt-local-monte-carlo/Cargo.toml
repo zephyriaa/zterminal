@@ -1,0 +1,14 @@
+[package]
+name = "zt-local-monte-carlo"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+zt-core = { path = "../../crates/zt-core" }
+zt-storage = { path = "../../crates/zt-storage" }
+zt-protocol = { path = "../../crates/zt-protocol" }

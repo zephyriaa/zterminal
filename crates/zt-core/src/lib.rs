@@ -765,6 +765,25 @@ pub enum LocalChartScene {
     },
 }
 
+/// Integrity-checked local bars eligible for bounded on-device research.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum LocalResearchSource {
+    /// A `Live` or within-budget `Cached` immutable segment supplied all bars.
+    Available {
+        /// Truthful fresh/cache state of the verified local snapshot.
+        availability: LocalAvailability,
+        /// Every integrity-checked bar from the explicit immutable segment.
+        bars: Vec<Bar>,
+    },
+    /// The immutable source was unavailable, corrupt, stale, or provenance-degraded.
+    Withheld {
+        /// Truthful reason the source is not safe for a local research result.
+        availability: LocalAvailability,
+        /// Number of decoded bars withheld when the payload was readable.
+        retained_bars: usize,
+    },
+}
+
 /// Error while decoding or bounding an explicit local scene request.
 #[derive(Debug)]
 pub enum LocalSceneError {
@@ -847,28 +866,27 @@ pub fn encode_local_bar_segment(
     Ok(encoded)
 }
 
-/// Reads one integrity-checked local segment and prepares at most 2,000 candles.
+/// Reads one integrity-checked immutable local segment for bounded research.
 ///
-/// `Gap`, `Unavailable`, `Corrupt`, and `Stale` local ranges are returned as
-/// `Withheld` rather than exposing a continuous scene to the Direct3D renderer.
-/// The function has no network, Render, cloud, or provider fallback behaviour.
-pub fn prepare_local_chart_scene(
+/// `Gap`, `Unavailable`, `Corrupt`, and `Stale` sources return `Withheld`; no
+/// caller receives those bars for research. The function has no network, Render,
+/// cloud, provider fallback, or local write behaviour.
+pub fn load_local_research_source(
     store: &SegmentStore,
     key: SegmentKey,
-    request: LocalSceneRequest,
     now_ns: u64,
     freshness_budget_ns: u64,
-) -> Result<LocalChartScene, LocalSceneError> {
+) -> Result<LocalResearchSource, LocalSceneError> {
     let (metadata, payload) = match store.read(key) {
         Ok(segment) => segment,
         Err(StorageError::SegmentMissing(_)) => {
-            return Ok(LocalChartScene::Withheld {
+            return Ok(LocalResearchSource::Withheld {
                 availability: LocalAvailability::Unavailable,
                 retained_bars: 0,
             });
         }
         Err(StorageError::CorruptSegment(_) | StorageError::InvalidMetadata) => {
-            return Ok(LocalChartScene::Withheld {
+            return Ok(LocalResearchSource::Withheld {
                 availability: LocalAvailability::Corrupt,
                 retained_bars: 0,
             });
@@ -878,7 +896,7 @@ pub fn prepare_local_chart_scene(
     let decoded = match decode_local_bar_segment(key, &payload) {
         Ok(segment) => segment,
         Err(LocalSceneError::InvalidSegment(_)) => {
-            return Ok(LocalChartScene::Withheld {
+            return Ok(LocalResearchSource::Withheld {
                 availability: LocalAvailability::Corrupt,
                 retained_bars: 0,
             });
@@ -895,25 +913,53 @@ pub fn prepare_local_chart_scene(
         availability,
         LocalAvailability::Live | LocalAvailability::Cached { .. }
     ) {
-        return Ok(LocalChartScene::Withheld {
+        return Ok(LocalResearchSource::Withheld {
             availability,
             retained_bars: decoded.bars.len(),
         });
     }
-    let last_bar = request
-        .first_bar
-        .checked_add(request.visible_bars)
-        .ok_or(LocalSceneError::InvalidRequest)?;
-    if last_bar > decoded.bars.len() {
-        return Err(LocalSceneError::InvalidRequest);
-    }
-    Ok(LocalChartScene::Renderable(RenderableLocalScene {
-        key,
+    Ok(LocalResearchSource::Available {
         availability,
-        total_bars: decoded.bars.len(),
-        first_bar: request.first_bar,
-        candles: decoded.bars[request.first_bar..last_bar].to_vec(),
-    }))
+        bars: decoded.bars,
+    })
+}
+
+/// Reads one integrity-checked local segment and prepares at most 2,000 candles.
+///
+/// The function uses the same strict source gate as local research and exposes no
+/// candles for `Gap`, `Unavailable`, `Corrupt`, or `Stale` local ranges.
+pub fn prepare_local_chart_scene(
+    store: &SegmentStore,
+    key: SegmentKey,
+    request: LocalSceneRequest,
+    now_ns: u64,
+    freshness_budget_ns: u64,
+) -> Result<LocalChartScene, LocalSceneError> {
+    match load_local_research_source(store, key, now_ns, freshness_budget_ns)? {
+        LocalResearchSource::Withheld {
+            availability,
+            retained_bars,
+        } => Ok(LocalChartScene::Withheld {
+            availability,
+            retained_bars,
+        }),
+        LocalResearchSource::Available { availability, bars } => {
+            let last_bar = request
+                .first_bar
+                .checked_add(request.visible_bars)
+                .ok_or(LocalSceneError::InvalidRequest)?;
+            if last_bar > bars.len() {
+                return Err(LocalSceneError::InvalidRequest);
+            }
+            Ok(LocalChartScene::Renderable(RenderableLocalScene {
+                key,
+                availability,
+                total_bars: bars.len(),
+                first_bar: request.first_bar,
+                candles: bars[request.first_bar..last_bar].to_vec(),
+            }))
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
