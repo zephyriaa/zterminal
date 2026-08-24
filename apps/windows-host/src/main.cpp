@@ -170,6 +170,30 @@ struct Vertex {
     return output.str();
 }
 
+[[nodiscard]] ComPtr<IDXGIAdapter> desktop_output_adapter() {
+    ComPtr<IDXGIFactory1> factory;
+    if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(factory.GetAddressOf())))) {
+        return {};
+    }
+    for (UINT adapter_index = 0; ; ++adapter_index) {
+        ComPtr<IDXGIAdapter> adapter;
+        if (factory->EnumAdapters(adapter_index, adapter.GetAddressOf()) == DXGI_ERROR_NOT_FOUND) {
+            break;
+        }
+        for (UINT output_index = 0; ; ++output_index) {
+            ComPtr<IDXGIOutput> output;
+            if (adapter->EnumOutputs(output_index, output.GetAddressOf()) == DXGI_ERROR_NOT_FOUND) {
+                break;
+            }
+            DXGI_OUTPUT_DESC description{};
+            if (SUCCEEDED(output->GetDesc(&description)) && description.AttachedToDesktop) {
+                return adapter;
+            }
+        }
+    }
+    return {};
+}
+
 void append_rectangle(
     std::vector<Vertex>& vertices,
     float left,
@@ -210,10 +234,22 @@ public:
             D3D_FEATURE_LEVEL_10_1,
         };
 
+        ComPtr<IDXGIAdapter> output_adapter = desktop_output_adapter();
         HRESULT result = D3D11CreateDeviceAndSwapChain(
-            nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+            output_adapter.Get(),
+            output_adapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
+            nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
             levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION, &descriptor,
             swap_chain_.GetAddressOf(), device_.GetAddressOf(), &selected_feature_level_, context_.GetAddressOf());
+        if (FAILED(result) && output_adapter) {
+            // A display adapter can reject a requested feature level. Retain the
+            // legacy hardware fallback before considering software rendering.
+            output_adapter.Reset();
+            result = D3D11CreateDeviceAndSwapChain(
+                nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION, &descriptor,
+                swap_chain_.GetAddressOf(), device_.GetAddressOf(), &selected_feature_level_, context_.GetAddressOf());
+        }
         if (FAILED(result)) {
             used_warp_ = true;
             result = D3D11CreateDeviceAndSwapChain(

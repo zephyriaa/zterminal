@@ -38,4 +38,6 @@ The evidence proves that a local native renderer can load a 100k-record fixture 
 4. Feed only verified `SegmentStore` bytes through a typed Rust scene contract; reject `Gap`, `Unavailable`, and `Corrupt` data before scene generation.
 5. Add deterministic 10k/100k pan, zoom, resize, and device-reset tests; record CPU, GPU where available, input-to-present, and frame histograms on the three required reference tiers.
 
+The renderer now first attempts to select the adapter attached to the active desktop before using the generic hardware fallback. On the connected hybrid-GPU reference device, the follow-up still reported the NVIDIA GeForce 710M and did **not** improve the five-second frame result: 47.026 ms p95 for 10k fixture records and 47.612 ms p95 for 100k. That follow-up confirms the current limitation is not solved by a simple adapter preference change.
+
 The raw machine-specific reports are `docs/windows/benchmarks/windows-fixture-candles-10000.json` and `docs/windows/benchmarks/windows-fixture-candles-100000.json`. The repeatable runner is `apps/windows-host/scripts/run-fixture-candle-benchmark.ps1`.
