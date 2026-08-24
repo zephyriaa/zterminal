@@ -1,0 +1,10 @@
+{
+    "schema_version":  1,
+    "packaged_executable":  true,
+    "arguments_supplied":  0,
+    "provider_connection_attempted":  false,
+    "network_opened":  false,
+    "expected_exit_code":  2,
+    "observed_exit_code":  2,
+    "diagnostic":  "internal direct public ingestion failed: missing required argument: --provider"
+}

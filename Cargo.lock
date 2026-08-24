@@ -822,6 +822,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "zt-direct-public-ingest"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "zt-adapters",
+ "zt-storage",
+]
+
+[[package]]
 name = "zt-local-scene-bridge"
 version = "0.1.0"
 dependencies = [
