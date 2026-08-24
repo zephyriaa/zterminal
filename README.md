@@ -61,6 +61,10 @@ The Windows strategy is **local-first where practical**. Work that can be perfor
 
 Central infrastructure remains responsible for functionality that genuinely requires centralized coordination, including authentication, entitlements, shared services, cloud synchronization, remote configuration and release distribution.
 
+<p align="center">
+  <img src="assets/zterminal-local-first.svg" alt="ZTerminal local-first architecture" width="1100" />
+</p>
+
 The exact local/server boundary will be refined through benchmarking rather than assumed in advance.
 
 ---
@@ -74,6 +78,10 @@ VWAP · Opening Range · Volume Profile · POC / VAH / VAL · HVN / LVN · Order
 ### Quantitative Research
 
 Strategy rules · Historical backtesting · Expectancy · Profit factor · Drawdown · R-multiple analysis · Monte Carlo · Walk-forward testing · Out-of-sample analysis
+
+<p align="center">
+  <img src="assets/zterminal-research-loop.svg" alt="ZTerminal quantitative research workflow" width="1100" />
+</p>
 
 ### Risk & Decision Support
 
@@ -118,6 +126,10 @@ Both are intended to use the same ZTerminal account and shared platform.
 ## Desktop distribution and automatic updates
 
 Users should **not** have to return to the website and manually reinstall ZTerminal for every release.
+
+<p align="center">
+  <img src="assets/zterminal-updates.svg" alt="ZTerminal Windows release and update workflow" width="1100" />
+</p>
 
 The production Windows release system is designed around:
 
