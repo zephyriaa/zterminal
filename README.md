@@ -5,7 +5,7 @@
 <h1 align="center">ZTerminal</h1>
 
 <p align="center">
-  <strong>Quantitative market intelligence evolving into a lightweight Windows trading terminal.</strong>
+  <strong>Quantitative market intelligence for everyone.</strong>
 </p>
 
 <p align="center">
