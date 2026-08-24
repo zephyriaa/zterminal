@@ -17,7 +17,7 @@ The Binance spot documentation exposes public aggregate trade, book ticker, dept
 
 The local adapter must be opt-in from the native client, use an allowlisted `wss://` endpoint, use no credentials for public channels, and retain provider/environment/status/sequence provenance in every normalized event. It must close/reconnect explicitly, rotate long-lived connections according to provider requirements, and record a gap on discontinuity instead of manufacturing a continuous chart.
 
-The first adapter tests use saved provider-shaped messages only. A manual Windows live-connection smoke test occurs after compile-time parsing and local storage integration pass; it must not involve account credentials or any execution capability.
+The first adapter tests use saved provider-shaped messages only. A bounded Windows live-connection smoke test subsequently succeeded by directly collecting three public Binance aggregate-trade messages over TLS. It used no account credentials, did not access private channels, did not send data through Render, and did not expose execution capability. The same smoke path first surfaced a missing TLS configuration and then an ambiguous Rustls crypto-provider configuration; both fail-closed conditions were corrected before the successful probe. The test is evidence of a local public path only, not a production entitlement, availability, or latency guarantee.
 
 ## References
 
