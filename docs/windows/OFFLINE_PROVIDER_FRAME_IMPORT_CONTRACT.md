@@ -40,3 +40,9 @@ This command is not a data downloader, historical backfill tool, sustained strea
 ## Validation evidence
 
 The importer unit suite validates a successful verified three-frame import that creates an integrity-checked local segment and produces a renderable `LocalChartScene`; an aggregate-ID gap that is withheld with no segment write; explicit no-flush behaviour; and a restart conflict that leaves the original immutable segment bytes unchanged. The focused importer tests and strict linting passed on Linux and on the connected Windows MSVC device. The command’s end-to-end local fixture run reported `network_opened: false`, two retained completed bars, and one persisted 160-byte segment. This is evidence of the offline local path only, not a claim of current market availability or provider entitlement.
+
+## Native host end-to-end evidence
+
+The connected Windows device imported three explicitly **test-only** offline aggregate-trade frames through the local command, then passed the returned immutable segment identity to the native Direct3D host. The importer reported `network_opened: false`, `outcome: persisted`, and a 160-byte segment containing two completed bars. The native host reported `fixture_only: false`, `chart_source: local_scene`, and two rendered candles. It truthfully labelled the view `LOCAL CACHED` because the imported capture time had elapsed; it did not claim the offline fixture was currently live. Renderer resize, device-recovery, and present-failure counters were all zero for that run.
+
+The raw test-only record is retained at `docs/windows/benchmarks/windows-offline-import-local-scene-smoke.json`. It proves the local import-to-scene-to-Direct3D handoff only. It does **not** prove a genuine provider connection, a fresh live chart, entitlement, backfill, reconnect, multiple segment navigation, cloud synchronization, execution, signing, installer delivery, or updates.

@@ -1,0 +1,50 @@
+{
+    "schema_version":  1,
+    "test_only_offline_frames":  true,
+    "network_opened":  false,
+    "importer":  {
+                     "schema_version":  1,
+                     "network_opened":  false,
+                     "provider":  "binance-spot-aggtrade",
+                     "source_frames":  3,
+                     "adapter_gaps":  0,
+                     "withheld_events":  0,
+                     "retained_completed_bars":  2,
+                     "flush_requested":  true,
+                     "outcome":  "persisted",
+                     "local_root":  "C:\\Manus\\zterminal\\out\\offline-import-local-scene-smoke\\store",
+                     "segment":  {
+                                     "symbol_id":  1,
+                                     "interval_ns":  1000000,
+                                     "start_ns":  1000000,
+                                     "bytes":  160
+                                 }
+                 },
+    "native_host":  {
+                        "schema_version":  1,
+                        "product":  "ZTerminal Native Local-First Host",
+                        "fixture_only":  false,
+                        "chart_source":  "local_scene",
+                        "local_availability":  "LOCAL CACHED",
+                        "local_bridge_diagnostic":  "",
+                        "fixture_candles":  2,
+                        "benchmark_unsynchronised_present":  false,
+                        "benchmark_resize_once":  false,
+                        "driver":  "hardware",
+                        "adapter":  "NVIDIA GeForce 710M",
+                        "feature_level":  "11_0",
+                        "launch_to_visible_ms":  138.239,
+                        "frame_samples":  119,
+                        "frame_average_ms":  16.817,
+                        "frame_p95_ms":  17.174,
+                        "frame_maximum_ms":  27.138,
+                        "renderer_resize_successes":  1,
+                        "renderer_resize_failures":  0,
+                        "renderer_device_recoveries":  0,
+                        "renderer_unrecoverable_device_failures":  0,
+                        "renderer_present_failures":  0,
+                        "renderer_last_error_hr":  0,
+                        "working_set_bytes":  29773824,
+                        "private_usage_bytes":  34304000
+                    }
+}
