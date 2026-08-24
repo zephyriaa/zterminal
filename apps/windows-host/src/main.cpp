@@ -1,8 +1,10 @@
 //
 // Windows-only local-first ZTerminal native host.
-// This vertical slice renders only explicitly labelled deterministic fixture
-// candles. It does not fetch, proxy, or manufacture market data. Real provider
-// data must enter later through the Rust protocol and local SegmentStore.
+// This vertical slice defaults to a withheld local chart state and renders only
+// an explicitly requested bounded local scene. Deterministic fixture candles
+// remain a labelled diagnostic path. It does not fetch, proxy, or manufacture
+// market data; verified provider bars must enter through the Rust protocol and
+// local SegmentStore before any local scene can be rendered.
 //
 
 #include "local_scene_bridge.h"
@@ -222,11 +224,28 @@ void append_rectangle(
 class Renderer final {
 public:
     bool initialize(HWND window) {
+        window_ = window;
+        return recreate_device_resources();
+    }
+
+    bool recreate_device_resources() {
+        render_target_.Reset();
+        vertex_buffer_.Reset();
+        input_layout_.Reset();
+        vertex_shader_.Reset();
+        pixel_shader_.Reset();
+        swap_chain_.Reset();
+        context_.Reset();
+        device_.Reset();
+        used_warp_ = false;
+        selected_feature_level_ = {};
+        adapter_description_.clear();
+
         DXGI_SWAP_CHAIN_DESC descriptor{};
         descriptor.BufferCount = 2;
         descriptor.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         descriptor.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        descriptor.OutputWindow = window;
+        descriptor.OutputWindow = window_;
         descriptor.SampleDesc.Count = 1;
         descriptor.Windowed = TRUE;
         descriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
@@ -253,7 +272,7 @@ public:
                 levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION, &descriptor,
                 swap_chain_.GetAddressOf(), device_.GetAddressOf(), &selected_feature_level_, context_.GetAddressOf());
         }
-        if (FAILED(result)) {
+        if (FAILED(result) && !recovering_device_) {
             used_warp_ = true;
             result = D3D11CreateDeviceAndSwapChain(
                 nullptr, D3D_DRIVER_TYPE_WARP, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
@@ -268,14 +287,25 @@ public:
     }
 
     void resize(UINT width, UINT height) {
-        if (!swap_chain_ || width == 0 || height == 0) {
+        if (!swap_chain_ || !context_ || width == 0 || height == 0) {
             return;
         }
+        context_->OMSetRenderTargets(0, nullptr, nullptr);
+        context_->ClearState();
+        context_->Flush();
         render_target_.Reset();
-        if (SUCCEEDED(swap_chain_->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0))) {
+        const HRESULT result = swap_chain_->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+        if (SUCCEEDED(result) && create_render_target()) {
             width_ = width;
             height_ = height;
-            (void)create_render_target();
+            ++resize_successes_;
+            return;
+        }
+        last_renderer_error_ = FAILED(result) ? result : E_FAIL;
+        if (is_device_loss(last_renderer_error_)) {
+            (void)recover_device(last_renderer_error_);
+        } else {
+            ++resize_failures_;
         }
     }
 
@@ -309,8 +339,16 @@ public:
             }
         }
 
-        if (SUCCEEDED(swap_chain_->Present(unsynchronised_present ? 0U : 1U, 0))) {
+        const HRESULT present_result = swap_chain_->Present(unsynchronised_present ? 0U : 1U, 0);
+        if (SUCCEEDED(present_result)) {
             frame_stats_.add(std::chrono::duration<double, std::milli>(Clock::now() - frame_started).count());
+        } else {
+            last_renderer_error_ = present_result;
+            if (is_device_loss(present_result)) {
+                (void)recover_device(present_result);
+            } else {
+                ++present_failures_;
+            }
         }
     }
 
@@ -318,8 +356,33 @@ public:
     [[nodiscard]] D3D_FEATURE_LEVEL feature_level() const { return selected_feature_level_; }
     [[nodiscard]] const std::wstring& adapter_description() const { return adapter_description_; }
     [[nodiscard]] FrameSummary frame_summary() const { return frame_stats_.summarize(); }
+    [[nodiscard]] std::uint64_t resize_successes() const { return resize_successes_; }
+    [[nodiscard]] std::uint64_t resize_failures() const { return resize_failures_; }
+    [[nodiscard]] std::uint64_t device_recoveries() const { return device_recoveries_; }
+    [[nodiscard]] std::uint64_t unrecoverable_device_failures() const { return unrecoverable_device_failures_; }
+    [[nodiscard]] std::uint64_t present_failures() const { return present_failures_; }
+    [[nodiscard]] HRESULT last_renderer_error() const { return last_renderer_error_; }
 
 private:
+    [[nodiscard]] static bool is_device_loss(HRESULT result) {
+        return result == DXGI_ERROR_DEVICE_REMOVED
+            || result == DXGI_ERROR_DEVICE_RESET
+            || result == DXGI_ERROR_DEVICE_HUNG;
+    }
+
+    bool recover_device(HRESULT result) {
+        last_renderer_error_ = result;
+        recovering_device_ = true;
+        const bool recovered = recreate_device_resources();
+        recovering_device_ = false;
+        if (recovered) {
+            ++device_recoveries_;
+            return true;
+        }
+        ++unrecoverable_device_failures_;
+        return false;
+    }
+
     bool create_render_target() {
         ComPtr<ID3D11Texture2D> back_buffer;
         if (FAILED(swap_chain_->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf())))) {
@@ -416,12 +479,20 @@ private:
         }
     }
 
+    HWND window_{};
     bool used_warp_{};
+    bool recovering_device_{};
     D3D_FEATURE_LEVEL selected_feature_level_{};
     UINT width_{1280};
     UINT height_{820};
     std::wstring adapter_description_;
     FrameStats frame_stats_;
+    std::uint64_t resize_successes_{};
+    std::uint64_t resize_failures_{};
+    std::uint64_t device_recoveries_{};
+    std::uint64_t unrecoverable_device_failures_{};
+    std::uint64_t present_failures_{};
+    HRESULT last_renderer_error_{S_OK};
     ComPtr<ID3D11Device> device_;
     ComPtr<ID3D11DeviceContext> context_;
     ComPtr<IDXGISwapChain> swap_chain_;
@@ -450,6 +521,7 @@ std::uint64_t local_age_ns{};
 bool render_requested = true;
 bool continuous_benchmark_rendering = false;
 bool unsynchronised_benchmark_present = false;
+bool benchmark_resize_once = false;
 
 void request_frame(HWND window) {
     render_requested = true;
@@ -498,6 +570,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     case WM_SIZE:
         if (renderer != nullptr && w_param != SIZE_MINIMIZED) {
             renderer->resize(LOWORD(l_param), HIWORD(l_param));
+            request_frame(window);
         }
         return 0;
     case WM_MOUSEMOVE:
@@ -713,6 +786,7 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"local_bridge_diagnostic\": \"" << json_escape(utf8_from_wide(local_diagnostic)) << "\",\n";
     output << "  \"fixture_candles\": " << chart_candles.size() << ",\n";
     output << "  \"benchmark_unsynchronised_present\": " << (unsynchronised_benchmark_present ? "true" : "false") << ",\n";
+    output << "  \"benchmark_resize_once\": " << (benchmark_resize_once ? "true" : "false") << ",\n";
     output << "  \"driver\": \"" << (native_renderer.used_warp() ? "warp" : "hardware") << "\",\n";
     output << "  \"adapter\": \"" << json_escape(utf8_from_wide(native_renderer.adapter_description())) << "\",\n";
     output << "  \"feature_level\": \"" << feature_level_name(native_renderer.feature_level()) << "\",\n";
@@ -721,6 +795,12 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"frame_average_ms\": " << frames.average_ms << ",\n";
     output << "  \"frame_p95_ms\": " << frames.p95_ms << ",\n";
     output << "  \"frame_maximum_ms\": " << frames.maximum_ms << ",\n";
+    output << "  \"renderer_resize_successes\": " << native_renderer.resize_successes() << ",\n";
+    output << "  \"renderer_resize_failures\": " << native_renderer.resize_failures() << ",\n";
+    output << "  \"renderer_device_recoveries\": " << native_renderer.device_recoveries() << ",\n";
+    output << "  \"renderer_unrecoverable_device_failures\": " << native_renderer.unrecoverable_device_failures() << ",\n";
+    output << "  \"renderer_present_failures\": " << native_renderer.present_failures() << ",\n";
+    output << "  \"renderer_last_error_hr\": " << static_cast<long>(native_renderer.last_renderer_error()) << ",\n";
     output << "  \"working_set_bytes\": " << (has_memory ? memory.WorkingSetSize : 0) << ",\n";
     output << "  \"private_usage_bytes\": " << (has_memory ? memory.PrivateUsage : 0) << "\n";
     output << "}\n";
@@ -762,6 +842,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
     continuous_benchmark_rendering = auto_close_after_seconds > 0;
     unsynchronised_benchmark_present = auto_close_after_seconds > 0
         && has_option(command_line, L"--benchmark-unsynchronised-present");
+    benchmark_resize_once = auto_close_after_seconds > 0
+        && has_option(command_line, L"--benchmark-resize-once");
+    if (benchmark_resize_once) {
+        // Internal diagnostic only: drive one ordinary WM_SIZE path without a
+        // cross-process window controller or any source/data change.
+        (void)SetWindowPos(window, nullptr, 0, 0, 1024, 680, SWP_NOMOVE | SWP_NOZORDER);
+    }
     const auto benchmark_deadline = Clock::now() + std::chrono::seconds(auto_close_after_seconds);
 
     MSG message{};

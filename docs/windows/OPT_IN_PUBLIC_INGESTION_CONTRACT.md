@@ -1,6 +1,6 @@
 # Opt-In Public Ingestion Contract
 
-**Status:** Implemented as a feature-gated, finite local ingestion foundation and fully validated on Linux with deterministic supplied-event tests. The default build opens no provider connection. Windows feature validation is pending because the connected device’s terminal bridge disconnected during the final check; no Windows result is claimed by this document. This contract does not authorize a reconnecting service, background process, cloud proxy, provider fallback, private channel, credential, broker action, or public release.
+**Status:** Implemented as a feature-gated, finite local ingestion foundation. The default and `live-public` feature builds both passed deterministic supplied-event tests and strict linting on Linux and the connected Windows MSVC device. No live provider connection was opened by these validations. This contract does not authorize a reconnecting service, background process, cloud proxy, provider fallback, private channel, credential, broker action, or public release.
 
 ## Purpose
 
