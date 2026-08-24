@@ -247,6 +247,129 @@ impl ExponentialMovingAverage {
     }
 }
 
+/// A bounded, deterministic local replay over previously verified bars.
+#[derive(Clone, Debug)]
+pub struct ReplaySession {
+    bars: Vec<Bar>,
+    cursor: usize,
+    expected_open_ns: Option<u64>,
+}
+
+/// Result of one explicit local replay step.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ReplayStep {
+    /// One verified historical bar is available for local rendering/research.
+    Bar(Bar),
+    /// The replay reached a missing or degraded range and must not continue.
+    Halted {
+        /// The timestamp the replay expected next, when known.
+        expected_open_ns: Option<u64>,
+        /// The provenance state that made the range unavailable.
+        data_status: DataStatus,
+    },
+    /// Every retained verified bar was replayed.
+    Completed,
+}
+
+/// Bounded local research result for an incremental EMA calculation.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct EmaResearchResult {
+    /// Number of verified bars consumed before completion or halt.
+    pub processed_bars: usize,
+    /// Last calculated EMA value, if at least one bar was processed.
+    pub last_ema: Option<f64>,
+    /// Whether the run completed without encountering a gap/degraded range.
+    pub complete: bool,
+    /// Status which stopped the run when `complete` is false.
+    pub halted_status: Option<DataStatus>,
+}
+
+impl ReplaySession {
+    /// Creates a replay session with an explicit maximum retained bar count.
+    ///
+    /// The caller supplies only locally verified bars. A session can detect an
+    /// unrepresented interval but never creates a synthetic replacement bar.
+    pub fn new(bars: Vec<Bar>, maximum_bars: usize) -> Result<Self, &'static str> {
+        if maximum_bars == 0 || bars.len() > maximum_bars {
+            return Err("replay retention bound was exceeded");
+        }
+        let mut previous: Option<Bar> = None;
+        for bar in &bars {
+            if bar.interval_ns == 0 {
+                return Err("replay bar interval must be non-zero");
+            }
+            if let Some(prior) = previous {
+                if prior.symbol_id != bar.symbol_id
+                    || prior.interval_ns != bar.interval_ns
+                    || bar.open_time_ns <= prior.open_time_ns
+                {
+                    return Err("replay bars must be sorted for one symbol and interval");
+                }
+            }
+            previous = Some(*bar);
+        }
+        Ok(Self {
+            bars,
+            cursor: 0,
+            expected_open_ns: None,
+        })
+    }
+
+    /// Advances one bar, halting on provenance degradation or an interval gap.
+    pub fn step(&mut self) -> ReplayStep {
+        let Some(bar) = self.bars.get(self.cursor).copied() else {
+            return ReplayStep::Completed;
+        };
+        if let Some(expected_open_ns) = self.expected_open_ns {
+            if bar.open_time_ns != expected_open_ns {
+                return ReplayStep::Halted {
+                    expected_open_ns: Some(expected_open_ns),
+                    data_status: DataStatus::Gap,
+                };
+            }
+        }
+        if bar.data_status != DataStatus::Live {
+            return ReplayStep::Halted {
+                expected_open_ns: self.expected_open_ns,
+                data_status: bar.data_status,
+            };
+        }
+        self.cursor = self.cursor.saturating_add(1);
+        self.expected_open_ns = Some(bar.open_time_ns.saturating_add(bar.interval_ns));
+        ReplayStep::Bar(bar)
+    }
+
+    /// Runs a bounded incremental EMA calculation over the replay data.
+    pub fn run_ema(&mut self, period: u32) -> EmaResearchResult {
+        let mut ema = ExponentialMovingAverage::new(period);
+        let mut processed_bars: usize = 0;
+        loop {
+            match self.step() {
+                ReplayStep::Bar(bar) => {
+                    let _ = ema.update(bar.close_ticks as f64);
+                    processed_bars = processed_bars.saturating_add(1);
+                }
+                ReplayStep::Completed => {
+                    return EmaResearchResult {
+                        processed_bars,
+                        last_ema: ema.value,
+                        complete: true,
+                        halted_status: None,
+                    };
+                }
+                ReplayStep::Halted { data_status, .. } => {
+                    return EmaResearchResult {
+                        processed_bars,
+                        last_ema: ema.value,
+                        complete: false,
+                        halted_status: Some(data_status),
+                    };
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -331,5 +454,61 @@ mod tests {
         assert_eq!(ema.update(10.0), 10.0);
         assert_eq!(ema.update(14.0), 12.0);
         assert_eq!(ema.update(14.0), 13.0);
+    }
+
+    fn bar(open_time_ns: u64, close_ticks: i64, data_status: DataStatus) -> Bar {
+        Bar {
+            symbol_id: 9,
+            open_time_ns,
+            interval_ns: SECOND,
+            open_ticks: close_ticks,
+            high_ticks: close_ticks,
+            low_ticks: close_ticks,
+            close_ticks,
+            volume: 1,
+            last_sequence: 1,
+            data_status,
+        }
+    }
+
+    #[test]
+    fn replay_runs_local_ema_only_on_contiguous_verified_history() {
+        let mut replay = ReplaySession::new(
+            vec![
+                bar(0, 10, DataStatus::Live),
+                bar(SECOND, 14, DataStatus::Live),
+            ],
+            10,
+        )
+        .expect("bounded verified replay should configure");
+        assert_eq!(
+            replay.run_ema(3),
+            EmaResearchResult {
+                processed_bars: 2,
+                last_ema: Some(12.0),
+                complete: true,
+                halted_status: None,
+            }
+        );
+    }
+
+    #[test]
+    fn replay_halts_on_missing_interval_without_synthetic_bar() {
+        let mut replay = ReplaySession::new(
+            vec![
+                bar(0, 10, DataStatus::Live),
+                bar(SECOND * 2, 12, DataStatus::Live),
+            ],
+            10,
+        )
+        .expect("ordered source bars should configure");
+        assert_eq!(replay.step(), ReplayStep::Bar(bar(0, 10, DataStatus::Live)));
+        assert_eq!(
+            replay.step(),
+            ReplayStep::Halted {
+                expected_open_ns: Some(SECOND),
+                data_status: DataStatus::Gap,
+            }
+        );
     }
 }
