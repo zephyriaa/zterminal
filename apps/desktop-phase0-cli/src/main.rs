@@ -79,6 +79,8 @@ fn main() {
             bytes: 512,
             last_access: index,
             data_status: DataStatus::Live,
+            // Fixture-only index benchmark: no payload is persisted here.
+            content_hash: 0,
         });
         evictions = evictions.saturating_add(mutation.evicted.len() as u64);
     }
