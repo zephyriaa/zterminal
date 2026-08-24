@@ -61,21 +61,11 @@ internal static class Program
                 DeleteDirectoryIfPresent(stagingRoot);
             }
 
-            var suppressLaunch = string.Equals(
-                Environment.GetEnvironmentVariable("ZTERMINAL_INSTALLER_NO_LAUNCH"),
-                "1",
-                StringComparison.Ordinal);
-            if (!suppressLaunch)
+            if (!string.Equals(Environment.GetEnvironmentVariable("ZTERMINAL_INSTALLER_NO_UI"), "1", StringComparison.Ordinal))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = Path.Combine(applicationRoot, "ZTerminalWindowsHost.exe"),
-                    WorkingDirectory = applicationRoot,
-                    UseShellExecute = true,
-                });
                 MessageBox.Show(
-                    "ZTerminal was installed for this Windows user and the native app has been opened.\n\n"
-                    + "The installer did not connect to a provider or enable cloud sync.",
+                    "ZTerminal was installed for this Windows user.\n\n"
+                    + "Open it from the ZTerminal Start Menu shortcut. The installer did not connect to a provider or enable cloud sync.",
                     "ZTerminal installation complete",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
