@@ -848,6 +848,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "zt-local-segment-catalog"
+version = "0.1.0"
+dependencies = [
+ "zt-protocol",
+ "zt-storage",
+]
+
+[[package]]
 name = "zt-offline-provider-import"
 version = "0.1.0"
 dependencies = [

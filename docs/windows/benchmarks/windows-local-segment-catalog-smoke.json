@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "test_only_offline_frames": true,
+  "packaged_importer": true,
+  "packaged_local_segment_catalog": true,
+  "execution_uses_cargo": false,
+  "network_opened": false,
+  "missing_argument_guard": {
+    "exit_code": 2,
+    "rejected_before_local_read": true
+  },
+  "imported_segments": {
+    "count": 2,
+    "retained_completed_bars_per_segment": 6
+  },
+  "catalog": {
+    "entry_count": 2,
+    "truncated": false,
+    "malformed_metadata_entries": 0,
+    "missing_payload_entries": 0,
+    "corrupt_payload_entries": 0,
+    "ordered": true
+  }
+}

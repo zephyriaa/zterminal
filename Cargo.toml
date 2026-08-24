@@ -8,6 +8,7 @@ members = [
   "apps/desktop-phase0-cli",
   "apps/zt-local-scene-bridge",
   "apps/zt-local-monte-carlo",
+  "apps/zt-local-segment-catalog",
   "apps/zt-offline-provider-import",
   "apps/zt-direct-public-ingest",
 ]
