@@ -23,7 +23,7 @@ The internal installation manifest records only aggregate package state: schema,
 
 ## Build and verification
 
-`apps/windows-host/scripts/build-private-installer.ps1` builds `out/private-installer/ZTerminal-Private-Setup.exe` using Windows IExpress. The build requires a complete existing Release directory, is finite, and performs no network action. The installer can be smoke-tested by redirecting `LOCALAPPDATA` and `APPDATA` to an isolated test root; a smoke never targets the user's real application or data paths.
+`apps/windows-host/scripts/build-private-installer.ps1` compiles `apps/windows-host/installer/Setup.cs` into `out/private-installer/ZTerminal-Private-Setup.exe` with one embedded ZIP payload. The setup executable visibly reports completion or failure, atomically deploys the bounded payload, creates the shortcut, and opens the installed native host after an ordinary interactive install. The build requires a complete existing Release directory, is finite, and performs no network action. A smoke uses the explicit `ZTERMINAL_INSTALLER_ROOT` override together with noninteractive/no-launch switches; it never targets the user's real application or data paths.
 
 ## Signing boundary
 
