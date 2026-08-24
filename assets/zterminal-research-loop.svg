@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0d1117"/><stop offset="1" stop-color="#161b22"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".35"/></filter></defs>
+<rect width="1200" height="520" rx="26" fill="url(#bg)"/>
+<text x="65" y="68" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="30" font-weight="700">Research → Validate → Improve</text>
+<text x="65" y="100" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="17">A repeatable workflow for turning an idea into measured evidence.</text>
+
+<g filter="url(#s)">
+<rect x="70" y="155" width="245" height="120" rx="20" fill="#111827" stroke="#1f6feb"/>
+<rect x="345" y="155" width="245" height="120" rx="20" fill="#111827" stroke="#a371f7"/>
+<rect x="620" y="155" width="245" height="120" rx="20" fill="#111827" stroke="#f0883e"/>
+<rect x="895" y="155" width="235" height="120" rx="20" fill="#111827" stroke="#3fb950"/>
+</g>
+
+<text x="98" y="195" fill="#58a6ff" font-family="Inter,Segoe UI,sans-serif" font-size="16" font-weight="700">01</text>
+<text x="98" y="225" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="700">HYPOTHESIS</text>
+<text x="98" y="253" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="15">Define objective rules.</text>
+
+<text x="373" y="195" fill="#a371f7" font-family="Inter,Segoe UI,sans-serif" font-size="16" font-weight="700">02</text>
+<text x="373" y="225" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="700">BACKTEST</text>
+<text x="373" y="253" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="15">Test historical behavior.</text>
+
+<text x="648" y="195" fill="#f0883e" font-family="Inter,Segoe UI,sans-serif" font-size="16" font-weight="700">03</text>
+<text x="648" y="225" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="700">ROBUSTNESS</text>
+<text x="648" y="253" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="15">Try to break the edge.</text>
+
+<text x="923" y="195" fill="#56d364" font-family="Inter,Segoe UI,sans-serif" font-size="16" font-weight="700">04</text>
+<text x="923" y="225" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="700">VALIDATION</text>
+<text x="923" y="253" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="15">Out-of-sample evidence.</text>
+
+<g fill="none" stroke="#58a6ff" stroke-width="4"><path d="M315 215 H340"/><path d="M333 207 L343 215 L333 223"/></g>
+<g fill="none" stroke="#a371f7" stroke-width="4"><path d="M590 215 H615"/><path d="M608 207 L618 215 L608 223"/></g>
+<g fill="none" stroke="#f0883e" stroke-width="4"><path d="M865 215 H890"/><path d="M883 207 L893 215 L883 223"/></g>
+
+<path d="M1010 315 C1010 390 880 430 605 430 C330 430 190 390 190 315" fill="none" stroke="#30363d" stroke-width="3"/>
+<path d="M188 313 L190 330 L200 319" fill="none" stroke="#79c0ff" stroke-width="3"/>
+
+<rect x="385" y="360" width="430" height="95" rx="20" fill="#0b1220" stroke="#30363d"/>
+<text x="600" y="398" text-anchor="middle" fill="#f0f6fc" font-family="Inter,Segoe UI,sans-serif" font-size="20" font-weight="700">LIVE MONITORING</text>
+<text x="600" y="428" text-anchor="middle" fill="#8b949e" font-family="Inter,Segoe UI,sans-serif" font-size="15">Trade → Data → Analysis → Improvement → New Hypothesis</text>
+</svg>
