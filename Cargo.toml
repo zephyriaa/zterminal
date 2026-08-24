@@ -9,6 +9,7 @@ members = [
   "apps/zt-local-scene-bridge",
   "apps/zt-local-monte-carlo",
   "apps/zt-local-segment-catalog",
+  "apps/zt-local-workspace",
   "apps/zt-offline-provider-import",
   "apps/zt-direct-public-ingest",
 ]

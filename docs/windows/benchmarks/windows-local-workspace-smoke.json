@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "packaged_local_workspace": true,
+  "execution_uses_cargo": false,
+  "network_opened": false,
+  "missing_argument_guard": {
+    "exit_code": 2,
+    "rejected_before_local_persistence": true
+  },
+  "local_snapshot": {
+    "workspace_id": 7,
+    "revision": 1,
+    "sync_state": "local_only",
+    "payload_bytes": 19,
+    "payload_disclosed": false
+  },
+  "compaction": {
+    "compacted": true,
+    "local_only": true
+  },
+  "missing_workspace": {
+    "workspace_id": 8,
+    "found": false
+  }
+}
