@@ -49,7 +49,7 @@ try {
     $fixture = Invoke-BoundedProcess -FilePath $HostExecutable -Arguments "--fixture-candles=10000 --benchmark-seconds=$BenchmarkSeconds" -TimeoutMilliseconds (($BenchmarkSeconds + 15) * 1000)
     if ($fixture.exit_code -ne 0) { throw "Fixture buffer benchmark exited with code $($fixture.exit_code): $($fixture.stderr.Trim())" }
     $fixtureNative = Read-NativeDiagnostics -DiagnosticPath $diagnostic
-    if (-not $fixtureNative.fixture_only -or $fixtureNative.chart_source -ne 'fixture' -or $fixtureNative.benchmark_unsynchronised_present -or $fixtureNative.renderer_vertex_buffer_uploads -lt 1 -or $fixtureNative.renderer_vertex_buffer_uploads -gt 2 -or $fixtureNative.renderer_retained_draw_reuses -lt 1 -or $fixtureNative.renderer_retained_draw_reuses -le $fixtureNative.renderer_vertex_buffer_uploads -or $fixtureNative.renderer_present_failures -ne 0) {
+    if (-not $fixtureNative.fixture_only -or $fixtureNative.chart_source -ne 'fixture' -or $fixtureNative.benchmark_unsynchronised_present -or $fixtureNative.renderer_vertex_buffer_uploads -lt 1 -or $fixtureNative.renderer_vertex_buffer_uploads -gt 2 -or $fixtureNative.renderer_retained_draw_reuses -lt 1 -or $fixtureNative.renderer_retained_draw_reuses -le $fixtureNative.renderer_vertex_buffer_uploads -or $fixtureNative.renderer_retained_vertex_rebuilds -ne $fixtureNative.renderer_vertex_buffer_uploads -or $fixtureNative.renderer_present_failures -ne 0) {
         throw "Fixture rendering did not retain and reuse a bounded vertex range under synchronized presentation: $($fixtureNative | ConvertTo-Json -Compress)"
     }
 
@@ -78,7 +78,7 @@ try {
     $local = Invoke-BoundedProcess -FilePath $HostExecutable -Arguments $localArguments -TimeoutMilliseconds (($BenchmarkSeconds + 15) * 1000)
     if ($local.exit_code -ne 0) { throw "Local scene buffer benchmark exited with code $($local.exit_code): $($local.stderr.Trim())" }
     $localNative = Read-NativeDiagnostics -DiagnosticPath $diagnostic
-    if ($localNative.fixture_only -or $localNative.chart_source -ne 'local_scene' -or ($localNative.local_availability -ne 'LOCAL LIVE' -and $localNative.local_availability -ne 'LOCAL CACHED') -or $localNative.fixture_candles -ne 2 -or $localNative.local_total_bars -ne 6 -or $localNative.benchmark_unsynchronised_present -or $localNative.renderer_vertex_buffer_uploads -lt 1 -or $localNative.renderer_vertex_buffer_uploads -gt 2 -or $localNative.renderer_retained_draw_reuses -lt 1 -or $localNative.renderer_retained_draw_reuses -le $localNative.renderer_vertex_buffer_uploads -or $localNative.renderer_present_failures -ne 0) {
+    if ($localNative.fixture_only -or $localNative.chart_source -ne 'local_scene' -or ($localNative.local_availability -ne 'LOCAL LIVE' -and $localNative.local_availability -ne 'LOCAL CACHED') -or $localNative.fixture_candles -ne 2 -or $localNative.local_total_bars -ne 6 -or $localNative.benchmark_unsynchronised_present -or $localNative.renderer_vertex_buffer_uploads -lt 1 -or $localNative.renderer_vertex_buffer_uploads -gt 2 -or $localNative.renderer_retained_draw_reuses -lt 1 -or $localNative.renderer_retained_draw_reuses -le $localNative.renderer_vertex_buffer_uploads -or $localNative.renderer_retained_vertex_rebuilds -ne $localNative.renderer_vertex_buffer_uploads -or $localNative.renderer_present_failures -ne 0) {
         throw "Verified local chart did not retain and reuse a bounded vertex range under synchronized presentation: $($localNative | ConvertTo-Json -Compress)"
     }
 
@@ -90,6 +90,7 @@ try {
         fixture_diagnostic = [pscustomobject]@{
             vertex_buffer_uploads = $fixtureNative.renderer_vertex_buffer_uploads
             retained_draw_reuses = $fixtureNative.renderer_retained_draw_reuses
+            retained_vertex_rebuilds = $fixtureNative.renderer_retained_vertex_rebuilds
             present_failures = $fixtureNative.renderer_present_failures
         }
         verified_local_scene = [pscustomobject]@{
@@ -97,6 +98,7 @@ try {
             chart_source = $localNative.chart_source
             vertex_buffer_uploads = $localNative.renderer_vertex_buffer_uploads
             retained_draw_reuses = $localNative.renderer_retained_draw_reuses
+            retained_vertex_rebuilds = $localNative.renderer_retained_vertex_rebuilds
             retained_vertex_clears = $localNative.renderer_retained_vertex_clears
             present_failures = $localNative.renderer_present_failures
         }

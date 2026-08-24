@@ -1,0 +1,21 @@
+{
+    "schema_version":  1,
+    "execution_uses_cargo":  false,
+    "network_opened":  false,
+    "synchronized_present":  true,
+    "fixture_diagnostic":  {
+                               "vertex_buffer_uploads":  2,
+                               "retained_draw_reuses":  119,
+                               "retained_vertex_rebuilds":  2,
+                               "present_failures":  0
+                           },
+    "verified_local_scene":  {
+                                 "test_only_offline_frames":  true,
+                                 "chart_source":  "local_scene",
+                                 "vertex_buffer_uploads":  1,
+                                 "retained_draw_reuses":  121,
+                                 "retained_vertex_rebuilds":  1,
+                                 "retained_vertex_clears":  0,
+                                 "present_failures":  0
+                             }
+}

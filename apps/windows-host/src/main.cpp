@@ -286,12 +286,16 @@ public:
             return false;
         }
         populate_adapter_diagnostics();
-        return create_render_target() && create_pipeline();
+        if (!create_render_target() || !create_pipeline()) {
+            return false;
+        }
+        advance_geometry_revision();
+        return true;
     }
 
-    void resize(UINT width, UINT height) {
+    [[nodiscard]] bool resize(UINT width, UINT height) {
         if (!swap_chain_ || !context_ || width == 0 || height == 0) {
-            return;
+            return false;
         }
         context_->OMSetRenderTargets(0, nullptr, nullptr);
         context_->ClearState();
@@ -302,20 +306,23 @@ public:
             width_ = width;
             height_ = height;
             ++resize_successes_;
-            return;
+            advance_geometry_revision();
+            return true;
         }
         last_renderer_error_ = FAILED(result) ? result : E_FAIL;
         if (is_device_loss(last_renderer_error_)) {
-            (void)recover_device(last_renderer_error_);
-        } else {
-            ++resize_failures_;
+            return recover_device(last_renderer_error_);
         }
+        ++resize_failures_;
+        return false;
     }
 
     void render(
         const std::vector<ChartCandle>& candles,
         const ChartView& view,
         std::uint64_t scene_revision,
+        std::uint64_t view_revision,
+        bool force_rebuild,
         bool unsynchronised_present
     ) {
         if (!context_ || !render_target_ || !swap_chain_ || !vertex_buffer_) {
@@ -331,9 +338,13 @@ public:
         if (candles.empty()) {
             clear_retained_vertices(true);
         } else {
-            const std::uint64_t signature = chart_input_signature(candles, view, scene_revision);
-            if (!retained_signature_.has_value() || *retained_signature_ != signature) {
-                rebuild_retained_vertices(candles, view, signature);
+            const RenderInputRevision input_revision{
+                .scene = scene_revision,
+                .view = view_revision,
+                .geometry = geometry_revision_,
+            };
+            if (force_rebuild || !retained_input_revision_.has_value() || *retained_input_revision_ != input_revision) {
+                rebuild_retained_vertices(candles, view, input_revision);
             }
             if (retained_upload_required_ && retained_vertex_count_ > 0) {
                 D3D11_MAPPED_SUBRESOURCE mapped{};
@@ -386,6 +397,7 @@ public:
     [[nodiscard]] std::uint64_t vertex_buffer_uploads() const { return vertex_buffer_uploads_; }
     [[nodiscard]] std::uint64_t retained_draw_reuses() const { return retained_draw_reuses_; }
     [[nodiscard]] std::uint64_t retained_vertex_clears() const { return retained_vertex_clears_; }
+    [[nodiscard]] std::uint64_t retained_vertex_rebuilds() const { return retained_vertex_rebuilds_; }
 
 private:
     [[nodiscard]] static bool is_device_loss(HRESULT result) {
@@ -447,57 +459,34 @@ private:
         return SUCCEEDED(device_->CreateBuffer(&buffer, nullptr, vertex_buffer_.GetAddressOf()));
     }
 
+    struct RenderInputRevision {
+        std::uint64_t scene{};
+        std::uint64_t view{};
+        std::uint64_t geometry{};
+
+        [[nodiscard]] bool operator==(const RenderInputRevision&) const = default;
+    };
+
+    void advance_geometry_revision() {
+        if (geometry_revision_ < std::numeric_limits<std::uint64_t>::max()) {
+            ++geometry_revision_;
+        }
+    }
+
     void clear_retained_vertices(bool record_clear) {
         if (retained_vertex_count_ > 0 && record_clear) {
             ++retained_vertex_clears_;
         }
         retained_vertices_.clear();
         retained_vertex_count_ = 0;
-        retained_signature_.reset();
+        retained_input_revision_.reset();
         retained_upload_required_ = false;
-    }
-
-    [[nodiscard]] static std::uint64_t hash_u64(std::uint64_t state, std::uint64_t value) {
-        constexpr std::uint64_t prime = 1'099'511'628'211ULL;
-        for (std::size_t byte = 0; byte < sizeof(value); ++byte) {
-            state ^= (value >> (byte * 8)) & 0xFFU;
-            state *= prime;
-        }
-        return state;
-    }
-
-    [[nodiscard]] std::uint64_t chart_input_signature(
-        const std::vector<ChartCandle>& candles,
-        const ChartView& view,
-        std::uint64_t scene_revision
-    ) const {
-        std::uint64_t state = 14'695'981'039'346'656'037ULL;
-        state = hash_u64(state, scene_revision);
-        state = hash_u64(state, static_cast<std::uint64_t>(view.first));
-        state = hash_u64(state, static_cast<std::uint64_t>(view.visible));
-        state = hash_u64(state, view.has_cursor ? 1U : 0U);
-        state = hash_u64(state, static_cast<std::uint64_t>(static_cast<std::int64_t>(view.cursor.x)));
-        state = hash_u64(state, static_cast<std::uint64_t>(static_cast<std::int64_t>(view.cursor.y)));
-        state = hash_u64(state, width_);
-        state = hash_u64(state, height_);
-        const std::size_t visible = std::min({view.visible, kMaximumVisibleCandles, candles.size()});
-        const std::size_t first = visible == 0 ? 0 : std::min(view.first, candles.size() - visible);
-        state = hash_u64(state, static_cast<std::uint64_t>(visible));
-        for (std::size_t index = first; index < first + visible; ++index) {
-            for (const double value : {candles[index].open, candles[index].high, candles[index].low, candles[index].close}) {
-                std::uint64_t bits{};
-                static_assert(sizeof(bits) == sizeof(value));
-                std::memcpy(&bits, &value, sizeof(bits));
-                state = hash_u64(state, bits);
-            }
-        }
-        return state;
     }
 
     void rebuild_retained_vertices(
         const std::vector<ChartCandle>& candles,
         const ChartView& view,
-        std::uint64_t signature
+        RenderInputRevision input_revision
     ) {
         retained_vertices_.clear();
         if (retained_vertices_.capacity() < kMaximumVertices) {
@@ -509,8 +498,9 @@ private:
             return;
         }
         retained_vertex_count_ = static_cast<UINT>(retained_vertices_.size());
-        retained_signature_ = signature;
+        retained_input_revision_ = input_revision;
         retained_upload_required_ = retained_vertex_count_ > 0;
+        ++retained_vertex_rebuilds_;
     }
 
     void chart_vertices(
@@ -586,12 +576,14 @@ private:
     std::uint64_t present_failures_{};
     HRESULT last_renderer_error_{S_OK};
     std::vector<Vertex> retained_vertices_;
-    std::optional<std::uint64_t> retained_signature_;
+    std::optional<RenderInputRevision> retained_input_revision_;
     UINT retained_vertex_count_{};
     bool retained_upload_required_{};
     std::uint64_t vertex_buffer_uploads_{};
     std::uint64_t retained_draw_reuses_{};
     std::uint64_t retained_vertex_clears_{};
+    std::uint64_t retained_vertex_rebuilds_{};
+    std::uint64_t geometry_revision_{};
     ComPtr<ID3D11Device> device_;
     ComPtr<ID3D11DeviceContext> context_;
     ComPtr<IDXGISwapChain> swap_chain_;
@@ -612,6 +604,8 @@ Renderer* renderer = nullptr;
 ChartView chart_view;
 std::vector<ChartCandle> chart_candles;
 std::uint64_t chart_scene_revision{};
+std::uint64_t chart_view_revision{};
+bool force_chart_vertex_rebuild = false;
 ChartSource chart_source = ChartSource::Unavailable;
 zterminal::local_scene::Availability local_availability = zterminal::local_scene::Availability::Unavailable;
 std::wstring local_diagnostic;
@@ -631,6 +625,22 @@ bool benchmark_resize_once = false;
 void request_frame(HWND window) {
     render_requested = true;
     InvalidateRect(window, nullptr, FALSE);
+}
+
+void advance_chart_revision(std::uint64_t& revision) {
+    if (revision < std::numeric_limits<std::uint64_t>::max()) {
+        ++revision;
+    } else {
+        force_chart_vertex_rebuild = true;
+    }
+}
+
+void advance_chart_scene_revision() {
+    advance_chart_revision(chart_scene_revision);
+}
+
+void advance_chart_view_revision() {
+    advance_chart_revision(chart_view_revision);
 }
 
 void update_title(HWND window) {
@@ -681,9 +691,7 @@ bool apply_local_scene_result(
     local_first_bar = result.first_bar;
     local_age_ns = result.age_ns;
     chart_candles.clear();
-    if (chart_scene_revision < std::numeric_limits<std::uint64_t>::max()) {
-        ++chart_scene_revision;
-    }
+    advance_chart_scene_revision();
     chart_view.first = 0;
     chart_view.dragging = false;
     if (result.availability != zterminal::local_scene::Availability::Live
@@ -704,6 +712,7 @@ bool apply_local_scene_result(
         });
     }
     chart_view.visible = std::min(chart_view.visible, chart_candles.size());
+    advance_chart_view_revision();
     return true;
 }
 
@@ -839,23 +848,43 @@ void pan_from_drag(HWND window, int cursor_x) {
     const double candles_per_pixel = static_cast<double>(chart_view.visible) / static_cast<double>(width);
     const long long delta = static_cast<long long>(std::llround((chart_view.drag_start_x - cursor_x) * candles_per_pixel));
     const long long maximum_first = static_cast<long long>(chart_candles.size() - std::min(chart_view.visible, chart_candles.size()));
-    chart_view.first = static_cast<std::size_t>(std::clamp(static_cast<long long>(chart_view.drag_start_first) + delta, 0LL, maximum_first));
-    update_title(window);
+    const std::size_t next_first = static_cast<std::size_t>(std::clamp(static_cast<long long>(chart_view.drag_start_first) + delta, 0LL, maximum_first));
+    if (next_first != chart_view.first) {
+        chart_view.first = next_first;
+        advance_chart_view_revision();
+        update_title(window);
+    }
 }
 
 LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
     switch (message) {
     case WM_SIZE:
         if (renderer != nullptr && w_param != SIZE_MINIMIZED) {
-            renderer->resize(LOWORD(l_param), HIWORD(l_param));
+            if (renderer->resize(LOWORD(l_param), HIWORD(l_param))) {
+                advance_chart_view_revision();
+            }
             request_frame(window);
         }
         return 0;
-    case WM_MOUSEMOVE:
-        chart_view.cursor = {GET_X_LPARAM(l_param), GET_Y_LPARAM(l_param)};
-        chart_view.has_cursor = true;
+    case WM_MOUSEMOVE: {
+        TRACKMOUSEEVENT tracking{sizeof(TRACKMOUSEEVENT), TME_LEAVE, window, 0};
+        (void)TrackMouseEvent(&tracking);
+        const POINT next_cursor{GET_X_LPARAM(l_param), GET_Y_LPARAM(l_param)};
+        if (!chart_view.has_cursor || next_cursor.x != chart_view.cursor.x || next_cursor.y != chart_view.cursor.y) {
+            chart_view.cursor = next_cursor;
+            chart_view.has_cursor = true;
+            advance_chart_view_revision();
+        }
         pan_from_drag(window, chart_view.cursor.x);
         request_frame(window);
+        return 0;
+    }
+    case WM_MOUSELEAVE:
+        if (chart_view.has_cursor) {
+            chart_view.has_cursor = false;
+            advance_chart_view_revision();
+            request_frame(window);
+        }
         return 0;
     case WM_MOUSEWHEEL: {
         const int delta = GET_WHEEL_DELTA_WPARAM(w_param);
@@ -866,6 +895,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         chart_view.visible = std::min(chart_view.visible, chart_candles.size());
         if (chart_view.visible != prior) {
             chart_view.first = std::min(chart_view.first, chart_candles.size() - chart_view.visible);
+            advance_chart_view_revision();
             update_title(window);
             request_frame(window);
         }
@@ -1076,9 +1106,8 @@ void select_chart_source(PWSTR command_line) {
     if (const std::optional<std::size_t> fixture_count = requested_fixture_candle_count(command_line); fixture_count.has_value()) {
         chart_source = ChartSource::FixtureDiagnostic;
         chart_candles = fixture_candles(*fixture_count);
-        if (chart_scene_revision < std::numeric_limits<std::uint64_t>::max()) {
-            ++chart_scene_revision;
-        }
+        advance_chart_scene_revision();
+        advance_chart_view_revision();
         return;
     }
     if (wcsstr(command_line, L"--local-root=") == nullptr) {
@@ -1169,6 +1198,7 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"renderer_vertex_buffer_uploads\": " << native_renderer.vertex_buffer_uploads() << ",\n";
     output << "  \"renderer_retained_draw_reuses\": " << native_renderer.retained_draw_reuses() << ",\n";
     output << "  \"renderer_retained_vertex_clears\": " << native_renderer.retained_vertex_clears() << ",\n";
+    output << "  \"renderer_retained_vertex_rebuilds\": " << native_renderer.retained_vertex_rebuilds() << ",\n";
     output << "  \"renderer_last_error_hr\": " << static_cast<long>(native_renderer.last_renderer_error()) << ",\n";
     output << "  \"working_set_bytes\": " << (has_memory ? memory.WorkingSetSize : 0) << ",\n";
     output << "  \"private_usage_bytes\": " << (has_memory ? memory.PrivateUsage : 0) << "\n";
@@ -1240,7 +1270,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
             TranslateMessage(&message);
             DispatchMessage(&message);
         } else if (render_requested || continuous_benchmark_rendering) {
-            native_renderer.render(chart_candles, chart_view, chart_scene_revision, unsynchronised_benchmark_present);
+            native_renderer.render(
+                chart_candles,
+                chart_view,
+                chart_scene_revision,
+                chart_view_revision,
+                force_chart_vertex_rebuild,
+                unsynchronised_benchmark_present);
+            force_chart_vertex_rebuild = false;
             render_requested = false;
             if (auto_close_after_seconds > 0 && Clock::now() >= benchmark_deadline) {
                 DestroyWindow(window);
