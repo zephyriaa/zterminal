@@ -518,6 +518,8 @@ std::wstring local_diagnostic;
 std::size_t local_total_bars{};
 std::size_t local_first_bar{};
 std::uint64_t local_age_ns{};
+std::uint64_t local_navigation_reloads{};
+std::optional<zterminal::local_scene::Request> active_local_scene_request;
 bool render_requested = true;
 bool continuous_benchmark_rendering = false;
 bool unsynchronised_benchmark_present = false;
@@ -547,8 +549,87 @@ void update_title(HWND window) {
             title << L" | " << local_diagnostic;
         }
     }
-    title << L" | wheel zoom, drag pan, Esc close";
+    title << L" | wheel zoom, drag pan, PgUp/PgDn page, Home/End bounds, Esc close";
     SetWindowText(window, title.str().c_str());
+}
+
+bool apply_local_scene_result(
+    const zterminal::local_scene::Request& request,
+    const zterminal::local_scene::Result& result
+) {
+    local_availability = result.availability;
+    local_diagnostic = result.diagnostic;
+    local_total_bars = result.total_bars == 0 ? result.retained_bars : result.total_bars;
+    local_first_bar = result.first_bar;
+    local_age_ns = result.age_ns;
+    chart_candles.clear();
+    chart_view.first = 0;
+    chart_view.dragging = false;
+    if (result.availability != zterminal::local_scene::Availability::Live
+        && result.availability != zterminal::local_scene::Availability::Cached) {
+        chart_source = ChartSource::Unavailable;
+        active_local_scene_request.reset();
+        return false;
+    }
+    chart_source = ChartSource::LocalScene;
+    active_local_scene_request = request;
+    chart_candles.reserve(result.candles.size());
+    for (const zterminal::local_scene::Candle& candle : result.candles) {
+        chart_candles.push_back({
+            .open = static_cast<double>(candle.open_ticks),
+            .high = static_cast<double>(candle.high_ticks),
+            .low = static_cast<double>(candle.low_ticks),
+            .close = static_cast<double>(candle.close_ticks),
+        });
+    }
+    chart_view.visible = std::min(chart_view.visible, chart_candles.size());
+    return true;
+}
+
+void reload_local_scene(HWND window, std::size_t requested_first_bar) {
+    if (chart_source != ChartSource::LocalScene || !active_local_scene_request.has_value()) {
+        return;
+    }
+    zterminal::local_scene::Request request = *active_local_scene_request;
+    const std::size_t maximum_first_bar = local_total_bars > request.visible_bars
+        ? local_total_bars - request.visible_bars
+        : 0;
+    request.first_bar = std::min(requested_first_bar, maximum_first_bar);
+    if (request.first_bar == active_local_scene_request->first_bar) {
+        return;
+    }
+    const zterminal::local_scene::Result result = zterminal::local_scene::load(request);
+    if (local_navigation_reloads < std::numeric_limits<std::uint64_t>::max()) {
+        ++local_navigation_reloads;
+    }
+    (void)apply_local_scene_result(request, result);
+    update_title(window);
+    request_frame(window);
+}
+
+void navigate_local_scene(HWND window, WPARAM virtual_key) {
+    if (chart_source != ChartSource::LocalScene || !active_local_scene_request.has_value()) {
+        return;
+    }
+    const zterminal::local_scene::Request& request = *active_local_scene_request;
+    const std::size_t page_step = std::max<std::size_t>(1, request.visible_bars / 2);
+    const std::size_t maximum_first_bar = local_total_bars > request.visible_bars
+        ? local_total_bars - request.visible_bars
+        : 0;
+    std::size_t requested_first_bar = request.first_bar;
+    if (virtual_key == VK_PRIOR) {
+        requested_first_bar = request.first_bar > page_step ? request.first_bar - page_step : 0;
+    } else if (virtual_key == VK_NEXT) {
+        const std::size_t remaining_bars = maximum_first_bar - request.first_bar;
+        requested_first_bar = request.first_bar + std::min(page_step, remaining_bars);
+    } else if (virtual_key == VK_HOME) {
+        requested_first_bar = 0;
+    } else if (virtual_key == VK_END) {
+        requested_first_bar = maximum_first_bar;
+    } else {
+        return;
+    }
+    reload_local_scene(window, requested_first_bar);
 }
 
 void pan_from_drag(HWND window, int cursor_x) {
@@ -611,6 +692,8 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     case WM_KEYDOWN:
         if (w_param == VK_ESCAPE) {
             DestroyWindow(window);
+        } else if (w_param == VK_PRIOR || w_param == VK_NEXT || w_param == VK_HOME || w_param == VK_END) {
+            navigate_local_scene(window, w_param);
         }
         return 0;
     case WM_DESTROY:
@@ -673,6 +756,27 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     return static_cast<std::uint64_t>(value);
 }
 
+[[nodiscard]] std::optional<WPARAM> diagnostic_local_navigation_key(PWSTR command_line) {
+    constexpr wchar_t option[] = L"--diagnostic-local-navigation=";
+    const std::optional<std::wstring> value = option_value(command_line, option);
+    if (!value.has_value()) {
+        return std::nullopt;
+    }
+    if (*value == L"page-up") {
+        return VK_PRIOR;
+    }
+    if (*value == L"page-down") {
+        return VK_NEXT;
+    }
+    if (*value == L"home") {
+        return VK_HOME;
+    }
+    if (*value == L"end") {
+        return VK_END;
+    }
+    return std::nullopt;
+}
+
 [[nodiscard]] std::optional<std::size_t> requested_fixture_candle_count(PWSTR command_line) {
     constexpr wchar_t option[] = L"--fixture-candles=";
     const std::optional<std::uint64_t> count = unsigned_option_value(command_line, option);
@@ -716,6 +820,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
 }
 
 void select_chart_source(PWSTR command_line) {
+    active_local_scene_request.reset();
     if (const std::optional<std::size_t> fixture_count = requested_fixture_candle_count(command_line); fixture_count.has_value()) {
         chart_source = ChartSource::FixtureDiagnostic;
         chart_candles = fixture_candles(*fixture_count);
@@ -735,26 +840,7 @@ void select_chart_source(PWSTR command_line) {
         return;
     }
     const zterminal::local_scene::Result result = zterminal::local_scene::load(*request);
-    local_availability = result.availability;
-    local_diagnostic = result.diagnostic;
-    local_total_bars = result.total_bars;
-    local_first_bar = result.first_bar;
-    local_age_ns = result.age_ns;
-    if (result.availability != zterminal::local_scene::Availability::Live
-        && result.availability != zterminal::local_scene::Availability::Cached) {
-        chart_source = ChartSource::Unavailable;
-        return;
-    }
-    chart_source = ChartSource::LocalScene;
-    chart_candles.reserve(result.candles.size());
-    for (const zterminal::local_scene::Candle& candle : result.candles) {
-        chart_candles.push_back({
-            .open = static_cast<double>(candle.open_ticks),
-            .high = static_cast<double>(candle.high_ticks),
-            .low = static_cast<double>(candle.low_ticks),
-            .close = static_cast<double>(candle.close_ticks),
-        });
-    }
+    (void)apply_local_scene_result(*request, result);
 }
 
 void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
@@ -784,6 +870,9 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"chart_source\": \"" << (chart_source == ChartSource::FixtureDiagnostic ? "fixture" : chart_source == ChartSource::LocalScene ? "local_scene" : "withheld") << "\",\n";
     output << "  \"local_availability\": \"" << json_escape(utf8_from_wide(zterminal::local_scene::availability_label(local_availability))) << "\",\n";
     output << "  \"local_bridge_diagnostic\": \"" << json_escape(utf8_from_wide(local_diagnostic)) << "\",\n";
+    output << "  \"local_total_bars\": " << local_total_bars << ",\n";
+    output << "  \"local_first_bar\": " << local_first_bar << ",\n";
+    output << "  \"local_navigation_reloads\": " << local_navigation_reloads << ",\n";
     output << "  \"fixture_candles\": " << chart_candles.size() << ",\n";
     output << "  \"benchmark_unsynchronised_present\": " << (unsynchronised_benchmark_present ? "true" : "false") << ",\n";
     output << "  \"benchmark_resize_once\": " << (benchmark_resize_once ? "true" : "false") << ",\n";
@@ -844,6 +933,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
         && has_option(command_line, L"--benchmark-unsynchronised-present");
     benchmark_resize_once = auto_close_after_seconds > 0
         && has_option(command_line, L"--benchmark-resize-once");
+    const std::optional<WPARAM> diagnostic_navigation = auto_close_after_seconds > 0
+        ? diagnostic_local_navigation_key(command_line)
+        : std::nullopt;
+    if (diagnostic_navigation.has_value()) {
+        // Internal benchmark-only exercise of the same keyboard navigation path.
+        navigate_local_scene(window, *diagnostic_navigation);
+    }
     if (benchmark_resize_once) {
         // Internal diagnostic only: drive one ordinary WM_SIZE path without a
         // cross-process window controller or any source/data change.

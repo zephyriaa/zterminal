@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "test_only_offline_frames": true,
+  "packaged_importer": true,
+  "execution_uses_cargo": false,
+  "network_opened": false,
+  "diagnostic_navigation": "end",
+  "importer": {
+    "source_frames": 7,
+    "retained_completed_bars": 6,
+    "outcome": "persisted"
+  },
+  "native_host": {
+    "schema_version": 1,
+    "product": "ZTerminal Native Local-First Host",
+    "fixture_only": false,
+    "chart_source": "local_scene",
+    "local_availability": "LOCAL CACHED",
+    "local_bridge_diagnostic": "",
+    "local_total_bars": 6,
+    "local_first_bar": 4,
+    "local_navigation_reloads": 1,
+    "fixture_candles": 2,
+    "benchmark_unsynchronised_present": false,
+    "benchmark_resize_once": false,
+    "driver": "hardware",
+    "adapter": "NVIDIA GeForce 710M",
+    "feature_level": "11_0",
+    "launch_to_visible_ms": 237.793,
+    "frame_samples": 119,
+    "frame_average_ms": 16.842,
+    "frame_p95_ms": 18.377,
+    "frame_maximum_ms": 39.285,
+    "renderer_resize_successes": 1,
+    "renderer_resize_failures": 0,
+    "renderer_device_recoveries": 0,
+    "renderer_unrecoverable_device_failures": 0,
+    "renderer_present_failures": 0,
+    "renderer_last_error_hr": 0,
+    "working_set_bytes": 30134272,
+    "private_usage_bytes": 34283520
+  }
+}
