@@ -17,6 +17,7 @@ struct Request {
     std::size_t simulations{};
     std::size_t horizon_bars{};
     std::uint64_t seed{};
+    std::size_t history_segments{1};
 };
 
 enum class Kind {
@@ -33,6 +34,7 @@ struct Result {
     std::size_t retained_bars{};
     std::uint16_t algorithm_version{};
     std::uint64_t seed{};
+    std::size_t source_segments{};
     std::size_t source_bars{};
     std::size_t source_returns{};
     std::size_t simulations{};
@@ -47,7 +49,7 @@ struct Result {
 };
 
 /// Runs the packaged local-only research command exactly once for an explicit,
-/// bounded immutable segment. A research failure never falls back to provider,
+/// bounded immutable local history beginning at one explicit segment. A research failure never falls back to provider,
 /// cloud, account, strategy, or execution behavior and does not alter chart data.
 [[nodiscard]] Result load(const Request& request);
 

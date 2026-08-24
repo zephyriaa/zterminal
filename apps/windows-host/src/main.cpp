@@ -562,6 +562,7 @@ void update_title(HWND window) {
     }
     if (local_monte_carlo_result.kind == zterminal::local_monte_carlo::Kind::Complete) {
         title << L" | " << zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind)
+              << L" | segments " << local_monte_carlo_result.source_segments
               << L" | median " << local_monte_carlo_result.median_return_bps
               << L" bps | p05 " << local_monte_carlo_result.p05_return_bps
               << L" | p95 " << local_monte_carlo_result.p95_return_bps;
@@ -880,7 +881,8 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
 [[nodiscard]] bool has_local_monte_carlo_option(PWSTR command_line) {
     return has_option(command_line, L"--local-monte-carlo-simulations=")
         || has_option(command_line, L"--local-monte-carlo-horizon-bars=")
-        || has_option(command_line, L"--local-monte-carlo-seed=");
+        || has_option(command_line, L"--local-monte-carlo-seed=")
+        || has_option(command_line, L"--local-monte-carlo-history-segments=");
 }
 
 [[nodiscard]] std::optional<zterminal::local_monte_carlo::Request> requested_local_monte_carlo(
@@ -890,14 +892,19 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     constexpr wchar_t simulations_option[] = L"--local-monte-carlo-simulations=";
     constexpr wchar_t horizon_option[] = L"--local-monte-carlo-horizon-bars=";
     constexpr wchar_t seed_option[] = L"--local-monte-carlo-seed=";
+    constexpr wchar_t history_segments_option[] = L"--local-monte-carlo-history-segments=";
     const std::optional<std::uint64_t> simulations = unsigned_option_value(command_line, simulations_option);
     const std::optional<std::uint64_t> horizon_bars = unsigned_option_value(command_line, horizon_option);
     const std::optional<std::uint64_t> seed = unsigned_option_value(command_line, seed_option);
+    const std::optional<std::uint64_t> history_segments = unsigned_option_value(command_line, history_segments_option);
+    const std::uint64_t effective_history_segments = history_segments.value_or(1);
     if (!simulations.has_value() || !horizon_bars.has_value() || !seed.has_value()
         || *simulations == 0 || *horizon_bars == 0 || *seed == 0
         || *simulations > 10'000 || *horizon_bars > 1'000
+        || effective_history_segments == 0 || effective_history_segments > 16
         || *simulations > std::numeric_limits<std::size_t>::max()
-        || *horizon_bars > std::numeric_limits<std::size_t>::max()) {
+        || *horizon_bars > std::numeric_limits<std::size_t>::max()
+        || effective_history_segments > std::numeric_limits<std::size_t>::max()) {
         return std::nullopt;
     }
     const std::size_t simulations_size = static_cast<std::size_t>(*simulations);
@@ -914,6 +921,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         .simulations = simulations_size,
         .horizon_bars = horizon_bars_size,
         .seed = *seed,
+        .history_segments = static_cast<std::size_t>(effective_history_segments),
     };
 }
 
@@ -1033,6 +1041,7 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"local_history_diagnostic\": \"" << json_escape(utf8_from_wide(local_history_diagnostic)) << "\",\n";
     output << "  \"local_monte_carlo_kind\": \"" << json_escape(utf8_from_wide(zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind))) << "\",\n";
     output << "  \"local_monte_carlo_availability\": \"" << json_escape(utf8_from_wide(zterminal::local_scene::availability_label(local_monte_carlo_result.availability))) << "\",\n";
+    output << "  \"local_monte_carlo_source_segments\": " << local_monte_carlo_result.source_segments << ",\n";
     output << "  \"local_monte_carlo_source_bars\": " << local_monte_carlo_result.source_bars << ",\n";
     output << "  \"local_monte_carlo_simulations\": " << local_monte_carlo_result.simulations << ",\n";
     output << "  \"local_monte_carlo_horizon_bars\": " << local_monte_carlo_result.horizon_bars << ",\n";

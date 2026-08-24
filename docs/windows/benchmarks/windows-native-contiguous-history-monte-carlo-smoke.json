@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "test_only_offline_frames": true,
+  "packaged_importer": true,
+  "packaged_local_monte_carlo": true,
+  "native_host": true,
+  "execution_uses_cargo": false,
+  "network_opened": false,
+  "contiguous_history": {
+    "chart_source": "local_scene",
+    "source_segments": 2,
+    "source_bars": 12,
+    "simulations": 32,
+    "horizon_bars": 4,
+    "median_return_bps": 376,
+    "continuity_proven": true
+  },
+  "invalid_history_request": {
+    "history_segments": 17,
+    "research_kind": "LOCAL MC BRIDGE FAILURE",
+    "retained_verified_chart": true,
+    "source_segments": 0
+  }
+}
