@@ -5,6 +5,8 @@
 // data must enter later through the Rust protocol and local SegmentStore.
 //
 
+#include "local_scene_bridge.h"
+
 #include <windows.h>
 #include <windowsx.h>
 #include <d3d11.h>
@@ -23,6 +25,7 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -32,7 +35,7 @@ using Microsoft::WRL::ComPtr;
 namespace {
 
 constexpr wchar_t kWindowClass[] = L"ZTerminalPhase0NativeHost";
-constexpr wchar_t kWindowTitle[] = L"ZTerminal Native — Fixture Candle Slice";
+constexpr wchar_t kWindowTitle[] = L"ZTerminal Native Local-First Host";
 constexpr std::size_t kMaximumVisibleCandles = 2'000;
 constexpr std::size_t kVerticesPerCandle = 12;
 constexpr std::size_t kMaximumVertices = (kMaximumVisibleCandles * kVerticesPerCandle) + 24;
@@ -79,7 +82,7 @@ private:
     std::vector<double> samples_;
 };
 
-struct FixtureCandle {
+struct ChartCandle {
     double open{};
     double high{};
     double low{};
@@ -114,8 +117,8 @@ struct Vertex {
     }
 }
 
-[[nodiscard]] std::vector<FixtureCandle> fixture_candles(std::size_t count) {
-    std::vector<FixtureCandle> candles;
+[[nodiscard]] std::vector<ChartCandle> fixture_candles(std::size_t count) {
+    std::vector<ChartCandle> candles;
     candles.reserve(count);
     double prior_close = 100'000.0;
     for (std::size_t index = 0; index < count; ++index) {
@@ -276,7 +279,7 @@ public:
         }
     }
 
-    void render(const std::vector<FixtureCandle>& candles, const ChartView& view, bool unsynchronised_present) {
+    void render(const std::vector<ChartCandle>& candles, const ChartView& view, bool unsynchronised_present) {
         if (!context_ || !render_target_ || !swap_chain_ || !vertex_buffer_) {
             return;
         }
@@ -357,7 +360,7 @@ private:
         return SUCCEEDED(device_->CreateBuffer(&buffer, nullptr, vertex_buffer_.GetAddressOf()));
     }
 
-    [[nodiscard]] std::vector<Vertex> chart_vertices(const std::vector<FixtureCandle>& candles, const ChartView& view) const {
+    [[nodiscard]] std::vector<Vertex> chart_vertices(const std::vector<ChartCandle>& candles, const ChartView& view) const {
         const std::size_t visible = std::min({view.visible, kMaximumVisibleCandles, candles.size()});
         const std::size_t first = std::min(view.first, candles.size() - visible);
         const std::size_t last = first + visible;
@@ -379,7 +382,7 @@ private:
         std::vector<Vertex> vertices;
         vertices.reserve((visible * kVerticesPerCandle) + 12);
         for (std::size_t local_index = 0; local_index < visible; ++local_index) {
-            const FixtureCandle& candle = candles[first + local_index];
+            const ChartCandle& candle = candles[first + local_index];
             const float x = -1.0F + (static_cast<float>(local_index) + 0.5F) * slot;
             const bool rising = candle.close >= candle.open;
             const std::array<float, 4> color = rising
@@ -429,9 +432,21 @@ private:
     ComPtr<ID3D11Buffer> vertex_buffer_;
 };
 
+enum class ChartSource {
+    Unavailable,
+    FixtureDiagnostic,
+    LocalScene,
+};
+
 Renderer* renderer = nullptr;
 ChartView chart_view;
-std::vector<FixtureCandle> chart_candles;
+std::vector<ChartCandle> chart_candles;
+ChartSource chart_source = ChartSource::Unavailable;
+zterminal::local_scene::Availability local_availability = zterminal::local_scene::Availability::Unavailable;
+std::wstring local_diagnostic;
+std::size_t local_total_bars{};
+std::size_t local_first_bar{};
+std::uint64_t local_age_ns{};
 bool render_requested = true;
 bool continuous_benchmark_rendering = false;
 bool unsynchronised_benchmark_present = false;
@@ -443,9 +458,24 @@ void request_frame(HWND window) {
 
 void update_title(HWND window) {
     std::wstringstream title;
-    title << kWindowTitle << L" | FIXTURE ONLY | " << chart_candles.size()
-          << L" candles | visible " << chart_view.visible
-          << L" | wheel zoom, drag pan, Esc close";
+    title << kWindowTitle << L" | ";
+    if (chart_source == ChartSource::FixtureDiagnostic) {
+        title << L"FIXTURE ONLY | " << chart_candles.size() << L" diagnostic candles";
+    } else if (chart_source == ChartSource::LocalScene) {
+        title << zterminal::local_scene::availability_label(local_availability)
+              << L" | " << chart_candles.size() << L" of " << local_total_bars
+              << L" verified local candles | source offset " << local_first_bar;
+        if (local_availability == zterminal::local_scene::Availability::Cached) {
+            title << L" | age " << local_age_ns << L" ns";
+        }
+    } else {
+        title << zterminal::local_scene::availability_label(local_availability)
+              << L" | no candles rendered";
+        if (!local_diagnostic.empty()) {
+            title << L" | " << local_diagnostic;
+        }
+    }
+    title << L" | wheel zoom, drag pan, Esc close";
     SetWindowText(window, title.str().c_str());
 }
 
@@ -533,18 +563,125 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     return end == value + (std::size(option) - 1) || seconds > 3'600 ? 0 : seconds;
 }
 
-[[nodiscard]] std::size_t requested_fixture_candle_count(PWSTR command_line) {
-    constexpr wchar_t option[] = L"--fixture-candles=";
+[[nodiscard]] std::optional<std::wstring> option_value(PWSTR command_line, const wchar_t* option) {
     const wchar_t* const value = wcsstr(command_line, option);
     if (value == nullptr) {
-        return 10'000;
+        return std::nullopt;
+    }
+    const wchar_t* first = value + wcslen(option);
+    if (*first == L'\"') {
+        ++first;
+        const wchar_t* const last = wcschr(first, L'\"');
+        if (last == nullptr || last == first) {
+            return std::nullopt;
+        }
+        return std::wstring(first, last);
+    }
+    const wchar_t* last = first;
+    while (*last != L'\0' && *last != L' ') {
+        ++last;
+    }
+    if (last == first) {
+        return std::nullopt;
+    }
+    return std::wstring(first, last);
+}
+
+[[nodiscard]] std::optional<std::uint64_t> unsigned_option_value(PWSTR command_line, const wchar_t* option) {
+    const std::optional<std::wstring> text = option_value(command_line, option);
+    if (!text.has_value()) {
+        return std::nullopt;
     }
     wchar_t* end{};
-    const unsigned long count = wcstoul(value + (std::size(option) - 1), &end, 10);
-    if (end == value + (std::size(option) - 1) || count < 10'000 || count > 100'000) {
-        return 10'000;
+    const unsigned long long value = wcstoull(text->c_str(), &end, 10);
+    if (end == text->c_str() || *end != L'\0') {
+        return std::nullopt;
     }
-    return static_cast<std::size_t>(count);
+    return static_cast<std::uint64_t>(value);
+}
+
+[[nodiscard]] std::optional<std::size_t> requested_fixture_candle_count(PWSTR command_line) {
+    constexpr wchar_t option[] = L"--fixture-candles=";
+    const std::optional<std::uint64_t> count = unsigned_option_value(command_line, option);
+    if (!count.has_value() || *count < 10'000 || *count > 100'000) {
+        return std::nullopt;
+    }
+    return static_cast<std::size_t>(*count);
+}
+
+[[nodiscard]] std::optional<zterminal::local_scene::Request> requested_local_scene(PWSTR command_line) {
+    constexpr wchar_t root_option[] = L"--local-root=";
+    constexpr wchar_t symbol_option[] = L"--symbol-id=";
+    constexpr wchar_t interval_option[] = L"--interval-ns=";
+    constexpr wchar_t start_option[] = L"--start-ns=";
+    constexpr wchar_t first_option[] = L"--first-bar=";
+    constexpr wchar_t visible_option[] = L"--visible-bars=";
+    constexpr wchar_t freshness_option[] = L"--freshness-budget-ns=";
+    const std::optional<std::wstring> root = option_value(command_line, root_option);
+    const std::optional<std::uint64_t> symbol_id = unsigned_option_value(command_line, symbol_option);
+    const std::optional<std::uint64_t> interval_ns = unsigned_option_value(command_line, interval_option);
+    const std::optional<std::uint64_t> start_ns = unsigned_option_value(command_line, start_option);
+    const std::optional<std::uint64_t> first_bar = unsigned_option_value(command_line, first_option);
+    const std::optional<std::uint64_t> visible_bars = unsigned_option_value(command_line, visible_option);
+    const std::optional<std::uint64_t> freshness_budget_ns = unsigned_option_value(command_line, freshness_option);
+    if (!root.has_value() || !symbol_id.has_value() || !interval_ns.has_value()
+        || !start_ns.has_value() || !first_bar.has_value() || !visible_bars.has_value()
+        || !freshness_budget_ns.has_value() || *symbol_id > std::numeric_limits<std::uint32_t>::max()
+        || *first_bar > std::numeric_limits<std::size_t>::max()
+        || *visible_bars > std::numeric_limits<std::size_t>::max()) {
+        return std::nullopt;
+    }
+    return zterminal::local_scene::Request{
+        .root = *root,
+        .symbol_id = static_cast<std::uint32_t>(*symbol_id),
+        .interval_ns = *interval_ns,
+        .start_ns = *start_ns,
+        .first_bar = static_cast<std::size_t>(*first_bar),
+        .visible_bars = static_cast<std::size_t>(*visible_bars),
+        .freshness_budget_ns = *freshness_budget_ns,
+    };
+}
+
+void select_chart_source(PWSTR command_line) {
+    if (const std::optional<std::size_t> fixture_count = requested_fixture_candle_count(command_line); fixture_count.has_value()) {
+        chart_source = ChartSource::FixtureDiagnostic;
+        chart_candles = fixture_candles(*fixture_count);
+        return;
+    }
+    if (wcsstr(command_line, L"--local-root=") == nullptr) {
+        chart_source = ChartSource::Unavailable;
+        local_availability = zterminal::local_scene::Availability::Unavailable;
+        local_diagnostic = L"explicit local scene request required";
+        return;
+    }
+    const std::optional<zterminal::local_scene::Request> request = requested_local_scene(command_line);
+    if (!request.has_value()) {
+        chart_source = ChartSource::Unavailable;
+        local_availability = zterminal::local_scene::Availability::BridgeFailure;
+        local_diagnostic = L"invalid local scene request";
+        return;
+    }
+    const zterminal::local_scene::Result result = zterminal::local_scene::load(*request);
+    local_availability = result.availability;
+    local_diagnostic = result.diagnostic;
+    local_total_bars = result.total_bars;
+    local_first_bar = result.first_bar;
+    local_age_ns = result.age_ns;
+    if (result.availability != zterminal::local_scene::Availability::Live
+        && result.availability != zterminal::local_scene::Availability::Cached) {
+        chart_source = ChartSource::Unavailable;
+        return;
+    }
+    chart_source = ChartSource::LocalScene;
+    chart_candles.reserve(result.candles.size());
+    for (const zterminal::local_scene::Candle& candle : result.candles) {
+        chart_candles.push_back({
+            .open = static_cast<double>(candle.open_ticks),
+            .high = static_cast<double>(candle.high_ticks),
+            .low = static_cast<double>(candle.low_ticks),
+            .close = static_cast<double>(candle.close_ticks),
+        });
+    }
 }
 
 void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
@@ -569,8 +706,11 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << std::fixed << std::setprecision(3);
     output << "{\n";
     output << "  \"schema_version\": 1,\n";
-    output << "  \"product\": \"ZTerminal Native Fixture Candle Slice\",\n";
-    output << "  \"fixture_only\": true,\n";
+    output << "  \"product\": \"ZTerminal Native Local-First Host\",\n";
+    output << "  \"fixture_only\": " << (chart_source == ChartSource::FixtureDiagnostic ? "true" : "false") << ",\n";
+    output << "  \"chart_source\": \"" << (chart_source == ChartSource::FixtureDiagnostic ? "fixture" : chart_source == ChartSource::LocalScene ? "local_scene" : "withheld") << "\",\n";
+    output << "  \"local_availability\": \"" << json_escape(utf8_from_wide(zterminal::local_scene::availability_label(local_availability))) << "\",\n";
+    output << "  \"local_bridge_diagnostic\": \"" << json_escape(utf8_from_wide(local_diagnostic)) << "\",\n";
     output << "  \"fixture_candles\": " << chart_candles.size() << ",\n";
     output << "  \"benchmark_unsynchronised_present\": " << (unsynchronised_benchmark_present ? "true" : "false") << ",\n";
     output << "  \"driver\": \"" << (native_renderer.used_warp() ? "warp" : "hardware") << "\",\n";
@@ -590,9 +730,9 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_command) {
     const auto process_started = Clock::now();
-    chart_candles = fixture_candles(requested_fixture_candle_count(command_line));
+    select_chart_source(command_line);
     chart_view.visible = std::min<std::size_t>(600, chart_candles.size());
-    chart_view.first = chart_candles.size() - chart_view.visible;
+    chart_view.first = chart_candles.empty() ? 0 : chart_candles.size() - chart_view.visible;
 
     WNDCLASS window_class{};
     window_class.hInstance = instance;

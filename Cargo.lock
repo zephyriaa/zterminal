@@ -820,6 +820,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "zt-local-scene-bridge"
+version = "0.1.0"
+dependencies = [
+ "zt-core",
+ "zt-storage",
+]
+
+[[package]]
 name = "zt-protocol"
 version = "0.1.0"
 
