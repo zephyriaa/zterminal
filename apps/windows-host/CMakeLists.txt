@@ -11,7 +11,7 @@ endif()
 add_executable(ZTerminalWindowsHost WIN32 src/main.cpp)
 target_compile_features(ZTerminalWindowsHost PRIVATE cxx_std_20)
 target_compile_definitions(ZTerminalWindowsHost PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(ZTerminalWindowsHost PRIVATE d3d11 dxgi d2d1 dwrite)
+target_link_libraries(ZTerminalWindowsHost PRIVATE d3d11 d3dcompiler dxgi d2d1 dwrite)
 
 if(MSVC)
   target_compile_options(ZTerminalWindowsHost PRIVATE /W4 /permissive- /EHsc)
