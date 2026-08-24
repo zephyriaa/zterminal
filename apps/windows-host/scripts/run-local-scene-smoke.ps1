@@ -53,9 +53,18 @@ if (-not $fixture.fixture_only -or $fixture.chart_source -ne 'fixture' -or $fixt
     throw "Explicit fixture diagnostic was not truthfully labelled: $($fixture | ConvertTo-Json -Compress)"
 }
 
+$resize = Invoke-NativeHostSmoke -Name 'internal resize diagnostic' -Arguments "--benchmark-seconds=$BenchmarkSeconds --benchmark-resize-once"
+if ($resize.fixture_only -or $resize.chart_source -ne 'withheld' -or $resize.local_availability -ne 'LOCAL DATA UNAVAILABLE' -or $resize.fixture_candles -ne 0 -or -not $resize.benchmark_resize_once) {
+    throw "Internal resize diagnostic lost its fail-closed local chart state: $($resize | ConvertTo-Json -Compress)"
+}
+if ($resize.renderer_resize_successes -lt 1 -or $resize.renderer_resize_failures -ne 0 -or $resize.renderer_device_recoveries -ne 0 -or $resize.renderer_unrecoverable_device_failures -ne 0 -or $resize.renderer_present_failures -ne 0) {
+    throw "Internal resize diagnostic reported unexpected renderer counters: $($resize | ConvertTo-Json -Compress)"
+}
+
 [pscustomobject]@{
-    schema_version = 1
+    schema_version = 2
     default = $default
     unavailable_local_scene = $unavailable
     explicit_fixture_diagnostic = $fixture
+    internal_resize_diagnostic = $resize
 } | ConvertTo-Json -Depth 4

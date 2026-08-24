@@ -14,6 +14,7 @@ The native Win32 host now creates a Direct3D 11 chart surface that remains blank
 | Crosshair | Mouse movement renders a local Direct3D crosshair; no service request occurs. |
 | Provenance | Diagnostics record whether the source is `fixture`, `local_scene`, or `withheld`, the truthful local availability label, explicit fixture status, hardware/WARP mode, adapter, feature level, launch time, frame timing, and process memory. |
 | Data integrity | The Rust `SegmentStore`, bounded `LocalChartScene`, and bridge reject arbitrary bytes and withhold stale, gapped, unavailable, or corrupt ranges. The Direct3D host renders no replacement candles for a withheld result. |
+| Renderer recovery | A normal `WM_SIZE` unbinds, clears, and flushes the Direct3D pipeline before rebuilding the back-buffer target and requesting one dirty frame. Device removal/reset/hang triggers one bounded resource recreation attempt with no server request or fixture fallback. |
 
 ## First measured chart evidence
 
@@ -34,9 +35,9 @@ The evidence proves that a local native renderer can load a 100k-record fixture 
 
 1. Separate retained local candle data from the per-frame visible scene so no full fixture/vector walk occurs in the interactive hot path.
 2. Use a persistent GPU vertex buffer and update only changed ranges, rather than remapping the full visible scene every present.
-3. Add a frame cap/dirty-render policy so an unchanged view does not rebuild/present at an unconstrained rate.
+3. Keep normal interaction dirty-frame driven and use continuous/unsynchronized presentation only for explicit finite diagnostics; measure input-to-present and synchronized pacing on all reference tiers.
 4. Persist verified provider bars locally and evolve the one-segment bridge into a versioned in-process scene boundary that preserves the typed Rust withholding rules. A missing, stale, gapped, unavailable, or corrupt range must remain unrendered.
-5. Add deterministic 10k/100k pan, zoom, resize, and device-reset tests; record CPU, GPU where available, input-to-present, and frame histograms on the three required reference tiers.
+5. Add deterministic 10k/100k pan, zoom, device-reset, sleep/resume, and multi-segment tests; record CPU, GPU where available, input-to-present, and frame histograms on the three required reference tiers.
 
 The renderer now first attempts to select the adapter attached to the active desktop before using the generic hardware fallback. On the connected hybrid-GPU reference device, the follow-up still reported the NVIDIA GeForce 710M and did **not** improve the five-second synchronized frame result: 47.026 ms p95 for 10k fixture records and 47.612 ms p95 for 100k. That follow-up confirms the current limitation is not solved by a simple adapter preference change.
 
