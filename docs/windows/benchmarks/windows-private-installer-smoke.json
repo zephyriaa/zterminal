@@ -1,23 +1,30 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "private_artifact": "ZTerminal-Private-Setup.exe",
-  "bytes": 1206272,
-  "sha256": "CC4FCCED95D92CA25A5861EEFD79671931A2D974EE2F252F0033EAFA60091170",
+  "builder": "self-contained Windows setup executable with embedded bounded payload",
+  "bytes": 1621504,
+  "sha256": "789181457E2050B2F12DB2722393350FF4B07854DFB38780ADC909D8E62B23ED",
   "signature_status": "NotSigned",
   "authorized_code_signing_identity_available": false,
   "network_opened": false,
   "public_release_created": false,
   "isolated_payload_smoke": {
+    "installer_exit_code": 0,
     "required_files_present": true,
     "installation_scope": "CurrentUser",
-    "shortcut_created": true,
     "manifest_network_opened": false,
-    "manifest_signed": false
+    "manifest_signed": false,
+    "shortcut_created": true,
+    "host_launch_suppressed_for_test": true
   },
-  "isolated_uninstaller_smoke": {
+  "installed_host_launch": {
+    "current_user_install_present": true,
+    "native_host_process_started": true
+  },
+  "uninstaller_boundary_smoke": {
     "installed_app_removed": true,
     "shortcut_removed": true,
     "separate_local_data_retained": true
   },
-  "note": "IExpress quiet-mode wrapper returned a nonzero process status while the isolated payload, manifest, shortcut, and uninstaller boundaries were independently verified. The installer is private and unsigned pending a real authorized code-signing certificate."
+  "note": "The retired IExpress wrapper did not reliably deploy from user launch and is no longer used. The replacement self-contained setup was verified with an explicit isolated installer root; interactive installation launches the installed native host. The installer is private and unsigned pending a real authorized code-signing certificate."
 }
