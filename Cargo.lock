@@ -808,7 +808,9 @@ dependencies = [
  "serde_json",
  "tokio",
  "tokio-tungstenite",
+ "zt-core",
  "zt-protocol",
+ "zt-storage",
 ]
 
 [[package]]
