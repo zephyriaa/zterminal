@@ -9,6 +9,7 @@
 
 #include "local_monte_carlo_bridge.h"
 #include "local_scene_bridge.h"
+#include "local_segment_catalog_bridge.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -520,6 +521,8 @@ std::size_t local_total_bars{};
 std::size_t local_first_bar{};
 std::uint64_t local_age_ns{};
 std::uint64_t local_navigation_reloads{};
+std::uint64_t local_segment_switches{};
+std::wstring local_history_diagnostic;
 std::optional<zterminal::local_scene::Request> active_local_scene_request;
 zterminal::local_monte_carlo::Result local_monte_carlo_result;
 bool render_requested = true;
@@ -541,6 +544,9 @@ void update_title(HWND window) {
         title << zterminal::local_scene::availability_label(local_availability)
               << L" | " << chart_candles.size() << L" of " << local_total_bars
               << L" verified local candles | source offset " << local_first_bar;
+        if (active_local_scene_request.has_value()) {
+            title << L" | segment " << active_local_scene_request->start_ns;
+        }
         if (local_availability == zterminal::local_scene::Availability::Cached) {
             title << L" | age " << local_age_ns << L" ns";
         }
@@ -550,6 +556,9 @@ void update_title(HWND window) {
         if (!local_diagnostic.empty()) {
             title << L" | " << local_diagnostic;
         }
+    }
+    if (!local_history_diagnostic.empty()) {
+        title << L" | " << local_history_diagnostic;
     }
     if (local_monte_carlo_result.kind == zterminal::local_monte_carlo::Kind::Complete) {
         title << L" | " << zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind)
@@ -617,6 +626,74 @@ void reload_local_scene(HWND window, std::size_t requested_first_bar) {
     request_frame(window);
 }
 
+void reload_adjacent_local_segment(HWND window, bool forward) {
+    if (chart_source != ChartSource::LocalScene || !active_local_scene_request.has_value()) {
+        return;
+    }
+    const zterminal::local_scene::Request current = *active_local_scene_request;
+    const zterminal::local_segment_catalog::Result catalog = zterminal::local_segment_catalog::load({
+        .root = current.root,
+        .symbol_id = current.symbol_id,
+        .interval_ns = current.interval_ns,
+        .maximum_entries = 256,
+    });
+    if (catalog.status != zterminal::local_segment_catalog::Status::Available) {
+        local_history_diagnostic = zterminal::local_segment_catalog::status_label(catalog.status);
+        update_title(window);
+        request_frame(window);
+        return;
+    }
+    if (catalog.truncated) {
+        local_history_diagnostic = L"LOCAL HISTORY CATALOG TRUNCATED";
+        update_title(window);
+        request_frame(window);
+        return;
+    }
+    const auto current_entry = std::find_if(
+        catalog.entries.begin(),
+        catalog.entries.end(),
+        [&current](const zterminal::local_segment_catalog::Entry& entry) {
+            return entry.start_ns == current.start_ns;
+        }
+    );
+    if (current_entry == catalog.entries.end()) {
+        local_history_diagnostic = L"CURRENT LOCAL SEGMENT NOT CATALOGED";
+        update_title(window);
+        request_frame(window);
+        return;
+    }
+    std::optional<std::uint64_t> adjacent_start;
+    if (forward) {
+        const auto next = std::next(current_entry);
+        if (next != catalog.entries.end()) {
+            adjacent_start = next->start_ns;
+        }
+    } else if (current_entry != catalog.entries.begin()) {
+        adjacent_start = std::prev(current_entry)->start_ns;
+    }
+    if (!adjacent_start.has_value()) {
+        local_history_diagnostic = forward ? L"NO LATER LOCAL SEGMENT" : L"NO EARLIER LOCAL SEGMENT";
+        update_title(window);
+        request_frame(window);
+        return;
+    }
+    zterminal::local_scene::Request request = current;
+    request.start_ns = *adjacent_start;
+    request.first_bar = 0;
+    local_monte_carlo_result = {};
+    local_history_diagnostic.clear();
+    const zterminal::local_scene::Result result = zterminal::local_scene::load(request);
+    if (local_navigation_reloads < std::numeric_limits<std::uint64_t>::max()) {
+        ++local_navigation_reloads;
+    }
+    if (local_segment_switches < std::numeric_limits<std::uint64_t>::max()) {
+        ++local_segment_switches;
+    }
+    (void)apply_local_scene_result(request, result);
+    update_title(window);
+    request_frame(window);
+}
+
 void navigate_local_scene(HWND window, WPARAM virtual_key) {
     if (chart_source != ChartSource::LocalScene || !active_local_scene_request.has_value()) {
         return;
@@ -628,8 +705,16 @@ void navigate_local_scene(HWND window, WPARAM virtual_key) {
         : 0;
     std::size_t requested_first_bar = request.first_bar;
     if (virtual_key == VK_PRIOR) {
+        if (request.first_bar == 0) {
+            reload_adjacent_local_segment(window, false);
+            return;
+        }
         requested_first_bar = request.first_bar > page_step ? request.first_bar - page_step : 0;
     } else if (virtual_key == VK_NEXT) {
+        if (request.first_bar == maximum_first_bar) {
+            reload_adjacent_local_segment(window, true);
+            return;
+        }
         const std::size_t remaining_bars = maximum_first_bar - request.first_bar;
         requested_first_bar = request.first_bar + std::min(page_step, remaining_bars);
     } else if (virtual_key == VK_HOME) {
@@ -766,6 +851,11 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     return static_cast<std::uint64_t>(value);
 }
 
+[[nodiscard]] bool diagnostic_next_local_segment(PWSTR command_line) {
+    constexpr wchar_t option[] = L"--diagnostic-local-navigation=";
+    return option_value(command_line, option) == std::optional<std::wstring>(L"next-segment");
+}
+
 [[nodiscard]] std::optional<WPARAM> diagnostic_local_navigation_key(PWSTR command_line) {
     constexpr wchar_t option[] = L"--diagnostic-local-navigation=";
     const std::optional<std::wstring> value = option_value(command_line, option);
@@ -872,6 +962,8 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
 void select_chart_source(PWSTR command_line) {
     active_local_scene_request.reset();
     local_monte_carlo_result = {};
+    local_segment_switches = 0;
+    local_history_diagnostic.clear();
     if (const std::optional<std::size_t> fixture_count = requested_fixture_candle_count(command_line); fixture_count.has_value()) {
         chart_source = ChartSource::FixtureDiagnostic;
         chart_candles = fixture_candles(*fixture_count);
@@ -937,6 +1029,8 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"local_total_bars\": " << local_total_bars << ",\n";
     output << "  \"local_first_bar\": " << local_first_bar << ",\n";
     output << "  \"local_navigation_reloads\": " << local_navigation_reloads << ",\n";
+    output << "  \"local_segment_switches\": " << local_segment_switches << ",\n";
+    output << "  \"local_history_diagnostic\": \"" << json_escape(utf8_from_wide(local_history_diagnostic)) << "\",\n";
     output << "  \"local_monte_carlo_kind\": \"" << json_escape(utf8_from_wide(zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind))) << "\",\n";
     output << "  \"local_monte_carlo_availability\": \"" << json_escape(utf8_from_wide(zterminal::local_scene::availability_label(local_monte_carlo_result.availability))) << "\",\n";
     output << "  \"local_monte_carlo_source_bars\": " << local_monte_carlo_result.source_bars << ",\n";
@@ -1003,10 +1097,17 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
         && has_option(command_line, L"--benchmark-unsynchronised-present");
     benchmark_resize_once = auto_close_after_seconds > 0
         && has_option(command_line, L"--benchmark-resize-once");
+    const bool diagnostic_next_segment = auto_close_after_seconds > 0
+        && diagnostic_next_local_segment(command_line);
     const std::optional<WPARAM> diagnostic_navigation = auto_close_after_seconds > 0
         ? diagnostic_local_navigation_key(command_line)
         : std::nullopt;
-    if (diagnostic_navigation.has_value()) {
+    if (diagnostic_next_segment) {
+        // Internal benchmark-only exercise of the same End then Page Down path
+        // users invoke at a local immutable segment boundary.
+        navigate_local_scene(window, VK_END);
+        navigate_local_scene(window, VK_NEXT);
+    } else if (diagnostic_navigation.has_value()) {
         // Internal benchmark-only exercise of the same keyboard navigation path.
         navigate_local_scene(window, *diagnostic_navigation);
     }
