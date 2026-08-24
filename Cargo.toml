@@ -6,6 +6,7 @@ members = [
   "crates/zt-storage",
   "crates/zt-adapters",
   "apps/desktop-phase0-cli",
+  "apps/zt-local-scene-bridge",
 ]
 # The legacy Tauri/NSIS preview is deliberately separate from the future native
 # client workspace. It remains a standalone Cargo package for Track A.
