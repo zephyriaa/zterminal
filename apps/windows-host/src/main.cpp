@@ -1217,6 +1217,30 @@ void select_chart_source(PWSTR command_line) {
     local_monte_carlo_result = zterminal::local_monte_carlo::load(*research_request);
 }
 
+void write_startup_status(const char* stage, long result_code) {
+    wchar_t app_data[MAX_PATH]{};
+    const DWORD app_data_length = GetEnvironmentVariableW(L"LOCALAPPDATA", app_data, MAX_PATH);
+    const std::filesystem::path root = app_data_length > 0 && app_data_length < MAX_PATH
+        ? std::filesystem::path(app_data) / L"ZTerminal" / L"logs"
+        : std::filesystem::temp_directory_path() / L"ZTerminal" / L"logs";
+    std::error_code error;
+    std::filesystem::create_directories(root, error);
+    if (error) {
+        return;
+    }
+    std::ofstream output(root / "native-startup-last.json", std::ios::trunc);
+    if (!output) {
+        return;
+    }
+    output << "{\n";
+    output << "  \"schema_version\": 1,\n";
+    output << "  \"product\": \"ZTerminal Native Local-First Host\",\n";
+    output << "  \"startup_stage\": \"" << stage << "\",\n";
+    output << "  \"result_code\": " << result_code << ",\n";
+    output << "  \"network_opened\": false\n";
+    output << "}\n";
+}
+
 void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     wchar_t app_data[MAX_PATH]{};
     const DWORD app_data_length = GetEnvironmentVariableW(L"LOCALAPPDATA", app_data, MAX_PATH);
@@ -1286,6 +1310,7 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_command) {
     const auto process_started = Clock::now();
+    write_startup_status("starting", 0);
     select_chart_source(command_line);
     chart_view.visible = std::min<std::size_t>(600, chart_candles.size());
     chart_view.first = chart_candles.empty() ? 0 : chart_candles.size() - chart_view.visible;
@@ -1297,19 +1322,24 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
     window_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
     window_class.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     if (RegisterClass(&window_class) == 0) {
+        write_startup_status("window_class_failed", static_cast<long>(GetLastError()));
         return 1;
     }
     HWND window = CreateWindowEx(0, kWindowClass, kWindowTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 820, nullptr, nullptr, instance, nullptr);
     if (window == nullptr) {
+        write_startup_status("window_create_failed", static_cast<long>(GetLastError()));
         return 2;
     }
+    write_startup_status("window_created", 0);
     Renderer native_renderer;
     renderer = &native_renderer;
     if (!native_renderer.initialize(window)) {
-        MessageBox(window, L"Direct3D 11 candle surface could not initialize.", kWindowTitle, MB_ICONERROR | MB_OK);
+        write_startup_status("direct3d_initialize_failed", static_cast<long>(native_renderer.last_renderer_error()));
+        MessageBox(window, L"ZTerminal could not initialize its local Direct3D workspace. See the local ZTerminal startup diagnostic for the error category.", kWindowTitle, MB_ICONERROR | MB_OK);
         DestroyWindow(window);
         return 3;
     }
+    write_startup_status("ready", 0);
     create_workspace_overlay(window);
     update_title(window);
     ShowWindow(window, show_command);

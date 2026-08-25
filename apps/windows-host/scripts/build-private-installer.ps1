@@ -2,16 +2,13 @@
 param(
     [string]$RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path,
     [string]$ReleaseDirectory = (Join-Path $PSScriptRoot '..\..\..\out\windows-host\Release'),
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\..\..\out\private-installer')
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\..\..\out\private-installer'),
+    [string]$Compiler = '',
+    [string]$SmokeRoot = ''
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-
-$compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-if (-not (Test-Path -LiteralPath $compiler -PathType Leaf)) {
-    throw "The Windows C# compiler is unavailable: $compiler"
-}
 
 $requiredFiles = @(
     'ZTerminalWindowsHost.exe',
@@ -29,57 +26,68 @@ foreach ($requiredFile in $requiredFiles) {
     }
 }
 
-$installerSource = Join-Path $RepositoryRoot 'apps\windows-host\installer'
-$setupSource = Join-Path $installerSource 'Setup.cs'
-$uninstallerSource = Join-Path $installerSource 'uninstall-zterminal.ps1'
-foreach ($source in @($setupSource, $uninstallerSource)) {
-    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
-        throw "The installer source is incomplete: $source"
-    }
+$installerDefinition = Join-Path $RepositoryRoot 'apps\windows-host\installer\ZTerminal.iss'
+if (-not (Test-Path -LiteralPath $installerDefinition -PathType Leaf)) {
+    throw "The conventional installer definition is missing: $installerDefinition"
 }
 
+if ([string]::IsNullOrWhiteSpace($Compiler)) {
+    $compilerCandidates = @(
+        (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 7\ISCC.exe'),
+        'C:\Program Files\Inno Setup 7\ISCC.exe',
+        'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+    )
+    $Compiler = $compilerCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+}
+if ([string]::IsNullOrWhiteSpace($Compiler) -or -not (Test-Path -LiteralPath $Compiler -PathType Leaf)) {
+    throw 'Inno Setup Compiler was not found. Install the verified private build tool before packaging ZTerminal.'
+}
+
+$resolvedReleaseDirectory = (Resolve-Path -LiteralPath $ReleaseDirectory).Path
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
-$payloadDirectory = Join-Path $OutputDirectory 'payload'
-$payloadArchive = Join-Path $OutputDirectory 'ZTerminalPayload.zip'
-$target = Join-Path $OutputDirectory 'ZTerminal-Private-Setup.exe'
-Remove-Item -LiteralPath $payloadDirectory -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath $payloadArchive -Force -ErrorAction SilentlyContinue
+$resolvedOutputDirectory = (Resolve-Path -LiteralPath $OutputDirectory).Path
+$target = Join-Path $resolvedOutputDirectory 'ZTerminal-Private-Setup.exe'
 Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Path $payloadDirectory -Force | Out-Null
 
-foreach ($requiredFile in $requiredFiles) {
-    Copy-Item -LiteralPath (Join-Path $ReleaseDirectory $requiredFile) -Destination (Join-Path $payloadDirectory $requiredFile) -Force
-}
-Copy-Item -LiteralPath $uninstallerSource -Destination (Join-Path $payloadDirectory 'uninstall-zterminal.ps1') -Force
-Compress-Archive -Path (Join-Path $payloadDirectory '*') -DestinationPath $payloadArchive -CompressionLevel Optimal -Force
-
-$references = @(
-    '/r:System.IO.Compression.dll',
-    '/r:System.IO.Compression.FileSystem.dll',
-    '/r:System.Windows.Forms.dll',
-    '/r:Microsoft.CSharp.dll'
-)
 $compilerArguments = @(
-    '/nologo',
-    '/target:winexe',
-    '/optimize+',
-    '/platform:anycpu',
-    "/out:$target",
-    "/resource:$payloadArchive,ZTerminalPayload.zip"
-) + $references + @($setupSource)
-& $compiler @compilerArguments
+    "/DReleaseDirectory=$resolvedReleaseDirectory",
+    "/DOutputDirectory=$resolvedOutputDirectory"
+)
+$effectiveSmokeRoot = ''
+if (-not [string]::IsNullOrWhiteSpace($SmokeRoot)) {
+    New-Item -ItemType Directory -Path $SmokeRoot -Force | Out-Null
+    $effectiveSmokeRoot = (Resolve-Path -LiteralPath $SmokeRoot).Path
+    $compilerArguments += @(
+        '/DInstallerAppId=ZTerminalPrivateSmoke',
+        '/DInstallerDisplayName=ZTerminal Smoke',
+        '/DInstallerGroupName=ZTerminal Smoke',
+        "/DDefaultInstallDirectory=$(Join-Path $effectiveSmokeRoot 'program')",
+        "/DLocalDataDirectory=$(Join-Path $effectiveSmokeRoot 'local-data')",
+        "/DRoamingDataDirectory=$(Join-Path $effectiveSmokeRoot 'roaming-data')",
+        "/DLegacyBinaryDirectory=$(Join-Path $effectiveSmokeRoot 'legacy\app')",
+        '/DLegacyUninstallKey=Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\ZTerminalLegacySmoke',
+        '/DMigrateLegacyInstall=1'
+    )
+}
+$compilerArguments += $installerDefinition
+& $Compiler @compilerArguments
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $target -PathType Leaf)) {
-    throw "The Windows setup compiler did not create the private installer. Exit code: $LASTEXITCODE"
+    throw "The Inno Setup compiler did not create the private installer. Exit code: $LASTEXITCODE"
 }
 
 $signature = Get-AuthenticodeSignature -FilePath $target
 [pscustomobject]@{
-    schema_version = 2
+    schema_version = 3
+    installer_format = 'Inno Setup conventional EXE'
+    compiler = $Compiler
     output = $target
     bytes = (Get-Item -LiteralPath $target).Length
     signature_status = $signature.Status.ToString()
     signed = $signature.Status -eq 'Valid'
-    payload_files = $requiredFiles.Count + 1
+    payload_files = $requiredFiles.Count
+    install_scope = 'CurrentUser'
+    isolated_smoke_build = -not [string]::IsNullOrWhiteSpace($effectiveSmokeRoot)
+    smoke_root = $effectiveSmokeRoot
     network_opened = $false
     public_release_created = $false
-} | ConvertTo-Json -Depth 3
+} | ConvertTo-Json -Depth 4
