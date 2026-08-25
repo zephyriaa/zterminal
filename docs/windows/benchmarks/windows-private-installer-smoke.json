@@ -1,43 +1,49 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "private_artifact": "ZTerminal-Private-Setup.exe",
-  "builder": "self-contained current-user Windows setup executable with embedded bounded payload",
-  "bytes": 1629696,
-  "sha256": "D622992DD9077DB5AA2D40F688530D97C168E3B663F13704987BC5C88E5B595C",
+  "installer_format": "Inno Setup conventional EXE",
+  "builder": "verified current-user Inno Setup 7.1.0 compiler",
+  "bytes": 3082987,
+  "sha256": "24641BF0C9FE8D24BE8EFD2960F035F221C0905060B1CD36856803C1FEDD3074",
   "signature_status": "NotSigned",
   "authorized_code_signing_identity_available": false,
   "network_opened": false,
   "public_release_created": false,
   "install_behavior": {
     "current_user_scope": true,
-    "atomic_payload_deployment": true,
-    "start_menu_shortcuts_created": true,
-    "opens_native_host_automatically": false,
-    "completion_feedback": "visible interactive completion dialog"
+    "conventional_wizard_pages": ["welcome", "ready", "installing", "finished"],
+    "default_binary_root": "%LOCALAPPDATA%\\Programs\\ZTerminal",
+    "automatic_host_launch": false,
+    "explicit_finish_page_launch_option": true,
+    "full_owned_data_uninstall": true
   },
-  "native_desktop_window_smoke": {
+  "native_startup_smoke": {
     "operating_system": "Windows 10 Home 19045",
     "main_window_title": "ZTerminal",
     "main_window_handle_nonzero": true,
     "main_window_responding": true,
     "bounded_host_exit_code": 0,
-    "local_data_unavailable_overlay": true
+    "startup_stage": "ready",
+    "startup_result_code": 0,
+    "startup_network_opened": false,
+    "truthful_local_data_unavailable_workspace": true
   },
-  "registered_installed_apps_smoke": {
+  "isolated_conventional_installer_smoke": {
     "setup_exit_code": 0,
-    "installed_payload_files": 10,
-    "install_scope": "CurrentUser",
-    "uninstall_scope": "full_zterminal_owned_local_data",
-    "registered_display_name": "ZTerminal",
-    "registered_no_modify": 1,
-    "registered_no_repair": 1,
-    "application_shortcut_created": true,
-    "uninstall_shortcut_created": true,
-    "native_host_started_by_installer": false,
-    "isolated_install_root_removed": true,
-    "isolated_registration_removed": true,
-    "isolated_owned_diagnostic_removed": true,
-    "isolated_owned_workspace_removed": true
+    "required_payload_and_uninstaller_present": true,
+    "registered_display_name": "ZTerminal Smoke",
+    "start_menu_shortcut_created": true,
+    "shortcut_target_launch_responding": true,
+    "shortcut_target_main_window_handle_nonzero": true,
+    "shortcut_target_main_window_title": "ZTerminal",
+    "installer_auto_launched_host": false,
+    "legacy_binary_root_removed": true,
+    "legacy_registration_removed": true,
+    "isolated_program_root_removed_on_uninstall": true,
+    "isolated_local_data_removed_on_uninstall": true,
+    "isolated_roaming_data_removed_on_uninstall": true,
+    "isolated_start_menu_group_removed_on_uninstall": true,
+    "isolated_installed_apps_registration_removed_on_uninstall": true
   },
-  "note": "The native desktop host now keeps the Windows title bar to the product name and presents a truthful local-data-unavailable workspace overlay instead of diagnostic-heavy title text. The private installer preserves current-user Installed-apps registration and confirmation-gated complete removal of only ZTerminal-owned local data. No network connection was opened. The installer remains unsigned pending a real authorized code-signing certificate."
+  "note": "The self-contained custom setup was replaced by a conventional current-user Inno Setup installer. The release package was compiled and full install/migrate/launch/uninstall behavior was verified using isolated roots and a distinct test app registration. No raw local records, provider data, credentials, or network traffic were retained in evidence. The installer remains unsigned pending a real authorized code-signing certificate."
 }
