@@ -1,9 +1,9 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "private_artifact": "ZTerminal-Private-Setup.exe",
   "builder": "self-contained current-user Windows setup executable with embedded bounded payload",
-  "bytes": 1628672,
-  "sha256": "739A4829D038081FC18A873F5AEA9393AC743B3FAAF92E60187827F05CF855D1",
+  "bytes": 1629696,
+  "sha256": "D622992DD9077DB5AA2D40F688530D97C168E3B663F13704987BC5C88E5B595C",
   "signature_status": "NotSigned",
   "authorized_code_signing_identity_available": false,
   "network_opened": false,
@@ -14,6 +14,14 @@
     "start_menu_shortcuts_created": true,
     "opens_native_host_automatically": false,
     "completion_feedback": "visible interactive completion dialog"
+  },
+  "native_desktop_window_smoke": {
+    "operating_system": "Windows 10 Home 19045",
+    "main_window_title": "ZTerminal",
+    "main_window_handle_nonzero": true,
+    "main_window_responding": true,
+    "bounded_host_exit_code": 0,
+    "local_data_unavailable_overlay": true
   },
   "registered_installed_apps_smoke": {
     "setup_exit_code": 0,
@@ -31,5 +39,5 @@
     "isolated_owned_diagnostic_removed": true,
     "isolated_owned_workspace_removed": true
   },
-  "note": "The private installer registers only a current-user Windows Installed-apps entry. The registered uninstaller is confirmation-gated for interactive use and permanently removes only the declared ZTerminal-owned local application, roaming data, shortcuts, registration, cache/history, workspace, and diagnostic paths. The test used isolated path and registry overrides and opened no network connection. The installer remains unsigned pending a real authorized code-signing certificate."
+  "note": "The native desktop host now keeps the Windows title bar to the product name and presents a truthful local-data-unavailable workspace overlay instead of diagnostic-heavy title text. The private installer preserves current-user Installed-apps registration and confirmation-gated complete removal of only ZTerminal-owned local data. No network connection was opened. The installer remains unsigned pending a real authorized code-signing certificate."
 }
