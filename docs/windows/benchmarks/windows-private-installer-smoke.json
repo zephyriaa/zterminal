@@ -1,9 +1,9 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "private_artifact": "ZTerminal-Private-Setup.exe",
-  "builder": "self-contained Windows setup executable with embedded bounded payload",
-  "bytes": 1621504,
-  "sha256": "F7772CABC61CB86F7F7FCD35FB8A3FE753A1091E3076E360AA8A7898F131EC54",
+  "builder": "self-contained current-user Windows setup executable with embedded bounded payload",
+  "bytes": 1628672,
+  "sha256": "739A4829D038081FC18A873F5AEA9393AC743B3FAAF92E60187827F05CF855D1",
   "signature_status": "NotSigned",
   "authorized_code_signing_identity_available": false,
   "network_opened": false,
@@ -11,19 +11,25 @@
   "install_behavior": {
     "current_user_scope": true,
     "atomic_payload_deployment": true,
-    "start_menu_shortcut_created": true,
+    "start_menu_shortcuts_created": true,
     "opens_native_host_automatically": false,
     "completion_feedback": "visible interactive completion dialog"
   },
-  "build_validation": {
-    "embedded_setup_compiled": true,
-    "bounded_payload_files": 8,
-    "signing_status_checked": true
+  "registered_installed_apps_smoke": {
+    "setup_exit_code": 0,
+    "installed_payload_files": 10,
+    "install_scope": "CurrentUser",
+    "uninstall_scope": "full_zterminal_owned_local_data",
+    "registered_display_name": "ZTerminal",
+    "registered_no_modify": 1,
+    "registered_no_repair": 1,
+    "application_shortcut_created": true,
+    "uninstall_shortcut_created": true,
+    "native_host_started_by_installer": false,
+    "isolated_install_root_removed": true,
+    "isolated_registration_removed": true,
+    "isolated_owned_diagnostic_removed": true,
+    "isolated_owned_workspace_removed": true
   },
-  "uninstaller_boundary_smoke": {
-    "installed_app_removed": true,
-    "shortcut_removed": true,
-    "separate_local_data_retained": true
-  },
-  "note": "The retired IExpress wrapper is no longer used. The replacement is an install-only private setup executable: it installs the bounded local package and creates the Start Menu shortcut, but does not launch ZTerminal. It remains unsigned pending a real authorized code-signing certificate."
+  "note": "The private installer registers only a current-user Windows Installed-apps entry. The registered uninstaller is confirmation-gated for interactive use and permanently removes only the declared ZTerminal-owned local application, roaming data, shortcuts, registration, cache/history, workspace, and diagnostic paths. The test used isolated path and registry overrides and opened no network connection. The installer remains unsigned pending a real authorized code-signing certificate."
 }
