@@ -39,7 +39,7 @@ using Microsoft::WRL::ComPtr;
 namespace {
 
 constexpr wchar_t kWindowClass[] = L"ZTerminalPhase0NativeHost";
-constexpr wchar_t kWindowTitle[] = L"ZTerminal Native Local-First Host";
+constexpr wchar_t kWindowTitle[] = L"ZTerminal";
 constexpr std::size_t kMaximumVisibleCandles = 2'000;
 constexpr std::size_t kVerticesPerCandle = 12;
 constexpr std::size_t kMaximumVertices = (kMaximumVisibleCandles * kVerticesPerCandle) + 24;
@@ -622,6 +622,99 @@ bool continuous_benchmark_rendering = false;
 bool unsynchronised_benchmark_present = false;
 bool benchmark_resize_once = false;
 
+HWND workspace_brand{};
+HWND workspace_state{};
+HWND workspace_detail{};
+HWND workspace_help{};
+HFONT workspace_brand_font{};
+HFONT workspace_state_font{};
+HFONT workspace_body_font{};
+
+void layout_workspace_overlay(HWND window) {
+    if (workspace_brand == nullptr) {
+        return;
+    }
+    RECT client{};
+    GetClientRect(window, &client);
+    const int width = std::max<LONG>(1, client.right - client.left);
+    const int height = std::max<LONG>(1, client.bottom - client.top);
+    const int left = std::max(32, (width - 640) / 2);
+    const int top = std::max(68, (height - 220) / 2);
+    SetWindowPos(workspace_brand, HWND_TOP, 30, 24, width - 60, 28, SWP_NOACTIVATE);
+    SetWindowPos(workspace_state, HWND_TOP, left, top, 640, 42, SWP_NOACTIVATE);
+    SetWindowPos(workspace_detail, HWND_TOP, left, top + 58, 640, 28, SWP_NOACTIVATE);
+    SetWindowPos(workspace_help, HWND_TOP, left, top + 96, 640, 54, SWP_NOACTIVATE);
+}
+
+void create_workspace_overlay(HWND window) {
+    if (workspace_brand != nullptr) {
+        return;
+    }
+    constexpr DWORD style = WS_CHILD | SS_LEFT | SS_NOPREFIX;
+    workspace_brand = CreateWindowExW(0, L"STATIC", L"ZTERMINAL  /  LOCAL WORKSPACE", style, 0, 0, 0, 0, window, nullptr, nullptr, nullptr);
+    workspace_state = CreateWindowExW(0, L"STATIC", L"LOCAL DATA UNAVAILABLE", style, 0, 0, 0, 0, window, nullptr, nullptr, nullptr);
+    workspace_detail = CreateWindowExW(0, L"STATIC", L"No verified local candles are available in this workspace.", style, 0, 0, 0, 0, window, nullptr, nullptr, nullptr);
+    workspace_help = CreateWindowExW(0, L"STATIC", L"Import a verified local segment to begin. ZTerminal will not fetch or manufacture market data automatically.", style, 0, 0, 0, 0, window, nullptr, nullptr, nullptr);
+    workspace_brand_font = CreateFontW(-16, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+    workspace_state_font = CreateFontW(-30, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+    workspace_body_font = CreateFontW(-17, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+    if (workspace_brand_font != nullptr) {
+        SendMessageW(workspace_brand, WM_SETFONT, reinterpret_cast<WPARAM>(workspace_brand_font), TRUE);
+    }
+    if (workspace_state_font != nullptr) {
+        SendMessageW(workspace_state, WM_SETFONT, reinterpret_cast<WPARAM>(workspace_state_font), TRUE);
+    }
+    if (workspace_body_font != nullptr) {
+        SendMessageW(workspace_detail, WM_SETFONT, reinterpret_cast<WPARAM>(workspace_body_font), TRUE);
+        SendMessageW(workspace_help, WM_SETFONT, reinterpret_cast<WPARAM>(workspace_body_font), TRUE);
+    }
+    layout_workspace_overlay(window);
+}
+
+void update_workspace_overlay(HWND window) {
+    if (workspace_brand == nullptr) {
+        return;
+    }
+    const bool unavailable = chart_source == ChartSource::Unavailable;
+    const int visibility = unavailable ? SW_SHOWNA : SW_HIDE;
+    ShowWindow(workspace_brand, visibility);
+    ShowWindow(workspace_state, visibility);
+    ShowWindow(workspace_detail, visibility);
+    ShowWindow(workspace_help, visibility);
+    if (!unavailable) {
+        return;
+    }
+    SetWindowTextW(workspace_state, L"LOCAL DATA UNAVAILABLE");
+    SetWindowTextW(workspace_detail, L"No verified local candles are available in this workspace.");
+    if (local_diagnostic == L"invalid local scene request") {
+        SetWindowTextW(workspace_help, L"The local scene request was invalid. Check the selected local store and segment parameters.");
+    } else if (!local_diagnostic.empty() && local_diagnostic != L"explicit local scene request required") {
+        SetWindowTextW(workspace_help, local_diagnostic.c_str());
+    } else {
+        SetWindowTextW(workspace_help, L"Import a verified local segment to begin. ZTerminal will not fetch or manufacture market data automatically.");
+    }
+    layout_workspace_overlay(window);
+}
+
+void destroy_workspace_overlay() {
+    if (workspace_brand_font != nullptr) {
+        DeleteObject(workspace_brand_font);
+        workspace_brand_font = nullptr;
+    }
+    if (workspace_state_font != nullptr) {
+        DeleteObject(workspace_state_font);
+        workspace_state_font = nullptr;
+    }
+    if (workspace_body_font != nullptr) {
+        DeleteObject(workspace_body_font);
+        workspace_body_font = nullptr;
+    }
+    workspace_brand = nullptr;
+    workspace_state = nullptr;
+    workspace_detail = nullptr;
+    workspace_help = nullptr;
+}
+
 void request_frame(HWND window) {
     render_requested = true;
     InvalidateRect(window, nullptr, FALSE);
@@ -644,41 +737,8 @@ void advance_chart_view_revision() {
 }
 
 void update_title(HWND window) {
-    std::wstringstream title;
-    title << kWindowTitle << L" | ";
-    if (chart_source == ChartSource::FixtureDiagnostic) {
-        title << L"FIXTURE ONLY | " << chart_candles.size() << L" diagnostic candles";
-    } else if (chart_source == ChartSource::LocalScene) {
-        title << zterminal::local_scene::availability_label(local_availability)
-              << L" | " << chart_candles.size() << L" of " << local_total_bars
-              << L" verified local candles | source offset " << local_first_bar;
-        if (active_local_scene_request.has_value()) {
-            title << L" | segment " << active_local_scene_request->start_ns;
-        }
-        if (local_availability == zterminal::local_scene::Availability::Cached) {
-            title << L" | age " << local_age_ns << L" ns";
-        }
-    } else {
-        title << zterminal::local_scene::availability_label(local_availability)
-              << L" | no candles rendered";
-        if (!local_diagnostic.empty()) {
-            title << L" | " << local_diagnostic;
-        }
-    }
-    if (!local_history_diagnostic.empty()) {
-        title << L" | " << local_history_diagnostic;
-    }
-    if (local_monte_carlo_result.kind == zterminal::local_monte_carlo::Kind::Complete) {
-        title << L" | " << zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind)
-              << L" | segments " << local_monte_carlo_result.source_segments
-              << L" | median " << local_monte_carlo_result.median_return_bps
-              << L" bps | p05 " << local_monte_carlo_result.p05_return_bps
-              << L" | p95 " << local_monte_carlo_result.p95_return_bps;
-    } else if (local_monte_carlo_result.kind != zterminal::local_monte_carlo::Kind::NotRequested) {
-        title << L" | " << zterminal::local_monte_carlo::kind_label(local_monte_carlo_result.kind);
-    }
-    title << L" | wheel zoom, drag pan, PgUp/PgDn page, Home/End bounds, Esc close";
-    SetWindowText(window, title.str().c_str());
+    SetWindowTextW(window, kWindowTitle);
+    update_workspace_overlay(window);
 }
 
 bool apply_local_scene_result(
@@ -863,9 +923,25 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
             if (renderer->resize(LOWORD(l_param), HIWORD(l_param))) {
                 advance_chart_view_revision();
             }
+            layout_workspace_overlay(window);
             request_frame(window);
         }
         return 0;
+    case WM_CTLCOLORSTATIC: {
+        HDC device_context = reinterpret_cast<HDC>(w_param);
+        const HWND control = reinterpret_cast<HWND>(l_param);
+        SetBkMode(device_context, TRANSPARENT);
+        if (control == workspace_state) {
+            SetTextColor(device_context, RGB(243, 176, 75));
+        } else if (control == workspace_brand) {
+            SetTextColor(device_context, RGB(147, 181, 209));
+        } else if (control == workspace_help) {
+            SetTextColor(device_context, RGB(139, 160, 179));
+        } else {
+            SetTextColor(device_context, RGB(223, 234, 244));
+        }
+        return reinterpret_cast<LRESULT>(GetStockObject(NULL_BRUSH));
+    }
     case WM_MOUSEMOVE: {
         TRACKMOUSEEVENT tracking{sizeof(TRACKMOUSEEVENT), TME_LEAVE, window, 0};
         (void)TrackMouseEvent(&tracking);
@@ -924,6 +1000,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         }
         return 0;
     case WM_DESTROY:
+        destroy_workspace_overlay();
         PostQuitMessage(0);
         return 0;
     default:
@@ -1233,6 +1310,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
         DestroyWindow(window);
         return 3;
     }
+    create_workspace_overlay(window);
     update_title(window);
     ShowWindow(window, show_command);
     UpdateWindow(window);
