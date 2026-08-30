@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://zterminal.onrender.com">Web App</a> · <a href="#windows-desktop">Windows Desktop</a> · <a href="#roadmap">Roadmap</a> · <a href="#contributing">Contributing</a>
+  <a href="https://zterminal.onrender.com">Web App</a> · <a href="#windows-desktop">Windows Desktop</a> · <a href="#architecture">Architecture</a> · <a href="#roadmap">Roadmap</a> · <a href="#contributing">Contributing</a>
 </p>
 
 <p align="center">
@@ -21,6 +21,7 @@
   <img src="https://img.shields.io/badge/web-live%20development-111827?style=flat-square" />
   <img src="https://img.shields.io/badge/desktop-Windows%2010%2F11-111827?style=flat-square" />
   <img src="https://img.shields.io/badge/focus-quant%20research-111827?style=flat-square" />
+  <img src="https://img.shields.io/badge/architecture-client%20first-111827?style=flat-square" />
 </p>
 
 <p align="center">
@@ -41,31 +42,110 @@ It brings market context, strategy research, statistical validation, risk analys
 
 ---
 
+## Architecture
+
+ZTerminal is being designed around a **client-first, server-light architecture**.
+
+The core idea is simple:
+
+> **Use the user's computer for computation whenever it is practical, while keeping the server responsible for the minimum amount of centralized work required to operate the platform reliably.**
+
+<p align="center">
+  <img src="assets/zterminal-architecture.svg" alt="ZTerminal client-first architecture" width="1100" />
+</p>
+
+This is both a performance strategy and a **scalability/cost strategy**. Heavy workloads should not automatically become server workloads simply because a user opened ZTerminal.
+
+### User computer — preferred location for heavy work
+
+The Windows client is intended to use the user's available **CPU, GPU, RAM and local storage** for workloads that can safely run locally, such as:
+
+- Chart rendering and visualization
+- Local market-data processing
+- Order-flow and footprint calculations
+- Indicator calculations
+- Statistical calculations
+- Backtesting and research workloads
+- Monte Carlo and other compute-heavy analysis
+- Local caching and preprocessing
+- Workspace state and other non-authoritative local data
+
+A user's machine can therefore contribute the compute required for their own session instead of forcing every calculation through shared infrastructure.
+
+### Central server — shared services only
+
+The backend should remain focused on work that actually benefits from centralized control, such as:
+
+- Authentication and account management
+- Subscription / entitlement checks
+- Shared configuration and feature flags
+- Secure API mediation where required
+- Shared data synchronization
+- Release metadata and application updates
+- Centralized notifications or events when necessary
+- Service health, telemetry and operational controls
+- Authoritative state that must remain consistent across devices
+
+The server should **not become the default compute engine for every user's heavy analytics workload** when that workload can be performed locally.
+
+### A practical rule
+
+For every feature, ZTerminal should ask:
+
+> **Does this computation need to happen on our infrastructure, or can the user's machine do it just as well?**
+
+If local execution is practical, secure and reliable, **local-first is the default**.
+
+This boundary will be determined through real benchmarking, reliability testing and product requirements rather than by blindly moving everything to either side.
+
+---
+
+## Why client-first?
+
+A traditional cloud-heavy design can make every user compete for centralized CPU, memory and compute resources. That increases infrastructure requirements as usage grows.
+
+ZTerminal instead aims to make the user's device responsible for as much appropriate computation as possible.
+
+Conceptually:
+
+```text
+Traditional cloud-heavy model
+
+10,000 users
+    ↓
+10,000 users × heavy compute
+    ↓
+Central infrastructure carries most of the workload
+
+
+ZTerminal client-first model
+
+10,000 users
+    ↓
+10,000 local clients perform appropriate compute
+    ↓
+Lightweight requests / shared services / synchronization
+    ↓
+Central infrastructure handles coordination, identity and shared state
+```
+
+This does **not** mean “no backend” or “everything is local.” Some data, services, security controls and authoritative operations must remain centralized.
+
+The goal is to avoid paying server-side compute costs for work that a user's computer can perform efficiently itself.
+
+---
+
 ## The ZTerminal strategy
 
 ZTerminal is evolving from a primarily web-based application into a **web + lightweight Windows terminal platform**.
 
-The web application remains the accessible, cross-platform experience. The Windows client is being designed as the higher-performance environment where appropriate computation and rendering can happen locally on the user's computer instead of requiring every heavy workload to run on shared infrastructure.
-
-<p align="center">
-  <img src="assets/zterminal-architecture.svg" alt="ZTerminal architecture — one platform, two experiences" width="1100" />
-</p>
-
-The goal is **not** to put the website inside an `.exe`. The goal is to build a proper lightweight desktop terminal around the same ZTerminal platform.
-
----
-
-## Why local-first Windows?
-
-The Windows strategy is **local-first where practical**. Work that can be performed efficiently and safely on the user's CPU, GPU, memory and storage should be evaluated for local execution first.
-
-Central infrastructure remains responsible for functionality that genuinely requires centralized coordination, including authentication, entitlements, shared services, cloud synchronization, remote configuration and release distribution.
+The web application remains the accessible, cross-platform experience. The Windows client is the preferred environment for workloads that benefit from local CPU/GPU execution, persistent storage, background processing and deeper desktop integration.
 
 <p align="center">
   <img src="assets/zterminal-local-first.svg" alt="ZTerminal local-first architecture" width="1100" />
 </p>
 
-The exact local/server boundary will be refined through benchmarking rather than assumed in advance.
+The goal is **not** to put the website inside an `.exe`. The goal is to build a proper lightweight desktop terminal around the same ZTerminal platform.
 
 ---
 
@@ -97,19 +177,20 @@ Context-aware alerts · Setup monitoring · Trade journaling · Execution analys
 
 The long-term Windows application is being designed as a **lightweight native terminal**, not as a browser wrapper.
 
-The native direction is centered around **Rust + native Windows technologies such as Win32/Direct3D**, with local-first computation and rendering where it provides a meaningful performance benefit.
+The native direction is centered around **Rust + native Windows technologies such as Win32/Direct3D**, with local-first computation and rendering where it provides a meaningful performance and scalability benefit.
 
 Planned capabilities include:
 
-* Native high-performance rendering
-* CPU/GPU utilization on the user's machine
-* Local chart and order-flow processing where practical
-* Persistent local workspaces
-* Multi-window and multi-monitor workflows
-* Native notifications
-* Global shortcuts
-* Background monitoring
-* Lower dependence on centralized compute
+- Native high-performance rendering
+- CPU/GPU utilization on the user's machine
+- Local chart, indicator and order-flow processing where practical
+- Local backtesting and research execution where practical
+- Persistent local workspaces and caches
+- Multi-window and multi-monitor workflows
+- Native notifications
+- Global shortcuts
+- Background monitoring
+- Reduced dependence on centralized compute
 
 The current Tauri-based Windows build is treated as an **internal packaging/proof track**, not as the final native architecture.
 
@@ -117,9 +198,46 @@ The current Tauri-based Windows build is treated as an **internal packaging/proo
 
 **Web:** instant, cross-platform access without installation.
 
-**Windows:** a dedicated terminal environment with local-first processing and deeper desktop integration.
+**Windows:** a dedicated terminal environment with local-first processing, more available local compute and deeper desktop integration.
 
-Both are intended to use the same ZTerminal account and shared platform.
+Both are intended to use the same ZTerminal account and shared platform, while respecting the different capabilities of each environment.
+
+---
+
+## Data and compute flow
+
+ZTerminal should prefer a pipeline similar to:
+
+```text
+                 ┌─────────────────────────────┐
+                 │        ZTerminal Server      │
+                 │                             │
+                 │ Auth / Entitlements         │
+                 │ Shared services             │
+                 │ Sync / Config               │
+                 │ Release management          │
+                 │ Minimal centralized compute │
+                 └──────────────┬──────────────┘
+                                │
+                      lightweight requests
+                         shared state/data
+                                │
+          ┌─────────────────────┴─────────────────────┐
+          │                                           │
+          ▼                                           ▼
+┌──────────────────────┐                    ┌──────────────────────┐
+│      User PC A       │                    │      User PC B       │
+│                      │                    │                      │
+│ CPU / GPU compute    │                    │ CPU / GPU compute    │
+│ Charts               │                    │ Charts               │
+│ Order flow           │                    │ Order flow           │
+│ Backtesting          │                    │ Backtesting          │
+│ Analytics            │                    │ Analytics            │
+│ Local cache          │                    │ Local cache           │
+└──────────────────────┘                    └──────────────────────┘
+```
+
+The exact boundary is feature-dependent. For example, **authoritative account state** belongs on the server, while a user's temporary analytical calculation generally does not.
 
 ---
 
@@ -133,14 +251,14 @@ Users should **not** have to return to the website and manually reinstall ZTermi
 
 The production Windows release system is designed around:
 
-* Signed releases
-* Versioned artifacts
-* Signed release manifests
-* CDN / object-storage distribution
-* Background update checks
-* Staged rollouts
-* Release pause / rollback
-* Separation of application binaries from user data
+- Signed releases
+- Versioned artifacts
+- Signed release manifests
+- CDN / object-storage distribution
+- Background update checks
+- Staged rollouts
+- Release pause / rollback
+- Separation of application binaries from user data
 
 The website and Windows updater will use one canonical release source of truth.
 
@@ -158,9 +276,51 @@ Remote configuration is **not** intended to become a mechanism for downloading o
 
 ## Scalable by design
 
-The Windows architecture is also a scalability strategy: use the user's hardware for appropriate local computation and rendering while keeping centralized infrastructure focused on shared data, identity, entitlements, synchronization, release distribution and other services that require central coordination.
+ZTerminal's architecture is intentionally designed so that **adding users does not automatically mean adding the same amount of server-side compute**.
 
-The objective is to reduce unnecessary server-side compute and improve the cost and scalability profile as the user base grows.
+The preferred scaling model is:
+
+```text
+More users
+    ↓
+More client-side compute
+    +
+Moderate growth in shared backend traffic
+```
+
+rather than:
+
+```text
+More users
+    ↓
+More users × heavy centralized computation
+    ↓
+Rapid growth in CPU / RAM / compute infrastructure
+```
+
+This can improve the cost profile of analytics-heavy features because the compute required for one user's local analysis is primarily supplied by that user's own machine.
+
+That said, network bandwidth, storage, market-data licensing, authentication, synchronization, observability and other shared services still scale with the platform and must be engineered accordingly.
+
+The architecture therefore optimizes for **efficient distribution of workload**, not the unrealistic goal of zero server costs.
+
+---
+
+## Security boundary
+
+Client-first does **not** mean trusting the client with authoritative decisions.
+
+The server remains the source of truth for security-sensitive and account-sensitive operations where appropriate. Local computation should generally operate on data and tasks that do not require the backend to blindly trust client-provided results.
+
+For example:
+
+- Authentication and entitlements should be server-controlled.
+- Subscription state should be validated centrally.
+- Sensitive credentials and server secrets must never be embedded in the client.
+- Local calculations can be performed locally, but authoritative account state should remain centralized.
+- Anti-tampering and integrity controls should be applied where product requirements demand them.
+
+The architecture aims to move **compute**, not **trust boundaries**, to the user's machine.
 
 ---
 
@@ -176,6 +336,17 @@ This is an engineering proof track, not the final native terminal.
 
 Rust · native Windows APIs · Direct3D/native rendering · local-first computation · high-performance charting · order-flow visualization · persistent workspaces · desktop integration.
 
+### Track C — Client/server workload separation
+
+For every major feature:
+
+1. Identify what must be centralized.
+2. Identify what can safely run locally.
+3. Benchmark both sides.
+4. Minimize unnecessary backend CPU and memory usage.
+5. Keep authoritative state and security controls centralized.
+6. Cache and batch network activity where practical.
+
 ### Shared release spine
 
 Versioning · release metadata · signing · distribution · update strategy · rollback · remote configuration.
@@ -188,62 +359,67 @@ Public Windows distribution should only be enabled when the appropriate producti
 
 ### Research
 
-* [x] Initial research workflow
-* [x] Strategy-oriented foundation
-* [ ] Advanced backtesting
-* [ ] Monte Carlo analysis
-* [ ] Walk-forward validation
-* [ ] Parameter sensitivity
-* [ ] Expanded statistical research
+- [x] Initial research workflow
+- [x] Strategy-oriented foundation
+- [ ] Advanced backtesting
+- [ ] Monte Carlo analysis
+- [ ] Walk-forward validation
+- [ ] Parameter sensitivity
+- [ ] Expanded statistical research
 
 ### Market Intelligence
 
-* [ ] Advanced market-regime detection
-* [ ] Deeper volume-profile analytics
-* [ ] Expanded order-flow analysis
-* [ ] Cross-market context
-* [ ] Additional real-time data integrations
+- [ ] Advanced market-regime detection
+- [ ] Deeper volume-profile analytics
+- [ ] Expanded order-flow analysis
+- [ ] Cross-market context
+- [ ] Additional real-time data integrations
 
 ### Risk & Monitoring
 
-* [ ] Advanced risk engine
-* [ ] Context-rich alerts
-* [ ] Exposure analytics
-* [ ] Advanced trade-plan workspace
+- [ ] Advanced risk engine
+- [ ] Context-rich alerts
+- [ ] Exposure analytics
+- [ ] Advanced trade-plan workspace
 
 ### Review
 
-* [ ] Automated journaling
-* [ ] Execution analytics
-* [ ] Strategy vs. trader performance
-* [ ] Performance attribution
+- [ ] Automated journaling
+- [ ] Execution analytics
+- [ ] Strategy vs. trader performance
+- [ ] Performance attribution
 
 ### Windows Desktop
 
-* [ ] Internal Windows packaging validation
-* [ ] Signed installer pipeline
-* [ ] Native Windows client foundation
-* [ ] Rust / native rendering architecture
-* [ ] Direct3D charting foundation
-* [ ] Local-first analytics
-* [ ] Persistent workspaces
-* [ ] Multi-window / multi-monitor workflows
-* [ ] Native notifications
-* [ ] Global shortcuts
-* [ ] Background monitoring
-* [ ] Windows auto-update system
-* [ ] Canonical release manifest
-* [ ] CDN / object-storage distribution
-* [ ] Staged releases and rollback
-* [ ] Public Windows download
+- [ ] Internal Windows packaging validation
+- [ ] Signed installer pipeline
+- [ ] Native Windows client foundation
+- [ ] Rust / native rendering architecture
+- [ ] Direct3D charting foundation
+- [ ] Client/server workload separation framework
+- [ ] Local-first analytics
+- [ ] Local backtesting / compute engine
+- [ ] Local market-data processing and caching
+- [ ] Persistent workspaces
+- [ ] Multi-window / multi-monitor workflows
+- [ ] Native notifications
+- [ ] Global shortcuts
+- [ ] Background monitoring
+- [ ] Windows auto-update system
+- [ ] Canonical release manifest
+- [ ] CDN / object-storage distribution
+- [ ] Staged releases and rollback
+- [ ] Public Windows download
 
 ### Platform
 
-* [ ] Shared web/desktop account architecture
-* [ ] Remote configuration
-* [ ] Cloud synchronization where appropriate
-* [ ] Release management tooling
-* [ ] Production observability
+- [ ] Shared web/desktop account architecture
+- [ ] Remote configuration
+- [ ] Cloud synchronization where appropriate
+- [ ] Central service minimization
+- [ ] Release management tooling
+- [ ] Production observability
+- [ ] Workload benchmarking and cost monitoring
 
 ---
 
@@ -257,7 +433,11 @@ Public Windows distribution should only be enabled when the appropriate producti
 
 **Robustness over optimization.** A stable strategy is more interesting than a perfectly optimized backtest.
 
-**Local compute where it makes sense.** Use the user's hardware when it is efficient and safe to do so.
+**Local compute where it makes sense.** Use the user's hardware when it is efficient, safe and reliable to do so.
+
+**Centralize what must be centralized.** Identity, entitlements, authoritative state and shared services belong where centralized control provides real value.
+
+**Minimize unnecessary infrastructure.** Server capacity should be spent on shared platform responsibilities, not avoidable per-user computation.
 
 **Human control over blind automation.** Automation should remove repetitive work, not remove responsibility.
 
@@ -267,9 +447,9 @@ Public Windows distribution should only be enabled when the appropriate producti
 
 ZTerminal is an **actively developing project**.
 
-The web application is the current accessible product experience. The Windows architecture is being developed toward a lightweight, native, local-first terminal designed to reduce unnecessary server-side computation and provide a deeper desktop workflow.
+The web application is the current accessible product experience. The Windows architecture is being developed toward a lightweight, native, client-first terminal designed to shift appropriate computation and rendering to the user's machine while keeping centralized infrastructure focused on shared services and authoritative state.
 
-The native Windows client, public desktop distribution and automatic-update infrastructure are being developed incrementally and should not be interpreted as fully production-ready merely because they appear in the roadmap.
+The client/server boundary, native Windows implementation, public desktop distribution and automatic-update infrastructure are being developed incrementally and should not be interpreted as fully production-ready merely because they appear in the roadmap.
 
 ---
 
@@ -281,6 +461,10 @@ Before proposing a large feature, ask:
 
 > **Does this make the trading research and decision workflow meaningfully better?**
 
+And for implementation:
+
+> **Does this really need server-side compute, or can the user's machine handle it?**
+
 ---
 
 ## Disclaimer
@@ -291,5 +475,5 @@ ZTerminal is software for market analysis, research and decision support. It doe
 
 <p align="center">
 <strong>ZTerminal</strong><br />
-<sub>Quantitative market intelligence / a lightweight analysis terminal.</sub>
+<sub>Quantitative market intelligence / a lightweight, client-first analysis terminal.</sub>
 </p>
