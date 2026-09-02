@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Cloud, CloudOff, Database, LogIn, LogOut, ShieldCheck, UserRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,18 @@ type ProviderMap = Record<string, { id: string }>;
 export function AccountPanel({ symbol, provider, dataStatus, onClose }: { symbol: string; provider?: string; dataStatus: string; onClose: () => void }) {
   const { data: session, status } = useSession();
   const [googleReady, setGoogleReady] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      if ((event.target as HTMLElement | null)?.closest(".zt-research-account")) return;
+      if (!panelRef.current?.contains(event.target as Node)) onClose();
+    };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.removeEventListener("pointerdown", onPointerDown); document.removeEventListener("keydown", onKeyDown); };
+  }, [onClose]);
 
   useEffect(() => {
     let active = true;
@@ -24,7 +36,7 @@ export function AccountPanel({ symbol, provider, dataStatus, onClose }: { symbol
   const displayName = session?.user?.name || session?.user?.email || "Research workspace";
 
   return (
-    <section className="zt-account-panel zt-account-panel-auth" aria-label="Research account and cloud workspace">
+    <section ref={panelRef} className="zt-account-panel zt-account-panel-auth" aria-label="Research account and cloud workspace">
       <header>
         <div><span>ZT ACCOUNT</span><h2>{authenticated ? "Your research workspace" : "Save your research"}</h2></div>
         <button type="button" onClick={onClose} aria-label="Close account information"><X /></button>
