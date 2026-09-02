@@ -15,7 +15,7 @@ import {
   NotebookPen,
   Trash2,
 } from "lucide-react";
-import { Panel, PanelHeader, Pill, SimulatedTag, StatRow } from "../terminal/primitives";
+import { Panel, PanelHeader, Pill, StatRow } from "../terminal/primitives";
 import { useWorkspace } from "@/stores/workspace";
 import { listContracts, getContract } from "@/lib/market/contracts";
 import { PROVIDER_CATALOG, type ProviderCatalogEntry } from "@/lib/market/capabilities";
@@ -30,49 +30,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 /* ----------------------------- Calendar ----------------------------- */
 
-const ECON_EVENTS = [
-  { time: "08:30 ET", date: "Today", title: "CPI m/m", impact: "high", actual: "0.2%", forecast: "0.3%", prev: "0.3%" },
-  { time: "10:00 ET", date: "Today", title: "Crude Oil Inventories", impact: "med", actual: null, forecast: "1.2M", prev: "-0.4M" },
-  { time: "14:00 ET", date: "Today", title: "FOMC Rate Decision", impact: "high", actual: null, forecast: "5.50%", prev: "5.50%" },
-  { time: "08:30 ET", date: "Tomorrow", title: "Initial Jobless Claims", impact: "med", actual: null, forecast: "220K", prev: "218K" },
-  { time: "08:30 ET", date: "Fri", title: "Nonfarm Payrolls", impact: "high", actual: null, forecast: "180K", prev: "175K" },
-];
-
 export function CalendarView() {
   return (
-    <ViewShell title="Economic Calendar" icon={CalendarIcon} right={<Pill tone="warn">Sample events</Pill>}>
-      <div className="px-3 py-2 border-b hairline text-[10.5px] text-muted-foreground">Illustrative event rows only. A provider-backed calendar has not been connected yet.</div>
-      <div className="overflow-y-auto scroll-thin">
-        <table className="w-full text-[12px]">
-          <thead className="sticky top-0 bg-panel border-b hairline">
-            <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              <th className="text-left font-medium px-3 py-2">Date</th>
-              <th className="text-left font-medium px-2 py-2">Time</th>
-              <th className="text-left font-medium px-2 py-2">Event</th>
-              <th className="text-center font-medium px-2 py-2">Impact</th>
-              <th className="text-right font-medium px-2 py-2 tnum">Actual</th>
-              <th className="text-right font-medium px-2 py-2 tnum">Forecast</th>
-              <th className="text-right font-medium px-3 py-2 tnum">Previous</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ECON_EVENTS.map((e, i) => (
-              <tr key={i} className="border-b hairline hover:bg-hover/40">
-                <td className="px-3 py-2 text-muted-foreground">{e.date}</td>
-                <td className="px-2 py-2 tnum text-muted-foreground">{e.time}</td>
-                <td className="px-2 py-2">{e.title}</td>
-                <td className="px-2 py-2 text-center">
-                  <Pill tone={e.impact === "high" ? "neg" : e.impact === "med" ? "warn" : "default"}>
-                    {e.impact === "high" ? "High" : e.impact === "med" ? "Med" : "Low"}
-                  </Pill>
-                </td>
-                <td className={cn("px-2 py-2 text-right tnum", e.actual ? "text-pos" : "text-muted-foreground")}>{e.actual ?? "—"}</td>
-                <td className="px-2 py-2 text-right tnum text-muted-foreground">{e.forecast}</td>
-                <td className="px-3 py-2 text-right tnum text-muted-foreground">{e.prev}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <ViewShell title="Economic Calendar" icon={CalendarIcon} right={<Pill tone="warn">Unavailable</Pill>}>
+      <div className="flex min-h-64 items-center justify-center p-6">
+        <Panel className="max-w-md p-5 text-center">
+          <CalendarIcon className="mx-auto h-6 w-6 text-warn" />
+          <h2 className="mt-3 text-sm font-semibold">Provider-backed calendar unavailable</h2>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">No economic-calendar provider is connected to the web terminal. ZTerminal withholds event rows, forecasts, and outcomes until verified data is available.</p>
+        </Panel>
       </div>
     </ViewShell>
   );
@@ -212,44 +178,15 @@ export function ResearchView() {
 
 /* ----------------------------- Portfolio ----------------------------- */
 
-const POSITIONS = [
-  { symbol: "NQ", net: 2, avg: 21420, last: 21455, pnl: 1400 },
-  { symbol: "ES", net: -1, avg: 6045, last: 6040, pnl: 250 },
-];
-
 export function PortfolioView() {
-  const total = POSITIONS.reduce((s, p) => s + p.pnl, 0);
   return (
-    <ViewShell title="Portfolio" icon={Briefcase} right={<><SimulatedTag /><Pill tone={total >= 0 ? "pos" : "neg"}>{total >= 0 ? "+" : ""}${total.toLocaleString()}</Pill></>}>
-      <div className="px-3 py-2 border-b hairline text-[10.5px] text-muted-foreground">Illustrative simulation only. No broker or account position feed is connected.</div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 p-3 border-b hairline">
-        <Panel className="p-3"><StatRow label="Equity" value="$102,350" tone="default" /><StatRow label="Realized P&L" value="+$1,240" tone="pos" /><StatRow label="Unrealized P&L" value={`+${total.toLocaleString()}`} tone="pos" /></Panel>
-        <Panel className="p-3"><StatRow label="Margin used" value="$8,400" /><StatRow label="Margin avail" value="$93,950" /><StatRow label="Exposure" value="8.2%" /></Panel>
-        <Panel className="p-3"><StatRow label="Open positions" value={String(POSITIONS.length)} /><StatRow label="Strategies" value="2" /><StatRow label="Day trades" value="3" /></Panel>
-      </div>
-      <div className="overflow-y-auto scroll-thin flex-1">
-        <table className="w-full text-[12px]">
-          <thead className="sticky top-0 bg-panel border-b hairline">
-            <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              <th className="text-left font-medium px-3 py-2">Symbol</th>
-              <th className="text-right font-medium px-2 py-2 tnum">Net</th>
-              <th className="text-right font-medium px-2 py-2 tnum">Avg</th>
-              <th className="text-right font-medium px-2 py-2 tnum">Last</th>
-              <th className="text-right font-medium px-3 py-2 tnum">P&L</th>
-            </tr>
-          </thead>
-          <tbody>
-            {POSITIONS.map((p) => (
-              <tr key={p.symbol} className="border-b hairline hover:bg-hover/40">
-                <td className="px-3 py-2 font-mono-num font-semibold">{p.symbol}</td>
-                <td className={cn("px-2 py-2 text-right tnum", p.net >= 0 ? "text-pos" : "text-neg")}>{p.net >= 0 ? "+" : ""}{p.net}</td>
-                <td className="px-2 py-2 text-right tnum text-muted-foreground">{p.avg.toLocaleString()}</td>
-                <td className="px-2 py-2 text-right tnum">{p.last.toLocaleString()}</td>
-                <td className={cn("px-3 py-2 text-right tnum font-medium", p.pnl >= 0 ? "text-pos" : "text-neg")}>{p.pnl >= 0 ? "+" : ""}${p.pnl.toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <ViewShell title="Portfolio" icon={Briefcase} right={<Pill tone="warn">Unavailable</Pill>}>
+      <div className="flex min-h-64 items-center justify-center p-6">
+        <Panel className="max-w-md p-5 text-center">
+          <Briefcase className="mx-auto h-6 w-6 text-warn" />
+          <h2 className="mt-3 text-sm font-semibold">No broker account connected</h2>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">Equity, positions, margin, exposure, and P&amp;L are withheld. The web terminal has no broker execution or account feed, so it will not display invented portfolio values.</p>
+        </Panel>
       </div>
     </ViewShell>
   );
