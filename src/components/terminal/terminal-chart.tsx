@@ -1,9 +1,6 @@
 "use client";
 
-/* Canvas rendering intentionally coordinates refs and browser observers outside React render state. */
-/* eslint-disable react-hooks/refs, react-hooks/set-state-in-effect, react-hooks/immutability */
-
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { getContract } from "@/lib/market/contracts";
 import type { Bar } from "@/lib/market/types";
@@ -11,6 +8,15 @@ import { useMarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import type { ChartTimezone } from "@/stores/workspace";
+import {
+  createChart,
+  ColorType,
+  CrosshairMode,
+  IChartApi,
+  ISeriesApi,
+  Time,
+  CandlestickSeries, BarSeries, LineSeries, AreaSeries, HistogramSeries, createSeriesMarkers, LineStyle
+} from "lightweight-charts";
 
 export type ChartType = "candles" | "bars" | "line" | "area";
 
@@ -34,7 +40,7 @@ export interface ChartIndicators {
 }
 
 export interface TradeMarker {
-  t: number;     // bar time
+  t: number;
   side: "buy" | "sell";
   price: number;
   qty: number;
@@ -68,19 +74,14 @@ interface ChartProps {
   timeframe: Timeframe;
   chartType: ChartType;
   indicators: ChartIndicators;
-  replayIndex?: number | null; // optional externally controlled replay cutoff
+  replayIndex?: number | null;
   replayEnabled?: boolean;
   markers?: TradeMarker[];
   settings?: ChartSettings;
-  /** Provider-normalized mark price. Omit it when the venue does not supply one. */
   markPrice?: number | null;
   timezone?: ChartTimezone;
   onCrosshair?: (b: Bar | null) => void;
 }
-
-const PRICE_AXIS_W = 64;
-const TIME_AXIS_H = 22;
-const VOL_PANE_H = 64;
 
 function ema(values: number[], period: number): (number | null)[] {
   const out: (number | null)[] = new Array(values.length).fill(null);
@@ -155,7 +156,6 @@ function rollingExtrema(values: number[], period: number, mode: "max" | "min"): 
   return out;
 }
 
-/** Session-anchored VWAP, reset at the selected chart-timezone day boundary. */
 function sessionVWAP(bars: Bar[], timezone: ChartTimezone): (number | null)[] {
   const out: (number | null)[] = new Array(bars.length).fill(null);
   let cumPV = 0;
@@ -199,19 +199,6 @@ function themeColors() {
   };
 }
 
-function fmtPrice(p: number, tick: number): string {
-  const decimals = tick >= 1 ? 2 : tick >= 0.1 ? 2 : Math.max(2, Math.round(-Math.log10(tick)));
-  return p.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-}
-
-function fmtTime(t: number, tf: Timeframe, timezone: ChartTimezone): string {
-  const daily = tf === "1d" || tf === "1w";
-  return new Intl.DateTimeFormat("en-GB", daily
-    ? { timeZone: timezone, month: "2-digit", day: "2-digit" }
-    : { timeZone: timezone, hour: "2-digit", minute: "2-digit", hour12: false }
-  ).format(new Date(t));
-}
-
 export function TerminalChart({
   symbol,
   timeframe,
@@ -225,36 +212,25 @@ export function TerminalChart({
   timezone = "America/New_York",
   onCrosshair,
 }: ChartProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<any> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<any> | null>(null);
+  const indicatorSeriesRef = useRef<Map<string, ISeriesApi<any>>>(new Map());
+
   const [bars, setBars] = useState<Bar[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [viewVersion, setViewVersion] = useState(0);
   const [internalReplayIndex, setInternalReplayIndex] = useState<number | null>(null);
   const [replayPlaying, setReplayPlaying] = useState(false);
-
-  // right is the number of time slots reserved after the latest candle.
-  // Keeping it in a ref gives pointer events immediate feedback, while the
-  // version state invalidates the derived viewport after every interaction.
-  const view = useRef({ right: settings.futureBars, count: 120 }); // right = index past the right edge
-  const priceView = useRef({ offset: 0, zoom: 1 });
-  const priceMetrics = useRef({ autoCenter: 0, autoRange: 1, priceHeight: 1 });
-  const cross = useRef<{ x: number; y: number } | null>(null);
-  const dragging = useRef<{ mode: "time" | "time-zoom" | "price-zoom" | "price-pan"; x: number; y: number; right: number; count: number; priceZoom: number; priceOffset: number } | null>(null);
-  const touchPoints = useRef(new Map<number, { x: number; y: number }>());
-  const pinch = useRef<{ mode: "time" | "price"; distance: number; count: number; right: number; priceZoom: number; clientY: number } | null>(null);
-  const raf = useRef(0);
-  const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
 
   const contract = getContract(symbol);
   const tfSec = TIMEFRAME_SECONDS[timeframe];
   const effectiveReplayIndex = replayIndex ?? (replayEnabled ? internalReplayIndex : null);
 
-  // live trade stream -> update last candle
   const { lastTrade } = useMarketStream(symbol, { trades: 1, depth: false });
 
-  // fetch historical bars
+  // Fetch historical bars
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -268,12 +244,7 @@ export function TerminalChart({
         if (!r.ok) throw new Error("fetch failed");
         const json = await r.json();
         if (cancelled) return;
-        const b: Bar[] = json.bars;
-        if (b.length) {
-          view.current.right = settings.futureBars;
-          setViewVersion((version) => version + 1);
-        }
-        setBars(b);
+        setBars(json.bars || []);
         setLoading(false);
       } catch (e) {
         if (!cancelled) {
@@ -285,34 +256,9 @@ export function TerminalChart({
     return () => {
       cancelled = true;
     };
-  }, [symbol, timeframe, tfSec, settings.futureBars]);
+  }, [symbol, timeframe, tfSec]);
 
-  useEffect(() => {
-    if (!replayEnabled) {
-      setInternalReplayIndex(null);
-      setReplayPlaying(false);
-      return;
-    }
-    if (bars.length) {
-      setInternalReplayIndex((current) => Math.min(bars.length - 1, current ?? Math.max(0, bars.length - Math.min(120, bars.length))));
-    }
-  }, [bars.length, replayEnabled]);
-
-  useEffect(() => {
-    if (!replayEnabled || !replayPlaying || internalReplayIndex == null || internalReplayIndex >= bars.length - 1) return;
-    const timer = window.setInterval(() => {
-      setInternalReplayIndex((current) => {
-        if (current == null || current >= bars.length - 1) {
-          setReplayPlaying(false);
-          return current;
-        }
-        return current + 1;
-      });
-    }, 350);
-    return () => window.clearInterval(timer);
-  }, [bars.length, internalReplayIndex, replayEnabled, replayPlaying]);
-
-  // live update last candle from trade stream
+  // Handle live trade update
   useEffect(() => {
     if (!lastTrade || !bars.length) return;
     const t = lastTrade.timestamp;
@@ -323,8 +269,6 @@ export function TerminalChart({
       const last = next[next.length - 1];
       if (!last || !Number.isFinite(price) || price <= 0) return prev;
 
-      // A reconnecting or degraded venue can emit a placeholder price. Preserve
-      // verified historical structure until the next stream print is plausible.
       const ratio = last.c > 0 ? price / last.c : 1;
       if (ratio < 0.5 || ratio > 1.5) return prev;
 
@@ -351,640 +295,343 @@ export function TerminalChart({
     });
   }, [lastTrade, timeframe]);
 
-  // resize observer
+  // Handle replay
   useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const e = entries[0];
-      const w = Math.floor(e.contentRect.width);
-      const h = Math.floor(e.contentRect.height);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      sizeRef.current = { w, h, dpr };
-      scheduleDraw();
+    if (!replayEnabled) {
+      setInternalReplayIndex(null);
+      setReplayPlaying(false);
+      return;
+    }
+    if (bars.length) {
+      setInternalReplayIndex((current) => Math.min(bars.length - 1, current ?? Math.max(0, bars.length - Math.min(120, bars.length))));
+    }
+  }, [bars.length, replayEnabled]);
+
+  useEffect(() => {
+    if (!replayEnabled || !replayPlaying || internalReplayIndex == null || internalReplayIndex >= bars.length - 1) return;
+    const timer = window.setInterval(() => {
+      setInternalReplayIndex((current) => {
+        if (current == null || current >= bars.length - 1) {
+          setReplayPlaying(false);
+          return current;
+        }
+        return current + 1;
+      });
+    }, 350);
+    return () => window.clearInterval(timer);
+  }, [bars.length, internalReplayIndex, replayEnabled, replayPlaying]);
+
+  // Initialize chart
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: settings.backgroundColor },
+        textColor: themeColors().axisText,
+      },
+      grid: {
+        vertLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
+        horzLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
     });
-    ro.observe(el);
-    return () => ro.disconnect();
+    
+    chartRef.current = chart;
+
+    if (onCrosshair) {
+      chart.subscribeCrosshairMove((param) => {
+        if (!param.time || !param.seriesData || !seriesRef.current) {
+          onCrosshair(null);
+          return;
+        }
+        const data = param.seriesData.get(seriesRef.current) as any;
+        if (data) {
+          const timestamp = (param.time as number) * 1000;
+          onCrosshair({
+            t: timestamp,
+            o: data.open ?? data.value,
+            h: data.high ?? data.value,
+            l: data.low ?? data.value,
+            c: data.close ?? data.value,
+            v: 0,
+          });
+        }
+      });
+    }
+
+    const handleResize = () => {
+      if (chartContainerRef.current) {
+        chart.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+          height: chartContainerRef.current.clientHeight,
+        });
+      }
+    };
+    
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
   }, []);
 
-  const scheduleDraw = useCallback(() => {
-    if (raf.current) return;
-    raf.current = requestAnimationFrame(() => {
-      raf.current = 0;
-      draw();
-    });
-  }, [bars, chartType, indicators, effectiveReplayIndex, markers, settings, markPrice, viewVersion]);
-
-  // redraw when data/view changes
+  // Sync settings when they change
   useEffect(() => {
-    scheduleDraw();
-  }, [bars, chartType, indicators, effectiveReplayIndex, markers, settings, viewVersion, scheduleDraw]);
-
-  const viewport = useMemo(() => {
-    const count = view.current.count;
-    const availableBars = effectiveReplayIndex == null ? bars.length : Math.min(bars.length, effectiveReplayIndex + 1);
-    // A positive right offset intentionally projects the timeline beyond the
-    // latest market candle. A negative offset pans backward through history.
-    const virtualEnd = availableBars + view.current.right;
-    const virtualStart = virtualEnd - count;
-    const start = Math.max(0, Math.ceil(virtualStart));
-    const end = Math.max(start, Math.min(availableBars, Math.floor(virtualEnd)));
-    return { bars: bars.slice(start, end), count, start, virtualStart, availableBars };
-  }, [bars, effectiveReplayIndex, viewVersion]);
-
-  // ----- drawing -----
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const { w, h, dpr } = sizeRef.current;
-    if (w === 0 || h === 0) return;
-    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-    }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const c = themeColors();
-    ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = settings.backgroundColor;
-    ctx.fillRect(0, 0, w, h);
-
-    const plotW = w - PRICE_AXIS_W;
-    const priceH = h - TIME_AXIS_H - (indicators.volume ? VOL_PANE_H + 6 : 0);
-    const volTop = priceH + 6;
-    const volH = indicators.volume ? VOL_PANE_H : 0;
-
-    const vb = viewport.bars;
-    if (!vb.length) {
-      ctx.fillStyle = c.axisText;
-      ctx.font = "11px var(--font-geist-mono), monospace";
-      ctx.textAlign = "center";
-      ctx.fillText("No data", w / 2, h / 2);
-      return;
-    }
-
-    // price range
-    let hi = -Infinity, lo = Infinity, maxVol = 0;
-    for (const b of vb) {
-      if (b.h > hi) hi = b.h;
-      if (b.l < lo) lo = b.l;
-      if (b.v > maxVol) maxVol = b.v;
-    }
-    // include overlays in range (vwap/ema/custom native studies)
-    const closes = vb.map((b) => b.c);
-    const ema20 = indicators.ema20 ? ema(closes, 20) : [];
-    const ema50 = indicators.ema50 ? ema(closes, 50) : [];
-    const vwap = indicators.vwap ? sessionVWAP(vb, timezone) : [];
-    const customLines = (indicators.customStudies ?? []).filter((study) => study.visible).flatMap((study) => {
-      const period = Math.max(1, study.period ?? 20);
-      if (study.kind === "ema") return [{ study, values: ema(closes, period), color: study.color, dash: [] as number[] }];
-      if (study.kind === "sma") return [{ study, values: sma(closes, period), color: study.color, dash: [] as number[] }];
-      if (study.kind === "wma") return [{ study, values: wma(closes, period), color: study.color, dash: [] as number[] }];
-      if (study.kind === "vwma") return [{ study, values: vwma(vb, period), color: study.color, dash: [] as number[] }];
-      if (study.kind === "vwap") return [{ study, values: sessionVWAP(vb, timezone), color: study.color, dash: [4, 3] }];
-      if (study.kind === "bollinger") {
-        const middle = sma(closes, period);
-        const deviation = standardDeviation(closes, period, middle);
-        const multiplier = Math.max(0.1, study.multiplier ?? 2);
-        return [
-          { study, values: middle, color: study.color, dash: [] as number[] },
-          { study, values: middle.map((value, index) => value == null || deviation[index] == null ? null : value + deviation[index]! * multiplier), color: study.color, dash: [3, 3] },
-          { study, values: middle.map((value, index) => value == null || deviation[index] == null ? null : value - deviation[index]! * multiplier), color: study.color, dash: [3, 3] },
-        ];
-      }
-      return [
-        { study, values: rollingExtrema(vb.map((bar) => bar.h), period, "max"), color: study.color, dash: [5, 3] },
-        { study, values: rollingExtrema(vb.map((bar) => bar.l), period, "min"), color: study.color, dash: [5, 3] },
-      ];
-    });
-    for (const v of [...ema20, ...ema50, ...vwap, ...customLines.flatMap((line) => line.values)]) if (typeof v === "number") { hi = Math.max(hi, v); lo = Math.min(lo, v); }
-    if (typeof markPrice === "number" && Number.isFinite(markPrice)) { hi = Math.max(hi, markPrice); lo = Math.min(lo, markPrice); }
-    const pad = (hi - lo) * 0.08 || hi * 0.01;
-    hi += pad; lo -= pad;
-    const autoRange = hi - lo || 1;
-    const manualRange = autoRange / priceView.current.zoom;
-    const autoCenter = (hi + lo) / 2;
-    priceMetrics.current = { autoCenter, autoRange, priceHeight: Math.max(1, priceH) };
-    const manualCenter = autoCenter + priceView.current.offset * autoRange;
-    hi = manualCenter + manualRange / 2;
-    lo = manualCenter - manualRange / 2;
-    const range = hi - lo || 1;
-
-    const slotW = plotW / viewport.count;
-    // Map bars into a virtual timeline. When the viewport extends beyond the
-    // newest candle, the unused right-hand slots stay deliberately blank.
-    const xFor = (i: number) => (i + viewport.start - viewport.virtualStart + 0.5) * slotW;
-    const candleW = Math.max(1, Math.min(14, slotW * 0.7));
-    const gridColor = `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})`;
-    const yFor = (p: number) => priceH - ((p - lo) / range) * priceH;
-
-    // grid (horizontal price lines, ~6)
-    ctx.strokeStyle = gridColor;
-    ctx.lineWidth = 1;
-    ctx.font = "10px ui-monospace, monospace";
-    ctx.fillStyle = c.axisText;
-    ctx.textAlign = "left";
-    const gridSteps = 6;
-    for (let i = 0; i <= gridSteps; i++) {
-      const p = lo + (range * i) / gridSteps;
-      const y = yFor(p);
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(plotW, y);
-      ctx.stroke();
-      ctx.fillText(fmtPrice(p, contract.tickSize), plotW + 6, y + 3);
-    }
-    // vertical time grid
-    const timeStep = Math.max(1, Math.floor(vb.length / 6));
-    ctx.textAlign = "center";
-    for (let i = 0; i < vb.length; i += timeStep) {
-      const x = xFor(i);
-      ctx.strokeStyle = gridColor;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, priceH);
-      ctx.stroke();
-      ctx.fillStyle = c.axisText;
-      ctx.fillText(fmtTime(vb[i].t, timeframe, timezone), x, h - 6);
-    }
-
-    // volume pane
-    if (indicators.volume) {
-      for (let i = 0; i < vb.length; i++) {
-        const b = vb[i];
-        const vh = (b.v / maxVol) * (volH - 4);
-        const x = xFor(i) - candleW / 2;
-        ctx.fillStyle = b.c >= b.o ? `${settings.candleUpColor}48` : `${settings.candleDownColor}48`;
-        ctx.fillRect(x, volTop + (volH - vh), candleW, vh);
-      }
-      ctx.strokeStyle = gridColor;
-      ctx.beginPath();
-      ctx.moveTo(0, volTop + volH);
-      ctx.lineTo(plotW, volTop + volH);
-      ctx.stroke();
-    }
-
-    // candles / bars / line / area
-    ctx.lineWidth = 1;
-    for (let i = 0; i < vb.length; i++) {
-      const b = vb[i];
-      const x = xFor(i);
-      const up = b.c >= b.o;
-      const col = up ? settings.candleUpColor : settings.candleDownColor;
-      if (chartType === "candles" || chartType === "bars") {
-        ctx.strokeStyle = col;
-        ctx.fillStyle = col;
-        // wick
-        ctx.beginPath();
-        ctx.moveTo(x, yFor(b.h));
-        ctx.lineTo(x, yFor(b.l));
-        ctx.stroke();
-        if (chartType === "candles") {
-          const yo = yFor(b.o), yc = yFor(b.c);
-          const top = Math.min(yo, yc);
-          const bh = Math.max(1, Math.abs(yc - yo));
-          ctx.fillRect(x - candleW / 2, top, candleW, bh);
-        } else {
-          // OHLC bars
-          ctx.beginPath();
-          ctx.moveTo(x - candleW / 2, yFor(b.o));
-          ctx.lineTo(x, yFor(b.o));
-          ctx.moveTo(x, yFor(b.h));
-          ctx.lineTo(x, yFor(b.l));
-          ctx.moveTo(x, yFor(b.c));
-          ctx.lineTo(x + candleW / 2, yFor(b.c));
-          ctx.stroke();
-        }
-      }
-    }
-    if (chartType === "line" || chartType === "area") {
-      ctx.strokeStyle = c.mdata;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      vb.forEach((b, i) => {
-        const x = xFor(i), y = yFor(b.c);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    if (chartRef.current) {
+      chartRef.current.applyOptions({
+        layout: {
+          background: { type: ColorType.Solid, color: settings.backgroundColor },
+        },
+        grid: {
+          vertLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
+          horzLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
+        },
       });
-      ctx.stroke();
-      if (chartType === "area") {
-        ctx.lineTo(xFor(vb.length - 1), priceH);
-        ctx.lineTo(xFor(0), priceH);
-        ctx.closePath();
-        ctx.fillStyle = "rgba(63,169,201,0.10)";
-        ctx.fill();
-      }
     }
+  }, [settings.backgroundColor, settings.gridOpacity, settings.showGrid]);
 
-    // overlays
-    const drawLine = (vals: (number | null)[], color: string, dash: number[] = []) => {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash(dash);
-      ctx.beginPath();
-      let started = false;
-      for (let i = 0; i < vals.length; i++) {
-        const v = vals[i];
-        if (v == null) continue;
-        const x = xFor(i), y = yFor(v);
-        if (!started) { ctx.moveTo(x, y); started = true; }
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
-    };
-    if (indicators.vwap) drawLine(vwap, c.warn, [4, 3]);
-    if (indicators.ema20) drawLine(ema20, c.mdata);
-    if (indicators.ema50) drawLine(ema50, c.research);
-    for (const line of customLines) drawLine(line.values, line.color, line.dash);
-
-    // trade markers
-    if (markers?.length) {
-      for (const m of markers) {
-        const idx = vb.findIndex((b) => b.t === m.t || (b.t <= m.t && m.t < b.t + tfSec * 1000));
-        if (idx < 0) continue;
-        const x = xFor(idx);
-        const y = yFor(m.price);
-        ctx.strokeStyle = m.side === "buy" ? c.pos : c.neg;
-        ctx.fillStyle = m.side === "buy" ? c.pos : c.neg;
-        const ay = m.side === "buy" ? y + 10 : y - 10;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x - 3, ay);
-        ctx.lineTo(x + 3, ay);
-        ctx.closePath();
-        ctx.fill();
-        if (m.label) {
-          ctx.font = "9px ui-monospace, monospace";
-          ctx.textAlign = "center";
-          ctx.fillText(m.label, x, ay + (m.side === "buy" ? 9 : -3));
-        }
-      }
-    }
-
-    // last price line + label
-    const last = vb[vb.length - 1];
-    const lastY = yFor(last.c);
-    if (settings.showPriceLine) {
-      ctx.strokeStyle = "rgba(255,255,255,0.18)";
-      ctx.setLineDash([2, 3]);
-      ctx.beginPath();
-      ctx.moveTo(0, lastY);
-      ctx.lineTo(plotW, lastY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    ctx.fillStyle = last.c >= last.o ? settings.candleUpColor : settings.candleDownColor;
-    ctx.fillRect(plotW, lastY - 8, PRICE_AXIS_W, 16);
-    ctx.fillStyle = "#0a0a0a";
-    ctx.font = "bold 10.5px ui-monospace, monospace";
-    ctx.textAlign = "left";
-    ctx.fillText(fmtPrice(last.c, contract.tickSize), plotW + 6, lastY + 3);
-
-    // Provider-normalized derivatives mark price; only rendered when supplied.
-    if (typeof markPrice === "number" && Number.isFinite(markPrice)) {
-      const markY = yFor(markPrice);
-      ctx.strokeStyle = c.mdata;
-      ctx.setLineDash([6, 3]);
-      ctx.beginPath();
-      ctx.moveTo(0, markY);
-      ctx.lineTo(plotW, markY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = c.mdata;
-      ctx.fillRect(plotW, markY - 8, PRICE_AXIS_W, 16);
-      ctx.fillStyle = "#0a0a0a";
-      ctx.font = "bold 9px ui-monospace, monospace";
-      ctx.textAlign = "left";
-      ctx.fillText(`M ${fmtPrice(markPrice, contract.tickSize)}`, plotW + 3, markY + 3);
-    }
-
-    // crosshair
-    if (settings.showCrosshair && cross.current) {
-      const { x, y } = cross.current;
-      if (x < plotW && y < priceH) {
-        ctx.strokeStyle = c.cross;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.moveTo(x, 0); ctx.lineTo(x, priceH);
-        ctx.moveTo(0, y); ctx.lineTo(plotW, y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        // price label
-        const p = lo + (1 - y / priceH) * range;
-        ctx.fillStyle = c.panel;
-        ctx.fillRect(plotW, y - 8, PRICE_AXIS_W, 16);
-        ctx.fillStyle = c.fg;
-        ctx.font = "10.5px ui-monospace, monospace";
-        ctx.textAlign = "left";
-        ctx.fillText(fmtPrice(p, contract.tickSize), plotW + 6, y + 3);
-
-        // OHLC tooltip
-        const virtualIndex = Math.floor(x / slotW + viewport.virtualStart);
-        const localIndex = virtualIndex - viewport.start;
-        const b = vb[localIndex];
-        if (b && onCrosshair) onCrosshair(b);
-        if (!b) return;
-        const up = b.c >= b.o;
-        const lines = [
-          ["O", fmtPrice(b.o, contract.tickSize)],
-          ["H", fmtPrice(b.h, contract.tickSize)],
-          ["L", fmtPrice(b.l, contract.tickSize)],
-          ["C", fmtPrice(b.c, contract.tickSize)],
-          ["V", b.v.toLocaleString()],
-        ];
-        let ty = 8;
-        ctx.font = "10.5px ui-monospace, monospace";
-        for (const [k, v] of lines) {
-          ctx.fillStyle = c.axisText;
-          ctx.textAlign = "left";
-          ctx.fillText(k, 8, ty);
-          ctx.fillStyle = up ? c.pos : c.neg;
-          ctx.fillText(v, 24, ty);
-          ty += 13;
-        }
-      } else if (onCrosshair) {
-        onCrosshair(null);
-      }
-    }
-  }, [viewport, chartType, indicators, contract.tickSize, markers, timeframe, markPrice, onCrosshair, settings, timezone]);
-
-  // pointer handlers
-  const maxFutureBars = Math.max(settings.futureBars * 5, 160);
-  // Retain at least a small visible history rather than allowing an all-empty
-  // canvas at the oldest boundary. The value is still derived only from loaded
-  // provider candles, never from padded or manufactured bars.
-  const minRightOffset = -Math.max(0, bars.length - Math.min(view.current.count, 24));
-  const clampRight = (right: number) => Math.max(minRightOffset, Math.min(maxFutureBars, right));
-  const invalidateViewport = () => setViewVersion((version) => version + 1);
-  const clampPriceOffset = (offset: number) => Math.max(-3, Math.min(3, offset));
-  const panTimeByPixels = (pixels: number, plotWidth: number, originRight: number) => {
-    const slotShift = pixels * (view.current.count / Math.max(1, plotWidth));
-    view.current.right = clampRight(originRight - slotShift);
-    invalidateViewport();
-  };
-  const panPriceByPixels = (pixels: number, originOffset: number) => {
-    const height = Math.max(1, priceMetrics.current.priceHeight);
-    priceView.current = { ...priceView.current, offset: clampPriceOffset(originOffset - pixels / height) };
-    invalidateViewport();
-  };
-  const zoomTimeScaleAtPointer = (nextCount: number, clientX: number, rect: DOMRect, originRight = view.current.right, originCount = view.current.count) => {
-    const boundedCount = Math.max(30, Math.min(400, Math.round(nextCount)));
-    const plotWidth = Math.max(1, rect.width - PRICE_AXIS_W);
-    const pivot = Math.max(0, Math.min(1, (clientX - rect.left) / plotWidth));
-    view.current.right = clampRight(originRight + (boundedCount - originCount) * (1 - pivot));
-    view.current.count = boundedCount;
-    invalidateViewport();
-  };
-  const resetTimeScale = () => {
-    view.current.right = settings.futureBars;
-    view.current.count = 120;
-    invalidateViewport();
-  };
-  const resetViewport = () => {
-    view.current.right = settings.futureBars;
-    view.current.count = 120;
-    priceView.current = { offset: 0, zoom: 1 };
-    invalidateViewport();
-  };
-  const resetPriceScale = () => {
-    priceView.current = { offset: 0, zoom: 1 };
-    invalidateViewport();
-  };
-  const zoomPriceScaleAtPointer = (nextZoom: number, clientY: number, rect: DOMRect) => {
-    const metrics = priceMetrics.current;
-    const zoom = Math.max(0.35, Math.min(8, nextZoom));
-    const fractionFromCenter = 0.5 - Math.max(0, Math.min(1, (clientY - rect.top) / metrics.priceHeight));
-    const currentCenter = metrics.autoCenter + priceView.current.offset * metrics.autoRange;
-    const currentRange = metrics.autoRange / priceView.current.zoom;
-    const anchoredPrice = currentCenter + fractionFromCenter * currentRange;
-    const nextRange = metrics.autoRange / zoom;
-    const nextCenter = anchoredPrice - fractionFromCenter * nextRange;
-    priceView.current = {
-      zoom,
-      offset: Math.max(-3, Math.min(3, (nextCenter - metrics.autoCenter) / metrics.autoRange)),
-    };
-    invalidateViewport();
-  };
-
-  const beginPinch = (rect: DOMRect) => {
-    const points = Array.from(touchPoints.current.values());
-    if (points.length < 2) return;
-    const [first, second] = points;
-    const distance = Math.hypot(first.x - second.x, first.y - second.y);
-    const onPriceAxis = first.x - rect.left >= rect.width - PRICE_AXIS_W && second.x - rect.left >= rect.width - PRICE_AXIS_W;
-    pinch.current = {
-      mode: onPriceAxis ? "price" : "time",
-      distance: Math.max(1, distance),
-      count: view.current.count,
-      right: view.current.right,
-      priceZoom: priceView.current.zoom,
-      clientY: (first.y + second.y) / 2,
-    };
-    dragging.current = null;
-  };
-  const beginSingleTouchDrag = (point: { x: number; y: number }, rect: DOMRect, mode?: "time" | "time-zoom" | "price-pan") => {
-    const inPriceAxis = point.x - rect.left >= rect.width - PRICE_AXIS_W;
-    const inTimeAxis = point.y - rect.top >= rect.height - TIME_AXIS_H;
-    dragging.current = {
-      mode: mode ?? (inPriceAxis ? "price-zoom" : inTimeAxis ? "time-zoom" : "time"),
-      x: point.x,
-      y: point.y,
-      right: view.current.right,
-      count: view.current.count,
-      priceZoom: priceView.current.zoom,
-      priceOffset: priceView.current.offset,
-    };
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    if (e.pointerType === "touch" && touchPoints.current.has(e.pointerId)) {
-      touchPoints.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (touchPoints.current.size >= 2) {
-        if (!pinch.current) beginPinch(rect);
-        const gesture = pinch.current;
-        const points = Array.from(touchPoints.current.values());
-        if (gesture && points.length >= 2) {
-          const distance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
-          if (gesture.mode === "price") {
-            // Pinch over the price scale controls candle height, mirroring desktop wheel zoom on that axis.
-            zoomPriceScaleAtPointer(gesture.priceZoom * (distance / gesture.distance), (points[0].y + points[1].y) / 2, rect);
-          } else {
-            // Pinch in the plot controls candle density while keeping the pinch midpoint stable in time.
-            const nextCount = Math.max(30, Math.min(400, Math.round(gesture.count * (gesture.distance / distance))));
-            const midpointX = (points[0].x + points[1].x) / 2;
-            const pivot = Math.max(0, Math.min(1, (midpointX - rect.left) / Math.max(1, rect.width - PRICE_AXIS_W)));
-            view.current.right = clampRight(gesture.right + (nextCount - gesture.count) * (1 - pivot));
-            view.current.count = nextCount;
-            invalidateViewport();
-          }
-        }
-        cross.current = { x, y };
-        scheduleDraw();
-        return;
-      }
-    }
-    if (dragging.current) {
-      if (dragging.current.mode === "price-zoom") {
-        // Dragging the price scale stretches or compresses candle height around the pointer.
-        const deltaY = e.clientY - dragging.current.y;
-        const nextZoom = dragging.current.priceZoom * Math.exp(-deltaY * 0.01);
-        zoomPriceScaleAtPointer(nextZoom, e.clientY, rect);
-      } else if (dragging.current.mode === "time-zoom") {
-        // Dragging across the lower time scale expands or contracts candle spacing around the pointer.
-        const deltaX = e.clientX - dragging.current.x;
-        const nextCount = dragging.current.count * Math.exp(-deltaX * 0.01);
-        zoomTimeScaleAtPointer(nextCount, e.clientX, rect, dragging.current.right, dragging.current.count);
-      } else if (dragging.current.mode === "price-pan") {
-        panPriceByPixels(e.clientY - dragging.current.y, dragging.current.priceOffset);
-      } else {
-        // Fractional slot movement avoids the inert feeling caused by rounding
-        // small pointer deltas before the canvas has visibly shifted.
-        panTimeByPixels(e.clientX - dragging.current.x, rect.width - PRICE_AXIS_W, dragging.current.right);
-      }
-    }
-    cross.current = { x, y };
-    scheduleDraw();
-  };
-  const onPointerDown = (e: React.PointerEvent) => {
-    // The chart body always owns a plot gesture. Floating-window movement is
-    // reserved for its title bar and resize handles.
-    e.preventDefault();
-    e.stopPropagation();
-    canvasRef.current?.focus();
-    canvasRef.current?.setPointerCapture?.(e.pointerId);
-    const rect = canvasRef.current!.getBoundingClientRect();
-    if (e.pointerType === "touch") {
-      touchPoints.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (touchPoints.current.size >= 2) beginPinch(rect);
-      else beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect);
-      return;
-    }
-    const plotMode = e.button === 1 || e.altKey ? "price-pan" : undefined;
-    beginSingleTouchDrag({ x: e.clientX, y: e.clientY }, rect, plotMode);
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    canvasRef.current?.releasePointerCapture?.(e.pointerId);
-    if (e.pointerType !== "touch") {
-      dragging.current = null;
-      return;
-    }
-    touchPoints.current.delete(e.pointerId);
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const remaining = Array.from(touchPoints.current.values());
-    if (remaining.length >= 2) beginPinch(rect);
-    else if (remaining.length === 1) {
-      pinch.current = null;
-      beginSingleTouchDrag(remaining[0], rect);
-    } else {
-      pinch.current = null;
-      dragging.current = null;
-    }
-  };
-  const onPointerLeave = (e: React.PointerEvent) => {
-    if (e.pointerType === "touch") return;
-    cross.current = null;
-    onCrosshair?.(null);
-    scheduleDraw();
-  };
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const isPriceAxis = e.clientX - rect.left >= rect.width - PRICE_AXIS_W;
-    // Normalize line/page wheel devices and high-resolution trackpads into one
-    // bounded exponential curve so both feel responsive without sudden jumps.
-    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? rect.height : 1;
-    const normalized = Math.max(-180, Math.min(180, e.deltaY * unit));
-    const factor = Math.exp(-normalized * 0.0016);
-    if (isPriceAxis) {
-      zoomPriceScaleAtPointer(priceView.current.zoom * factor, e.clientY, rect);
-      return;
-    }
-    const previousCount = view.current.count;
-    // Wheel over the chart plot changes density; wheel over the time scale has the same
-    // horizontal result while keeping the rest of the chart gesture model explicit.
-    zoomTimeScaleAtPointer(previousCount / factor, e.clientX, rect);
-  };
-
-  // keyboard pan/zoom
+  // Apply main series type
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
-      if (e.key === "+" || e.key === "=") {
-        view.current.count = Math.max(30, Math.round(view.current.count * 0.87));
-        invalidateViewport();
-      } else if (e.key === "-" || e.key === "_") {
-        view.current.count = Math.min(400, Math.round(view.current.count * 1.15));
-        invalidateViewport();
-      } else if (e.key === "ArrowLeft") {
-        view.current.right = clampRight(view.current.right - Math.max(1, Math.round(view.current.count * 0.1)));
-        invalidateViewport();
-      } else if (e.key === "ArrowRight") {
-        view.current.right = clampRight(view.current.right + Math.max(1, Math.round(view.current.count * 0.1)));
-        invalidateViewport();
-      } else if (e.key === "Home" || e.key === "Escape") {
-        resetViewport();
+    if (!chartRef.current) return;
+    const chart = chartRef.current;
+
+    if (seriesRef.current) {
+      chart.removeSeries(seriesRef.current);
+    }
+
+    if (chartType === "candles") {
+      seriesRef.current = chart.addSeries(CandlestickSeries, {
+        upColor: settings.candleUpColor,
+        downColor: settings.candleDownColor,
+        borderVisible: false,
+        wickUpColor: settings.candleUpColor,
+        wickDownColor: settings.candleDownColor,
+      });
+    } else if (chartType === "bars") {
+      seriesRef.current = chart.addSeries(BarSeries, {
+        upColor: settings.candleUpColor,
+        downColor: settings.candleDownColor,
+      });
+    } else if (chartType === "line") {
+      seriesRef.current = chart.addSeries(LineSeries, {
+        color: themeColors().mdata,
+        lineWidth: 2,
+      });
+    } else if (chartType === "area") {
+      seriesRef.current = chart.addSeries(AreaSeries, {
+        lineColor: themeColors().mdata,
+        topColor: "rgba(63,169,201,0.4)",
+        bottomColor: "rgba(63,169,201,0.0)",
+        lineWidth: 2,
+      });
+    }
+  }, [chartType, settings.candleUpColor, settings.candleDownColor]);
+
+  // Setup Volume series
+  useEffect(() => {
+    if (!chartRef.current) return;
+    
+    if (indicators.volume) {
+      if (!volumeSeriesRef.current) {
+        volumeSeriesRef.current = chartRef.current.addSeries(HistogramSeries, {
+          color: "#26a69a",
+          priceFormat: { type: "volume" },
+          priceScaleId: "",
+        });
+        chartRef.current.priceScale("").applyOptions({
+          scaleMargins: { top: 0.8, bottom: 0 },
+        });
       }
+    } else if (volumeSeriesRef.current) {
+      chartRef.current.removeSeries(volumeSeriesRef.current);
+      volumeSeriesRef.current = null;
+    }
+  }, [indicators.volume]);
+
+  // Feed data to chart
+  useEffect(() => {
+    if (!seriesRef.current || !bars.length) return;
+    
+    // Sort and deduplicate bars for lightweight-charts
+    const uniqueBars = new Map<number, Bar>();
+    for (const b of bars) uniqueBars.set(b.t, b);
+    const sortedBars = Array.from(uniqueBars.values()).sort((a, b) => a.t - b.t);
+    
+    const availableBars = effectiveReplayIndex == null ? sortedBars : sortedBars.slice(0, effectiveReplayIndex + 1);
+    
+    const timeData = availableBars.map(b => (b.t / 1000) as Time);
+    
+    // Main series
+    if (chartType === "candles" || chartType === "bars") {
+      seriesRef.current.setData(availableBars.map(b => ({
+        time: (b.t / 1000) as Time,
+        open: b.o,
+        high: b.h,
+        low: b.l,
+        close: b.c,
+      })));
+    } else {
+      seriesRef.current.setData(availableBars.map(b => ({
+        time: (b.t / 1000) as Time,
+        value: b.c,
+      })));
+    }
+
+    // Volume
+    if (volumeSeriesRef.current && indicators.volume) {
+      volumeSeriesRef.current.setData(availableBars.map(b => ({
+        time: (b.t / 1000) as Time,
+        value: b.v,
+        color: b.c >= b.o ? `${settings.candleUpColor}48` : `${settings.candleDownColor}48`,
+      })));
+    }
+    
+    // Indicators
+    const c = themeColors();
+    const closes = availableBars.map(b => b.c);
+    
+    const drawLine = (id: string, vals: (number | null)[], color: string, lineStyle?: number) => {
+      if (!chartRef.current) return;
+      let series = indicatorSeriesRef.current.get(id);
+      if (!series) {
+        series = chartRef.current.addSeries(LineSeries, { color, lineWidth: 2, crosshairMarkerVisible: false, lineStyle: lineStyle ?? 0 });
+        indicatorSeriesRef.current.set(id, series);
+      } else {
+        series.applyOptions({ color, lineStyle: lineStyle ?? 0 });
+      }
+      
+      const lineData = vals.map((v, i) => ({
+        time: timeData[i],
+        value: v ?? undefined,
+      })).filter(d => d.value !== undefined) as any;
+      
+      series.setData(lineData);
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [bars.length, settings.futureBars]);
+
+    if (indicators.vwap) drawLine("vwap", sessionVWAP(availableBars, timezone), c.warn, 2 /* Dashed */);
+    else if (indicatorSeriesRef.current.has("vwap")) {
+      chartRef.current?.removeSeries(indicatorSeriesRef.current.get("vwap")!);
+      indicatorSeriesRef.current.delete("vwap");
+    }
+
+    if (indicators.ema20) drawLine("ema20", ema(closes, 20), c.mdata);
+    else if (indicatorSeriesRef.current.has("ema20")) {
+      chartRef.current?.removeSeries(indicatorSeriesRef.current.get("ema20")!);
+      indicatorSeriesRef.current.delete("ema20");
+    }
+
+    if (indicators.ema50) drawLine("ema50", ema(closes, 50), c.research);
+    else if (indicatorSeriesRef.current.has("ema50")) {
+      chartRef.current?.removeSeries(indicatorSeriesRef.current.get("ema50")!);
+      indicatorSeriesRef.current.delete("ema50");
+    }
+    
+    // Draw Custom Studies
+    const activeStudies = new Set<string>();
+    if (indicators.customStudies) {
+      for (const study of indicators.customStudies) {
+        if (!study.visible) continue;
+        const period = Math.max(1, study.period ?? 20);
+        
+        if (study.kind === "ema") {
+          drawLine(study.id, ema(closes, period), study.color);
+          activeStudies.add(study.id);
+        } else if (study.kind === "sma") {
+          drawLine(study.id, sma(closes, period), study.color);
+          activeStudies.add(study.id);
+        } else if (study.kind === "wma") {
+          drawLine(study.id, wma(closes, period), study.color);
+          activeStudies.add(study.id);
+        } else if (study.kind === "vwma") {
+          drawLine(study.id, vwma(availableBars, period), study.color);
+          activeStudies.add(study.id);
+        } else if (study.kind === "vwap") {
+          drawLine(study.id, sessionVWAP(availableBars, timezone), study.color, 2);
+          activeStudies.add(study.id);
+        } else if (study.kind === "bollinger") {
+          const middle = sma(closes, period);
+          const deviation = standardDeviation(closes, period, middle);
+          const multiplier = Math.max(0.1, study.multiplier ?? 2);
+          const upper = middle.map((val, idx) => val == null || deviation[idx] == null ? null : val + deviation[idx]! * multiplier);
+          const lower = middle.map((val, idx) => val == null || deviation[idx] == null ? null : val - deviation[idx]! * multiplier);
+          
+          drawLine(study.id + "_mid", middle, study.color);
+          drawLine(study.id + "_upper", upper, study.color, 1 /* Dotted */);
+          drawLine(study.id + "_lower", lower, study.color, 1 /* Dotted */);
+          activeStudies.add(study.id + "_mid");
+          activeStudies.add(study.id + "_upper");
+          activeStudies.add(study.id + "_lower");
+        } else if (study.kind === "donchian") {
+          const highs = availableBars.map(b => b.h);
+          const lows = availableBars.map(b => b.l);
+          const upper = rollingExtrema(highs, period, "max");
+          const lower = rollingExtrema(lows, period, "min");
+          drawLine(study.id + "_upper", upper, study.color, 2);
+          drawLine(study.id + "_lower", lower, study.color, 2);
+          activeStudies.add(study.id + "_upper");
+          activeStudies.add(study.id + "_lower");
+        }
+      }
+    }
+    
+    // Cleanup removed custom studies
+    for (const key of indicatorSeriesRef.current.keys()) {
+      if (key !== "vwap" && key !== "ema20" && key !== "ema50" && !activeStudies.has(key)) {
+        chartRef.current?.removeSeries(indicatorSeriesRef.current.get(key)!);
+        indicatorSeriesRef.current.delete(key);
+      }
+    }
+    
+    // Markers
+    if (markers?.length && seriesRef.current) {
+      const tvMarkers = markers.map(m => ({
+        time: (m.t / 1000) as Time,
+        position: m.side === "buy" ? "belowBar" : "aboveBar",
+        color: m.side === "buy" ? c.pos : c.neg,
+        shape: m.side === "buy" ? "arrowUp" : "arrowDown",
+        text: m.label || "",
+      })) as any;
+      createSeriesMarkers(seriesRef.current, tvMarkers);
+    } else {
+      createSeriesMarkers(seriesRef.current, []);
+    }
+  }, [bars, chartType, indicators, effectiveReplayIndex, settings, markers, timezone]);
 
   return (
-    <div ref={wrapRef} className="relative h-full w-full bg-background">
-      <canvas
-        ref={canvasRef}
-        className="block h-full w-full touch-none cursor-grab active:cursor-grabbing"
-        onPointerMove={onPointerMove}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onPointerLeave={onPointerLeave}
-        onWheel={onWheel}
-        onDoubleClick={(event) => {
-          const rect = canvasRef.current!.getBoundingClientRect();
-          const inPriceAxis = event.clientX - rect.left >= rect.width - PRICE_AXIS_W;
-          const inTimeAxis = event.clientY - rect.top >= rect.height - TIME_AXIS_H;
-          if (inPriceAxis) resetPriceScale();
-          else if (inTimeAxis) resetTimeScale();
-          else resetViewport();
-        }}
-        tabIndex={0}
-        aria-label={`${symbol} ${timeframe} chart; drag the plot to pan time, use middle mouse or Alt-drag to pan the price range, use the lower time scale to widen or narrow candles, use the right price scale to stretch or compress candle height, and double click an axis to reset that axis`}
-      />
-      <div className="mobile-chart-gesture-hint pointer-events-none absolute right-2 top-2 rounded-[3px] border hairline bg-panel/80 px-1.5 py-1 text-[8px] text-muted-foreground backdrop-blur">Drag to pan · Alt-drag price · pinch to scale</div>
-      {replayEnabled && internalReplayIndex != null && <div className="absolute bottom-7 right-2 flex items-center gap-1 border hairline bg-panel/95 p-1 shadow-sm backdrop-blur"><button type="button" onClick={() => { setReplayPlaying(false); setInternalReplayIndex((current) => Math.max(0, (current ?? 0) - 1)); }} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground" aria-label="Previous replay bar" title="Previous bar"><ChevronLeft className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setReplayPlaying((playing) => !playing)} className="grid h-6 w-6 place-items-center rounded bg-research/15 text-research hover:bg-research/25" aria-label={replayPlaying ? "Pause replay" : "Play replay"} title={replayPlaying ? "Pause replay" : "Play replay"}>{replayPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</button><button type="button" onClick={() => { setReplayPlaying(false); setInternalReplayIndex((current) => Math.min(Math.max(0, bars.length - 1), (current ?? 0) + 1)); }} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground" aria-label="Next replay bar" title="Next bar"><ChevronRight className="h-3.5 w-3.5" /></button><span className="px-1 font-mono-num text-[9px] text-muted-foreground">Replay {internalReplayIndex + 1}/{bars.length}</span></div>}
-      <div className="pointer-events-none absolute bottom-7 left-2 flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={resetViewport}
-          className="pointer-events-auto rounded-[4px] border hairline bg-panel/90 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-hover hover:text-foreground"
-          title="Reset chart viewport (double click, Home, or Escape)"
-        >
-          Reset view
-        </button>
-        {view.current.right < settings.futureBars - 1 && (
-          <button
-            type="button"
-            onClick={() => { view.current.right = settings.futureBars; invalidateViewport(); }}
-            className="pointer-events-auto rounded-[4px] border border-mdata/30 bg-mdata/10 px-2 py-1 text-[10px] font-medium text-mdata shadow-sm backdrop-blur transition-colors hover:bg-mdata/20"
-          >
-            Go to realtime
+    <div className="relative h-full w-full bg-background" onDoubleClick={() => chartRef.current?.timeScale().fitContent()}>
+      <div ref={chartContainerRef} className="absolute inset-0 z-10" />
+      
+      {replayEnabled && internalReplayIndex != null && (
+        <div className="absolute bottom-7 right-2 z-50 flex items-center gap-1 border hairline bg-panel/95 p-1 shadow-sm backdrop-blur">
+          <button type="button" onClick={() => { setReplayPlaying(false); setInternalReplayIndex((current) => Math.max(0, (current ?? 0) - 1)); }} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground">
+            <ChevronLeft className="h-3.5 w-3.5" />
           </button>
-        )}
-      </div>
+          <button type="button" onClick={() => setReplayPlaying((playing) => !playing)} className="grid h-6 w-6 place-items-center rounded bg-research/15 text-research hover:bg-research/25">
+            {replayPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          </button>
+          <button type="button" onClick={() => { setReplayPlaying(false); setInternalReplayIndex((current) => Math.min(Math.max(0, bars.length - 1), (current ?? 0) + 1)); }} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground">
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+          <span className="px-1 font-mono-num text-[9px] text-muted-foreground">Replay {internalReplayIndex + 1}/{bars.length}</span>
+        </div>
+      )}
+      
       {loading && (
-        <div className="absolute inset-0 grid place-items-center text-[11px] text-muted-foreground uppercase tracking-wider">
+        <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/50 text-[11px] text-muted-foreground uppercase tracking-wider backdrop-blur-sm">
           loading…
         </div>
       )}
       {err && (
-        <div className="absolute inset-0 grid place-items-center text-[11px] text-neg">
+        <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/80 text-[11px] text-neg backdrop-blur-sm">
           {err}
         </div>
       )}
