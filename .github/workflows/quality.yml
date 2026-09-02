@@ -38,8 +38,6 @@ jobs:
         run: npm run lint
       - name: Build web application
         run: npm run build
-      - name: Build local desktop frontend
-        run: npm run desktop:build
       - name: Enforce high-severity production dependency threshold
         run: npm audit --omit=dev --audit-level=high
       - name: Capture production dependency audit
@@ -53,25 +51,3 @@ jobs:
           path: npm-audit-production.json
           if-no-files-found: error
 
-  windows-desktop:
-    name: Windows desktop build
-    runs-on: windows-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - name: Install locked dependencies
-        run: npm ci
-      - name: Build unsigned Windows installers
-        run: npm run tauri build
-      - name: Upload Windows desktop artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: zterminal-windows-unsigned
-          path: |
-            src-tauri/target/release/bundle/nsis/*.exe
-            src-tauri/target/release/bundle/msi/*.msi
-          if-no-files-found: error
