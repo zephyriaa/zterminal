@@ -402,21 +402,40 @@ export function ConnectionsView() {
 
 /* ----------------------------- Settings ----------------------------- */
 
+function readSetting(key: string, fallback: boolean) {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const value = window.localStorage.getItem(key);
+    return value === null ? fallback : value === "true";
+  } catch { return fallback; }
+}
+
 export function SettingsView() {
   const { sidebarCollapsed, setSidebar, connection } = useWorkspace();
-  const [tabular, setTabular] = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const [confirmOrders, setConfirmOrders] = useState(true);
+  const [tabular, setTabular] = useState(() => readSetting("zterminal.settings.tabular", true));
+  const [reduceMotion, setReduceMotion] = useState(() => readSetting("zterminal.settings.reduce-motion", false));
+  const [confirmOrders, setConfirmOrders] = useState(() => readSetting("zterminal.settings.confirm-orders", true));
   const [preferredProvider, setPreferredProvider] = useState<ProviderCatalogEntry["id"]>(() => {
     if (typeof window === "undefined") return "gateio";
     const saved = window.localStorage.getItem("zterminal.preferred-provider");
     return PROVIDER_CATALOG.some((provider) => provider.id === saved) ? saved as ProviderCatalogEntry["id"] : "gateio";
   });
-  const [aggregatedView, setAggregatedView] = useState(false);
+  const [aggregatedView, setAggregatedView] = useState(() => readSetting("zterminal.settings.aggregated-view", false));
 
   useEffect(() => {
-    window.localStorage.setItem("zterminal.preferred-provider", preferredProvider);
+    try { window.localStorage.setItem("zterminal.preferred-provider", preferredProvider); } catch { /* optional local preference */ }
   }, [preferredProvider]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("zterminal.settings.tabular", String(tabular));
+      window.localStorage.setItem("zterminal.settings.reduce-motion", String(reduceMotion));
+      window.localStorage.setItem("zterminal.settings.confirm-orders", String(confirmOrders));
+      window.localStorage.setItem("zterminal.settings.aggregated-view", String(aggregatedView));
+      document.documentElement.classList.toggle("zt-reduce-motion", reduceMotion);
+    } catch { /* optional local preference */ }
+    return () => { document.documentElement.classList.remove("zt-reduce-motion"); };
+  }, [aggregatedView, confirmOrders, reduceMotion, tabular]);
 
   return (
     <ViewShell title="Settings" icon={SettingsIcon}>

@@ -967,6 +967,17 @@
   .zt-reference-header { height:48px; gap:8px; padding:0 8px; }.zt-reference-mark { width:25px; }.zt-reference-mark img { width:19px; height:19px; }.zt-header-separator { height:18px; }.zt-instrument-picker { min-width:0; flex:1; width:auto; }.zt-instrument-picker-trigger { height:30px; }.zt-research-account { min-width:0; padding-left:4px; border-left:0; }.zt-research-account > span { width:27px; height:27px; }.zt-reference-body { display:block; height:calc(100dvh - 48px); }.zt-reference-body > main { height:100%; min-height:0; }.zt-reference-toolrail { display:none; }.zt-desktop-window { inset:0 !important; width:auto !important; height:auto !important; border:0; border-radius:0; }.zt-desktop-window-titlebar { min-height:34px; border-radius:0; }.zt-window-resize { display:none; }.zt-window-task { bottom:6px; left:6px !important; }.zt-chart-readout { gap:5px; font-size:7.5px; }.zt-chart-toolbar { min-height:34px; flex-basis:34px; gap:4px; padding:0 6px; }.zt-chart-contract { font-size:8.5px; }.zt-chart-contract small,.zt-chart-price,.zt-chart-feed-indicator { display:none; }.zt-chart-timeframes button { min-width:23px; height:23px; padding:0 3px; }.zt-chart-toolbar-button:not(.is-icon) { padding:0 4px; font-size:8px; }.zt-instrument-picker-menu { position:fixed; top:54px; right:8px; left:8px; width:auto; }.zt-context-window { padding:9px; }
 }
 
+/* Applied by the web Settings surface; keep motion reduction scoped to the
+   document so chart/window interactions remain functional without animation. */
+.zt-reduce-motion *,
+.zt-reduce-motion *::before,
+.zt-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
 /* Verified market browser, account information, and indicator workflow. */
 .zt-market-browser { width:min(540px, calc(100vw - 24px)); }
 .zt-market-browser-topline { display:flex; align-items:center; justify-content:space-between; min-height:29px; padding:0 11px; border-bottom:1px solid rgba(139,155,192,.13); color:#74839e; font-family:var(--font-geist-mono,ui-monospace,monospace); font-size:8px; letter-spacing:.08em; text-transform:uppercase; }
