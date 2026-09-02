@@ -20,7 +20,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { useWorkspace, type ViewId } from "@/stores/workspace";
-import { listContracts } from "@/lib/market/contracts";
+import { useContractCatalogue } from "@/hooks/use-contract-catalog";
 
 const VIEWS: { id: ViewId; label: string; icon: React.ComponentType<{ className?: string }>; group: string }[] = [
   { id: "chart", label: "Open Chart", icon: CandlestickChart, group: "Go to" },
@@ -47,6 +47,7 @@ export function CommandPalette() {
     symbol,
     saveWorkspace,
   } = useWorkspace();
+  const catalogue = useContractCatalogue();
 
   // Keyboard shortcut Ctrl/Cmd+K
   useEffect(() => {
@@ -92,7 +93,7 @@ export function CommandPalette() {
       <CommandList className="scroll-thin">
         <CommandEmpty>No results.</CommandEmpty>
         <CommandGroup heading="Symbols">
-          {listContracts().filter((contract) => contract.exchange === "GATEIO").map((c) => (
+          {catalogue.contracts.map((c) => (
             <CommandItem
               key={c.symbol}
               value={`symbol ${c.symbol} ${c.description}`}
@@ -106,6 +107,7 @@ export function CommandPalette() {
               )}
             </CommandItem>
           ))}
+          {!catalogue.loading && !catalogue.contracts.length && <CommandItem value="no verified symbols"><span className="text-muted-foreground">{catalogue.error ?? "No verified symbols available"}</span></CommandItem>}
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="Go to">
