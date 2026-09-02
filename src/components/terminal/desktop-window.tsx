@@ -173,7 +173,7 @@ export function DesktopWindow({
 
   return (
     <section
-      className={cn("zt-desktop-window", mode === "maximized" && "is-maximized", className)}
+      className={cn("zt-desktop-window", `zt-window-${id}`, mode === "maximized" && "is-maximized", className)}
       style={style}
       onPointerDown={focus}
       aria-label={`${title} window`}

@@ -1053,5 +1053,19 @@
 .zt-terminal-preference-actions button:hover { color: #fff; }
 .zt-terminal-preference-actions span { color: #65738b; font-size: 8px; }
 html[data-terminal-density="comfortable"] .zt-reference-header { height: 60px; }
+
+/* On small screens auxiliary windows become contained modal surfaces. The
+   chart stays full-bleed while context, indicators, strategy, and settings
+   remain visible above it instead of all occupying the same hidden rectangle. */
+@media (max-width: 767px) {
+  .zt-reference-canvas > .zt-desktop-window:not(.zt-reference-chart-window) {
+    inset: 8px !important;
+    width: auto !important;
+    height: auto !important;
+    border: 1px solid var(--zt-line);
+    border-radius: 6px;
+  }
+  .zt-reference-canvas > .zt-desktop-window:not(.zt-reference-chart-window) .zt-desktop-window-titlebar { border-radius: 6px 6px 0 0; }
+}
 html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 14px; }
 @media (max-width: 639px) { .zt-preference-presets { grid-template-columns: 1fr; } .zt-preference-grid { gap: 9px; } }
