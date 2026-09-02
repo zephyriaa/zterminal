@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Activity,
+  BarChart3,
   CalendarDays,
   Code2,
   FlaskConical,
@@ -66,6 +67,7 @@ export function FloatingWorkstationShell() {
         <nav className="zt-reference-toolrail" aria-label="Research tools">
           <RailButton label="Indicators" onClick={() => window.dispatchEvent(new Event("zterminal:open-indicators"))}><Layers3 /></RailButton>
           <RailButton label="Strategy and backtesting" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))}><FlaskConical /></RailButton>
+          <RailButton label="Open local backtester" onClick={() => window.dispatchEvent(new Event("zterminal:open-backtester"))}><BarChart3 /></RailButton>
           <RailButton label="Market context" onClick={() => window.dispatchEvent(new Event("zterminal:open-context"))}><SlidersHorizontal /></RailButton>
           <span className="zt-rail-divider" aria-hidden="true" />
           <RailButton label="Reset workspace layout" onClick={() => window.dispatchEvent(new Event("zterminal:reset-layout"))}><RotateCcw /></RailButton>

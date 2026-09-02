@@ -10,6 +10,7 @@ import {
   ChartNoAxesCombined,
   Layers3,
   LineChart,
+  FlaskConical,
   Play,
   RefreshCw,
   SlidersHorizontal,
@@ -27,6 +28,7 @@ import {
 import { IndicatorsBrowser, type IndicatorToggleId } from "./indicators-browser";
 import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
 import { StrategyView } from "@/components/views/strategy-view";
+import { BacktesterView } from "@/components/views/backtester-view";
 import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
@@ -80,6 +82,7 @@ export function ReferenceChartWorkspace() {
   const [replay, setReplay] = useState(false);
   const [indicatorsOpen, setIndicatorsOpen] = useState(false);
   const [strategyOpen, setStrategyOpen] = useState(false);
+  const [backtesterOpen, setBacktesterOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -140,12 +143,14 @@ export function ReferenceChartWorkspace() {
   useEffect(() => {
     const openIndicators = () => setIndicatorsOpen(true);
     const openStrategy = () => setStrategyOpen(true);
+    const openBacktester = () => setBacktesterOpen(true);
     const openSettings = () => setSettingsOpen(true);
     const openContext = () => setContextOpen(true);
     const openCalendar = () => setCalendarOpen(true);
     const openTerminalSettings = () => setTerminalSettingsOpen(true);
     window.addEventListener("zterminal:open-indicators", openIndicators);
     window.addEventListener("zterminal:open-strategy", openStrategy);
+    window.addEventListener("zterminal:open-backtester", openBacktester);
     window.addEventListener("zterminal:open-settings", openSettings);
     window.addEventListener("zterminal:open-context", openContext);
     window.addEventListener("zterminal:open-calendar", openCalendar);
@@ -153,6 +158,7 @@ export function ReferenceChartWorkspace() {
     return () => {
       window.removeEventListener("zterminal:open-indicators", openIndicators);
       window.removeEventListener("zterminal:open-strategy", openStrategy);
+      window.removeEventListener("zterminal:open-backtester", openBacktester);
       window.removeEventListener("zterminal:open-settings", openSettings);
       window.removeEventListener("zterminal:open-context", openContext);
       window.removeEventListener("zterminal:open-calendar", openCalendar);
@@ -210,6 +216,7 @@ export function ReferenceChartWorkspace() {
       {indicatorsOpen && <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser layers={layers} customStudies={customStudies} onToggleLayer={toggleBuiltIn} onCreate={(study) => setCustomStudies((current) => [...current, study])} onUpdate={(study) => setCustomStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => setCustomStudies((current) => current.filter((item) => item.id !== id))} /></DesktopWindow>}
 
       {strategyOpen && <DesktopWindow id="strategy" title="Strategy developer" subtitle="RESEARCH RULES" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={480} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><div className="h-full overflow-auto scroll-thin"><StrategyView /></div></DesktopWindow>}
+      {backtesterOpen && <DesktopWindow id="backtester" title="Local backtester" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 180, y: 80, width: 900, height: 600 }} minWidth={520} minHeight={380} icon={<FlaskConical className="h-3.5 w-3.5" />} onClose={() => setBacktesterOpen(false)}><BacktesterView /></DesktopWindow>}
 
       {settingsOpen && <DesktopWindow id="settings" title="Chart preferences" subtitle="WORKSPACE" initialBounds={{ x: 840, y: 170, width: 330, height: 330 }} minWidth={300} minHeight={260} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><div className="p-3 text-[10px]"><p className="text-muted-foreground">Preferences are stored only in this browser.</p><PreferenceRange label="Future chart space" value={settings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => setSettings((current) => ({ ...current, futureBars }))} /><PreferenceRange label="Grid intensity" value={appearance.gridOpacity} min={0} max={18} suffix="%" onChange={(gridOpacity) => updateAppearance({ gridOpacity })} /><label className="mt-4 flex items-center justify-between border-t hairline pt-3 text-muted-foreground">Show crosshair<input type="checkbox" checked={settings.showCrosshair} onChange={(event) => setSettings((current) => ({ ...current, showCrosshair: event.target.checked }))} /></label><button type="button" className="mt-4 text-[9px] uppercase tracking-[.12em] text-mdata hover:text-foreground" onClick={() => setSettings(DEFAULT_CHART_SETTINGS)}>Reset preferences</button></div></DesktopWindow>}
 

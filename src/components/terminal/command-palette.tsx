@@ -65,12 +65,14 @@ export function CommandPalette() {
   const go = (id: ViewId) => {
     const dockTab: Partial<Record<ViewId, string>> = {
       strategy: "script",
-      backtester: "tester",
       research: "research",
       markets: "data",
       alerts: "alerts",
     };
-    if (dockTab[id]) {
+    if (id === "backtester") {
+      setView("chart");
+      window.dispatchEvent(new Event("zterminal:open-backtester"));
+    } else if (dockTab[id]) {
       setView("chart");
       window.dispatchEvent(new CustomEvent("zterminal:open-dock", { detail: dockTab[id] }));
     } else if (id === "orderflow") {
