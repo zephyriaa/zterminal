@@ -17,8 +17,9 @@ import {
 } from "lucide-react";
 import { Panel, PanelHeader, Pill, StatRow } from "../terminal/primitives";
 import { useWorkspace } from "@/stores/workspace";
-import { listContracts, getContract } from "@/lib/market/contracts";
+import { getContract } from "@/lib/market/contracts";
 import { PROVIDER_CATALOG, type ProviderCatalogEntry } from "@/lib/market/capabilities";
+import { useContractCatalogue } from "@/hooks/use-contract-catalog";
 import { calculateFixedRiskSizing } from "@/domain/risk/sizing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ interface Alert {
 
 export function AlertsView() {
   const { setSymbol, setView, symbol, connection } = useWorkspace();
+  const catalogue = useContractCatalogue();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [sym, setSym] = useState(symbol);
   const [cond, setCond] = useState<"above" | "below">("above");
@@ -63,9 +65,11 @@ export function AlertsView() {
   const [error, setError] = useState<string | null>(null);
 
   const liveContracts = useMemo(() => {
-    if (connection.provider !== "gateio" || connection.dataStatus !== "LIVE") return [];
-    return listContracts().filter((contract) => contract.symbol === "QQQX_USDT");
-  }, [connection.dataStatus, connection.provider]);
+    if (connection.dataStatus !== "LIVE") return [];
+    return catalogue.contracts;
+  }, [catalogue.contracts, connection.dataStatus]);
+
+  const selectedSymbol = liveContracts.some((contract) => contract.symbol === sym) ? sym : liveContracts[0]?.symbol ?? "";
 
   const add = () => {
     const p = Number(price);
@@ -73,7 +77,7 @@ export function AlertsView() {
       setError("Enter a positive numeric trigger price.");
       return;
     }
-    const alertSymbol = liveContracts.some((contract) => contract.symbol === sym) ? sym : liveContracts[0]?.symbol;
+    const alertSymbol = selectedSymbol;
     if (!alertSymbol) {
       setError("Choose a symbol with an active live market-data subscription before creating an alert.");
       return;
@@ -87,7 +91,7 @@ export function AlertsView() {
     <ViewShell title="Alerts" icon={Bell} right={<Pill tone="warn">Session only</Pill>}>
       <div className="p-3 border-b hairline flex flex-wrap items-end gap-2">
         <Field label="Symbol">
-          <Select value={sym} onValueChange={setSym} disabled={!liveContracts.length}>
+          <Select value={selectedSymbol} onValueChange={setSym} disabled={!liveContracts.length}>
             <SelectTrigger className="h-7 w-28 text-[12px] bg-surface"><SelectValue placeholder="No live symbols" /></SelectTrigger>
             <SelectContent>{liveContracts.map((contract) => <SelectItem key={contract.symbol} value={contract.symbol}>{contract.symbol}</SelectItem>)}</SelectContent>
           </Select>
