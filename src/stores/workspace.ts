@@ -125,7 +125,7 @@ export const useWorkspace = create<WorkspaceState>()(
 
       connection: {
         state: "connecting",
-        provider: "binance",
+        provider: "gateio",
         environment: "live",
         dataStatus: "DISCONNECTED",
       },

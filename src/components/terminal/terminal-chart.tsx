@@ -234,7 +234,7 @@ export function TerminalChart({
   const tfSec = TIMEFRAME_SECONDS[timeframe];
   const effectiveReplayIndex = replayIndex ?? (replayEnabled ? internalReplayIndex : null);
 
-  const { lastTrade } = useMarketStream(symbol, { trades: 1, depth: false });
+  const { lastTrade, provider } = useMarketStream(symbol, { trades: 1, depth: false });
 
   // Fetch historical bars
   useEffect(() => {
@@ -248,7 +248,8 @@ export function TerminalChart({
         const to = Date.now();
         const barsCount = 600;
         const from = to - barsCount * tfSec * 1000;
-        const r = await fetch(`/api/bars?symbol=${encodeURIComponent(symbol)}&tf=${timeframe}&to=${to}&bars=${barsCount}`);
+        const historicalProvider = provider === "binance" ? "binance" : "gateio";
+        const r = await fetch(`/api/bars?provider=${historicalProvider}&symbol=${encodeURIComponent(symbol)}&tf=${timeframe}&to=${to}&bars=${barsCount}`);
         if (!r.ok) throw new Error("fetch failed");
         const json = await r.json();
         if (cancelled) return;
@@ -264,7 +265,7 @@ export function TerminalChart({
     return () => {
       cancelled = true;
     };
-  }, [symbol, timeframe, tfSec]);
+  }, [provider, symbol, timeframe, tfSec]);
 
   // Handle live trade update
   useEffect(() => {
