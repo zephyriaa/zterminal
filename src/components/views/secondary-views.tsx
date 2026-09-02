@@ -294,13 +294,24 @@ interface Entry {
   note: string;
 }
 
-const SEED_ENTRIES: Entry[] = [];
+const JOURNAL_KEY = "zterminal.journal.entries.v1";
+
+function readJournalEntries(): Entry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(JOURNAL_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((item): item is Entry => Boolean(item && typeof item.id === "string" && typeof item.date === "string" && typeof item.symbol === "string" && (item.side === "long" || item.side === "short") && typeof item.setup === "string" && Number.isFinite(item.result) && typeof item.note === "string")) : [];
+  } catch { return []; }
+}
 
 export function JournalView() {
   const { symbol } = useWorkspace();
-  const [entries, setEntries] = useState<Entry[]>(SEED_ENTRIES);
+  const [entries, setEntries] = useState<Entry[]>(readJournalEntries);
   const [note, setNote] = useState("");
   const [tab, setTab] = useState<"protocol" | "trade-notes">("protocol");
+  useEffect(() => {
+    try { window.localStorage.setItem(JOURNAL_KEY, JSON.stringify(entries)); } catch { /* optional local persistence */ }
+  }, [entries]);
   const add = () => {
     const trimmedNote = note.trim();
     if (!trimmedNote) return;
@@ -312,7 +323,7 @@ export function JournalView() {
       <div className="border-b hairline bg-panel px-3 py-2 flex flex-wrap items-center gap-2">
         <button onClick={() => setTab("protocol")} className={cn("h-7 rounded px-2.5 text-[11px]", tab === "protocol" ? "bg-research text-research-foreground" : "bg-surface text-muted-foreground hover:text-foreground")}>Institutional Protocol Ledger</button>
         <button onClick={() => setTab("trade-notes")} className={cn("h-7 rounded px-2.5 text-[11px]", tab === "trade-notes" ? "bg-hover text-foreground" : "bg-surface text-muted-foreground hover:text-foreground")}>Trade notes</button>
-        <span className="text-[9.5px] text-muted-foreground">Protocol history is versioned and reconstructable; manual notes remain session-only in this increment.</span>
+        <span className="text-[9.5px] text-muted-foreground">Protocol history is versioned; manual notes persist locally in this browser. Cloud sync is separate.</span>
       </div>
       {tab === "protocol" ? <div className="overflow-y-auto scroll-thin p-3"><ProtocolJournalLedger /></div> : <><div className="p-3 border-b hairline flex items-center gap-2"><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Log an observation, setup, or mistake…" className="h-7 text-[12px] bg-surface" /><Button size="sm" onClick={add} className="h-7 text-[12px]"><Plus className="w-3.5 h-3.5 mr-1" />Entry</Button></div><div className="overflow-y-auto scroll-thin p-3 space-y-2">{!entries.length && <Panel className="p-4 text-[11px] text-muted-foreground">No journal entries are stored yet. Entries created here remain in this browser session until the durable journal service is released.</Panel>}{entries.map((e) => <Panel key={e.id} className="p-3"><div className="flex items-center gap-2 text-[11px]"><span className="tnum text-muted-foreground">{e.date}</span><span className="font-mono-num font-semibold">{e.symbol}</span><Pill tone={e.side === "long" ? "pos" : "neg"}>{e.side}</Pill><span className="text-muted-foreground">{e.setup}</span><span className={cn("ml-auto tnum font-medium", e.result >= 0 ? "text-pos" : "text-neg")}>{e.result >= 0 ? "+" : ""}${e.result}</span></div><p className="text-[12px] mt-1.5 text-foreground/85">{e.note}</p></Panel>)}</div></>}
     </ViewShell>
