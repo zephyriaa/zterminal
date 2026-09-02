@@ -6,7 +6,7 @@ import type { ChartStudy } from "./terminal-chart";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/stores/workspace";
 
-export type IndicatorToggleId = "vwap" | "ema20" | "ema50" | "volume";
+export type IndicatorToggleId = "vwap" | "ema20" | "ema50" | "volume" | "profile";
 
 type IndicatorPreset = {
   id: string;
@@ -30,6 +30,7 @@ const PRESETS: IndicatorPreset[] = [
   { id: "bollinger20", name: "Bollinger Bands", category: "Volatility", description: "20-period SMA · 2 standard deviations", color: "#c4b5fd", kind: "bollinger", period: 20, multiplier: 2 },
   { id: "donchian20", name: "Donchian Channels", category: "Volatility", description: "Rolling highest high / lowest low · 20", color: "#67e8f9", kind: "donchian", period: 20 },
   { id: "volume", name: "Volume", category: "Volume", description: "Observed exchange trade volume", color: "#94a3b8", kind: "volume", toggleId: "volume" },
+  { id: "profile", name: "Volume Profile", category: "Volume", description: "OHLCV-level price distribution with POC and value area", color: "#c084fc", kind: "volume", toggleId: "profile" },
 ];
 
 const LIBRARY_CATEGORIES: IndicatorPreset["category"][] = ["Trend", "Volatility", "Volume"];

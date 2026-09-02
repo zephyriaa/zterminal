@@ -1054,6 +1054,16 @@
 .zt-terminal-preference-actions span { color: #65738b; font-size: 8px; }
 html[data-terminal-density="comfortable"] .zt-reference-header { height: 60px; }
 
+.zt-volume-profile { position:absolute; top:42px; right:8px; bottom:24px; z-index:12; display:flex; width:118px; flex-direction:column; justify-content:flex-end; pointer-events:none; opacity:.9; }
+.zt-volume-profile-title { margin-bottom:4px; color:#9c8bd9; font:700 7px/1.2 var(--font-geist-mono,ui-monospace,monospace); letter-spacing:.14em; text-align:right; }
+.zt-volume-profile-levels { display:flex; min-height:0; flex:1; flex-direction:column; justify-content:space-around; border-right:1px solid rgba(192,132,252,.25); padding:2px 4px 2px 14px; }
+.zt-volume-profile-level { display:flex; height:8px; align-items:center; justify-content:flex-end; gap:4px; }
+.zt-volume-profile-level i { display:block; height:4px; min-width:3px; border-radius:2px 0 0 2px; background:linear-gradient(90deg,rgba(192,132,252,.15),rgba(192,132,252,.8)); }
+.zt-volume-profile-level span { color:#71819e; font:8px var(--font-geist-mono,ui-monospace,monospace); }
+.zt-volume-profile-key { display:grid; gap:2px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(139,155,192,.16); color:#71819e; font:8px/1.2 var(--font-geist-mono,ui-monospace,monospace); text-align:right; }
+.zt-volume-profile-key b { color:#d8cdff; font-weight:600; }
+@media (max-width:767px) { .zt-volume-profile { right:4px; width:84px; opacity:.76; }.zt-volume-profile-level span { display:none; }.zt-volume-profile-levels { padding-left:20px; }.zt-volume-profile-key { font-size:7px; } }
+
 /* On small screens auxiliary windows become contained modal surfaces. The
    chart stays full-bleed while context, indicators, strategy, and settings
    remain visible above it instead of all occupying the same hidden rectangle. */

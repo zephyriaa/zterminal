@@ -8,6 +8,7 @@ import { useMarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import { normalizeChartBars } from "@/lib/market/chart-data";
+import { buildVolumeProfile, type VolumeProfile } from "@/domain/analytics/market";
 import type { ChartTimezone } from "@/stores/workspace";
 import {
   createChart,
@@ -37,6 +38,7 @@ export interface ChartIndicators {
   ema20: boolean;
   ema50: boolean;
   volume: boolean;
+  profile?: boolean;
   customStudies?: ChartStudy[];
 }
 
@@ -233,6 +235,11 @@ export function TerminalChart({
   const contract = getContract(symbol);
   const tfSec = TIMEFRAME_SECONDS[timeframe];
   const effectiveReplayIndex = replayIndex ?? (replayEnabled ? internalReplayIndex : null);
+
+  const volumeProfile = useMemo<VolumeProfile | null>(() => {
+    if (!indicators.profile || bars.length < 2) return null;
+    try { return buildVolumeProfile(bars, contract.tickSize); } catch { return null; }
+  }, [bars, contract.tickSize, indicators.profile]);
 
   const { lastTrade, provider } = useMarketStream(symbol, { trades: 1, depth: false });
 
@@ -626,6 +633,7 @@ export function TerminalChart({
   return (
     <div className="relative h-full w-full bg-background" onDoubleClick={() => chartRef.current?.timeScale().fitContent()}>
       <div ref={chartContainerRef} className="absolute inset-0 z-10" />
+      {volumeProfile && <VolumeProfileOverlay profile={volumeProfile} />}
       
       {replayEnabled && internalReplayIndex != null && (
         <div className="absolute bottom-7 right-2 z-50 flex items-center gap-1 border hairline bg-panel/95 p-1 shadow-sm backdrop-blur">
@@ -659,4 +667,10 @@ export function TerminalChart({
       )}
     </div>
   );
+}
+
+function VolumeProfileOverlay({ profile }: { profile: VolumeProfile }) {
+  const levels = profile.levels.slice(-28);
+  const maximum = Math.max(...levels.map((level) => level.volume), 1);
+  return <aside className="zt-volume-profile" aria-label="Volume profile overlay"><div className="zt-volume-profile-title">VOL PROFILE</div><div className="zt-volume-profile-levels">{levels.map((level) => <div key={level.price} className="zt-volume-profile-level"><i style={{ width: `${Math.max(3, (level.volume / maximum) * 100)}%` }} /><span>{level.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span></div>)}</div><div className="zt-volume-profile-key"><span>POC <b>{profile.pointOfControl?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span><span>VAH <b>{profile.valueAreaHigh?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span><span>VAL <b>{profile.valueAreaLow?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span></div></aside>;
 }
