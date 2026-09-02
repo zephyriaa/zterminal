@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: zterminal
+    runtime: docker
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeployTrigger: commit
+    healthCheckPath: /healthz
+    envVars:
+      - key: MARKET_PROVIDER
+        value: gateio
+      - key: MARKET_DATA_PORT
+        value: "3003"
+      - key: APP_PORT
+        value: "3000"
