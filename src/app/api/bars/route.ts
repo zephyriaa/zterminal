@@ -44,6 +44,9 @@ function cacheResponse(key: string, payload: unknown) {
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams;
   const requestedProvider = search.get("provider");
+  if (requestedProvider && !["mock", "binance", "gateio"].includes(requestedProvider)) {
+    return NextResponse.json({ error: "unsupported historical data provider" }, { status: 400 });
+  }
   const provider = requestedProvider === "mock" || requestedProvider === "binance" ? requestedProvider : "gateio";
   const requestedSymbol = search.get("symbol") ?? (provider === "gateio" ? "BTC_USDT" : "BTCUSDT");
   const timeframe = search.get("tf") ?? "5m";
