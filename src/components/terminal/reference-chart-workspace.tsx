@@ -84,7 +84,7 @@ export function ReferenceChartWorkspace() {
   const [contextOpen, setContextOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [terminalSettingsOpen, setTerminalSettingsOpen] = useState(false);
-  const [layers, setLayers] = useState<Record<IndicatorToggleId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true });
+  const [layers, setLayers] = useState<Record<IndicatorToggleId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true, profile: false });
   const [customStudies, setCustomStudies] = useState<ChartStudy[]>([]);
   const [settings, setSettings] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
   const [appearance, setAppearance] = useState<TerminalAppearance>(DEFAULT_APPEARANCE);
@@ -97,6 +97,7 @@ export function ReferenceChartWorkspace() {
     ema20: layers.ema20,
     ema50: layers.ema50,
     volume: layers.volume,
+    profile: layers.profile,
     customStudies,
   };
   const livePrice = lastTrade?.price ?? derivatives?.markPrice ?? null;
