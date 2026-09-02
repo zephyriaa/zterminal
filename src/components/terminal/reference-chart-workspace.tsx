@@ -29,7 +29,7 @@ import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
 import { StrategyView } from "@/components/views/strategy-view";
 import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
-import type { Timeframe } from "@/lib/market/types";
+import type { Bar, Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 
 type TerminalAppearance = {
@@ -88,6 +88,8 @@ export function ReferenceChartWorkspace() {
   const [customStudies, setCustomStudies] = useState<ChartStudy[]>([]);
   const [settings, setSettings] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
   const [appearance, setAppearance] = useState<TerminalAppearance>(DEFAULT_APPEARANCE);
+  const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
+  const [latestBar, setLatestBar] = useState<Bar | null>(null);
   const appearanceHydrated = useRef(false);
   const { quote, trades, lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 600, depth: false });
   const indicators: ChartIndicators = {
@@ -197,9 +199,9 @@ export function ReferenceChartWorkspace() {
             </div>
           </div>
           <div className="zt-chart-stage">
-            <div className="zt-chart-readout"><span>O <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>H <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>L <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>C <b>{formatPrice(lastTrade?.price, contract.tickSize)}</b></span><span>V <b>—</b></span></div>
+            <div className="zt-chart-readout"><span>O <b>{formatPrice((crosshairBar ?? latestBar)?.o ?? lastTrade?.price, contract.tickSize)}</b></span><span>H <b>{formatPrice((crosshairBar ?? latestBar)?.h ?? lastTrade?.price, contract.tickSize)}</b></span><span>L <b>{formatPrice((crosshairBar ?? latestBar)?.l ?? lastTrade?.price, contract.tickSize)}</b></span><span>C <b>{formatPrice((crosshairBar ?? latestBar)?.c ?? lastTrade?.price, contract.tickSize)}</b></span><span>V <b>{(crosshairBar ?? latestBar)?.v?.toLocaleString() ?? "—"}</b></span></div>
             <div className="zt-chart-overlays"><span className={layers.vwap ? "text-warn" : "hidden"}>VWAP</span><span className={layers.ema20 ? "text-mdata" : "hidden"}>EMA 20</span><span className={layers.volume ? "text-muted-foreground" : "hidden"}>Volume</span></div>
-            <TerminalChart symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={chartSettings} replayEnabled={replay} timezone={timezone} markPrice={derivatives?.markPrice} />
+            <TerminalChart symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={chartSettings} replayEnabled={replay} timezone={timezone} markPrice={derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} />
           </div>
         </div>
       </DesktopWindow>

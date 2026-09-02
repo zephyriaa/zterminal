@@ -7,6 +7,7 @@ import type { Bar } from "@/lib/market/types";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
+import { normalizeChartBars } from "@/lib/market/chart-data";
 import type { ChartTimezone } from "@/stores/workspace";
 import {
   createChart,
@@ -81,6 +82,7 @@ interface ChartProps {
   markPrice?: number | null;
   timezone?: ChartTimezone;
   onCrosshair?: (b: Bar | null) => void;
+  onLatestBar?: (b: Bar | null) => void;
 }
 
 function ema(values: number[], period: number): (number | null)[] {
@@ -180,7 +182,10 @@ function sessionVWAP(bars: Bar[], timezone: ChartTimezone): (number | null)[] {
 
 function themeVar(name: string, fallback: string): string {
   if (typeof window === "undefined") return fallback;
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  // Lightweight Charts does not parse newer CSS Color 4 formats such as
+  // lab()/oklch(), while the app's Tailwind tokens may resolve to them.
+  return /^(#[0-9a-f]{3,8}|rgba?\(|hsla?\(|transparent$)/i.test(value) ? value : fallback;
 }
 
 function themeColors() {
@@ -211,6 +216,7 @@ export function TerminalChart({
   markPrice,
   timezone = "America/New_York",
   onCrosshair,
+  onLatestBar,
 }: ChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -233,6 +239,8 @@ export function TerminalChart({
   // Fetch historical bars
   useEffect(() => {
     let cancelled = false;
+    // These states mirror the lifecycle of the external historical-data request.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setErr(null);
     (async () => {
@@ -244,7 +252,7 @@ export function TerminalChart({
         if (!r.ok) throw new Error("fetch failed");
         const json = await r.json();
         if (cancelled) return;
-        setBars(json.bars || []);
+        setBars(normalizeChartBars(json.bars));
         setLoading(false);
       } catch (e) {
         if (!cancelled) {
@@ -264,6 +272,8 @@ export function TerminalChart({
     const t = lastTrade.timestamp;
     const price = lastTrade.price;
     const bucket = alignToTimeframe(t, timeframe);
+    // A live provider event is an external subscription callback, not derived render state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBars((prev) => {
       const next = prev.slice();
       const last = next[next.length - 1];
@@ -295,9 +305,15 @@ export function TerminalChart({
     });
   }, [lastTrade, timeframe]);
 
+  useEffect(() => {
+    onLatestBar?.(bars.at(-1) ?? null);
+  }, [bars, onLatestBar]);
+
   // Handle replay
   useEffect(() => {
     if (!replayEnabled) {
+      // Reset local playback state when the externally controlled replay mode closes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInternalReplayIndex(null);
       setReplayPlaying(false);
       return;
@@ -368,18 +384,18 @@ export function TerminalChart({
 
     const handleResize = () => {
       if (chartContainerRef.current) {
-        chart.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: chartContainerRef.current.clientHeight,
-        });
+        const width = chartContainerRef.current.clientWidth;
+        const height = chartContainerRef.current.clientHeight;
+        if (width > 0 && height > 0) chart.resize(width, height);
       }
     };
-    
-    window.addEventListener("resize", handleResize);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(chartContainerRef.current);
     handleResize();
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.remove();
     };
   }, []);
@@ -633,6 +649,11 @@ export function TerminalChart({
       {err && (
         <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/80 text-[11px] text-neg backdrop-blur-sm">
           {err}
+        </div>
+      )}
+      {!loading && !err && !bars.length && (
+        <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/80 text-center text-[11px] text-muted-foreground backdrop-blur-sm">
+          No historical candles available for this market and timeframe.
         </div>
       )}
     </div>
