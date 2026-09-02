@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://zterminal.onrender.com">Web App</a> · <a href="#windows-desktop">Windows Desktop</a> · <a href="#architecture">Architecture</a> · <a href="#roadmap">Roadmap</a> · <a href="#contributing">Contributing</a>
+  <a href="https://zterminal.onrender.com">Web App</a> · <a href="#architecture">Architecture</a> · <a href="#roadmap">Roadmap</a> · <a href="#contributing">Contributing</a>
 </p>
 
 <p align="center">
