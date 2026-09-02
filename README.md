@@ -5,7 +5,7 @@
 <h1 align="center">ZTerminal</h1>
 
 <p align="center">
-  <strong>Quantitative market intelligence evolving into a lightweight Windows trading terminal.</strong>
+  <strong>Quantitative market intelligence in a focused, browser-first trading workspace.</strong>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/status-in%20development-111827?style=flat-square" />
   <img src="https://img.shields.io/badge/web-live%20development-111827?style=flat-square" />
-  <img src="https://img.shields.io/badge/desktop-Windows%2010%2F11-111827?style=flat-square" />
+  <img src="https://img.shields.io/badge/platform-browser-111827?style=flat-square" />
   <img src="https://img.shields.io/badge/focus-quant%20research-111827?style=flat-square" />
   <img src="https://img.shields.io/badge/architecture-client%20first-111827?style=flat-square" />
 </p>
@@ -58,7 +58,7 @@ This is both a performance strategy and a **scalability/cost strategy**. Heavy w
 
 ### User computer — preferred location for heavy work
 
-The Windows client is intended to use the user's available **CPU, GPU, RAM and local storage** for workloads that can safely run locally, such as:
+The browser client is intended to use the user's available **CPU, GPU, RAM and local storage** for workloads that can safely run locally, such as:
 
 - Chart rendering and visualization
 - Local market-data processing
@@ -137,15 +137,15 @@ The goal is to avoid paying server-side compute costs for work that a user's com
 
 ## The ZTerminal strategy
 
-ZTerminal is evolving from a primarily web-based application into a **web + lightweight Windows terminal platform**.
+ZTerminal is a **web-only, browser-first application**.
 
-The web application remains the accessible, cross-platform experience. The Windows client is the preferred environment for workloads that benefit from local CPU/GPU execution, persistent storage, background processing and deeper desktop integration.
+The web app is the product surface and cross-platform experience; local browser compute is used where it improves charting and research responsiveness.
 
 <p align="center">
   <img src="assets/zterminal-local-first.svg" alt="ZTerminal local-first architecture" width="1100" />
 </p>
 
-The goal is **not** to put the website inside an `.exe`. The goal is to build a proper lightweight desktop terminal around the same ZTerminal platform.
+The goal is a reliable, responsive web workspace with truthful data states and no native-app dependency.
 
 ---
 
@@ -173,7 +173,7 @@ Context-aware alerts · Setup monitoring · Trade journaling · Execution analys
 
 ---
 
-## Windows Desktop
+## Deferred native clients (out of scope)
 
 The long-term Windows application is being designed as a **lightweight native terminal**, not as a browser wrapper.
 
@@ -241,7 +241,7 @@ The exact boundary is feature-dependent. For example, **authoritative account st
 
 ---
 
-## Desktop distribution and automatic updates
+## Web delivery
 
 Users should **not** have to return to the website and manually reinstall ZTerminal for every release.
 
@@ -389,31 +389,19 @@ Public Windows distribution should only be enabled when the appropriate producti
 - [ ] Strategy vs. trader performance
 - [ ] Performance attribution
 
-### Windows Desktop
+### Browser workspace
 
-- [ ] Internal Windows packaging validation
-- [ ] Signed installer pipeline
-- [ ] Native Windows client foundation
-- [ ] Rust / native rendering architecture
-- [ ] Direct3D charting foundation
+- [x] Responsive browser workspace
 - [ ] Client/server workload separation framework
 - [ ] Local-first analytics
 - [ ] Local backtesting / compute engine
 - [ ] Local market-data processing and caching
 - [ ] Persistent workspaces
-- [ ] Multi-window / multi-monitor workflows
-- [ ] Native notifications
-- [ ] Global shortcuts
 - [ ] Background monitoring
-- [ ] Windows auto-update system
-- [ ] Canonical release manifest
-- [ ] CDN / object-storage distribution
-- [ ] Staged releases and rollback
-- [ ] Public Windows download
 
 ### Platform
 
-- [ ] Shared web/desktop account architecture
+- [ ] Shared account architecture
 - [ ] Remote configuration
 - [ ] Cloud synchronization where appropriate
 - [ ] Central service minimization
@@ -447,9 +435,9 @@ Public Windows distribution should only be enabled when the appropriate producti
 
 ZTerminal is an **actively developing project**.
 
-The web application is the current accessible product experience. The Windows architecture is being developed toward a lightweight, native, client-first terminal designed to shift appropriate computation and rendering to the user's machine while keeping centralized infrastructure focused on shared services and authoritative state.
+The web application is the product. ZTerminal keeps appropriate charting and research computation in the browser while the backend provides authoritative market-data mediation, account boundaries, health checks and shared services.
 
-The client/server boundary, native Windows implementation, public desktop distribution and automatic-update infrastructure are being developed incrementally and should not be interpreted as fully production-ready merely because they appear in the roadmap.
+Native Windows clients and desktop distribution are explicitly deferred and are not implementation targets for this repository.
 
 ---
 
