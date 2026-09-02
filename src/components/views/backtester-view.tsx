@@ -22,10 +22,11 @@ function ema(values: number[], period: number) {
 }
 
 function runEmaCross(bars: Bar[], fastPeriod = 20, slowPeriod = 50) {
-  if (bars.length < 60) return [];
+  const warmup = Math.max(fastPeriod, slowPeriod);
+  if (bars.length <= warmup) return [];
   const closes = bars.map((bar) => bar.c); const fast = ema(closes, fastPeriod); const slow = ema(closes, slowPeriod);
   const returns: number[] = []; let position: -1 | 0 | 1 = 0; let entry = 0;
-  for (let index = 50; index < bars.length; index += 1) {
+  for (let index = warmup; index < bars.length; index += 1) {
     const nextPosition: -1 | 0 | 1 = fast[index] > slow[index] ? 1 : -1;
     if (nextPosition !== position) {
       if (position !== 0 && entry > 0) returns.push(((bars[index].c - entry) / entry) * position);
