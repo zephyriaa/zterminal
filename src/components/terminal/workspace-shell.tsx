@@ -51,6 +51,18 @@ export function WorkspaceShell() {
   const { activeView, setView, setCommandOpen } = useWorkspace();
 
   useEffect(() => {
+    const applyMotionPreference = () => {
+      try {
+        document.documentElement.classList.toggle("zt-reduce-motion", window.localStorage.getItem("zterminal.settings.reduce-motion") === "true");
+      } catch { /* optional local preference */ }
+    };
+    applyMotionPreference();
+    const onStorage = (event: StorageEvent) => { if (event.key === "zterminal.settings.reduce-motion") applyMotionPreference(); };
+    window.addEventListener("storage", onStorage);
+    return () => { window.removeEventListener("storage", onStorage); document.documentElement.classList.remove("zt-reduce-motion"); };
+  }, []);
+
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
