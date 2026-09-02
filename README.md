@@ -175,32 +175,21 @@ Context-aware alerts · Setup monitoring · Trade journaling · Execution analys
 
 ## Deferred native clients (out of scope)
 
-The long-term Windows application is being designed as a **lightweight native terminal**, not as a browser wrapper.
+Native desktop clients are explicitly deferred. This repository targets the hosted browser workspace only.
 
-The native direction is centered around **Rust + native Windows technologies such as Win32/Direct3D**, with local-first computation and rendering where it provides a meaningful performance and scalability benefit.
+The web scope includes:
 
-Planned capabilities include:
-
-- Native high-performance rendering
-- CPU/GPU utilization on the user's machine
+- High-performance browser rendering
+- CPU/GPU utilization available to the browser
 - Local chart, indicator and order-flow processing where practical
 - Local backtesting and research execution where practical
 - Persistent local workspaces and caches
 - Multi-window and multi-monitor workflows
-- Native notifications
-- Global shortcuts
-- Background monitoring
+- Browser notifications where supported
+- Background monitoring while the web app is open
 - Reduced dependence on centralized compute
 
-The current Tauri-based Windows build is treated as an **internal packaging/proof track**, not as the final native architecture.
-
-### Web + Windows, not Web vs. Windows
-
-**Web:** instant, cross-platform access without installation.
-
-**Windows:** a dedicated terminal environment with local-first processing, more available local compute and deeper desktop integration.
-
-Both are intended to use the same ZTerminal account and shared platform, while respecting the different capabilities of each environment.
+The web app is the sole supported product surface. Native packaging and desktop-specific workflows are not implementation targets.
 
 ---
 
@@ -243,24 +232,7 @@ The exact boundary is feature-dependent. For example, **authoritative account st
 
 ## Web delivery
 
-Users should **not** have to return to the website and manually reinstall ZTerminal for every release.
-
-<p align="center">
-  <img src="assets/zterminal-updates.svg" alt="ZTerminal Windows release and update workflow" width="1100" />
-</p>
-
-The production Windows release system is designed around:
-
-- Signed releases
-- Versioned artifacts
-- Signed release manifests
-- CDN / object-storage distribution
-- Background update checks
-- Staged rollouts
-- Release pause / rollback
-- Separation of application binaries from user data
-
-The website and Windows updater will use one canonical release source of truth.
+The web application is built and deployed from the canonical `main` branch. Render provides the hosted runtime; browser releases require no installer or desktop updater.
 
 ---
 
@@ -326,17 +298,7 @@ The architecture aims to move **compute**, not **trust boundaries**, to the user
 
 ## Development strategy
 
-### Track A — Windows packaging proof
-
-Windows builds · installer behavior · test signing · artifact verification · controlled internal distribution.
-
-This is an engineering proof track, not the final native terminal.
-
-### Track B — Native Windows terminal
-
-Rust · native Windows APIs · Direct3D/native rendering · local-first computation · high-performance charting · order-flow visualization · persistent workspaces · desktop integration.
-
-### Track C — Client/server workload separation
+### Client/server workload separation
 
 For every major feature:
 
@@ -347,11 +309,9 @@ For every major feature:
 5. Keep authoritative state and security controls centralized.
 6. Cache and batch network activity where practical.
 
-### Shared release spine
+### Web release spine
 
-Versioning · release metadata · signing · distribution · update strategy · rollback · remote configuration.
-
-Public Windows distribution should only be enabled when the appropriate production gates have passed.
+GitHub `main` is the source of truth and Render auto-deploys commits after validation.
 
 ---
 
