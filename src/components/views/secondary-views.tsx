@@ -434,7 +434,6 @@ export function SettingsView() {
       window.localStorage.setItem("zterminal.settings.aggregated-view", String(aggregatedView));
       document.documentElement.classList.toggle("zt-reduce-motion", reduceMotion);
     } catch { /* optional local preference */ }
-    return () => { document.documentElement.classList.remove("zt-reduce-motion"); };
   }, [aggregatedView, confirmOrders, reduceMotion, tabular]);
 
   return (
