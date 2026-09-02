@@ -1063,6 +1063,10 @@ html[data-terminal-density="comfortable"] .zt-reference-header { height: 60px; }
 .zt-volume-profile-key { display:grid; gap:2px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(139,155,192,.16); color:#71819e; font:8px/1.2 var(--font-geist-mono,ui-monospace,monospace); text-align:right; }
 .zt-volume-profile-key b { color:#d8cdff; font-weight:600; }
 @media (max-width:767px) { .zt-volume-profile { right:4px; width:84px; opacity:.76; }.zt-volume-profile-level span { display:none; }.zt-volume-profile-levels { padding-left:20px; }.zt-volume-profile-key { font-size:7px; } }
+.zt-market-context-strip { position:absolute; left:10px; bottom:27px; z-index:12; display:flex; max-width:calc(100% - 20px); flex-wrap:wrap; gap:5px 10px; padding:4px 6px; border:1px solid rgba(139,155,192,.16); border-radius:3px; background:rgba(7,11,20,.72); color:#8492aa; font:8px/1.2 var(--font-geist-mono,ui-monospace,monospace); pointer-events:none; }
+.zt-market-context-strip span { white-space:nowrap; }
+.zt-market-context-strip b { margin-right:4px; color:#9c8bd9; font-size:7px; letter-spacing:.1em; }
+@media (max-width:767px) { .zt-market-context-strip { left:5px; bottom:22px; max-width:calc(100% - 10px); gap:3px 6px; font-size:7px; }.zt-market-context-strip span:nth-child(3) { display:none; } }
 
 /* On small screens auxiliary windows become contained modal surfaces. The
    chart stays full-bleed while context, indicators, strategy, and settings

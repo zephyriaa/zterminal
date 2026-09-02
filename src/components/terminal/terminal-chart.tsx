@@ -8,7 +8,7 @@ import { useMarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import { normalizeChartBars } from "@/lib/market/chart-data";
-import { buildVolumeProfile, type VolumeProfile } from "@/domain/analytics/market";
+import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpeningRange, type VolumeProfile } from "@/domain/analytics/market";
 import type { ChartTimezone } from "@/stores/workspace";
 import {
   createChart,
@@ -240,6 +240,16 @@ export function TerminalChart({
     if (!indicators.profile || bars.length < 2) return null;
     try { return buildVolumeProfile(bars, contract.tickSize); } catch { return null; }
   }, [bars, contract.tickSize, indicators.profile]);
+
+  const marketContext = useMemo(() => {
+    if (bars.length < 3) return null;
+    const volatility = calculateVolatility(bars, Math.min(50, bars.length));
+    const regime = classifyRegime(bars, { lookback: Math.min(50, bars.length), trendThreshold: 0.01, compressionThreshold: 0.002 });
+    const latest = bars.at(-1)!;
+    const utcDayStart = Date.UTC(new Date(latest.t).getUTCFullYear(), new Date(latest.t).getUTCMonth(), new Date(latest.t).getUTCDate());
+    const openingRange = computeOpeningRange(bars, utcDayStart, utcDayStart + 30 * 60 * 1_000);
+    return { volatility, regime, openingRange };
+  }, [bars]);
 
   const { lastTrade, provider } = useMarketStream(symbol, { trades: 1, depth: false });
 
@@ -634,6 +644,7 @@ export function TerminalChart({
     <div className="relative h-full w-full bg-background" onDoubleClick={() => chartRef.current?.timeScale().fitContent()}>
       <div ref={chartContainerRef} className="absolute inset-0 z-10" />
       {volumeProfile && <VolumeProfileOverlay profile={volumeProfile} />}
+      {marketContext && <MarketContextOverlay context={marketContext} tickSize={contract.tickSize} />}
       
       {replayEnabled && internalReplayIndex != null && (
         <div className="absolute bottom-7 right-2 z-50 flex items-center gap-1 border hairline bg-panel/95 p-1 shadow-sm backdrop-blur">
@@ -673,4 +684,10 @@ function VolumeProfileOverlay({ profile }: { profile: VolumeProfile }) {
   const levels = profile.levels.slice(-28);
   const maximum = Math.max(...levels.map((level) => level.volume), 1);
   return <aside className="zt-volume-profile" aria-label="Volume profile overlay"><div className="zt-volume-profile-title">VOL PROFILE</div><div className="zt-volume-profile-levels">{levels.map((level) => <div key={level.price} className="zt-volume-profile-level"><i style={{ width: `${Math.max(3, (level.volume / maximum) * 100)}%` }} /><span>{level.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span></div>)}</div><div className="zt-volume-profile-key"><span>POC <b>{profile.pointOfControl?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span><span>VAH <b>{profile.valueAreaHigh?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span><span>VAL <b>{profile.valueAreaLow?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span></div></aside>;
+}
+
+function MarketContextOverlay({ context, tickSize }: { context: { volatility: ReturnType<typeof calculateVolatility>; regime: ReturnType<typeof classifyRegime>; openingRange: ReturnType<typeof computeOpeningRange> }; tickSize: number }) {
+  const price = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: Math.max(2, Math.min(8, Math.round(-Math.log10(tickSize)))) });
+  const range = context.openingRange.complete && Number.isFinite(context.openingRange.high) ? `${price(context.openingRange.low)}–${price(context.openingRange.high)}` : "Awaiting range";
+  return <aside className="zt-market-context-strip" aria-label="Market intelligence context"><span><b>REGIME</b>{context.regime.kind.replaceAll("_", " ")} · {(context.regime.confidence * 100).toFixed(0)}%</span><span><b>ATR</b>{context.volatility.atr == null ? "—" : price(context.volatility.atr)}</span><span><b>RV</b>{context.volatility.realizedVolatility == null ? "—" : `${(context.volatility.realizedVolatility * 100).toFixed(3)}%`}</span><span><b>OR 00:00–00:30 UTC</b>{range}</span></aside>;
 }
