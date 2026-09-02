@@ -20,6 +20,7 @@ import { useWorkspace } from "@/stores/workspace";
 import { getContract } from "@/lib/market/contracts";
 import { PROVIDER_CATALOG, type ProviderCatalogEntry } from "@/lib/market/capabilities";
 import { useContractCatalogue } from "@/hooks/use-contract-catalog";
+import { useMarketStream } from "@/hooks/use-market-stream";
 import { calculateFixedRiskSizing } from "@/domain/risk/sizing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -55,10 +56,21 @@ interface Alert {
   active: boolean;
 }
 
+const ALERTS_KEY = "zterminal.alerts.v1";
+
+function readAlerts(): Alert[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(ALERTS_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((item): item is Alert => Boolean(item && typeof item.id === "string" && typeof item.symbol === "string" && (item.cond === "above" || item.cond === "below") && Number.isFinite(item.price) && typeof item.active === "boolean")) : [];
+  } catch { return []; }
+}
+
 export function AlertsView() {
   const { setSymbol, setView, symbol, connection } = useWorkspace();
   const catalogue = useContractCatalogue();
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const stream = useMarketStream(symbol, { trades: 2, depth: false });
+  const [alerts, setAlerts] = useState<Alert[]>(readAlerts);
   const [sym, setSym] = useState(symbol);
   const [cond, setCond] = useState<"above" | "below">("above");
   const [price, setPrice] = useState("");
@@ -70,6 +82,21 @@ export function AlertsView() {
   }, [catalogue.contracts, connection.dataStatus]);
 
   const selectedSymbol = liveContracts.some((contract) => contract.symbol === sym) ? sym : liveContracts[0]?.symbol ?? "";
+
+  useEffect(() => {
+    try { window.localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts)); } catch { /* optional local persistence */ }
+  }, [alerts]);
+
+  const evaluated = useMemo(() => {
+    const current = stream.lastTrade?.price;
+    const previous = stream.trades.at(-2)?.price;
+    return alerts.map((alert) => {
+      const crosses = alert.active && alert.symbol === symbol && Number.isFinite(current) && Number.isFinite(previous)
+        ? alert.cond === "above" ? previous! < alert.price && current! >= alert.price : previous! > alert.price && current! <= alert.price
+        : false;
+      return { ...alert, crosses, observedPrice: alert.symbol === symbol ? current : undefined };
+    });
+  }, [alerts, stream.lastTrade?.price, stream.trades, symbol]);
 
   const add = () => {
     const p = Number(price);
@@ -108,7 +135,7 @@ export function AlertsView() {
         <Button size="sm" onClick={add} disabled={!liveContracts.length} className="h-7 text-[12px]"><Plus className="w-3.5 h-3.5 mr-1" />Add</Button>
       </div>
       <div className="px-3 py-2 border-b hairline text-[10.5px] text-muted-foreground">
-        {liveContracts.length ? `Provider: ${connection.provider.toUpperCase()} · alerts are kept only in this browser session until the durable alert service is released.` : "No active live provider is available. Reconnect public market data before adding an alert."}
+        {liveContracts.length ? `Provider: ${connection.provider.toUpperCase()} · alerts persist in this browser and evaluate only against observed public trades.` : "No active live provider is available. Reconnect public market data before adding an alert."}
         {error && <span className="block mt-1 text-neg" role="alert">{error}</span>}
       </div>
       <div className="overflow-y-auto scroll-thin flex-1">
@@ -123,7 +150,7 @@ export function AlertsView() {
             </tr>
           </thead>
           <tbody>
-            {alerts.map((a) => (
+            {evaluated.map((a) => (
               <tr key={a.id} className="border-b hairline hover:bg-hover/40">
                 <td className="px-3 py-2">
                   <button className="font-mono-num font-semibold hover:text-mdata" onClick={() => { setSymbol(a.symbol); setView("chart"); }}>{a.symbol}</button>
@@ -134,7 +161,7 @@ export function AlertsView() {
                   <Switch checked={a.active} onCheckedChange={(v) => setAlerts((s) => s.map((x) => x.id === a.id ? { ...x, active: v } : x))} className="h-4 w-7" />
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <button onClick={() => setAlerts((s) => s.filter((x) => x.id !== a.id))} className="text-muted-foreground hover:text-neg"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <span className={cn("mr-2 text-[9px] uppercase", a.crosses ? "text-pos" : "text-muted-foreground")}>{a.crosses ? "triggered" : a.observedPrice === undefined ? "awaiting" : "watching"}</span><button onClick={() => setAlerts((s) => s.filter((x) => x.id !== a.id))} className="text-muted-foreground hover:text-neg" aria-label={`Delete alert for ${a.symbol}`}><Trash2 className="w-3.5 h-3.5" /></button>
                 </td>
               </tr>
             ))}
