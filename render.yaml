@@ -9,7 +9,7 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: MARKET_PROVIDER
-        value: binance
+        value: gateio
       - key: ALLOWED_ORIGIN
         value: https://zterminal.onrender.com
       - key: MARKET_DATA_PORT
