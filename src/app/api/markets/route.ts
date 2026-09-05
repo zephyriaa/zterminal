@@ -8,6 +8,9 @@ export const runtime = "nodejs";
 /** Read-only provider-backed market snapshot for the live watchlist. */
 export async function GET(request: Request) {
   const requestedProvider = new URL(request.url).searchParams.get("provider") ?? process.env.MARKET_PROVIDER ?? "gateio";
+  if (requestedProvider !== "binance" && requestedProvider !== "gateio") {
+    return NextResponse.json({ provider: requestedProvider, dataStatus: "UNAVAILABLE", error: "Unsupported market provider", rows: [] }, { status: 400 });
+  }
   const provider = requestedProvider === "binance" ? "binance" : "gateio";
   try {
     if (provider === "binance") {
