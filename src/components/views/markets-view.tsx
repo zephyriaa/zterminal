@@ -29,7 +29,7 @@ function fmt(p: number, tick: number) {
 }
 
 export function MarketsView() {
-  const { setSymbol, setView, symbol } = useWorkspace();
+  const { connection, setSymbol, setView, symbol } = useWorkspace();
   const [rows, setRows] = useState<MarketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -39,7 +39,7 @@ export function MarketsView() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const r = await fetch("/api/markets");
+      const r = await fetch(`/api/markets?provider=${encodeURIComponent(connection.provider)}`, { cache: "no-store" });
       const j = await r.json();
       if (!cancelled) {
         setRows(Array.isArray(j.rows) ? j.rows : []);
@@ -59,7 +59,7 @@ export function MarketsView() {
       cancelled = true;
       clearInterval(id);
     };
-  }, []);
+  }, [connection.provider]);
 
   const filtered = rows.filter((r) =>
     !q ? true : r.symbol.includes(q.toUpperCase()) || r.description.toLowerCase().includes(q.toLowerCase())
