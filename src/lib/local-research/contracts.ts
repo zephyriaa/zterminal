@@ -23,7 +23,7 @@ export interface ScriptRecord {
 export interface ResearchTrade {
   id: string; side: "long" | "short"; entryTime: number; exitTime: number | null;
   entryPrice: number; exitPrice: number; quantity: number; pnl: number;
-  return: number; accountReturn: number; fees: number; status: "closed" | "open";
+  return: number; accountReturn: number | null; fees: number; status: "closed" | "open";
 }
 export interface EquityPoint { time: number; equity: number; drawdown: number; benchmark: number; }
 export interface Metric { value: number | null; reason?: string; }
@@ -37,10 +37,10 @@ export interface ResearchResult {
   version: 1; id: string; createdAt: number; name: string; source: string;
   sourceHash: string; inputHash: string; resultHash: string;
   engine: { python: string; vectorbt: string; sdk: string; analytics: string };
-  config: ResearchConfig; dataset: Dataset; assumptions: string[];
+  config: ResearchConfig; params: Record<string, number | string | boolean>; dataset: Dataset; assumptions: string[];
   metrics: Record<string, Metric>; equity: EquityPoint[]; trades: ResearchTrade[];
   plots: Record<string, { time: number; value: number }[]>;
-  monthly: { period: string; return: number }[];
+  monthly: { period: string; return: number | null }[];
   drawdowns: { start: number; trough: number; recovery: number | null; depth: number; durationMs: number }[];
   observations: string[]; logs: string[]; monteCarlo?: MonteCarloResult;
 }

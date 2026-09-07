@@ -80,6 +80,8 @@ interface ChartProps {
   replayIndex?: number | null;
   replayEnabled?: boolean;
   markers?: TradeMarker[];
+  snapshot?: Bar[];
+  focusRange?: { from: number; to: number } | null;
   settings?: ChartSettings;
   markPrice?: number | null;
   timezone?: ChartTimezone;
@@ -165,9 +167,10 @@ function sessionVWAP(bars: Bar[], timezone: ChartTimezone): (number | null)[] {
   let cumPV = 0;
   let cumV = 0;
   let dayKey = "";
+  const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" });
   for (let i = 0; i < bars.length; i++) {
     const b = bars[i];
-    const parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(b.t));
+    const parts = formatter.formatToParts(new Date(b.t));
     const key = `${parts.find((part) => part.type === "year")?.value ?? "0000"}-${parts.find((part) => part.type === "month")?.value ?? "00"}-${parts.find((part) => part.type === "day")?.value ?? "00"}`;
     if (key !== dayKey) {
       dayKey = key;
@@ -214,6 +217,8 @@ export function TerminalChart({
   replayIndex,
   replayEnabled = false,
   markers,
+  snapshot,
+  focusRange,
   settings = DEFAULT_CHART_SETTINGS,
   markPrice,
   timezone = "America/New_York",
@@ -226,7 +231,9 @@ export function TerminalChart({
   const volumeSeriesRef = useRef<ISeriesApi<any> | null>(null);
   const indicatorSeriesRef = useRef<Map<string, ISeriesApi<any>>>(new Map());
 
-  const [bars, setBars] = useState<Bar[]>([]);
+  const [liveBars, setBars] = useState<Bar[]>([]);
+  const bars = snapshot ?? liveBars;
+  const markerPlugin = useRef<ReturnType<typeof createSeriesMarkers<Time>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [internalReplayIndex, setInternalReplayIndex] = useState<number | null>(null);
@@ -253,13 +260,15 @@ export function TerminalChart({
 
   const { lastTrade, provider } = useMarketStream(symbol, { trades: 1, depth: false });
 
-  // Fetch historical bars
+  // Archived data is immutable; live history belongs to the current provider and instrument.
   useEffect(() => {
     let cancelled = false;
     // These states mirror the lifecycle of the external historical-data request.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
+    setLoading(!snapshot);
     setErr(null);
+    if (snapshot) return;
+    setBars([]);
     (async () => {
       try {
         const to = Date.now();
@@ -282,11 +291,11 @@ export function TerminalChart({
     return () => {
       cancelled = true;
     };
-  }, [provider, symbol, timeframe, tfSec]);
+  }, [provider, symbol, timeframe, tfSec, snapshot]);
 
   // Handle live trade update
   useEffect(() => {
-    if (!lastTrade || !bars.length) return;
+    if (snapshot || !lastTrade || !bars.length) return;
     const t = lastTrade.timestamp;
     const price = lastTrade.price;
     const bucket = alignToTimeframe(t, timeframe);
@@ -321,7 +330,7 @@ export function TerminalChart({
       }
       return next;
     });
-  }, [lastTrade, timeframe]);
+  }, [lastTrade, timeframe, snapshot]);
 
   useEffect(() => {
     onLatestBar?.(bars.at(-1) ?? null);
@@ -414,7 +423,8 @@ export function TerminalChart({
 
     return () => {
       resizeObserver.disconnect();
-      chart.remove();
+      markerPlugin.current?.detach(); markerPlugin.current = null;
+      chart.remove(); chartRef.current = null; seriesRef.current = null; volumeSeriesRef.current = null; indicatorSeriesRef.current.clear();
     };
   }, []);
 
@@ -439,6 +449,8 @@ export function TerminalChart({
     const chart = chartRef.current;
 
     if (seriesRef.current) {
+      markerPlugin.current?.detach();
+      markerPlugin.current = null;
       chart.removeSeries(seriesRef.current);
     }
 
@@ -625,20 +637,26 @@ export function TerminalChart({
       }
     }
     
-    // Markers
-    if (markers?.length && seriesRef.current) {
-      const tvMarkers = markers.map(m => ({
+  }, [bars, chartType, indicators, effectiveReplayIndex, settings, timezone]);
+
+  useEffect(() => {
+    if (!seriesRef.current) return;
+    if (!markerPlugin.current) markerPlugin.current = createSeriesMarkers(seriesRef.current, []);
+    const tvMarkers = [...(markers ?? [])].sort((a, b) => a.t - b.t).map(m => ({
         time: (m.t / 1000) as Time,
         position: m.side === "buy" ? "belowBar" : "aboveBar",
-        color: m.side === "buy" ? c.pos : c.neg,
+        color: m.side === "buy" ? themeColors().pos : themeColors().neg,
         shape: m.side === "buy" ? "arrowUp" : "arrowDown",
         text: m.label || "",
       })) as any;
-      createSeriesMarkers(seriesRef.current, tvMarkers);
-    } else {
-      createSeriesMarkers(seriesRef.current, []);
-    }
-  }, [bars, chartType, indicators, effectiveReplayIndex, settings, markers, timezone]);
+    markerPlugin.current.setMarkers(tvMarkers);
+  }, [markers, chartType, settings.candleUpColor, settings.candleDownColor]);
+
+  useEffect(() => {
+    if (!chartRef.current || !snapshot?.length) return;
+    if (focusRange) chartRef.current.timeScale().setVisibleRange({ from: (focusRange.from / 1000) as Time, to: (focusRange.to / 1000) as Time });
+    else chartRef.current.timeScale().fitContent();
+  }, [snapshot, focusRange]);
 
   return (
     <div className="relative h-full w-full bg-background" onDoubleClick={() => chartRef.current?.timeScale().fitContent()}>
