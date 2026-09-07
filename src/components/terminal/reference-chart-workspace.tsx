@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   BarChart3,
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { PanelTaskStrip } from "./panel-task-strip";
 import { usePanels } from "@/stores/panels";
+import { useStudies } from "@/stores/studies";
 import { DesktopWindow } from "./desktop-window";
 import {
   DEFAULT_CHART_SETTINGS,
@@ -91,26 +92,24 @@ export function ReferenceChartWorkspace() {
   const setContextOpen = (open: boolean) => { if (open) usePanels.getState().open("context"); else usePanels.getState().patch("context", { status: "closed" }); };
   const setCalendarOpen = (open: boolean) => { if (open) usePanels.getState().open("economic-calendar"); else usePanels.getState().patch("economic-calendar", { status: "closed" }); };
   const setTerminalSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("terminal-settings"); else usePanels.getState().patch("terminal-settings", { status: "closed" }); };
-  const [layers, setLayers] = useState<Record<IndicatorToggleId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true, profile: false });
-  const [customStudies, setCustomStudies] = useState<ChartStudy[]>([]);
+  const instances = useStudies(s => s.instances);
   const [settings, setSettings] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
   const [appearance, setAppearance] = useState<TerminalAppearance>(DEFAULT_APPEARANCE);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
   const [latestBar, setLatestBar] = useState<Bar | null>(null);
   const appearanceHydrated = useRef(false);
   const { quote, trades, lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 600, depth: false });
-  const indicators: ChartIndicators = {
-    vwap: layers.vwap,
-    ema20: layers.ema20,
-    ema50: layers.ema50,
-    volume: layers.volume,
-    profile: layers.profile,
-    customStudies,
-  };
+  const indicators: ChartIndicators = useMemo(() => ({
+    vwap: false, ema20: false, ema50: false,
+    volume: instances.some(p => p.kind === 'volume' && p.visible),
+    profile: instances.some(p => p.kind === 'profile' && p.visible),
+    customStudies: instances.filter(p => !['volume', 'profile'].includes(p.kind)) as ChartStudy[],
+  }), [instances]);
   const livePrice = lastTrade?.price ?? derivatives?.markPrice ?? null;
 
 
   useEffect(() => {
+    void useStudies.persist.rehydrate();
     const timer = window.setTimeout(() => {
       try {
         const saved = window.localStorage.getItem(APPEARANCE_STORAGE_KEY);
@@ -139,10 +138,6 @@ export function ReferenceChartWorkspace() {
   const updateAppearance = (next: Partial<TerminalAppearance>) => setAppearance((current) => ({ ...current, ...next, preset: next.preset ?? "Custom" }));
 
   const chartSettings: ChartSettings = { ...settings, backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 };
-
-  const toggleBuiltIn = (id: IndicatorToggleId) => {
-    setLayers((current) => ({ ...current, [id]: !current[id] }));
-  };
 
   useEffect(() => {
     const focusChart = () => usePanels.getState().open("chart");
@@ -217,13 +212,13 @@ export function ReferenceChartWorkspace() {
           </div>
           <div className="zt-chart-stage">
             <div className="zt-chart-readout"><span>O <b>{formatPrice((crosshairBar ?? latestBar)?.o, contract.tickSize)}</b></span><span>H <b>{formatPrice((crosshairBar ?? latestBar)?.h, contract.tickSize)}</b></span><span>L <b>{formatPrice((crosshairBar ?? latestBar)?.l, contract.tickSize)}</b></span><span>C <b>{formatPrice((crosshairBar ?? latestBar)?.c, contract.tickSize)}</b></span><span>V <b>{(crosshairBar ?? latestBar)?.v?.toLocaleString() ?? "—"}</b></span></div>
-            <div className="zt-chart-overlays"><span className={layers.vwap ? "text-warn" : "hidden"}>VWAP</span><span className={layers.ema20 ? "text-mdata" : "hidden"}>EMA 20</span><span className={layers.volume ? "text-muted-foreground" : "hidden"}>Volume</span></div>
+            <div className="zt-chart-overlays">{instances.filter(p => p.visible).slice(0, 6).map(p => <span key={p.id} style={{ color: p.color }}>{p.name}</span>)}</div>
             <TerminalChart symbol={symbol} timeframe={timeframe as Timeframe} chartType={chartType} indicators={indicators} settings={chartSettings} replayEnabled={replay} timezone={timezone} markPrice={derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} />
           </div>
         </div>
       </DesktopWindow>
 
-      <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser layers={layers} customStudies={customStudies} onToggleLayer={toggleBuiltIn} onCreate={(study) => setCustomStudies((current) => [...current, study])} onUpdate={(study) => setCustomStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => setCustomStudies((current) => current.filter((item) => item.id !== id))} /></DesktopWindow>
+      <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser /></DesktopWindow>
 
       <DesktopWindow id="strategy" title="Strategy developer" subtitle="RESEARCH RULES" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={480} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><div className="h-full overflow-auto scroll-thin"><StrategyView /></div></DesktopWindow>
       <DesktopWindow id="backtester" title="Local backtester" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 180, y: 80, width: 900, height: 600 }} minWidth={520} minHeight={380} icon={<FlaskConical className="h-3.5 w-3.5" />} onClose={() => setBacktesterOpen(false)}><BacktesterView /></DesktopWindow>
