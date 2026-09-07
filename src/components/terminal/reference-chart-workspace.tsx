@@ -16,6 +16,8 @@ import {
   SlidersHorizontal,
   Settings2,
 } from "lucide-react";
+import { PanelTaskStrip } from "./panel-task-strip";
+import { usePanels } from "@/stores/panels";
 import { DesktopWindow } from "./desktop-window";
 import {
   DEFAULT_CHART_SETTINGS,
@@ -29,6 +31,7 @@ import { IndicatorsBrowser, type IndicatorToggleId } from "./indicators-browser"
 import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
 import { StrategyView } from "@/components/views/strategy-view";
 import { BacktesterView } from "@/components/views/backtester-view";
+import { AlertsView, JournalView } from "@/components/views/secondary-views";
 import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
@@ -80,13 +83,14 @@ export function ReferenceChartWorkspace() {
   const contract = getContract(symbol);
   const [chartType, setChartType] = useState<ChartType>("candles");
   const [replay, setReplay] = useState(false);
-  const [indicatorsOpen, setIndicatorsOpen] = useState(false);
-  const [strategyOpen, setStrategyOpen] = useState(false);
-  const [backtesterOpen, setBacktesterOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [contextOpen, setContextOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [terminalSettingsOpen, setTerminalSettingsOpen] = useState(false);
+  const indicatorsOpen = usePanels(s => s.panels.indicators?.status === "open");
+  const setIndicatorsOpen = (open: boolean) => { if (open) usePanels.getState().open("indicators"); else usePanels.getState().patch("indicators", { status: "closed" }); };
+  const setStrategyOpen = (open: boolean) => { if (open) usePanels.getState().open("strategy"); else usePanels.getState().patch("strategy", { status: "closed" }); };
+  const setBacktesterOpen = (open: boolean) => { if (open) usePanels.getState().open("backtester"); else usePanels.getState().patch("backtester", { status: "closed" }); };
+  const setSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("settings"); else usePanels.getState().patch("settings", { status: "closed" }); };
+  const setContextOpen = (open: boolean) => { if (open) usePanels.getState().open("context"); else usePanels.getState().patch("context", { status: "closed" }); };
+  const setCalendarOpen = (open: boolean) => { if (open) usePanels.getState().open("economic-calendar"); else usePanels.getState().patch("economic-calendar", { status: "closed" }); };
+  const setTerminalSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("terminal-settings"); else usePanels.getState().patch("terminal-settings", { status: "closed" }); };
   const [layers, setLayers] = useState<Record<IndicatorToggleId, boolean>>({ vwap: true, ema20: true, ema50: false, volume: true, profile: false });
   const [customStudies, setCustomStudies] = useState<ChartStudy[]>([]);
   const [settings, setSettings] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
@@ -141,8 +145,10 @@ export function ReferenceChartWorkspace() {
   };
 
   useEffect(() => {
+    const focusChart = () => usePanels.getState().open("chart");
+    window.addEventListener("zterminal:focus-chart", focusChart);
     const openIndicators = () => setIndicatorsOpen(true);
-    const openStrategy = () => setStrategyOpen(true);
+    const openStrategy = () => { setStrategyOpen(true); setBacktesterOpen(true); usePanels.getState().focus("strategy"); };
     const openBacktester = () => setBacktesterOpen(true);
     const openSettings = () => setSettingsOpen(true);
     const openContext = () => setContextOpen(true);
@@ -156,6 +162,7 @@ export function ReferenceChartWorkspace() {
     window.addEventListener("zterminal:open-calendar", openCalendar);
     window.addEventListener("zterminal:open-terminal-settings", openTerminalSettings);
     return () => {
+      window.removeEventListener("zterminal:focus-chart", focusChart);
       window.removeEventListener("zterminal:open-indicators", openIndicators);
       window.removeEventListener("zterminal:open-strategy", openStrategy);
       window.removeEventListener("zterminal:open-backtester", openBacktester);
@@ -168,6 +175,9 @@ export function ReferenceChartWorkspace() {
 
   return (
     <div className="zt-reference-canvas" aria-label="Floating research workstation" style={{ "--zt-app-bg": appearance.appBackground, "--zt-panel-bg": appearance.panelBackground, "--zt-chart-bg": appearance.chartBackground, "--zt-accent": appearance.accent, "--zt-grid-opacity": appearance.gridOpacity / 100 } as React.CSSProperties}>
+      <PanelTaskStrip />
+      <DesktopWindow id="alerts" title="Alerts" initialBounds={{ x: 80, y: 60, width: 600, height: 420 }} onClose={() => usePanels.getState().patch("alerts", { status: "closed" })}><div className="h-full overflow-auto"><AlertsView /></div></DesktopWindow>
+      <DesktopWindow id="journal" title="Journal" initialBounds={{ x: 100, y: 80, width: 700, height: 480 }} onClose={() => usePanels.getState().patch("journal", { status: "closed" })}><div className="h-full overflow-auto"><JournalView /></div></DesktopWindow>
       <DesktopWindow
         id="chart"
         title={`${formatSymbol(symbol)} · ${timeframe.toUpperCase()}`}
@@ -213,16 +223,16 @@ export function ReferenceChartWorkspace() {
         </div>
       </DesktopWindow>
 
-      {indicatorsOpen && <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser layers={layers} customStudies={customStudies} onToggleLayer={toggleBuiltIn} onCreate={(study) => setCustomStudies((current) => [...current, study])} onUpdate={(study) => setCustomStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => setCustomStudies((current) => current.filter((item) => item.id !== id))} /></DesktopWindow>}
+      <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser layers={layers} customStudies={customStudies} onToggleLayer={toggleBuiltIn} onCreate={(study) => setCustomStudies((current) => [...current, study])} onUpdate={(study) => setCustomStudies((current) => current.map((item) => item.id === study.id ? study : item))} onRemove={(id) => setCustomStudies((current) => current.filter((item) => item.id !== id))} /></DesktopWindow>
 
-      {strategyOpen && <DesktopWindow id="strategy" title="Strategy developer" subtitle="RESEARCH RULES" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={480} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><div className="h-full overflow-auto scroll-thin"><StrategyView /></div></DesktopWindow>}
-      {backtesterOpen && <DesktopWindow id="backtester" title="Local backtester" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 180, y: 80, width: 900, height: 600 }} minWidth={520} minHeight={380} icon={<FlaskConical className="h-3.5 w-3.5" />} onClose={() => setBacktesterOpen(false)}><BacktesterView /></DesktopWindow>}
+      <DesktopWindow id="strategy" title="Strategy developer" subtitle="RESEARCH RULES" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={480} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><div className="h-full overflow-auto scroll-thin"><StrategyView /></div></DesktopWindow>
+      <DesktopWindow id="backtester" title="Local backtester" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 180, y: 80, width: 900, height: 600 }} minWidth={520} minHeight={380} icon={<FlaskConical className="h-3.5 w-3.5" />} onClose={() => setBacktesterOpen(false)}><BacktesterView /></DesktopWindow>
 
-      {settingsOpen && <DesktopWindow id="settings" title="Chart preferences" subtitle="WORKSPACE" initialBounds={{ x: 840, y: 170, width: 330, height: 330 }} minWidth={300} minHeight={260} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><div className="p-3 text-[10px]"><p className="text-muted-foreground">Preferences are stored only in this browser.</p><PreferenceRange label="Future chart space" value={settings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => setSettings((current) => ({ ...current, futureBars }))} /><PreferenceRange label="Grid intensity" value={appearance.gridOpacity} min={0} max={18} suffix="%" onChange={(gridOpacity) => updateAppearance({ gridOpacity })} /><label className="mt-4 flex items-center justify-between border-t hairline pt-3 text-muted-foreground">Show crosshair<input type="checkbox" checked={settings.showCrosshair} onChange={(event) => setSettings((current) => ({ ...current, showCrosshair: event.target.checked }))} /></label><button type="button" className="mt-4 text-[9px] uppercase tracking-[.12em] text-mdata hover:text-foreground" onClick={() => setSettings(DEFAULT_CHART_SETTINGS)}>Reset preferences</button></div></DesktopWindow>}
+      <DesktopWindow id="settings" title="Chart preferences" subtitle="WORKSPACE" initialBounds={{ x: 840, y: 170, width: 330, height: 330 }} minWidth={300} minHeight={260} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><div className="p-3 text-[10px]"><p className="text-muted-foreground">Preferences are stored only in this browser.</p><PreferenceRange label="Future chart space" value={settings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => setSettings((current) => ({ ...current, futureBars }))} /><PreferenceRange label="Grid intensity" value={appearance.gridOpacity} min={0} max={18} suffix="%" onChange={(gridOpacity) => updateAppearance({ gridOpacity })} /><label className="mt-4 flex items-center justify-between border-t hairline pt-3 text-muted-foreground">Show crosshair<input type="checkbox" checked={settings.showCrosshair} onChange={(event) => setSettings((current) => ({ ...current, showCrosshair: event.target.checked }))} /></label><button type="button" className="mt-4 text-[9px] uppercase tracking-[.12em] text-mdata hover:text-foreground" onClick={() => setSettings(DEFAULT_CHART_SETTINGS)}>Reset preferences</button></div></DesktopWindow>
 
-      {contextOpen && <DesktopWindow id="context" title="Market context" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 972, y: 50, width: 330, height: 420 }} minWidth={300} minHeight={280} icon={<Activity className="h-3.5 w-3.5" />} onClose={() => setContextOpen(false)}><ContextWindow symbol={symbol} tickSize={contract.tickSize} quote={quote} lastPrice={livePrice} derivatives={derivatives} dataStatus={dataStatus} provider={provider} healthReason={health?.reason ?? reason} /></DesktopWindow>}
-      {calendarOpen && <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 96, width: 390, height: 320 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow timezone={timezone} /></DesktopWindow>}
-      {terminalSettingsOpen && <DesktopWindow id="terminal-settings" title="Terminal preferences" subtitle="WORKSTATION" initialBounds={{ x: 850, y: 120, width: 360, height: 520 }} minWidth={320} minHeight={420} icon={<Settings2 className="h-3.5 w-3.5" />} onClose={() => setTerminalSettingsOpen(false)}><TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} appearance={appearance} onAppearanceChange={updateAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)} /></DesktopWindow>}
+      <DesktopWindow id="context" title="Market context" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 972, y: 50, width: 330, height: 420 }} minWidth={300} minHeight={280} icon={<Activity className="h-3.5 w-3.5" />} onClose={() => setContextOpen(false)}><ContextWindow symbol={symbol} tickSize={contract.tickSize} quote={quote} lastPrice={livePrice} derivatives={derivatives} dataStatus={dataStatus} provider={provider} healthReason={health?.reason ?? reason} /></DesktopWindow>
+      <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 96, width: 390, height: 320 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow timezone={timezone} /></DesktopWindow>
+      <DesktopWindow id="terminal-settings" title="Terminal preferences" subtitle="WORKSTATION" initialBounds={{ x: 850, y: 120, width: 360, height: 520 }} minWidth={320} minHeight={420} icon={<Settings2 className="h-3.5 w-3.5" />} onClose={() => setTerminalSettingsOpen(false)}><TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} appearance={appearance} onAppearanceChange={updateAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)} /></DesktopWindow>
 
     </div>
   );
