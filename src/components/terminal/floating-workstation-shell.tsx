@@ -18,6 +18,7 @@ import { InstrumentPicker } from "./instrument-picker";
 import { ReferenceChartWorkspace } from "./reference-chart-workspace";
 import { AccountPanel } from "./account-panel";
 import { useWorkspace } from "@/stores/workspace";
+import { usePanels } from "@/stores/panels";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { CloudSyncBridge } from "@/components/auth/cloud-sync-bridge";
 
@@ -53,7 +54,7 @@ export function FloatingWorkstationShell() {
         </button>
         <span className="zt-header-separator" aria-hidden="true" />
         <InstrumentPicker />
-        <div className="zt-workspace-label hidden lg:block"><b>FLOATING WORKSTATION</b><span>Drag windows to arrange</span></div>
+        <div className="zt-workspace-label hidden lg:block"><b>RESEARCH WORKSPACE</b><span>Write / backtest / inspect</span></div>
         <div className="ml-auto flex items-center gap-1.5">
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-calendar"))} aria-label="Open economic calendar" title="Economic calendar"><CalendarDays /></button>
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))} aria-label="Open Python strategy developer" title="Python strategy developer"><Code2 /></button>
@@ -65,20 +66,22 @@ export function FloatingWorkstationShell() {
       </header>
       <div className="zt-reference-body">
         <nav className="zt-reference-toolrail" aria-label="Research tools">
+          <RailButton label="Chart" onClick={() => usePanels.getState().open("chart")}><BarChart3 /></RailButton>
           <RailButton label="Indicators" onClick={() => window.dispatchEvent(new Event("zterminal:open-indicators"))}><Layers3 /></RailButton>
-          <RailButton label="Strategy and backtesting" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))}><FlaskConical /></RailButton>
-          <RailButton label="Open local backtester" onClick={() => window.dispatchEvent(new Event("zterminal:open-backtester"))}><BarChart3 /></RailButton>
-          <RailButton label="Market context" onClick={() => window.dispatchEvent(new Event("zterminal:open-context"))}><SlidersHorizontal /></RailButton>
+          <RailButton label="Research" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))}><FlaskConical /></RailButton>
+          <RailButton label="Backtests" onClick={() => window.dispatchEvent(new Event("zterminal:open-backtester"))}><BarChart3 /></RailButton>
+          <RailButton label="Alerts" onClick={() => usePanels.getState().open("alerts")}><Activity /></RailButton>
+          <details className="zt-more-tools"><summary>More</summary><button onClick={() => usePanels.getState().open("context")}>Context</button><button onClick={() => usePanels.getState().open("journal")}>Journal</button><button onClick={() => usePanels.getState().open("economic-calendar")}>Calendar</button><button onClick={() => usePanels.getState().open("terminal-settings")}>Preferences</button></details>
           <span className="zt-rail-divider" aria-hidden="true" />
           <RailButton label="Reset workspace layout" onClick={() => window.dispatchEvent(new Event("zterminal:reset-layout"))}><RotateCcw /></RailButton>
           <RailButton label="Feed details" onClick={() => window.dispatchEvent(new Event("zterminal:open-context"))}><Activity /></RailButton>
         </nav>
-        <main className="min-h-0 min-w-0 overflow-hidden" aria-label="Floating market research canvas"><ReferenceChartWorkspace /></main>
+        <main className="min-h-0 min-w-0 overflow-hidden" aria-label="Market research workspace"><ReferenceChartWorkspace /></main>
       </div>
     </div>
   );
 }
 
 function RailButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" className="zt-reference-rail-button" onClick={onClick} aria-label={label} title={label}>{children}</button>;
+  return <button type="button" className="zt-reference-rail-button" onClick={onClick} aria-label={label} title={label}>{children}<span>{label}</span></button>;
 }
