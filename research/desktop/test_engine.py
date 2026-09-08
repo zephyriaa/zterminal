@@ -103,11 +103,27 @@ class ExecutionTests(unittest.TestCase):
         request["dataset"]["hash"] = "fake"
         with self.assertRaisesRegex(ValueError, "SHA-256"):
             validate(request)
+        request = fixture()
+        request["params"] = {"nested": [1, 2]}
+        with self.assertRaisesRegex(ValueError, "parameters"):
+            validate(request)
 
     def test_user_data_mutation_does_not_change_engine_prices(self):
         request = fixture()
         request["source"] = request["source"].replace("    i =", "    data['open'] = 999\n    i =")
         self.assertEqual(execute(request)["trades"][0]["entryPrice"], 12)
+
+    def test_bundled_vectorbt_can_generate_supported_signals(self):
+        source = '''import vectorbt as vbt
+import zterminal as zt
+def strategy(data, params):
+    fast = vbt.MA.run(data.close, window=2).ma
+    slow = vbt.MA.run(data.close, window=3).ma
+    return zt.Strategy(zt.crossover(fast, slow), zt.crossunder(fast, slow))
+'''
+        result = execute(fixture(source, prices=[10, 9, 8, 9, 10, 8, 7, 9]))
+        self.assertEqual(result["engine"]["vectorbt"], "0.28.1")
+        self.assertGreaterEqual(len(result["trades"]), 1)
 
 
 class AnalyticsTests(unittest.TestCase):

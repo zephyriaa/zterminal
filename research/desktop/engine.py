@@ -8,6 +8,7 @@ import io
 import json
 import math
 import platform
+from importlib.metadata import version as package_version
 import time
 import traceback
 import uuid
@@ -15,18 +16,74 @@ import uuid
 import numpy as np
 import pandas as pd
 import rfc8785
-import vectorbt as vbt
 import zterminal as zt
 import analytics
 
 from validation import validate, digest
 
+VERSION = "1.1.0"
 
 class BoundedLog(io.StringIO):
     def write(self, value):
         remaining = max(0, 32_768 - self.tell())
         super().write(value[:remaining])
         return len(value)
+
+
+def simulate(frame, signals, config):
+    """Deterministic one-position price simulation; all four signals are already next-bar shifted."""
+    le, lx, se, sx = (s.to_numpy(dtype=bool) for s in signals)
+    opens, closes = frame.open.to_numpy(), frame.close.to_numpy()
+    fee_rate, slip = config["feeBps"] / 10000, config["slippageBps"] / 10000
+    multiplier, step = config["multiplier"], config["quantityStep"]
+    account, position, exposure = float(config["initialCapital"]), None, 0
+    equity_values, trades = [], []
+    for i, (open_price, close_price) in enumerate(zip(opens, closes)):
+        if position is not None:
+            wants_exit = lx[i] if position["side"] == "long" else sx[i]
+            if wants_exit:
+                direction = 1 if position["side"] == "long" else -1
+                exit_price = open_price * (1 - slip * direction)
+                exit_fee = abs(exit_price * position["quantity"] * multiplier) * fee_rate
+                pnl = direction * (exit_price - position["entryPrice"]) * position["quantity"] * multiplier - position["entryFee"] - exit_fee
+                account += pnl
+                entry_value = position["entryPrice"] * position["quantity"] * multiplier + position["entryFee"]
+                trades.append({"id": str(len(trades)), "side": position["side"], "entryTime": position["entryTime"],
+                               "exitTime": int(frame.index[i].value // 1_000_000), "entryPrice": position["entryPrice"],
+                               "exitPrice": float(exit_price), "quantity": position["quantity"], "pnl": float(pnl),
+                               "return": float(pnl / entry_value), "accountReturn": float(pnl / position["account"]) if position["account"] > 0 else None,
+                               "fees": float(position["entryFee"] + exit_fee), "status": "closed"})
+                position = None
+        # Opposite entries while holding are ignored. Same-direction entries do not pyramid.
+        if position is None and (le[i] or se[i]):
+            side = "long" if le[i] else "short"
+            direction = 1 if side == "long" else -1
+            entry_price = open_price * (1 + slip * direction)
+            raw_quantity = account * config["allocation"] / (entry_price * multiplier * (1 + fee_rate))
+            quantity = math.floor((raw_quantity + step * 1e-12) / step) * step
+            if quantity >= step and quantity > 0:
+                entry_fee = abs(entry_price * quantity * multiplier) * fee_rate
+                position = {"side": side, "entryTime": int(frame.index[i].value // 1_000_000), "entryPrice": float(entry_price),
+                            "quantity": float(quantity), "entryFee": float(entry_fee), "account": float(account)}
+        if position is None:
+            equity_values.append(account)
+        else:
+            exposure += 1
+            direction = 1 if position["side"] == "long" else -1
+            equity_values.append(account + direction * (close_price - position["entryPrice"]) * position["quantity"] * multiplier - position["entryFee"])
+    if position is not None:
+        direction = 1 if position["side"] == "long" else -1
+        mark = float(closes[-1])
+        pnl = direction * (mark - position["entryPrice"]) * position["quantity"] * multiplier - position["entryFee"]
+        entry_value = position["entryPrice"] * position["quantity"] * multiplier + position["entryFee"]
+        trades.append({"id": str(len(trades)), "side": position["side"], "entryTime": position["entryTime"], "exitTime": None,
+                       "entryPrice": position["entryPrice"], "exitPrice": mark, "quantity": position["quantity"], "pnl": float(pnl),
+                       "return": float(pnl / entry_value), "accountReturn": float(pnl / position["account"]) if position["account"] > 0 else None,
+                       "fees": position["entryFee"], "status": "open"})
+    equity = pd.Series(equity_values, index=frame.index, dtype=float)
+    if not np.isfinite(equity.to_numpy()).all():
+        raise ValueError("Simulation produced non-finite equity")
+    return equity, trades, exposure / len(frame)
 
 
 def execute(request, stage=lambda value: None):
@@ -77,40 +134,14 @@ def execute(request, stage=lambda value: None):
     stage("calculating_report")
     # All signals move one full bar. Final-bar signals have no manufactured fill.
     shifted = [s.shift(1, fill_value=False) for s in (le, lx, se, sx)]
-    multiplier = config["multiplier"]
-    portfolio = vbt.Portfolio.from_signals(
-        close=frame.close * multiplier, price=frame.open * multiplier,
-        entries=shifted[0], exits=shifted[1], short_entries=shifted[2], short_exits=shifted[3],
-        # One ULP avoids flooring 9.999999999999998 contracts to 9 at exact boundaries.
-        init_cash=config["initialCapital"], size=float(np.nextafter(config["allocation"], 1.0)), size_type="percent",
-        size_granularity=config["quantityStep"], fees=config["feeBps"] / 10000,
-        slippage=config["slippageBps"] / 10000, accumulate=False, upon_opposite_entry="ignore",
-        lock_cash=True, allow_partial=True, freq=pd.Timedelta(milliseconds=interval))
-    equity = portfolio.value()
-    if not np.isfinite(equity.to_numpy()).all():
-        raise ValueError("Simulation produced non-finite equity")
-    trades = []
-    account = config["initialCapital"]
-    for record in portfolio.trades.records.to_dict("records"):
-        entry, exit_ = int(record["entry_idx"]), int(record["exit_idx"])
-        closed = int(record["status"]) == 1
-        pnl = float(record["pnl"])
-        trades.append({"id": str(record["id"]), "side": "long" if int(record["direction"]) == 0 else "short",
-                       "entryTime": int(frame.index[entry].value // 1_000_000),
-                       "exitTime": int(frame.index[exit_].value // 1_000_000) if closed else None,
-                       "entryPrice": float(record["entry_price"]) / multiplier, "exitPrice": float(record["exit_price"]) / multiplier,
-                       "quantity": float(record["size"]), "pnl": pnl, "return": float(record["return"]),
-                       "accountReturn": pnl / account if account > 0 else None,
-                       "fees": float(record["entry_fees"] + record["exit_fees"]), "status": "closed" if closed else "open"})
-        if closed:
-            account += pnl
-    metrics, dd, drawdowns, monthly, observations = analytics.report(equity, config["initialCapital"], trades, config["from"], config["to"], float(portfolio.position_mask().mean()))
+    equity, trades, exposure = simulate(frame, shifted, config)
+    metrics, dd, drawdowns, monthly, observations = analytics.report(equity, config["initialCapital"], trades, config["from"], config["to"], exposure)
     # Passive price-only benchmark: starts at the first available open, same dataset.
     benchmark = config["initialCapital"] * frame.close / frame.open.iloc[0]
     result = {"version": 1, "id": str(uuid.uuid4()), "createdAt": int(time.time() * 1000),
               "name": str(request.get("name", "Untitled"))[:120], "source": request["source"],
               "sourceHash": hashlib.sha256(request["source"].encode()).hexdigest(), "inputHash": digest({"name": str(request.get("name", "Untitled"))[:120], "source": request["source"], "config": config, "params": request.get("params", {}), "dataset": dataset}),
-              "engine": {"python": platform.python_version(), "vectorbt": vbt.__version__, "sdk": zt.__version__, "analytics": analytics.VERSION},
+              "engine": {"engine": VERSION, "python": platform.python_version(), "vectorbt": package_version("vectorbt"), "sdk": zt.__version__, "analytics": analytics.VERSION},
               "config": config, "params": request.get("params", {}), "dataset": dataset, "metrics": metrics, "trades": trades, "plots": plots,
               "equity": [{"time": int(t.value // 1_000_000), "equity": float(v), "drawdown": float(d), "benchmark": float(b)} for t, v, d, b in zip(equity.index, equity, dd, benchmark)],
               "monthly": monthly, "drawdowns": drawdowns, "observations": observations,

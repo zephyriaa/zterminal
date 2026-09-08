@@ -146,7 +146,7 @@ class Archive:
                 raise ValueError("Invalid trade values")
         if not isinstance(result.get("metrics"), dict) or any(not isinstance(v, dict) or (v.get("value") is not None and not numeric(v["value"])) or (v.get("value") is None and not isinstance(v.get("reason"), str)) for v in result["metrics"].values()):
             raise ValueError("Invalid metrics")
-        if not isinstance(result.get("engine"), dict) or any(not isinstance(result["engine"].get(k), str) for k in ("python", "vectorbt", "sdk", "analytics")):
+        if not isinstance(result.get("engine"), dict) or any(not isinstance(result["engine"].get(k), str) for k in ("python", "vectorbt", "sdk", "analytics")) or (result["engine"].get("engine") is not None and not isinstance(result["engine"]["engine"], str)):
             raise ValueError("Missing engine versions")
         for key in ("assumptions", "logs", "observations"):
             if any(not isinstance(v, str) for v in result[key]):

@@ -70,7 +70,7 @@ class ResearchLauncher : Form {
     }
     void Install() {
         try {
-            string destination = Path.Combine(data, "package-1.0.0-preview.1");
+            string destination = Path.Combine(data, "package-1.0.0-preview.2");
             if (Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar).Equals(Path.GetFullPath(destination), StringComparison.OrdinalIgnoreCase)) { state.Text = "This helper is already installed for your user."; return; }
             install.Enabled = false; state.Text = "Installing the private runtime. Saved research data is preserved."; Refresh();
             CopyTree(root, destination);

@@ -157,6 +157,12 @@ class ProcessTests(unittest.TestCase):
         self.assertEqual(status["stage"], "complete", status)
         self.assertEqual(self.archive.result(status["resultId"])["source"], expected)
 
+    def test_completed_job_allows_immediate_next_run(self):
+        first = self.controller.create(fixture())
+        self.assertEqual(self.wait(first)["stage"], "complete")
+        second = self.controller.create(fixture())
+        self.assertEqual(self.wait(second)["stage"], "complete")
+
     def test_one_job_and_cancellation(self):
         request = fixture("while True:\n    pass")
         job = self.controller.create(request)

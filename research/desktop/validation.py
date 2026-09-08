@@ -45,6 +45,7 @@ def validate(request):
             raise ValueError(f"Invalid OHLCV at index {i}")
     if dataset["hash"] != digest([[b[k] for k in ["t", "o", "h", "l", "c", "v"]] for b in bars]):
         raise ValueError("Dataset SHA-256 mismatch")
-    if not isinstance(request.get("params", {}), dict) or len(json.dumps(request.get("params", {}))) > 16384:
+    params = request.get("params", {})
+    if not isinstance(params, dict) or len(json.dumps(params)) > 16384 or any(not isinstance(k, str) or len(k) > 80 or isinstance(v, (dict, list)) or not isinstance(v, (str, int, float, bool)) or (isinstance(v, float) and not math.isfinite(v)) for k, v in params.items()):
         raise ValueError("Invalid strategy parameters")
     return interval

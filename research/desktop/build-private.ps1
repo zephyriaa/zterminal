@@ -1,4 +1,4 @@
-param([string]$RuntimePath = "out/research-runtime", [string]$OutputPath = "out/private-helper")
+param([string]$RuntimePath = "out/research-runtime", [string]$OutputPath = "out/private-helper-1.0.0-preview.2")
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $runtimeRoot = [IO.Path]::GetFullPath((Join-Path $repoRoot $RuntimePath))
@@ -22,5 +22,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Launcher compilation failed.' }
 $manifest = Get-ChildItem -LiteralPath $packageRoot -File -Recurse | ForEach-Object { '{0}  {1}' -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.FullName.Substring($packageRoot.Length + 1).Replace('\','/') }
 [IO.File]::WriteAllLines((Join-Path $packageRoot 'SHA256SUMS.txt'), $manifest)
 $zip = $packageRoot + '.zip'
-Compress-Archive -LiteralPath $packageRoot -DestinationPath $zip -CompressionLevel Optimal
+if (Test-Path -LiteralPath $zip) { throw 'Choose an unused ZIP output path; existing artifacts are preserved.' }
+& tar.exe -a -c -f $zip -C (Split-Path -Parent $packageRoot) (Split-Path -Leaf $packageRoot)
+if ($LASTEXITCODE -ne 0) { throw 'Private package compression failed.' }
 Get-FileHash -LiteralPath $zip -Algorithm SHA256

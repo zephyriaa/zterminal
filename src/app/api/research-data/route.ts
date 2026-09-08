@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
     if (!symbol) throw new Error("Unsupported provider-native symbol.");
     const from = Number(query.get("from")), to = Number(query.get("to"));
     const interval = intervalMs(timeframe);
-    if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from < 0 || from >= to || from % interval || to % interval || (to - from) / interval > 20_000 || to > Math.floor(Date.now() / interval) * interval) throw new Error("Select a complete, aligned range of 2–20,000 closed candles. Two years of hourly data is supported where available.");
+    const requested = (to - from) / interval;
+    if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from < 0 || from >= to || from % interval || to % interval || requested < 2 || requested > 20_000 || to > Math.floor(Date.now() / interval) * interval) throw new Error("Select a complete, aligned range of 2–20,000 closed candles. Two years of hourly data is supported where available.");
+    if (provider === "gateio" && requested > 10_000) throw new Error("Gate.io verifies only its most recent 10,000 candles for this request. Select 90 days, shorten the range explicitly, or select Binance for the two-year hourly test.");
     const fetcher = (url: string | URL, init?: RequestInit) => fetch(url, { ...init, signal: AbortSignal.any([request.signal, AbortSignal.timeout(20_000)]) });
     const raw = await (provider === "gateio" ? fetchGateioHistoricalBars(symbol, timeframe, from, to - interval, fetcher) : fetchBinanceHistoricalBars(symbol, timeframe, from, to - interval, fetcher));
     const bars = validateDataset(raw, { from, to, timeframe });

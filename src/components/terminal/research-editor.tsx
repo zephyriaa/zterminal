@@ -39,5 +39,10 @@ export default function ResearchEditor() {
     } }));
     editor.focus();
   };
-  return <Editor height="100%" path={`zterminal://scripts/${script.id}.py`} defaultLanguage="python" theme="vs-dark" value={script.source} onChange={value => useResearch.getState().setSource(value ?? "")} onMount={mount} loading={<p className="p-4 text-xs text-muted-foreground">Loading Python editor…</p>} options={{ fontSize: 12, lineHeight: 20, fontFamily: "var(--font-geist-mono), Consolas, monospace", minimap: { enabled: minimap }, automaticLayout: true, scrollBeyondLastLine: false, wordWrap: "off", padding: { top: 12 }, tabSize: 4, renderLineHighlight: "line", ariaLabel: "Python strategy editor", accessibilitySupport: "auto" }} />;
+  const prepare = (monaco: Monaco) => monaco.editor.defineTheme("zterminal-dark", {
+    base: "vs-dark", inherit: true,
+    rules: [{ token: "comment", foreground: "82A774" }],
+    colors: { "editor.background": "#1e1e1e" },
+  });
+  return <Editor height="100%" path={`zterminal://scripts/${script.id}.py`} defaultLanguage="python" theme="zterminal-dark" value={script.source} onChange={value => useResearch.getState().setSource(value ?? "")} beforeMount={prepare} onMount={mount} loading={<p className="p-4 text-xs text-muted-foreground">Loading Python editor…</p>} options={{ fontSize: 12, lineHeight: 20, fontFamily: "var(--font-geist-mono), Consolas, monospace", minimap: { enabled: minimap }, automaticLayout: true, scrollBeyondLastLine: false, wordWrap: "off", padding: { top: 12 }, tabSize: 4, renderLineHighlight: "line", ariaLabel: "Python strategy editor", accessibilitySupport: "auto" }} />;
 }
