@@ -24,6 +24,6 @@ Use CPython **3.12.10 Windows x64 embedded ZIP** from `https://www.python.org/ft
 
 Run `out/research-runtime/python.exe -m unittest discover -s research/desktop -p "test_*.py" -v`. Build with `powershell -ExecutionPolicy Bypass -File research/desktop/build-private.ps1`. The build verifies Python/vectorbt versions, includes dependency license metadata, compiles the GUI launcher, records file hashes, and produces an ignored private ZIP. It does not upload or publish it.
 
-First execution includes Numba compilation and can take about a minute. Measure cold startup separately from cached runs. Jobs have a 180-second wall limit, 120-second CPU limit, 2 GB memory limit and one-process Windows Job Object. Only one job runs at a time. A stopped process or disk failure cannot create a successful result.
+Standard SDK strategies avoid per-run vectorbt portfolio compilation. A cached two-year hourly example is measured separately from data download and first initialization. Strategies that import vectorbt directly can still compile kernels on first use. Jobs have a 180-second wall limit, 120-second CPU limit, 2 GB memory limit and one-process Windows Job Object. Only one job runs at a time. A stopped process or disk failure cannot create a successful result.
 
 Keep the complete package and its license notices together. See THIRD-PARTY-NOTICES.md and VECTORBT-LICENSE.md.

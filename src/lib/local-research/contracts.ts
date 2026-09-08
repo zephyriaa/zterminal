@@ -36,7 +36,7 @@ export interface MonteCarloResult {
 export interface ResearchResult {
   version: 1; id: string; createdAt: number; name: string; source: string;
   sourceHash: string; inputHash: string; resultHash: string;
-  engine: { python: string; vectorbt: string; sdk: string; analytics: string };
+  engine: { engine?: string; python: string; vectorbt: string; sdk: string; analytics: string };
   config: ResearchConfig; params: Record<string, number | string | boolean>; dataset: Dataset; assumptions: string[];
   metrics: Record<string, Metric>; equity: EquityPoint[]; trades: ResearchTrade[];
   plots: Record<string, { time: number; value: number }[]>;

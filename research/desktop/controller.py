@@ -8,6 +8,7 @@ import tempfile
 import threading
 import time
 import uuid
+from collections import OrderedDict
 
 from archive import encode
 from process_limits import JobLimits
@@ -21,7 +22,7 @@ class Controller:
         self.root.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
         self.active = None
-        self.failures = {}
+        self.failures = OrderedDict()
         self.archive.recover_jobs()
 
     def status(self, job_id):
@@ -32,6 +33,16 @@ class Controller:
         captured = encode(request)
         if len(captured.encode()) > 32_000_000:
             raise ValueError("Request exceeds 32 MB")
+        # A completed result is committed before its process resources finish closing.
+        # Absorb that short lifecycle edge so an immediate next Backtest stays one-action.
+        deadline = time.monotonic() + 2
+        while self.active is not None and time.monotonic() < deadline:
+            try:
+                if self.status(self.active["id"])["stage"] not in ("complete", "failed", "cancelled"):
+                    break
+            except (KeyError, OSError):
+                break
+            time.sleep(.01)
         with self.lock:
             if self.active is not None:
                 raise ValueError("A local job is already running; cancel it or wait for completion")
@@ -104,6 +115,8 @@ class Controller:
         except BaseException as error:
             failure = {"id": job["id"], "stage": "failed", "diagnostic": {"message": f"{type(error).__name__}: {error}"}}
             self.failures[job["id"]] = failure
+            while len(self.failures) > 1000:
+                self.failures.popitem(last=False)
             try:
                 self.archive.save_job(failure)
             except Exception:
@@ -120,4 +133,5 @@ class Controller:
             if folder.parent.resolve() == self.root.resolve():
                 shutil.rmtree(folder, ignore_errors=True)
             with self.lock:
-                self.active = None
+                if self.active is active:
+                    self.active = None

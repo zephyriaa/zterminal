@@ -185,7 +185,7 @@ export function ReferenceChartWorkspace() {
   }, []);
 
   return (
-    <div className="zt-reference-canvas" aria-label="Floating research workstation" style={{ "--zt-app-bg": appearance.appBackground, "--zt-panel-bg": appearance.panelBackground, "--zt-chart-bg": appearance.chartBackground, "--zt-accent": appearance.accent, "--zt-grid-opacity": appearance.gridOpacity / 100 } as React.CSSProperties}>
+    <div className="zt-reference-canvas" role="region" aria-label="Floating research workstation" style={{ "--zt-app-bg": appearance.appBackground, "--zt-panel-bg": appearance.panelBackground, "--zt-chart-bg": appearance.chartBackground, "--zt-accent": appearance.accent, "--zt-grid-opacity": appearance.gridOpacity / 100 } as React.CSSProperties}>
       <PanelTaskStrip />
       <DesktopWindow id="alerts" title="Alerts" initialBounds={{ x: 80, y: 60, width: 600, height: 420 }} onClose={() => usePanels.getState().patch("alerts", { status: "closed" })}><div className="h-full overflow-auto"><AlertsView /></div></DesktopWindow>
       <DesktopWindow id="journal" title="Journal" initialBounds={{ x: 100, y: 80, width: 700, height: 480 }} onClose={() => usePanels.getState().patch("journal", { status: "closed" })}><div className="h-full overflow-auto"><JournalView /></div></DesktopWindow>
