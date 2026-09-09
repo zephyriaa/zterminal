@@ -31,6 +31,7 @@ import { useResearch } from "@/stores/research";
 import { intervalMs } from "@/lib/local-research/dataset";
 import type { TradeMarker } from "./terminal-chart";
 import { AlertsView, JournalView } from "@/components/views/secondary-views";
+import { EconomicCalendarTable } from "./economic-calendar/economic-calendar-table";
 import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
@@ -279,7 +280,7 @@ export function ReferenceChartWorkspace() {
       <DesktopWindow id="settings" title="Chart settings" subtitle="PER-MARKET" initialBounds={{ x: 780, y: 110, width: 440, height: 500 }} minWidth={360} minHeight={380} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><ChartSettingsPanel settings={chartSettings} instrument={formatSymbol(chartSymbol)} provider={chartProvider.toUpperCase()} volumeVisible={volumePane.visible} volumeHeight={volumePane.height} onChange={patch => useChartDocuments.getState().updateSettings(chartDocumentId, patch)} onVolume={patch => useChartDocuments.getState().setVolumePane(chartDocumentId, patch)} onReset={() => useChartDocuments.getState().resetSettings(chartDocumentId)} /></DesktopWindow>
 
       <DesktopWindow id="context" title="Market context" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 972, y: 50, width: 330, height: 420 }} minWidth={300} minHeight={280} icon={<Activity className="h-3.5 w-3.5" />} onClose={() => setContextOpen(false)}><ContextWindow symbol={symbol} tickSize={contract.tickSize} quote={quote} lastPrice={livePrice} derivatives={derivatives} dataStatus={dataStatus} provider={provider} healthReason={health?.reason ?? reason} /></DesktopWindow>
-      <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 96, width: 390, height: 320 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow timezone={timezone} /></DesktopWindow>
+      <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 70, width: 680, height: 440 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow /></DesktopWindow>
       <DesktopWindow id="terminal-settings" title="Terminal preferences" subtitle="WORKSTATION" initialBounds={{ x: 850, y: 120, width: 360, height: 520 }} minWidth={320} minHeight={420} icon={<Settings2 className="h-3.5 w-3.5" />} onClose={() => setTerminalSettingsOpen(false)}><TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} appearance={appearance} onAppearanceChange={updateAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)} /></DesktopWindow>
 
     </div>
@@ -318,6 +319,10 @@ function ColorControl({ label, value, onChange }: { label: string; value: string
   return <label className="zt-color-control"><span>{label}</span><input type="color" value={value} onChange={(event) => onChange(event.target.value)} /><code>{value.toUpperCase()}</code></label>;
 }
 
-function EconomicCalendarWindow({ timezone }: { timezone: ChartTimezone }) {
-  return <div className="zt-economic-calendar"><div className="zt-economic-calendar-status"><CalendarDays /><div><b>Calendar source unavailable</b><p>No verified economic-news provider is connected to this public research deployment, so ZTerminal does not fabricate events, release times, or impact scores.</p></div></div><div className="zt-economic-calendar-row"><span>Display timezone</span><b>{TIMEZONE_OPTIONS.find((option) => option.value === timezone)?.label ?? timezone}</b></div><p className="zt-economic-calendar-footnote">Connect a licensed, provider-backed economic calendar before live event scheduling is enabled.</p></div>;
+function EconomicCalendarWindow() {
+  return (
+    <div className="h-full overflow-hidden bg-background">
+      <EconomicCalendarTable />
+    </div>
+  );
 }

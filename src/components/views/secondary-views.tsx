@@ -29,21 +29,12 @@ import { ProtocolJournalLedger } from "./protocol-journal-ledger";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EconomicCalendarTable } from "@/components/terminal/economic-calendar/economic-calendar-table";
 
 /* ----------------------------- Calendar ----------------------------- */
 
 export function CalendarView() {
-  return (
-    <ViewShell title="Economic Calendar" icon={CalendarIcon} right={<Pill tone="warn">Unavailable</Pill>}>
-      <div className="flex min-h-64 items-center justify-center p-6">
-        <Panel className="max-w-md p-5 text-center">
-          <CalendarIcon className="mx-auto h-6 w-6 text-warn" />
-          <h2 className="mt-3 text-sm font-semibold">Provider-backed calendar unavailable</h2>
-          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">No economic-calendar provider is connected to the web terminal. ZTerminal withholds event rows, forecasts, and outcomes until verified data is available.</p>
-        </Panel>
-      </div>
-    </ViewShell>
-  );
+  return <EconomicCalendarTable />;
 }
 
 /* ----------------------------- Alerts ----------------------------- */
