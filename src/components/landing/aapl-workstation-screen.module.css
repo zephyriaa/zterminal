@@ -1,0 +1,471 @@
+.screen {
+  position: relative;
+  width: 1000px;
+  height: 800px;
+  background: #070913;
+  color: #c9d1d9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Top App Header */
+.topNav {
+  height: 44px;
+  background: #090c1a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.brandGroup {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+
+.brandMark {
+  display: inline-block;
+  width: 12px;
+  height: 14px;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  clip-path: polygon(30% 0%, 100% 0%, 70% 100%, 0% 100%);
+}
+
+.navTabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navTab {
+  font-size: 12px;
+  color: #8b949e;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: color 0.15s;
+}
+
+.navTab.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.rightControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #6e7681;
+  width: 190px;
+}
+
+.searchKbd {
+  margin-left: auto;
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #8b949e;
+}
+
+.userAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #2e1065;
+  color: #c084fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(192, 132, 252, 0.35);
+}
+
+/* Main Workspace Split */
+.workspaceBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Left Tools Rail */
+.toolsRail {
+  width: 40px;
+  background: #080a17;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.toolIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6e7681;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toolIcon:hover {
+  color: #c9d1d9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Center Content Area */
+.centerArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Chart Toolbar */
+.chartBar {
+  height: 38px;
+  background: #090c1b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  font-size: 12px;
+}
+
+.symbolInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.symbolBadge {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.appleMark {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.symbolName {
+  color: #8b949e;
+  font-size: 12px;
+}
+
+.timeframes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  font-size: 11px;
+}
+
+.tfBtn {
+  color: #6e7681;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.tfBtn.activeTf {
+  background: #7c3aed;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.chartActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #8b949e;
+  font-size: 11px;
+}
+
+/* Ticker Metrics Bar */
+.tickerMetrics {
+  height: 28px;
+  background: #070915;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 11px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.metricItem {
+  color: #8b949e;
+}
+
+.metricItem span {
+  color: #c9d1d9;
+  font-weight: 500;
+}
+
+.metricGreen {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Candlestick Chart Viewport */
+.chartCanvasWrapper {
+  flex: 1;
+  position: relative;
+  background: #070914;
+  overflow: hidden;
+}
+
+.chartSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Right Watchlist Panel */
+.watchlistPanel {
+  width: 190px;
+  background: #090c1a;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.watchlistHeader {
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9d1d9;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 55px 45px 40px 1fr;
+  padding: 6px 12px;
+  font-size: 10px;
+  color: #6e7681;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.tableHeader span:not(:first-child) {
+  text-align: right;
+}
+
+.watchlistRows {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.watchRow {
+  display: grid;
+  grid-template-columns: 55px 45px 40px 1fr;
+  padding: 6px 12px;
+  font-size: 11px;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.watchRow span:not(:first-child) {
+  text-align: right;
+}
+
+.watchRow.activeRow {
+  background: rgba(124, 58, 237, 0.28);
+  border-left: 2px solid #a855f7;
+  color: #ffffff;
+}
+
+.symName {
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.priceVal {
+  color: #c9d1d9;
+}
+
+.gain {
+  color: #10b981;
+}
+
+.loss {
+  color: #f43f5e;
+}
+
+/* Bottom Multi-Tab Deck */
+.bottomDeck {
+  height: 185px;
+  background: #080a17;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+}
+
+.deckLeft {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+}
+
+.deckTabs {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.deckTab {
+  font-size: 11px;
+  color: #6e7681;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.deckTab.activeDeckTab {
+  color: #ffffff;
+  font-weight: 600;
+  border-bottom: 2px solid #a855f7;
+  padding-bottom: 6px;
+}
+
+.newsList {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.newsItem {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  gap: 10px;
+}
+
+.newsTime {
+  color: #6e7681;
+  width: 48px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.newsHeadline {
+  color: #c9d1d9;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.newsSource {
+  color: #6e7681;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* Bottom Right Quick Note */
+.deckRight {
+  width: 260px;
+  background: #080b18;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  flex-shrink: 0;
+}
+
+.noteHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.noteBody {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #c9d1d9;
+  line-height: 1.45;
+  flex: 1;
+  margin-bottom: 8px;
+}
+
+.noteFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.noteTags {
+  display: flex;
+  gap: 4px;
+  font-size: 9px;
+  color: #a855f7;
+}
+
+.saveBtn {
+  background: #4c1d95;
+  border: 1px solid #6d28d9;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  cursor: pointer;
+}

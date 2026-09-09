@@ -52,8 +52,14 @@ export function ParticleWave({
               : 878 - 235 * Math.exp(-Math.pow((x - 1150) / 480, 2));
           const y = ridge + row * (2.1 + row * 0.047) + (rand() - 0.5) * 5;
           const alpha =
-            (0.16 + rand() * 0.62) * Math.exp(-row / 19) * (band === 0 ? 1 : 0.35);
-          const radius = (0.25 + rand() * 0.95) * (row < 7 ? 1.2 : 0.7);
+            (0.2 + rand() * 0.7) * Math.exp(-row / 18) * (band === 0 ? 1 : 0.4);
+          const radius = (0.3 + rand() * 1.1) * (row < 8 ? 1.25 : 0.75);
+
+          // Deep violet-indigo palette matching reference image: #a855f7, #7c3aed, #818cf8
+          const isHighlight = rand() > 0.82;
+          const r = isHighlight ? 180 + Math.floor(rand() * 45) : 110 + Math.floor(rand() * 55);
+          const g = isHighlight ? 85 + Math.floor(rand() * 45) : 45 + Math.floor(rand() * 40);
+          const b = isHighlight ? 245 + Math.floor(rand() * 10) : 210 + Math.floor(rand() * 45);
 
           particles.push({
             baseX: x,
@@ -63,9 +69,9 @@ export function ParticleWave({
             band,
             alpha,
             radius,
-            r: 75 + Math.floor(rand() * 45),
-            g: 48 + Math.floor(rand() * 35),
-            b: 155 + Math.floor(rand() * 90),
+            r,
+            g,
+            b,
           });
         }
       }

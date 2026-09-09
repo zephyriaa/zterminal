@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useIsReducedMotion, EASE_OUT_EXPO } from "./motion-primitives";
 import { ParticleWave } from "./particle-wave";
+import { AAPLWorkstationScreen } from "./aapl-workstation-screen";
 import styles from "./hero-scene.module.css";
 
 const KEY_ROWS = [
@@ -45,9 +45,7 @@ export function HeroScene() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Smooth mouse physics for restrained 2-4px parallax
-  const springX = useSpring(0, { stiffness: 45, damping: 25 });
-  const springY = useSpring(0, { stiffness: 45, damping: 25 });
+  // Subtle mouse tracking for gentle particle wave interaction
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -56,20 +54,12 @@ export function HeroScene() {
     function handleMouseMove(e: MouseEvent) {
       const nx = e.clientX / window.innerWidth - 0.5;
       const ny = e.clientY / window.innerHeight - 0.5;
-      springX.set(nx);
-      springY.set(ny);
       setMousePos({ x: nx, y: ny });
     }
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [reduced, isDesktop, springX, springY]);
-
-  // Restrained laptop parallax (strictly 2-4px displacement, sub-degree tilt)
-  const laptopParallaxX = useTransform(springX, [-0.5, 0.5], [-4, 4]);
-  const laptopParallaxY = useTransform(springY, [-0.5, 0.5], [-3, 3]);
-  const laptopRotateY = useTransform(springX, [-0.5, 0.5], [-0.7, 0.7]);
-  const laptopRotateX = useTransform(springY, [-0.5, 0.5], [0.5, -0.5]);
+  }, [reduced, isDesktop]);
 
   // Natural scroll depth transition
   const { scrollYProgress } = useScroll({
@@ -110,18 +100,18 @@ export function HeroScene() {
           />
         </motion.div>
 
-        {/* 80px Visual Height Public Header */}
+        {/* Apple-style floating liquid frosted-glass navigation */}
         <header className={styles.header}>
           <Link href="/" className={styles.brand} aria-label="ZTerminal home">
             <i className={styles.mark} aria-hidden="true" />
             <span>ZTERMINAL</span>
           </Link>
-          <nav aria-label="Main navigation" className={styles.nav}>
-            <a href="#overview">Overview</a>
-            <a href="#workflow">Workflow</a>
-            <Link href="/download">Windows</Link>
-            <Link href="/docs">Docs</Link>
-            <Link href="/terminal">Web terminal</Link>
+          <nav aria-label="Main navigation" className={styles.navGlassPill}>
+            <a href="#overview" className={styles.navGlassLink}>Overview</a>
+            <a href="#workflow" className={styles.navGlassLink}>Workflow</a>
+            <Link href="/download" className={styles.navGlassLink}>Windows</Link>
+            <Link href="/docs" className={styles.navGlassLink}>Docs</Link>
+            <Link href="/terminal" className={styles.navGlassLink}>Web terminal</Link>
           </nav>
         </header>
 
@@ -210,59 +200,50 @@ export function HeroScene() {
         >
           <motion.div
             className={styles.laptopMotionStage}
-            initial={reduced ? undefined : { opacity: 0, y: 22, scale: 0.985 }}
+            initial={reduced ? undefined : { opacity: 0, y: 16, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 1.15, delay: 0.3, ease: EASE_OUT_EXPO }}
-            style={
-              !reduced && isDesktop
-                ? {
-                    x: laptopParallaxX,
-                    y: laptopParallaxY,
-                    rotateX: laptopRotateX,
-                    rotateY: laptopRotateY,
-                  }
-                : undefined
-            }
+            transition={{ duration: 1.1, delay: 0.2, ease: EASE_OUT_EXPO }}
           >
             {/* Scroll depth delta */}
             <motion.div style={!reduced && isDesktop ? { y: laptopScrollY } : undefined}>
-              {/* Laptop Screen Lid with Projective Homography */}
-              <div className={styles.lid}>
+              {/* Laptop Screen Lid with Projective Homography & Cinematic 3D Opening Hinge */}
+              <div className={styles.lidPositioner}>
                 <motion.div
-                  className={styles.terminal}
-                  initial={reduced ? undefined : { opacity: 0.2, filter: "brightness(0.6) contrast(0.92)" }}
-                  animate={{ opacity: 1, filter: "brightness(1) contrast(1)" }}
-                  transition={{ duration: 1.0, delay: 0.45, ease: EASE_OUT_EXPO }}
+                  className={styles.lidHinge}
+                  initial={reduced ? undefined : { rotateX: 48, opacity: 0.8 }}
+                  animate={{ rotateX: 0, opacity: 1 }}
+                  transition={{ duration: 1.4, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <Image
-                    src="/landing/terminal-screenshot.webp"
-                    alt="Current ZTerminal research workspace with real candlestick chart and indicators"
-                    width={3200}
-                    height={1800}
-                    priority
-                    className={styles.screenImage}
-                    sizes="(max-width: 800px) 100vw, 1000px"
-                  />
-                  {/* Subtle Violet Screen Wake Glow */}
-                  <motion.div
-                    className={styles.screenPowerGlow}
-                    aria-hidden="true"
-                    initial={reduced ? undefined : { opacity: 0 }}
-                    animate={{ opacity: [0, 0.65, 0.2] }}
-                    transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-                  />
-                  {/* Diagonal Specular Sheen Sweep */}
-                  {!reduced && (
+                  <div className={styles.lid}>
                     <motion.div
-                      className={styles.screenSheen}
-                      aria-hidden="true"
-                      initial={{ x: "-120%", opacity: 0 }}
-                      animate={{ x: "120%", opacity: [0, 1, 0.8, 0] }}
-                      transition={{ duration: 1.25, delay: 0.75, ease: [0.16, 1, 0.3, 1] }}
-                    />
-                  )}
-                  {/* Static Ambient Glass Glare */}
-                  <div className={styles.screenGlare} aria-hidden="true" />
+                      className={styles.terminal}
+                      initial={reduced ? undefined : { opacity: 0.25, filter: "brightness(0.3) contrast(0.9)" }}
+                      animate={{ opacity: 1, filter: "brightness(1) contrast(1)" }}
+                      transition={{ duration: 1.1, delay: 0.55, ease: EASE_OUT_EXPO }}
+                    >
+                      <AAPLWorkstationScreen />
+                      {/* Subtle Violet Screen Wake Glow */}
+                      <motion.div
+                        className={styles.screenPowerGlow}
+                        aria-hidden="true"
+                        initial={reduced ? undefined : { opacity: 0 }}
+                        animate={{ opacity: [0, 0.7, 0.2] }}
+                        transition={{ duration: 1.3, delay: 0.65, ease: "easeOut" }}
+                      />
+                      {/* Diagonal Specular Sheen Sweep */}
+                      {!reduced && (
+                        <motion.div
+                          className={styles.screenSheen}
+                          aria-hidden="true"
+                          initial={{ x: "-120%", opacity: 0 }}
+                          animate={{ x: "120%", opacity: [0, 1, 0.8, 0] }}
+                          transition={{ duration: 1.25, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                        />
+                      )}
+                      {/* Static Ambient Glass Glare */}
+                      <div className={styles.screenGlare} aria-hidden="true" />
+                    </motion.div>
+                  </div>
                 </motion.div>
               </div>
 
