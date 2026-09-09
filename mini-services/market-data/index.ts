@@ -353,11 +353,10 @@ io.on("connection", (socket) => {
   });
 });
 
-void bootLiveProvider().finally(() => {
-  httpServer.listen(PORT, () => {
-    console.log(`[market-data] socket.io listening on ${PORT} (${PROVIDER_MODE.toUpperCase()})`);
-    emitStatus();
-  });
+httpServer.listen(PORT, () => {
+  console.log(`[market-data] socket.io listening on ${PORT} (${PROVIDER_MODE.toUpperCase()})`);
+  emitStatus();
+  void bootLiveProvider();
 });
 
 function shutdown() {
