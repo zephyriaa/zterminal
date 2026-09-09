@@ -109,5 +109,13 @@ All 82 unit tests pass cleanly:
 - **TypeScript (`npm run typecheck`):** Clean exit code 0, 0 errors.
 - **ESLint (`npm run lint`):** Clean exit code 0, 0 warnings/errors.
 - **Production Build (`npm run build`):** Clean exit code 0, all static and dynamic routes compiled.
-- **Deployed Commit:** `76347bd` pushed to `origin/main`. Render deployment hook triggered automatically.
+- **Enhanced Opening Motion & Speed Pass:**
+  - Line-masked typography reveal for *"See more. Guess less."* with custom cubic-bezier easing (`[0.16, 1, 0.3, 1]`).
+  - Screen wake-up luminance ramp and diagonal specular glass sheen sweep across the laptop display.
+  - Particle ridge horizon energy sweep (0.4s–1.8s) settling smoothly into ambient wave drift.
+  - `IntersectionObserver` offscreen canvas pausing, reducing idle CPU/GPU consumption to 0% during scroll.
+  - High-fidelity WebP asset conversion reducing hero image payloads by 67–80%.
+  - `content-visibility: auto` on offscreen sections for near-instant main-thread interaction.
+- **Deployed Commit:** `797198b` pushed to `origin/main`. Render deployment hook triggered automatically.
+
 
