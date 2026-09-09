@@ -116,6 +116,39 @@ All 82 unit tests pass cleanly:
   - `IntersectionObserver` offscreen canvas pausing, reducing idle CPU/GPU consumption to 0% during scroll.
   - High-fidelity WebP asset conversion reducing hero image payloads by 67–80%.
   - `content-visibility: auto` on offscreen sections for near-instant main-thread interaction.
-- **Deployed Commit:** `797198b` pushed to `origin/main`. Render deployment hook triggered automatically.
+- **Deployed Commit:** `6d60d6c` pushed to `origin/main`. Render deployment hook triggered automatically.
 
+---
 
+## 6. Render Deployment Diagnostic & Resolution
+
+### Root Causes Identified
+1. **Missing WASM Package in Remote Git Repository:**
+   - `wasm-pack` generated an automatic `.gitignore` file containing `*` inside `packages/zterminal-research-wasm/`.
+   - As a result, git ignored `packages/zterminal-research-wasm/`, so its `package.json`, typings, and `.wasm` binary were never pushed to GitHub.
+   - When Render performed `git clone`, the required local package (`"zterminal-research-wasm": "file:./packages/zterminal-research-wasm"`) was missing.
+2. **Missing `packages/` Copy in `Dockerfile`:**
+   - In `Dockerfile`'s builder stage, `COPY package*.json ./` was executed right before `RUN npm ci`.
+   - Because `packages/` was not copied beforehand, `npm ci` threw `ENOENT: no such file or directory, open '/app/packages/zterminal-research-wasm/package.json'`.
+3. **Inefficient Runner Stage Dependency Re-Install:**
+   - The runner stage executed `RUN npm ci --include=dev`, re-downloading all 1,000+ packages over the network, deleting the generated `@prisma/client` engine, and failing without `packages/`.
+4. **Delayed Port Binding on Container Start:**
+   - In `mini-services/market-data/index.ts`, `httpServer.listen()` was deferred until after `bootLiveProvider()` completed network requests to discover contracts from Gate.io. If Render probed `/healthz` right after container boot, Caddy returned `502 Bad Gateway`.
+
+### Actions Taken
+1. **Tracked WASM Package in Git:**
+   - Removed `.gitignore` inside `packages/zterminal-research-wasm/`.
+   - Staged and committed `package.json`, `research_core.d.ts`, `research_core.js`, `research_core_bg.wasm`, and `research_core_bg.wasm.d.ts`.
+2. **Updated `Dockerfile`:**
+   - Added `COPY packages ./packages` in the `builder` stage prior to `RUN npm ci`.
+   - In the `runner` stage, replaced duplicate `npm ci --include=dev` with `COPY --from=builder /app/packages ./packages` and `COPY --from=builder /app/node_modules ./node_modules`. This preserves the pre-generated Prisma client and guarantees instant, deterministic container builds.
+3. **Immediate Liveness Port Binding:**
+   - Updated `mini-services/market-data/index.ts` to bind port 3003 immediately upon startup and run `bootLiveProvider()` in the background. `/healthz` now responds HTTP 200 immediately on container launch.
+4. **Next.js `/healthz` Route Added:**
+   - Added `src/app/healthz/route.ts` as a reliable fallback.
+5. **Validation & Push:**
+   - Passed `npm run typecheck` (0 errors).
+   - Passed `npm run lint` (0 warnings).
+   - Passed `npm run test` (85/85 tests passed).
+   - Passed `npm run build` (Next.js production build succeeded with all static/dynamic pages).
+   - Pushed commit `6d60d6c` to `origin/main` to trigger the Render Docker build.
