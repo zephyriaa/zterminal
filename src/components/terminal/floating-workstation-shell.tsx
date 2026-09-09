@@ -15,6 +15,7 @@ import { useWorkspace } from "@/stores/workspace";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { CloudSyncBridge } from "@/components/auth/cloud-sync-bridge";
 import { MobileResearchMenu, ResearchSidebar } from "./research-sidebar";
+import { cn } from "@/lib/utils";
 
 /**
  * The public terminal uses one reference-led windowed workstation. Existing P0
@@ -22,7 +23,7 @@ import { MobileResearchMenu, ResearchSidebar } from "./research-sidebar";
  * substitutes an archived client or simulated market state.
  */
 export function FloatingWorkstationShell() {
-  const { symbol } = useWorkspace();
+  const { symbol, sidebarCollapsed } = useWorkspace();
   const { provider, dataStatus } = useMarketStream(symbol, { trades: 1, depth: false });
   const [accountOpen, setAccountOpen] = useState(false);
 
@@ -63,7 +64,7 @@ export function FloatingWorkstationShell() {
           {accountOpen && <AccountPanel symbol={symbol} provider={provider} dataStatus={dataStatus} onClose={() => setAccountOpen(false)} />}
         </div>
       </header>
-      <div className="zt-reference-body">
+      <div className={cn("zt-reference-body", sidebarCollapsed && "is-collapsed")} data-sidebar-collapsed={sidebarCollapsed}>
         <ResearchSidebar />
         <main className="min-h-0 min-w-0 overflow-hidden" aria-label="Market research workspace"><ReferenceChartWorkspace /></main>
       </div>
