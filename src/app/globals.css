@@ -910,8 +910,9 @@
 .zt-research-account small { color:#7787a5; font-size:8px; letter-spacing:.08em; text-transform:uppercase; }
 
 .zt-reference-body { display:grid; grid-template-columns:auto minmax(0,1fr); height:calc(100dvh - 66px); }
+.zt-reference-body.is-collapsed { grid-template-columns:42px minmax(0,1fr); }
 .zt-research-sidebar { position:relative; z-index:110; display:flex; width:194px; min-width:194px; flex-direction:column; overflow:hidden; border-right:1px solid var(--zt-line); background:linear-gradient(180deg,rgba(12,17,28,.995),rgba(6,9,16,.995)); transition:width 180ms ease,min-width 180ms ease; }
-.zt-research-sidebar.is-collapsed { width:48px; min-width:48px; }
+.zt-research-sidebar.is-collapsed { width:42px; min-width:42px; }
 .zt-sidebar-heading { display:flex; height:49px; flex:0 0 49px; align-items:center; gap:8px; padding:0 8px 0 13px; border-bottom:1px solid rgba(139,155,192,.13); }
 .zt-sidebar-identity { min-width:0; flex:1; overflow:hidden; line-height:1.2; white-space:nowrap; transition:opacity 120ms ease; }
 .zt-sidebar-identity strong,.zt-sidebar-identity span { display:block; }
@@ -921,8 +922,10 @@
 .zt-sidebar-heading > button:hover { border-color:rgba(125,211,252,.32); background:rgba(125,211,252,.07); color:#b8dff0; }
 .zt-sidebar-heading svg { width:13px; height:13px; }
 .zt-research-sidebar.is-collapsed .zt-sidebar-heading { justify-content:center; padding:0; }
+.zt-research-sidebar.is-collapsed .zt-sidebar-heading > button { width:24px; height:24px; }
 .zt-research-sidebar.is-collapsed .zt-sidebar-identity { display:none; }
 .zt-sidebar-tools { display:flex; min-height:0; flex:1; flex-direction:column; gap:2px; padding:9px 7px; }
+.zt-research-sidebar.is-collapsed .zt-sidebar-tools { padding:9px 0; align-items:center; }
 .zt-sidebar-tool { position:relative; display:flex; width:100%; min-height:38px; align-items:center; gap:10px; overflow:hidden; border:1px solid transparent; border-radius:3px; padding:0 8px; color:#8190aa; text-align:left; }
 .zt-sidebar-tool::before { position:absolute; top:8px; bottom:8px; left:-1px; width:2px; background:transparent; content:""; }
 .zt-sidebar-tool > svg { width:15px; height:15px; flex:0 0 auto; stroke-width:1.55; }
@@ -935,10 +938,12 @@
 .zt-sidebar-tool.is-active { border-color:rgba(125,211,252,.23); background:linear-gradient(90deg,rgba(125,211,252,.11),rgba(125,211,252,.025)); color:#8ed8f5; }
 .zt-sidebar-tool.is-active::before { background:#7dd3fc; box-shadow:0 0 8px rgba(125,211,252,.35); }
 .zt-sidebar-tool.is-active .zt-sidebar-tool-copy b { color:#d9f1fb; }
-.zt-research-sidebar.is-collapsed .zt-sidebar-tool { width:34px; min-height:34px; justify-content:center; align-self:center; padding:0; }
+.zt-research-sidebar.is-collapsed .zt-sidebar-tool { width:32px; min-height:32px; justify-content:center; align-self:center; padding:0; }
 .zt-research-sidebar.is-collapsed .zt-sidebar-tool-copy { display:none; }
 .zt-sidebar-footer { padding:7px; border-top:1px solid rgba(139,155,192,.13); }
+.zt-research-sidebar.is-collapsed .zt-sidebar-footer { padding:7px 0; display:flex; flex-direction:column; align-items:center; }
 .zt-sidebar-footer > span { display:block; padding:4px 8px 2px; color:#58667d; font:7px var(--font-geist-mono,ui-monospace,monospace); letter-spacing:.11em; text-transform:uppercase; white-space:nowrap; }
+.zt-research-sidebar.is-collapsed .zt-sidebar-footer > span { display:none; }
 .zt-sidebar-tooltip { border:1px solid rgba(125,211,252,.25); border-radius:3px; background:#111722; color:#dce8f5; font:9px var(--font-geist-mono,ui-monospace,monospace); letter-spacing:.04em; }
 .zt-mobile-menu-trigger { display:none; width:28px; height:28px; place-items:center; border:1px solid var(--zt-line); border-radius:3px; color:#93a1ba; }
 .zt-mobile-menu-trigger svg { width:15px; height:15px; }
@@ -1155,7 +1160,6 @@ html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 
   #panel-strategy .zt-desktop-window-body aside { width:100%; flex-basis:auto; }
   #panel-strategy .zt-desktop-window-body section { min-height:320px; flex-shrink:0; }
 }
-.zt-reference-body { grid-template-columns:82px minmax(0,1fr); }
 .zt-reference-toolrail { width:82px; }
 .zt-reference-toolrail .zt-reference-rail-button { display:flex; flex-direction:column; width:76px; height:54px; gap:5px; font:9px ui-monospace,monospace; }
 .zt-reference-rail-button span { max-width:72px; overflow:hidden; text-overflow:ellipsis; }
