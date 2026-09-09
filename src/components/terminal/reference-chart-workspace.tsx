@@ -3,13 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
-  BarChart3,
   Palette,
   CalendarDays,
   CandlestickChart,
   ChartNoAxesCombined,
   Layers3,
-  LineChart,
   FlaskConical,
   Play,
   RefreshCw,
@@ -21,12 +19,9 @@ import { usePanels } from "@/stores/panels";
 import { useStudies } from "@/stores/studies";
 import { DesktopWindow } from "./desktop-window";
 import {
-  DEFAULT_CHART_SETTINGS,
   TerminalChart,
   type ChartIndicators,
-  type ChartSettings,
   type ChartStudy,
-  type ChartType,
 } from "./terminal-chart";
 import { IndicatorsBrowser, type IndicatorToggleId } from "./indicators-browser";
 import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
@@ -40,6 +35,10 @@ import { getContract } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
+import { ChartToolbar } from "./chart-toolbar";
+import { ChartSettingsPanel } from "./chart-settings-panel";
+import { chartDocumentKey, createChartDocument, PRIMARY_CHART_ID, type InstrumentKey } from "@/lib/chart/contracts";
+import { useChartDocuments } from "@/stores/chart-documents";
 
 type TerminalAppearance = {
   preset: string;
@@ -62,16 +61,6 @@ const APPEARANCE_PRESETS: Record<string, Omit<TerminalAppearance, "preset">> = {
 const DEFAULT_APPEARANCE: TerminalAppearance = { preset: "Graphite", ...APPEARANCE_PRESETS.Graphite };
 const APPEARANCE_STORAGE_KEY = "zterminal:appearance";
 
-const TIMEFRAMES: { value: Timeframe; label: string }[] = [
-  { value: "1m", label: "1m" },
-  { value: "5m", label: "5m" },
-  { value: "15m", label: "15m" },
-  { value: "30m", label: "30m" },
-  { value: "1h", label: "1h" },
-  { value: "4h", label: "4h" },
-  { value: "1d", label: "D" },
-];
-
 function formatSymbol(symbol: string) {
   return symbol.includes("_") ? symbol.replace("_", " / ") : symbol.endsWith("USDT") ? `${symbol.slice(0, -4)} / USDT` : symbol;
 }
@@ -83,7 +72,7 @@ function formatPrice(value: number | undefined | null, tick: number) {
 }
 
 export function ReferenceChartWorkspace() {
-  const { symbol, timeframe, setTimeframe, timezone, setTimezone } = useWorkspace();
+  const { activeWorkspaceId, symbol, timeframe, setTimeframe, timezone, setTimezone } = useWorkspace();
   const contract = getContract(symbol);
   const archivedChart = useResearch(s => s.chartResult);
   const selectedTrade = useResearch(s => s.selectedTrade);
@@ -98,7 +87,6 @@ export function ReferenceChartWorkspace() {
     from: Math.max(archivedChart.dataset.from, selected.entryTime - 10 * intervalMs(chartTimeframe)),
     to: Math.min(archivedChart.dataset.to, (selected.exitTime ?? archivedChart.dataset.to) + 10 * intervalMs(chartTimeframe)),
   } : null, [selected, archivedChart, chartTimeframe]);
-  const [chartType, setChartType] = useState<ChartType>("candles");
   const [replay, setReplay] = useState(false);
   const indicatorsOpen = usePanels(s => s.panels.indicators?.status === "open");
   const setIndicatorsOpen = (open: boolean) => { if (open) usePanels.getState().open("indicators"); else usePanels.getState().patch("indicators", { status: "closed" }); };
@@ -109,23 +97,33 @@ export function ReferenceChartWorkspace() {
   const setCalendarOpen = (open: boolean) => { if (open) usePanels.getState().open("economic-calendar"); else usePanels.getState().patch("economic-calendar", { status: "closed" }); };
   const setTerminalSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("terminal-settings"); else usePanels.getState().patch("terminal-settings", { status: "closed" }); };
   const instances = useStudies(s => s.instances);
-  const [settings, setSettings] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
   const [appearance, setAppearance] = useState<TerminalAppearance>(DEFAULT_APPEARANCE);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
   const [latestBar, setLatestBar] = useState<Bar | null>(null);
   const appearanceHydrated = useRef(false);
   const { quote, trades, lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 600, depth: false });
+  const chartProvider = archivedChart?.dataset.provider ?? provider ?? "gateio";
+  const chartContract = getContract(chartSymbol);
+  const instrument = useMemo<InstrumentKey>(() => ({ provider: chartProvider, exchange: chartContract.exchange, product: "perpetual", nativeSymbol: chartSymbol }), [chartContract.exchange, chartProvider, chartSymbol]);
+  const chartDocumentId = chartDocumentKey(activeWorkspaceId, PRIMARY_CHART_ID, instrument);
+  const storedChartDocument = useChartDocuments(state => state.documents[chartDocumentId]);
+  const fallbackChartDocument = useMemo(() => createChartDocument({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: { backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 } }), [activeWorkspaceId, appearance.chartBackground, appearance.downColor, appearance.gridOpacity, appearance.upColor, chartTimeframe, instrument]);
+  const chartDocument = storedChartDocument ?? fallbackChartDocument;
+  const chartType = chartDocument.chartType;
+  const chartSettings = chartDocument.settings;
+  const volumePane = chartDocument.panes.find(pane => pane.id === "volume") ?? { id: "volume", kind: "volume" as const, visible: true, height: 0.22, order: 1 };
   const indicators: ChartIndicators = useMemo(() => ({
     vwap: false, ema20: false, ema50: false,
-    volume: instances.some(p => p.kind === 'volume' && p.visible),
+    volume: volumePane.visible && instances.some(p => p.kind === 'volume' && p.visible),
     profile: instances.some(p => p.kind === 'profile' && p.visible),
     customStudies: instances.filter(p => !['volume', 'profile'].includes(p.kind)) as ChartStudy[],
-  }), [instances]);
+  }), [instances, volumePane.visible]);
   const livePrice = lastTrade?.price ?? derivatives?.markPrice ?? null;
 
 
   useEffect(() => {
     void useStudies.persist.rehydrate();
+    void Promise.resolve(useChartDocuments.persist.rehydrate()).then(() => { useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings }); });
     const timer = window.setTimeout(() => {
       try {
         const saved = window.localStorage.getItem(APPEARANCE_STORAGE_KEY);
@@ -140,6 +138,10 @@ export function ReferenceChartWorkspace() {
   }, []);
 
   useEffect(() => {
+    useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings });
+  }, [chartDocumentId]);
+
+  useEffect(() => {
     if (appearanceHydrated.current) window.localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(appearance));
   }, [appearance]);
 
@@ -151,9 +153,16 @@ export function ReferenceChartWorkspace() {
     document.documentElement.style.setProperty("--zt-accent", appearance.accent);
   }, [appearance]);
 
-  const updateAppearance = (next: Partial<TerminalAppearance>) => setAppearance((current) => ({ ...current, ...next, preset: next.preset ?? "Custom" }));
-
-  const chartSettings: ChartSettings = { ...settings, backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 };
+  const updateAppearance = (next: Partial<TerminalAppearance>) => {
+    setAppearance((current) => ({ ...current, ...next, preset: next.preset ?? "Custom" }));
+    const chartPatch = {
+      ...(next.chartBackground ? { backgroundColor: next.chartBackground } : {}),
+      ...(next.upColor ? { candleUpColor: next.upColor } : {}),
+      ...(next.downColor ? { candleDownColor: next.downColor } : {}),
+      ...(typeof next.gridOpacity === "number" ? { gridOpacity: next.gridOpacity / 100 } : {}),
+    };
+    if (Object.keys(chartPatch).length > 0) useChartDocuments.getState().updateSettings(chartDocumentId, chartPatch);
+  };
 
   useEffect(() => {
     const focusChart = () => usePanels.getState().open("chart");
@@ -206,31 +215,11 @@ export function ReferenceChartWorkspace() {
         }
       >
         <div className="zt-chart-content">
-          <div className="zt-chart-toolbar" aria-label="Chart controls">
-            <span className="zt-chart-contract">{formatSymbol(chartSymbol)} <small>{archivedChart ? "ARCHIVED" : "PERPETUAL"}</small></span>
-            {archivedChart && <button className="zt-chart-toolbar-button" onClick={() => useResearch.setState({ chartResult: null, selectedTrade: null })}>Return to live →</button>}
-            <span className="zt-toolbar-divider" aria-hidden="true" />
-            <div className="zt-chart-timeframes" aria-label="Chart timeframe">
-              {TIMEFRAMES.map((item) => <button key={item.value} type="button" disabled={Boolean(archivedChart)} onClick={() => setTimeframe(item.value)} className={cn(chartTimeframe === item.value && "is-active")} aria-pressed={chartTimeframe === item.value}>{item.label}</button>)}
-            </div>
-            <span className="zt-toolbar-divider" aria-hidden="true" />
-            <button type="button" className="zt-chart-toolbar-button hidden sm:inline-flex" onClick={() => setContextOpen(true)}><Activity />Market</button>
-            <button type="button" className={cn("zt-chart-toolbar-button", indicatorsOpen && "is-active")} onClick={() => setIndicatorsOpen(true)}><Layers3 />Indicators</button>
-            <span className="zt-toolbar-divider hidden md:block" aria-hidden="true" />
-            {!archivedChart && <><div className="zt-chart-price"><b>{formatPrice(livePrice, contract.tickSize)}</b><span className={dataStatus === "LIVE" ? "text-pos" : "text-muted-foreground"}>{provider?.toUpperCase() ?? "BINANCE"} · {dataStatus}</span></div>
-            <span className={cn("zt-chart-feed-indicator", dataStatus === "LIVE" && "is-live")} title={reason ?? health?.reason ?? "Research feed status"}><i />{dataStatus === "LIVE" ? "LIVE" : "RESEARCH"}</span></>}
-            <div className="ml-auto flex items-center gap-1">
-              <ChartTypeButton active={chartType === "candles"} label="Candles" onClick={() => setChartType("candles")}><CandlestickChart /></ChartTypeButton>
-              <ChartTypeButton active={chartType === "bars"} label="Bars" onClick={() => setChartType("bars")}><BarChart3 /></ChartTypeButton>
-              <ChartTypeButton active={chartType === "line"} label="Line" onClick={() => setChartType("line")}><LineChart /></ChartTypeButton>
-              <button type="button" className="zt-chart-toolbar-button is-icon" onClick={() => setContextOpen(true)} aria-label="Open market context" title="Market context"><Activity /></button>
-              <button type="button" className="zt-chart-toolbar-button is-icon" onClick={() => setSettingsOpen(true)} aria-label="Open chart preferences" title="Chart preferences"><SlidersHorizontal /></button>
-            </div>
-          </div>
+          <ChartToolbar symbol={formatSymbol(chartSymbol)} productLabel={archivedChart ? "ARCHIVED" : "PERPETUAL"} timeframe={chartTimeframe as Timeframe} archived={Boolean(archivedChart)} price={formatPrice(livePrice, contract.tickSize)} providerLabel={(provider ?? chartProvider).toUpperCase()} dataStatus={dataStatus} statusReason={reason ?? health?.reason} chartType={chartType} indicatorsOpen={indicatorsOpen} onTimeframe={next => { setTimeframe(next); useChartDocuments.getState().setTimeframe(chartDocumentId, next); }} onChartType={next => useChartDocuments.getState().setChartType(chartDocumentId, next)} onIndicators={() => setIndicatorsOpen(true)} onContext={() => setContextOpen(true)} onSettings={() => setSettingsOpen(true)} onReturnLive={() => useResearch.setState({ chartResult: null, selectedTrade: null })} />
           <div className="zt-chart-stage">
             <div className="zt-chart-readout"><span>O <b>{formatPrice((crosshairBar ?? latestBar)?.o, contract.tickSize)}</b></span><span>H <b>{formatPrice((crosshairBar ?? latestBar)?.h, contract.tickSize)}</b></span><span>L <b>{formatPrice((crosshairBar ?? latestBar)?.l, contract.tickSize)}</b></span><span>C <b>{formatPrice((crosshairBar ?? latestBar)?.c, contract.tickSize)}</b></span><span>V <b>{(crosshairBar ?? latestBar)?.v?.toLocaleString() ?? "—"}</b></span></div>
             <div className="zt-chart-overlays">{instances.filter(p => p.visible).slice(0, 6).map(p => <span key={p.id} style={{ color: p.color }}>{p.name}</span>)}</div>
-            <TerminalChart symbol={chartSymbol} timeframe={chartTimeframe as Timeframe} snapshot={archivedChart?.dataset.bars} markers={markers} focusRange={focusRange} chartType={chartType} indicators={indicators} settings={chartSettings} replayEnabled={!archivedChart && replay} timezone={archivedChart ? "UTC" : timezone} markPrice={archivedChart ? undefined : derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} />
+            <TerminalChart symbol={chartSymbol} timeframe={chartTimeframe as Timeframe} snapshot={archivedChart?.dataset.bars} markers={chartSettings.showStrategyTrades ? markers : []} focusRange={focusRange} chartType={chartType} indicators={indicators} settings={chartSettings} volumePaneHeight={volumePane.height} replayEnabled={!archivedChart && replay} timezone={archivedChart ? "UTC" : timezone} markPrice={archivedChart || !chartSettings.showMarkPrice ? undefined : derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} />
           </div>
         </div>
       </DesktopWindow>
@@ -240,7 +229,7 @@ export function ReferenceChartWorkspace() {
       <DesktopWindow id="strategy" title="Strategy research" subtitle="PYTHON / LOCAL PREVIEW" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={360} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><ResearchWorkbench /></DesktopWindow>
       <DesktopWindow id="backtester" title="Research report" subtitle="LOCAL ARCHIVE" initialBounds={{ x: 180, y: 80, width: 900, height: 600 }} minWidth={360} minHeight={250} icon={<FlaskConical className="h-3.5 w-3.5" />} onClose={() => setBacktesterOpen(false)}><ResearchReport /></DesktopWindow>
 
-      <DesktopWindow id="settings" title="Chart preferences" subtitle="WORKSPACE" initialBounds={{ x: 840, y: 170, width: 330, height: 330 }} minWidth={300} minHeight={260} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><div className="p-3 text-[10px]"><p className="text-muted-foreground">Preferences are stored only in this browser.</p><PreferenceRange label="Future chart space" value={settings.futureBars} min={0} max={80} suffix=" bars" onChange={(futureBars) => setSettings((current) => ({ ...current, futureBars }))} /><PreferenceRange label="Grid intensity" value={appearance.gridOpacity} min={0} max={18} suffix="%" onChange={(gridOpacity) => updateAppearance({ gridOpacity })} /><label className="mt-4 flex items-center justify-between border-t hairline pt-3 text-muted-foreground">Show crosshair<input type="checkbox" checked={settings.showCrosshair} onChange={(event) => setSettings((current) => ({ ...current, showCrosshair: event.target.checked }))} /></label><button type="button" className="mt-4 text-[9px] uppercase tracking-[.12em] text-mdata hover:text-foreground" onClick={() => setSettings(DEFAULT_CHART_SETTINGS)}>Reset preferences</button></div></DesktopWindow>
+      <DesktopWindow id="settings" title="Chart settings" subtitle="PER-MARKET" initialBounds={{ x: 780, y: 110, width: 440, height: 500 }} minWidth={360} minHeight={380} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><ChartSettingsPanel settings={chartSettings} instrument={formatSymbol(chartSymbol)} provider={chartProvider.toUpperCase()} volumeVisible={volumePane.visible} volumeHeight={volumePane.height} onChange={patch => useChartDocuments.getState().updateSettings(chartDocumentId, patch)} onVolume={patch => useChartDocuments.getState().setVolumePane(chartDocumentId, patch)} onReset={() => useChartDocuments.getState().resetSettings(chartDocumentId)} /></DesktopWindow>
 
       <DesktopWindow id="context" title="Market context" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 972, y: 50, width: 330, height: 420 }} minWidth={300} minHeight={280} icon={<Activity className="h-3.5 w-3.5" />} onClose={() => setContextOpen(false)}><ContextWindow symbol={symbol} tickSize={contract.tickSize} quote={quote} lastPrice={livePrice} derivatives={derivatives} dataStatus={dataStatus} provider={provider} healthReason={health?.reason ?? reason} /></DesktopWindow>
       <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 96, width: 390, height: 320 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow timezone={timezone} /></DesktopWindow>
@@ -252,10 +241,6 @@ export function ReferenceChartWorkspace() {
 
 function PreferenceRange({ label, value, min, max, suffix, onChange }: { label: string; value: number; min: number; max: number; suffix: string; onChange: (value: number) => void }) {
   return <label className="mt-4 block text-muted-foreground"><span className="flex justify-between"><span>{label}</span><b className="font-mono-num text-foreground">{value}{suffix}</b></span><input className="mt-2 w-full accent-[var(--zt-accent)]" type="range" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
-}
-
-function ChartTypeButton({ active, label, children, onClick }: { active: boolean; label: string; children: React.ReactNode; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className={cn("zt-chart-type-button", active && "is-active")} aria-label={label} title={label}>{children}</button>;
 }
 
 function ContextWindow({ symbol, tickSize, quote, lastPrice, derivatives, dataStatus, provider, healthReason }: { symbol: string; tickSize: number; quote: { bid: number; ask: number; bidSize: number; askSize: number } | null; lastPrice: number | null; derivatives: { markPrice?: number; fundingRate?: number } | null; dataStatus: string; provider?: string; healthReason?: string }) {

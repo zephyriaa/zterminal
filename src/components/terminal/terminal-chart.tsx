@@ -10,17 +10,18 @@ import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import { normalizeChartBars } from "@/lib/market/chart-data";
 import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpeningRange, type VolumeProfile } from "@/domain/analytics/market";
 import type { ChartTimezone } from "@/stores/workspace";
+import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/lib/chart/contracts";
+import { applyVolumePaneLayout, lightweightChartOptions } from "@/lib/chart/lightweight-adapter";
 import {
   createChart,
-  ColorType,
-  CrosshairMode,
   IChartApi,
+  IPriceLine,
   ISeriesApi,
   Time,
   CandlestickSeries, BarSeries, LineSeries, AreaSeries, HistogramSeries, createSeriesMarkers, LineStyle
 } from "lightweight-charts";
 
-export type ChartType = "candles" | "bars" | "line" | "area";
+export type { ChartType } from "@/lib/chart/contracts";
 
 export interface ChartStudy {
   id: string;
@@ -50,27 +51,8 @@ export interface TradeMarker {
   label?: string;
 }
 
-export interface ChartSettings {
-  futureBars: number;
-  gridOpacity: number;
-  candleUpColor: string;
-  candleDownColor: string;
-  backgroundColor: string;
-  showGrid: boolean;
-  showPriceLine: boolean;
-  showCrosshair: boolean;
-}
-
-export const DEFAULT_CHART_SETTINGS: ChartSettings = {
-  futureBars: 24,
-  gridOpacity: 0.075,
-  candleUpColor: "#34d399",
-  candleDownColor: "#ef4444",
-  backgroundColor: "#0a0a0a",
-  showGrid: true,
-  showPriceLine: true,
-  showCrosshair: true,
-};
+export type ChartSettings = ChartSettingsV2;
+export { DEFAULT_CHART_SETTINGS } from "@/lib/chart/contracts";
 
 interface ChartProps {
   symbol: string;
@@ -83,6 +65,7 @@ interface ChartProps {
   snapshot?: Bar[];
   focusRange?: { from: number; to: number } | null;
   settings?: ChartSettings;
+  volumePaneHeight?: number;
   markPrice?: number | null;
   timezone?: ChartTimezone;
   onCrosshair?: (b: Bar | null) => void;
@@ -224,12 +207,15 @@ export function TerminalChart({
   timezone = "America/New_York",
   onCrosshair,
   onLatestBar,
+  volumePaneHeight = 0.22,
 }: ChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<any> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<any> | null>(null);
   const indicatorSeriesRef = useRef<Map<string, ISeriesApi<any>>>(new Map());
+  const markPriceLineRef = useRef<IPriceLine | null>(null);
+  const barsRef = useRef<Bar[]>([]);
 
   const [liveBars, setBars] = useState<Bar[]>([]);
   const bars = snapshot ?? liveBars;
@@ -242,6 +228,8 @@ export function TerminalChart({
   const contract = getContract(symbol);
   const tfSec = TIMEFRAME_SECONDS[timeframe];
   const effectiveReplayIndex = replayIndex ?? (replayEnabled ? internalReplayIndex : null);
+
+  useEffect(() => { barsRef.current = bars; }, [bars]);
 
   const volumeProfile = useMemo<VolumeProfile | null>(() => {
     if (!indicators.profile || bars.length < 2) return null;
@@ -368,23 +356,7 @@ export function TerminalChart({
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: settings.backgroundColor },
-        textColor: themeColors().axisText,
-      },
-      grid: {
-        vertLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
-        horzLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-      },
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-      },
-    });
+    const chart = createChart(chartContainerRef.current, lightweightChartOptions(settings, themeColors().axisText));
     
     chartRef.current = chart;
 
@@ -403,7 +375,7 @@ export function TerminalChart({
             h: data.high ?? data.value,
             l: data.low ?? data.value,
             c: data.close ?? data.value,
-            v: 0,
+            v: barsRef.current.find(bar => bar.t === timestamp)?.v ?? 0,
           });
         }
       });
@@ -431,17 +403,9 @@ export function TerminalChart({
   // Sync settings when they change
   useEffect(() => {
     if (chartRef.current) {
-      chartRef.current.applyOptions({
-        layout: {
-          background: { type: ColorType.Solid, color: settings.backgroundColor },
-        },
-        grid: {
-          vertLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
-          horzLines: { color: `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})` },
-        },
-      });
+      chartRef.current.applyOptions(lightweightChartOptions(settings, themeColors().axisText));
     }
-  }, [settings.backgroundColor, settings.gridOpacity, settings.showGrid]);
+  }, [settings]);
 
   // Apply main series type
   useEffect(() => {
@@ -449,6 +413,10 @@ export function TerminalChart({
     const chart = chartRef.current;
 
     if (seriesRef.current) {
+      if (markPriceLineRef.current) {
+        seriesRef.current.removePriceLine(markPriceLineRef.current);
+        markPriceLineRef.current = null;
+      }
       markerPlugin.current?.detach();
       markerPlugin.current = null;
       chart.removeSeries(seriesRef.current);
@@ -456,11 +424,7 @@ export function TerminalChart({
 
     if (chartType === "candles") {
       seriesRef.current = chart.addSeries(CandlestickSeries, {
-        upColor: settings.candleUpColor,
-        downColor: settings.candleDownColor,
-        borderVisible: false,
-        wickUpColor: settings.candleUpColor,
-        wickDownColor: settings.candleDownColor,
+        upColor: settings.candleUpColor, downColor: settings.candleDownColor,
       });
     } else if (chartType === "bars") {
       seriesRef.current = chart.addSeries(BarSeries, {
@@ -480,7 +444,15 @@ export function TerminalChart({
         lineWidth: 2,
       });
     }
-  }, [chartType, settings.candleUpColor, settings.candleDownColor]);
+  }, [chartType]);
+
+  useEffect(() => {
+    if (!seriesRef.current) return;
+    if (chartType === "candles") seriesRef.current.applyOptions({ upColor: settings.candleUpColor, downColor: settings.candleDownColor, borderVisible: settings.showCandleBorders, borderUpColor: settings.candleBorderUpColor, borderDownColor: settings.candleBorderDownColor, wickVisible: settings.showCandleWicks, wickUpColor: settings.candleWickUpColor, wickDownColor: settings.candleWickDownColor, priceLineVisible: settings.showPriceLine });
+    else if (chartType === "bars") seriesRef.current.applyOptions({ upColor: settings.candleUpColor, downColor: settings.candleDownColor, priceLineVisible: settings.showPriceLine });
+    else if (chartType === "line") seriesRef.current.applyOptions({ color: themeColors().mdata, priceLineVisible: settings.showPriceLine });
+    else seriesRef.current.applyOptions({ lineColor: themeColors().mdata, priceLineVisible: settings.showPriceLine });
+  }, [chartType, settings]);
 
   // Setup Volume series
   useEffect(() => {
@@ -491,17 +463,35 @@ export function TerminalChart({
         volumeSeriesRef.current = chartRef.current.addSeries(HistogramSeries, {
           color: "#26a69a",
           priceFormat: { type: "volume" },
-          priceScaleId: "",
-        });
-        chartRef.current.priceScale("").applyOptions({
-          scaleMargins: { top: 0.8, bottom: 0 },
-        });
+          priceScaleId: "right",
+          priceLineVisible: false,
+          lastValueVisible: false,
+        }, 1);
       }
     } else if (volumeSeriesRef.current) {
       chartRef.current.removeSeries(volumeSeriesRef.current);
       volumeSeriesRef.current = null;
     }
   }, [indicators.volume]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    applyVolumePaneLayout(chartRef.current, volumePaneHeight);
+  }, [indicators.volume, volumePaneHeight]);
+
+  useEffect(() => {
+    if (!seriesRef.current) return;
+    if (markPriceLineRef.current) {
+      seriesRef.current.removePriceLine(markPriceLineRef.current);
+      markPriceLineRef.current = null;
+    }
+    if (markPrice == null || !Number.isFinite(markPrice)) return;
+    markPriceLineRef.current = seriesRef.current.createPriceLine({ price: markPrice, color: themeColors().mdata, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: "MARK" });
+    return () => {
+      if (seriesRef.current && markPriceLineRef.current) seriesRef.current.removePriceLine(markPriceLineRef.current);
+      markPriceLineRef.current = null;
+    };
+  }, [chartType, markPrice]);
 
   // Feed data to chart
   useEffect(() => {
@@ -637,7 +627,7 @@ export function TerminalChart({
       }
     }
     
-  }, [bars, chartType, indicators, effectiveReplayIndex, settings, timezone]);
+  }, [bars, chartType, indicators, effectiveReplayIndex, settings.candleUpColor, settings.candleDownColor, timezone]);
 
   useEffect(() => {
     if (!seriesRef.current) return;

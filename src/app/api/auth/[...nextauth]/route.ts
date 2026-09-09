@@ -8,7 +8,9 @@ type AuthRouteContext = { params: Promise<{ nextauth?: string[] }> };
 async function disabledConfiguration(context: AuthRouteContext) {
   const { nextauth = [] } = await context.params;
   if (nextauth[0] === "providers") return NextResponse.json({});
-  if (nextauth[0] === "session") return NextResponse.json(null);
+  // NextAuth's client calls Object.keys on the session payload. Its canonical
+  // unauthenticated shape is an empty object; JSON null triggers CLIENT_FETCH_ERROR.
+  if (nextauth[0] === "session") return NextResponse.json({});
   return NextResponse.json(
     { error: "GOOGLE_SIGN_IN_UNAVAILABLE", message: "Google sign-in is not configured on this server." },
     { status: 503 },
