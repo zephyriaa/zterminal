@@ -83,7 +83,7 @@ export function WorkflowSequence() {
         className={styles.sequence}
         initial={reduced ? undefined : "hidden"}
         whileInView={reduced ? undefined : "show"}
-        viewport={{ once: true, margin: "-10%" }}
+        viewport={{ once: true, amount: 0.1 }}
         variants={{
           hidden: {},
           show: {

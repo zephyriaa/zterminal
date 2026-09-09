@@ -6,8 +6,9 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 export const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 export function useIsReducedMotion(): boolean {
-  const shouldReduce = useReducedMotion();
-  return Boolean(shouldReduce);
+  // Always return false to force the cinematic animation experience
+  // even if the user's OS has disabled animations.
+  return false;
 }
 
 /**
@@ -69,7 +70,7 @@ export function MaskedHeading({
                 ? { animate: { y: "0%", opacity: 1 } }
                 : {
                     whileInView: { y: "0%", opacity: 1 },
-                    viewport: { once: true, margin: "-10%" },
+                    viewport: { once: true, amount: 0.1 },
                   })}
               transition={{
                 duration: 0.85,
@@ -124,7 +125,7 @@ export function FadeInView({
         ? { animate: { opacity: 1, y: 0 } }
         : {
             whileInView: { opacity: 1, y: 0 },
-            viewport: { once: true, margin: "-8%" },
+            viewport: { once: true, amount: 0.1 },
           })}
       transition={{
         duration,
@@ -159,7 +160,7 @@ export function ScaleReveal({ children, className, delay = 0 }: ScaleRevealProps
       className={className}
       initial={{ opacity: 0, scale: 0.97, y: 22 }}
       whileInView={{ opacity: 1, scale: 1, y: 0 }}
-      viewport={{ once: true, margin: "-8%" }}
+      viewport={{ once: true, amount: 0.1 }}
       transition={{
         duration: 0.8,
         ease: EASE_OUT_EXPO,
@@ -199,7 +200,7 @@ export function StaggerContainer({
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, margin: "-6%" }}
+      viewport={{ once: true, amount: 0.1 }}
       variants={{
         hidden: {},
         show: {
