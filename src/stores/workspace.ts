@@ -32,6 +32,7 @@ export interface SavedWorkspace {
 }
 
 interface WorkspaceState {
+  activeWorkspaceId: string;
   activeView: ViewId;
   setView: (v: ViewId) => void;
 
@@ -72,7 +73,7 @@ interface WorkspaceState {
 const P0_DEFAULT_SYMBOL = "BTCUSDT";
 const P0_TIMEFRAMES = new Set(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]);
 
-type PersistedWorkspace = Partial<Pick<WorkspaceState, "sidebarCollapsed" | "symbol" | "timeframe" | "timezone" | "workspaces">>;
+type PersistedWorkspace = Partial<Pick<WorkspaceState, "activeWorkspaceId" | "sidebarCollapsed" | "symbol" | "timeframe" | "timezone" | "workspaces">>;
 
 const SUPPORTED_TIMEZONES = new Set<ChartTimezone>(["America/New_York", "UTC", "Europe/London", "Asia/Dubai"]);
 
@@ -98,12 +99,14 @@ function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
         timezone: SUPPORTED_TIMEZONES.has(workspace.timezone as ChartTimezone) ? workspace.timezone : timezone,
       }))
     : [];
-  return { ...persisted, symbol: P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
+  const activeWorkspaceId = typeof persisted.activeWorkspaceId === "string" && (persisted.activeWorkspaceId === "local-default" || workspaces.some(workspace => workspace.id === persisted.activeWorkspaceId)) ? persisted.activeWorkspaceId : "local-default";
+  return { ...persisted, activeWorkspaceId, symbol: P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
 }
 
 export const useWorkspace = create<WorkspaceState>()(
   persist(
     (set, get) => ({
+      activeWorkspaceId: "local-default",
       activeView: "chart",
       setView: (v) => set({ activeView: v }),
 
@@ -157,6 +160,7 @@ export const useWorkspace = create<WorkspaceState>()(
         const ws = get().workspaces.find((w) => w.id === id);
         if (!ws) return;
         set({
+          activeWorkspaceId: ws.id,
           activeView: ws.view,
           symbol: ws.symbol,
           timeframe: ws.timeframe,
@@ -175,9 +179,10 @@ export const useWorkspace = create<WorkspaceState>()(
     }),
     {
       name: "zterminal-workspace",
-      version: 3,
+      version: 4,
       migrate: (persistedState) => migratePersistedWorkspace(persistedState),
       partialize: (s) => ({
+        activeWorkspaceId: s.activeWorkspaceId,
         sidebarCollapsed: s.sidebarCollapsed,
         symbol: s.symbol,
         timeframe: s.timeframe,
