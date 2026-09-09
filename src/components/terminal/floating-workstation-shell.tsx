@@ -54,13 +54,13 @@ export function FloatingWorkstationShell() {
         <MobileResearchMenu />
         <span className="zt-header-separator" aria-hidden="true" />
         <InstrumentPicker />
-        <div className="zt-workspace-label hidden lg:block"><b>RESEARCH WORKSPACE</b><span>Write / backtest / inspect</span></div>
+        <div className="zt-workspace-label hidden lg:flex" title="Write / backtest / inspect"><b>RESEARCH WORKSPACE</b><span>Write / backtest / inspect</span></div>
         <div className="ml-auto flex items-center gap-1.5">
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-calendar"))} aria-label="Open economic calendar" title="Economic calendar"><CalendarDays /></button>
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-strategy"))} aria-label="Open Python strategy developer" title="Python strategy developer"><Code2 /></button>
-          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><Search /></button>
+          <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets (Ctrl/Cmd+K)" title="Search verified markets (Ctrl/Cmd+K)"><Search /></button>
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-terminal-settings"))} aria-label="Terminal preferences" title="Terminal preferences"><Settings2 /></button>
-          <button type="button" className="zt-research-account" onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} aria-label="Open research account information"><span>R</span><div className="hidden sm:block"><b>Research mode</b><small>Read only</small></div></button>
+          <button type="button" className="zt-research-account" onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} aria-label="Open research account information" title="Research mode · Read only (click to inspect account state)"><span>R</span><div className="zt-research-account-copy hidden sm:flex"><b>Research mode</b><small>Read only</small></div></button>
           {accountOpen && <AccountPanel symbol={symbol} provider={provider} dataStatus={dataStatus} onClose={() => setAccountOpen(false)} />}
         </div>
       </header>
