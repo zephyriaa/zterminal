@@ -1,24 +1,43 @@
-/* Shared public-site design tokens */
+/* Public-site tokens are intentionally scoped. Nothing here targets :root or body. */
 .publicScope {
-  --pub-bg: #060914;
-  --pub-bg-elevated: rgba(13, 22, 36, 0.62);
-  --pub-bg-card: rgba(13, 22, 36, 0.4);
-  --pub-text-main: #f3f6fb;
-  --pub-text-sec: #aebdd0;
-  --pub-text-muted: #9fafc0;
-  --pub-text-eyebrow: #9e8ff4;
-  --pub-accent-violet: #6849db;
-  --pub-accent-lilac: #c7bbff;
-  --pub-border-light: rgba(162, 180, 203, 0.14);
-  --pub-border: rgba(159, 178, 203, 0.16);
-  --pub-btn-bg: #e8e1ff;
-  --pub-btn-text: #171126;
-  --pub-btn-sec-bg: rgba(162, 180, 203, 0.1);
-}
+  --public-bg: #050a15;
+  --public-bg-soft: #070d1c;
+  --public-surface: rgba(12, 17, 34, 0.78);
+  --public-ink: #f5f6fc;
+  --public-copy: #a8bedc;
+  --public-muted: #778ca9;
+  --public-violet: #6527e4;
+  --public-violet-glow: rgba(101, 39, 228, 0.28);
+  --public-lilac: #c093f5;
+  --public-line: rgba(133, 153, 195, 0.22);
+  --public-line-soft: rgba(133, 153, 195, 0.12);
+  --public-gutter: clamp(24px, 5.8vw, 120px);
+  --public-font-serif: Georgia, "Times New Roman", serif;
+  --public-font-mono: var(--font-geist-mono), monospace;
 
-.publicLayout {
   min-height: 100vh;
-  color: var(--pub-text-main);
-  background: var(--pub-bg);
+  background: var(--public-bg);
+  color: var(--public-ink);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+.publicScope :where(a, button):focus-visible {
+  outline: 2px solid var(--public-lilac);
+  outline-offset: 5px;
+}
+
+.publicScope ::selection {
+  background: #6432a7;
+  color: white;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .publicScope *,
+  .publicScope *::before,
+  .publicScope *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

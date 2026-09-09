@@ -1,70 +1,104 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import styles from "./workflow-sequence.module.css";
 
-const steps = [
-  { id: "01", title: "Research", desc: "Start with the market as it is, not the trade you want it to become." },
-  { id: "02", title: "Validate", desc: "Make the rule clear enough for history to challenge it." },
-  { id: "03", title: "Monitor", desc: "Track live conditions against the validated rule." },
-  { id: "04", title: "Decide", desc: "Review the evidence, know the risk, and keep the call human." },
-  { id: "05", title: "Execute", desc: "Carry out the decision precisely as planned." },
-  { id: "06", title: "Review", desc: "Journal the outcome against the original hypothesis." }
+interface WorkflowStep {
+  num: string;
+  phase: string;
+  tag: string;
+  lead: string;
+  details: string;
+  spec: string;
+}
+
+const WORKFLOW_STEPS: WorkflowStep[] = [
+  {
+    num: "01",
+    phase: "Research",
+    tag: "HYPOTHESIS",
+    lead: "Isolate the structural edge.",
+    details: "Frame a question about price, volume distribution, or regime compression before looking at charts.",
+    spec: "INPUT: LOCAL PARQUET",
+  },
+  {
+    num: "02",
+    phase: "Validate",
+    tag: "SIMULATION",
+    lead: "Test with mathematical rigor.",
+    details: "Express logic in Python. Measure Sharpe, drawdowns, and sample size with visible simulation limits.",
+    spec: "ENGINE: POLARS / VECTORBT",
+  },
+  {
+    num: "03",
+    phase: "Monitor",
+    tag: "MARKET CANVAS",
+    lead: "Track multi-timeframe regime.",
+    details: "Inspect real-time order flow, volume profile, and moving average envelopes on the GPU canvas.",
+    spec: "STREAM: DIRECT WEBSOCKET",
+  },
+  {
+    num: "04",
+    phase: "Decide",
+    tag: "CONVICTION",
+    lead: "Weigh edge against friction.",
+    details: "Evaluate the statistical setup against risk budget, drawdown limits, and portfolio allocation.",
+    spec: "RULE: ZERO LEVERAGE",
+  },
+  {
+    num: "05",
+    phase: "Execute",
+    tag: "SOVEREIGN",
+    lead: "Place separately with broker.",
+    details: "ZTerminal maintains no broker routing. You retain 100% control of order entry and capital custody.",
+    spec: "STATUS: USER EXECUTED",
+  },
+  {
+    num: "06",
+    phase: "Review",
+    tag: "AUDIT",
+    lead: "Compare outcome to premise.",
+    details: "Record entry rationale and outcome in the local journal with SHA-256 reproducible data archives.",
+    spec: "ARCHIVE: LOCAL DISK",
+  },
 ];
 
 export function WorkflowSequence() {
-  const [activeStep, setActiveStep] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let ticking = false;
-
-    const updateStep = () => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      const topOffset = rect.top - (windowHeight / 3);
-      const height = rect.height;
-      const progress = Math.max(0, Math.min(1, -topOffset / height));
-      
-      const currentStep = Math.min(steps.length - 1, Math.floor(progress * steps.length));
-      setActiveStep(currentStep);
-      ticking = false;
-    };
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(updateStep);
-        ticking = true;
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // init
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const [activeStep, setActiveStep] = useState<number>(0);
 
   return (
-    <div className={styles.workflowContainer} ref={containerRef}>
-      <div className={styles.stickyTrack}>
-        <div className={styles.stepGrid}>
-          {steps.map((step, index) => (
-            <div 
-              key={step.id} 
-              className={`${styles.stepCard} ${index === activeStep ? styles.active : ''} ${index < activeStep ? styles.past : ''}`}
+    <div className={styles.wrapper}>
+      <div className={styles.timelineBar} aria-hidden="true">
+        <div
+          className={styles.timelineProgress}
+          style={{ width: `${((activeStep + 1) / WORKFLOW_STEPS.length) * 100}%` }}
+        />
+      </div>
+
+      <ol className={styles.sequence}>
+        {WORKFLOW_STEPS.map((step, idx) => {
+          const isActive = activeStep === idx;
+          return (
+            <li
+              key={step.phase}
+              className={`${styles.stepItem} ${isActive ? styles.activeItem : ""}`}
+              onMouseEnter={() => setActiveStep(idx)}
+              onClick={() => setActiveStep(idx)}
             >
               <div className={styles.stepHeader}>
-                <span className={styles.stepNumber}>{step.id}</span>
-                <span className={styles.stepConnector} aria-hidden="true" />
+                <span className={styles.stepNum}>{step.num}</span>
+                <span className={styles.stepTag}>{step.tag}</span>
               </div>
-              <h3>{step.title}</h3>
-              <p>{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+              <h3 className={styles.stepPhase}>{step.phase}</h3>
+              <p className={styles.stepLead}>{step.lead}</p>
+              <p className={styles.stepDetails}>{step.details}</p>
+              <div className={styles.stepFooter}>
+                <span className={styles.stepSpec}>{step.spec}</span>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
-

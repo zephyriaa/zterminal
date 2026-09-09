@@ -1,50 +1,113 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-
 import { publicWindowsRelease } from "@/lib/releases/windows-release";
+import styles from "../../docs.module.css";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Installing ZTerminal on Windows",
-  description: "Official ZTerminal Windows installation, update, and release-security guidance.",
+  title: "Installing ZTerminal on Windows — Documentation",
+  description: "Official ZTerminal Windows installation, package verification, and security guidelines.",
 };
+
+function Arrow() {
+  return <span className={styles.arrow} aria-hidden="true">↗</span>;
+}
 
 export default function WindowsInstallationGuide() {
   const release = publicWindowsRelease();
 
   return (
-    <main className="min-h-screen bg-[#060914] px-5 py-12 text-slate-100 sm:px-10 lg:px-20">
-      <div className="mx-auto max-w-4xl">
-        <Link href="/download" className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300 hover:text-cyan-100">← Windows release status</Link>
-        <p className="mt-12 text-xs font-semibold tracking-[0.18em] text-violet-300">ZTERMINAL FOR WINDOWS</p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Installing ZTerminal on Windows</h1>
-        <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-400">This page is the official reference for the ZTerminal Windows release path. It distinguishes verified public releases from the native desktop work that is still in development.</p>
+    <article className={styles.docArticle}>
+      <Link href="/docs" className={styles.backLink}>← Documentation index</Link>
 
-        <section className="mt-12 rounded-2xl border border-slate-700/70 bg-slate-900/50 p-7">
-          <p className="text-xs font-semibold tracking-[0.16em] text-violet-300">CURRENT RELEASE STATUS</p>
-          {release.available ? (
-            <>
-              <h2 className="mt-3 text-2xl font-semibold">ZTerminal {release.version} is available for Windows x64.</h2>
-              <p className="mt-3 leading-7 text-slate-400">The official package is signed, versioned, and distributed through the verified ZTerminal release route. Check the publisher and SHA-256 before installation if your organization requires independent verification.</p>
-              <Link href="/download" className="mt-5 inline-flex rounded-md bg-violet-200 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-white">Download ZTerminal</Link>
-            </>
-          ) : (
-            <>
-              <h2 className="mt-3 text-2xl font-semibold">No signed public Windows installer is available yet.</h2>
-              <p className="mt-3 leading-7 text-slate-400">ZTerminal will not ask you to download a development artifact. Windows compatibility, verified signing, measured requirements, release notes, and update details will be published here before the first public installer is enabled.</p>
-              <p className="mt-4 font-mono text-xs tracking-wide text-amber-200">STATUS: {release.reason.replaceAll("_", " ")}</p>
-            </>
-          )}
-        </section>
+      <p className={styles.eyebrow}>ZTERMINAL FOR WINDOWS</p>
+      <h1 className={styles.docTitle}>
+        Installing ZTerminal
+        <em>on Windows.</em>
+      </h1>
+      <p className={styles.docLead}>
+        This guide is the official reference for verified ZTerminal Windows releases. It clearly distinguishes verified public releases from desktop work in active development.
+      </p>
 
-        <section className="mt-12 grid gap-6 sm:grid-cols-2">
-          <article className="rounded-xl border border-slate-800 bg-slate-950/50 p-6"><h2 className="text-xl font-semibold">When a release is available</h2><ol className="mt-4 list-decimal space-y-3 pl-5 leading-7 text-slate-400"><li>Download only from the official ZTerminal download page.</li><li>Confirm the displayed product and publisher before installation.</li><li>Run the signed MSIX installer and complete the normal Windows installation flow.</li><li>Launch ZTerminal and use the same ZTerminal account when account features are enabled.</li></ol></article>
-          <article className="rounded-xl border border-slate-800 bg-slate-950/50 p-6"><h2 className="text-xl font-semibold">Updates and recovery</h2><p className="mt-4 leading-7 text-slate-400">Supported released builds will receive version information from the same release source used by this website. If an update or release is paused, the website and the application will both stop advertising that release. User workspaces and cached data must be preserved through verified upgrades; uninstall guidance will clearly distinguish program files from user data.</p></article>
-        </section>
+      {/* RELEASE STATUS CARD */}
+      <section className={styles.statusBox}>
+        <div className={styles.statusBoxHeader}>
+          <span className={styles.statusLabel}>CURRENT RELEASE STATUS</span>
+          <span className={styles.statusChannel}>
+            {release.available ? `CHANNEL: ${release.channel}` : "CHANNEL: PRE-RELEASE"}
+          </span>
+        </div>
+        {release.available ? (
+          <div>
+            <h2 className={styles.statusHeading}>ZTerminal {release.version} is available for Windows x64.</h2>
+            <p className={styles.statusText}>
+              The official package is signed, versioned, and distributed through the verified ZTerminal route. Verify the publisher and SHA-256 hash before installation.
+            </p>
+            <div className={styles.statusActions}>
+              <Link href="/download" className={styles.primaryButtonSmall}>
+                Download ZTerminal <Arrow />
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h2 className={styles.statusHeading}>No signed public Windows installer is available yet.</h2>
+            <p className={styles.statusText}>
+              ZTerminal will never ask users to run an unsigned or unverified development binary. Windows compatibility, verified publisher signatures, benchmark metrics, and release notes will be published before the first installer is enabled.
+            </p>
+            <div className={styles.statusDetail}>
+              STATUS CODE: <code>{release.reason.replaceAll("_", " ")}</code>
+            </div>
+          </div>
+        )}
+      </section>
 
-        <section className="mt-12 border-t border-slate-800 pt-9"><h2 className="text-2xl font-semibold">Need ZTerminal now?</h2><p className="mt-3 max-w-2xl leading-7 text-slate-400">The browser research terminal remains the available ZTerminal workspace while the Windows release completes native host, package, signing, and acceptance validation.</p><Link href="/terminal" className="mt-5 inline-flex rounded-md border border-cyan-300/60 px-4 py-2 text-sm font-semibold text-cyan-200 hover:border-cyan-100 hover:text-cyan-50">Open web terminal</Link></section>
-      </div>
-    </main>
+      {/* VERIFIED RELEASE PROCEDURE */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Verified installation procedure</h2>
+        <p className={styles.sectionPara}>
+          When an official release becomes available, follow these security-first verification steps:
+        </p>
+        <ol className={styles.stepList}>
+          <li>
+            <strong>Download only from the official release page:</strong> Never install binaries from third-party mirrors, forums, or unofficial repositories.
+          </li>
+          <li>
+            <strong>Confirm publisher signature:</strong> Right-click the downloaded <code>.msix</code> package, select Properties &gt; Digital Signatures, and verify the publisher identity.
+          </li>
+          <li>
+            <strong>Verify SHA-256 hash:</strong> Open PowerShell or Command Prompt and compute the cryptographic hash:
+            <pre className={styles.codeSnippet}><code>certutil -hashfile ZTerminal-Setup.msix SHA256</code></pre>
+            Ensure the output matches the published hash on the download page.
+          </li>
+          <li>
+            <strong>Complete the installation:</strong> Run the MSIX installer. Windows will handle sandboxed package registration and local permissions.
+          </li>
+        </ol>
+      </section>
+
+      {/* UPDATES & PERSISTENCE */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Updates, caching &amp; data persistence</h2>
+        <p className={styles.sectionPara}>
+          ZTerminal stores historical tick data, Parquet files, and strategy logs in standard local directories. Upgrades to the application binary preserve your research databases and configuration without loss.
+        </p>
+        <div className={styles.callout}>
+          <strong>User Data Isolation:</strong> Uninstalling the application binary does not delete your local Parquet data lake or private Python strategy scripts unless you explicitly remove the user directory.
+        </div>
+      </section>
+
+      {/* BROWSER WORKSPACE FALLBACK */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Immediate browser workspace</h2>
+        <p className={styles.sectionPara}>
+          While the Windows native client completes final package signing, the browser research terminal remains available for immediate exploration.
+        </p>
+        <Link href="/terminal" className={styles.primaryButtonSmall}>
+          Launch web terminal <Arrow />
+        </Link>
+      </section>
+    </article>
   );
 }
