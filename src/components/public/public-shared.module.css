@@ -5,30 +5,33 @@
   gap: 24px;
   height: 80px;
   min-height: 80px;
+  padding: 0 95px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   z-index: 20;
+  width: 100%;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
   color: #ffffff;
   text-decoration: none;
 }
 
 .brandLogo {
-  width: 22px;
-  height: 22px;
+  width: 27px;
+  height: 27px;
   object-fit: contain;
   display: block;
+  filter: brightness(1.2);
 }
 
 .brandName {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.24em;
   color: #ffffff;
   text-transform: uppercase;
 }
@@ -36,12 +39,12 @@
 .nav {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: 42px;
 }
 
 .navLink, .nav a {
-  color: #8c9eb5;
-  font-size: 13.5px;
+  color: #94a5bd;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.01em;
   text-decoration: none;
@@ -99,16 +102,23 @@
   color: var(--pub-text-muted) !important;
 }
 
+@media (max-width: 1200px) {
+  .header {
+    padding: 0 clamp(20px, 5.5vw, 95px);
+  }
+}
+
 @media (max-width: 680px) {
   .header {
     min-height: 66px;
     height: 66px;
+    padding: 0 20px;
   }
   .nav {
     gap: 16px;
   }
   .navLink, .nav a {
-    font-size: 12.5px;
+    font-size: 13px;
   }
   .footerTop {
     flex-direction: column;

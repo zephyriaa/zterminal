@@ -1,12 +1,13 @@
 import React from "react";
 
-interface WaveConfig {
+interface WaveRow {
   baseY: number;
   amp: number;
   count: number;
   opacity: number;
   size: number;
   color: string;
+  blur?: boolean;
 }
 
 interface DotPoint {
@@ -17,21 +18,39 @@ interface DotPoint {
 }
 
 export function HeroParticleWave() {
-  const waves: WaveConfig[] = [
-    { baseY: 140, amp: 45, count: 65, opacity: 0.35, size: 1.4, color: "#7c3aed" },
-    { baseY: 155, amp: 48, count: 70, opacity: 0.50, size: 1.6, color: "#8b5cf6" },
-    { baseY: 170, amp: 52, count: 75, opacity: 0.65, size: 1.8, color: "#9d6eff" },
-    { baseY: 185, amp: 56, count: 80, opacity: 0.85, size: 2.2, color: "#bfa3ff" },
-    { baseY: 200, amp: 60, count: 85, opacity: 0.95, size: 2.4, color: "#d2bfff" },
-    { baseY: 215, amp: 62, count: 80, opacity: 0.80, size: 2.0, color: "#a87ff5" },
-    { baseY: 230, amp: 64, count: 75, opacity: 0.60, size: 1.7, color: "#8b5cf6" },
-    { baseY: 245, amp: 66, count: 70, opacity: 0.40, size: 1.5, color: "#7033ea" },
-    { baseY: 260, amp: 68, count: 65, opacity: 0.25, size: 1.3, color: "#581cd8" },
+  // Layered particle wave with depth-of-field, organic scatter, and volumetric bloom
+  const waveLayers: WaveRow[] = [
+    // Background out-of-focus soft glowing layer
+    { baseY: 130, amp: 48, count: 50, opacity: 0.28, size: 2.8, color: "#6d28d9", blur: true },
+    { baseY: 150, amp: 52, count: 55, opacity: 0.35, size: 3.2, color: "#7c3aed", blur: true },
+    
+    // Midground ribbons
+    { baseY: 135, amp: 44, count: 65, opacity: 0.40, size: 1.3, color: "#8b5cf6" },
+    { baseY: 150, amp: 48, count: 70, opacity: 0.55, size: 1.6, color: "#9333ea" },
+    { baseY: 165, amp: 52, count: 75, opacity: 0.70, size: 1.9, color: "#a855f7" },
+    { baseY: 180, amp: 56, count: 80, opacity: 0.85, size: 2.2, color: "#c084fc" },
+    { baseY: 195, amp: 60, count: 85, opacity: 0.95, size: 2.5, color: "#d8b4fe" },
+    { baseY: 210, amp: 63, count: 80, opacity: 0.80, size: 2.1, color: "#bfa1fc" },
+    { baseY: 225, amp: 65, count: 75, opacity: 0.60, size: 1.7, color: "#9333ea" },
+    { baseY: 240, amp: 68, count: 70, opacity: 0.42, size: 1.4, color: "#7c3aed" },
+    { baseY: 255, amp: 70, count: 60, opacity: 0.26, size: 1.2, color: "#5b21b6" },
+  ];
+
+  // Foreground sparkling anchor particles scattered naturally
+  const sparklers = [
+    { x: 180, y: 150, r: 2.6, op: 0.9, col: "#ffffff" },
+    { x: 260, y: 142, r: 2.2, op: 0.85, col: "#f3e8ff" },
+    { x: 340, y: 138, r: 2.8, op: 0.95, col: "#ffffff" },
+    { x: 420, y: 146, r: 2.4, op: 0.88, col: "#e9d5ff" },
+    { x: 510, y: 160, r: 2.0, op: 0.82, col: "#ffffff" },
+    { x: 590, y: 182, r: 2.5, op: 0.90, col: "#d8b4fe" },
+    { x: 670, y: 210, r: 2.2, op: 0.75, col: "#c084fc" },
+    { x: 750, y: 245, r: 1.9, op: 0.65, col: "#a855f7" },
   ];
 
   return (
     <svg
-      viewBox="0 0 1100 360"
+      viewBox="0 0 1140 370"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{
@@ -42,40 +61,46 @@ export function HeroParticleWave() {
       aria-hidden="true"
     >
       <defs>
-        <radialGradient id="waveBackGlow" cx="45%" cy="60%" r="50%">
-          <stop offset="0%" stopColor="#7a3cf5" stopOpacity="0.32" />
-          <stop offset="50%" stopColor="#4f17d2" stopOpacity="0.12" />
+        <filter id="softDofBlur" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3.5" />
+        </filter>
+        <radialGradient id="waveBackGlow" cx="42%" cy="58%" r="52%">
+          <stop offset="0%" stopColor="#8b4cf7" stopOpacity="0.34" />
+          <stop offset="45%" stopColor="#581cd8" stopOpacity="0.14" />
           <stop offset="100%" stopColor="#03050c" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="fadeHorizontal" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#fff" stopOpacity="0.05" />
-          <stop offset="20%" stopColor="#fff" stopOpacity="0.95" />
-          <stop offset="65%" stopColor="#fff" stopOpacity="0.85" />
-          <stop offset="100%" stopColor="#fff" stopOpacity="0.02" />
+        <linearGradient id="fadeH" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0.04" />
+          <stop offset="18%" stopColor="#fff" stopOpacity="0.96" />
+          <stop offset="68%" stopColor="#fff" stopOpacity="0.88" />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0.01" />
         </linearGradient>
-        <mask id="particleWaveMask">
-          <rect x="0" y="0" width="1100" height="360" fill="url(#fadeHorizontal)" />
+        <mask id="organicWaveMask">
+          <rect x="0" y="0" width="1140" height="370" fill="url(#fadeH)" />
         </mask>
       </defs>
 
       {/* Atmospheric ambient bloom behind particle wave */}
-      <ellipse cx="480" cy="210" rx="440" ry="140" fill="url(#waveBackGlow)" />
+      <ellipse cx="490" cy="205" rx="460" ry="145" fill="url(#waveBackGlow)" />
 
       {/* Wave lines and dot particles */}
-      <g mask="url(#particleWaveMask)">
-        {waves.map((w, wIdx) => {
+      <g mask="url(#organicWaveMask)">
+        {waveLayers.map((w, wIdx) => {
           const points: DotPoint[] = [];
           for (let i = 0; i <= w.count; i++) {
             const t = i / w.count;
-            const x = t * 1100;
-            const arch = Math.sin(t * Math.PI) * -50;
-            const ripple = Math.sin(x * 0.0055 + wIdx * 0.28) * (w.amp * 0.45);
-            const secondary = Math.cos(x * 0.0032 + wIdx * 0.15) * 14;
-            const y = w.baseY + arch + ripple + secondary;
+            const x = t * 1140;
+            // Wave formulation: organic arch with harmonic perturbation
+            const arch = Math.sin(t * Math.PI) * -52;
+            const ripple = Math.sin(x * 0.0058 + wIdx * 0.26) * (w.amp * 0.44);
+            const harmonic = Math.cos(x * 0.0034 + wIdx * 0.18) * 16;
+            // Pseudo-random subtle organic jitter based on index
+            const jitter = ((i * 17 + wIdx * 31) % 11 - 5) * 0.6;
+            const y = w.baseY + arch + ripple + harmonic + jitter;
 
             const centerFactor = Math.sin(t * Math.PI);
-            const dotR = w.size * (0.6 + centerFactor * 0.55);
-            const dotAlpha = w.opacity * (0.2 + centerFactor * 0.8);
+            const dotR = w.size * (0.65 + centerFactor * 0.55);
+            const dotAlpha = w.opacity * (0.22 + centerFactor * 0.78);
 
             points.push({
               cx: Number(x.toFixed(1)),
@@ -90,12 +115,12 @@ export function HeroParticleWave() {
           }, "");
 
           return (
-            <g key={wIdx}>
+            <g key={wIdx} filter={w.blur ? "url(#softDofBlur)" : undefined}>
               <path
                 d={pathD}
                 stroke={w.color}
-                strokeWidth={0.65}
-                strokeOpacity={Number((w.opacity * 0.22).toFixed(2))}
+                strokeWidth={w.blur ? 1.2 : 0.65}
+                strokeOpacity={Number((w.opacity * (w.blur ? 0.35 : 0.22)).toFixed(2))}
                 fill="none"
               />
               {points.map((pt, pIdx) => (
@@ -111,6 +136,14 @@ export function HeroParticleWave() {
             </g>
           );
         })}
+
+        {/* Foreground sharp sparkle particles */}
+        {sparklers.map((sp, sIdx) => (
+          <g key={`sp-${sIdx}`}>
+            <circle cx={sp.x} cy={sp.y} r={sp.r * 2} fill={sp.col} opacity={sp.op * 0.25} />
+            <circle cx={sp.x} cy={sp.y} r={sp.r} fill={sp.col} opacity={sp.op} />
+          </g>
+        ))}
       </g>
     </svg>
   );
