@@ -3,48 +3,33 @@ import styles from "./device-frame.module.css";
 
 export function DeviceFrame() {
   return (
-    <div className={styles.deviceWrapper}>
-      <div className={styles.devicePerspective}>
-        <div className={styles.laptop}>
-          {/* Screen Lid */}
-          <div className={styles.lid}>
-            <div className={styles.bezel}>
-              <div className={styles.cameraNotch} aria-hidden="true" />
-              <div className={styles.display}>
-                <Image
-                  src="/landing/terminal-screenshot.png"
-                  alt="ZTerminal Quantitative Research Workstation"
-                  width={1600}
-                  height={900}
-                  className={styles.screenshot}
-                  priority
-                />
-                <div className={styles.glassGlare} aria-hidden="true" />
-              </div>
+    <div className={styles.scene} aria-label="ZTerminal research workstation shown on a laptop">
+      <div className={styles.glow} aria-hidden="true" />
+      <div className={styles.laptop}>
+        <div className={styles.lid}>
+          <div className={styles.bezel}>
+            <div className={styles.camera} aria-hidden="true" />
+            <div className={styles.display}>
+              <Image
+                src="/landing/terminal-screenshot.png"
+                alt="Current ZTerminal market canvas showing a BTC chart and research navigation"
+                width={3200}
+                height={1800}
+                sizes="(max-width: 900px) 92vw, 72vw"
+                className={styles.screenshot}
+                priority
+              />
+              <div className={styles.glare} aria-hidden="true" />
             </div>
-            <div className={styles.lidHighlight} aria-hidden="true" />
           </div>
-
-          {/* Laptop Base (Keyboard Deck + Trackpad) */}
-          <div className={styles.base} aria-hidden="true">
-            <div className={styles.deck}>
-              <div className={styles.keyboardWell}>
-                <div className={styles.keyboardTexture} />
-              </div>
-              <div className={styles.trackpad} />
-            </div>
-            <div className={styles.baseFrontEdge} />
-            <div className={styles.baseLeftEdge} />
-          </div>
-
-          {/* Under-laptop Contact Shadow & Ambient Reflection */}
-          <div className={styles.contactShadow} aria-hidden="true" />
-          <div className={styles.ambientReflection} aria-hidden="true" />
+        </div>
+        <div className={styles.base} aria-hidden="true">
+          <div className={styles.keyboard} />
+          <div className={styles.trackpad} />
+          <div className={styles.frontEdge} />
         </div>
       </div>
-
-      {/* Atmospheric Purple Glow behind the screen */}
-      <div className={styles.screenBackdropGlow} aria-hidden="true" />
+      <div className={styles.shadow} aria-hidden="true" />
     </div>
   );
 }

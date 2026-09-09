@@ -1,5 +1,111 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { EXAMPLES } from "@/lib/local-research/examples";
+import styles from "../docs.module.css";
+
+export const metadata: Metadata = {
+  title: "Python Research API — ZTerminal Documentation",
+  description: "Write vectorbt and pandas trading strategies in Python, execute locally, and inspect reproducible backtest evidence.",
+};
+
+function Arrow() {
+  return <span className={styles.arrow} aria-hidden="true">↗</span>;
+}
+
 export default function PythonResearchDocumentationPage() {
-  return <main className="min-h-screen bg-background text-foreground"><header className="border-b border-border px-6 py-4"><Link href="/terminal" className="text-sm text-violet-300">← Research workspace</Link></header><article className="mx-auto max-w-3xl space-y-8 px-6 py-12"><div><p className="font-mono text-xs text-violet-300">ZTERMINAL SDK / VERSION 1</p><h1 className="mt-4 text-4xl font-semibold">Write → backtest → inspect.</h1><p className="mt-5 leading-7 text-muted-foreground">The free private Windows preview runs real Python and vectorbt on your computer. Pair the supplied helper once, write a strategy, and press Backtest or Ctrl/Cmd+Enter. Python never executes on Render.</p></div><section><h2 className="text-xl">Local execution, your permissions</h2><p className="mt-3 leading-7 text-muted-foreground">Install the complete private package and open ZTerminal Research Helper. Enter its eight-digit code in Research. Your browser may ask for local-network access. Scripts run with your user permissions; process limits are not a secure sandbox. Run only code you trust. Public installer availability remains gated.</p></section><section id="quickstart"><h2 className="text-xl">A testable strategy</h2><pre className="mt-4 overflow-auto border border-border bg-black/20 p-5 text-xs leading-6"><code>{EXAMPLES[0].source}</code></pre><p className="mt-3 leading-7 text-muted-foreground">Educational example only. The engine supplies a UTC-indexed pandas DataFrame with open, high, low, close and volume columns. Return aligned boolean pandas Series through zt.Strategy. Optional short_entries, short_exits and named numeric plots are supported. The helpers ema, sma, rsi, crossover and crossunder use observed series. Bundled vectorbt may be imported to generate signals.</p></section><section><h2 className="text-xl">Explicit simulation assumptions</h2><p className="mt-3 leading-7 text-muted-foreground">Signals at completed-bar close fill at the following open. No fill is manufactured beyond the dataset. One position, no leverage, no pyramiding or automatic reversal. Set costs, cash allocation and direction before testing; instrument quantity units come from the provider. Open positions are marked to market and excluded from closed-trade statistics. Funding, liquidation, margin and market impact are unmodeled. Arbitrary Python can introduce look-ahead bias; shifted signals do not prove a strategy causal.</p></section><section><h2 className="text-xl">Reproducible review</h2><p className="mt-3 leading-7 text-muted-foreground">Each successful result retains its exact source, parameters, configuration, complete dataset and SHA-256 hashes in the helper's local archive. Click a trade to inspect its archived candles and entry/exit markers. Return to live mode explicitly. Reopening needs no market connectivity. Export and import use validated JSON and never execute imported source.</p></section><section><h2 className="text-xl">Statistics with visible limits</h2><p className="mt-3 leading-7 text-muted-foreground">Risk ratios use complete UTC daily observations, a 365-day crypto calendar, zero risk-free/target return and at least 30 daily returns. CAGR requires one year. Undefined values show reasons. Optional seeded Monte Carlo bootstraps closed-trade account returns with replacement. Its independence assumptions and sample size are visible; this is historical exploration, not a forecast or trading recommendation.</p></section><section><h2 className="text-xl">Legacy records</h2><p className="mt-3 leading-7 text-muted-foreground">Legacy source and results are preserved as incomplete records. Pine, EasyLanguage and ZS are not silently translated, and unsupported Python never falls back to another strategy. Write or review an explicit SDK v1 strategy for a new test.</p></section></article></main>;
+  const exampleCode = EXAMPLES[0]?.source || `# Default strategy example\nimport zt\nimport pandas as pd`;
+
+  return (
+    <article className={styles.docArticle}>
+      <Link href="/docs" className={styles.backLink}>← Documentation index</Link>
+
+      <p className={styles.eyebrow}>ZTERMINAL SDK / VERSION 1</p>
+      <h1 className={styles.docTitle}>
+        Python Research API
+        <em>Write → validate → inspect.</em>
+      </h1>
+      <p className={styles.docLead}>
+        The ZTerminal Research API runs real Python and vectorbt on your computer. Pair the local helper once, write a strategy in standard pandas, and run vectorized backtests with visible empirical limits. Python code never leaves your machine.
+      </p>
+
+      {/* LOCAL EXECUTION SECTION */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Local execution &amp; user permissions</h2>
+        <p className={styles.sectionPara}>
+          Install the private package and start the ZTerminal Research Helper. Enter its eight-digit authentication code in the terminal. Your browser or OS may prompt for local network permissions. Scripts run under your user permissions; process limits do not constitute a remote multi-tenant sandbox. Run only code you trust.
+        </p>
+      </section>
+
+      {/* STRATEGY SPECIFICATION */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Authoring a testable strategy</h2>
+        <p className={styles.sectionPara}>
+          The engine provides an observed, UTC-indexed pandas DataFrame with standard columns: <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, and <code>volume</code>. Your strategy returns an aligned boolean series through <code>zt.Strategy</code>.
+        </p>
+
+        <div className={styles.codeContainer}>
+          <div className={styles.codeBar}>
+            <span>strategy_sdk_v1.py</span>
+            <span>PYTHON 3.11+</span>
+          </div>
+          <pre className={styles.codeSnippet}>
+            <code>{exampleCode}</code>
+          </pre>
+        </div>
+
+        <p className={styles.sectionPara}>
+          Built-in indicators such as <code>zt.ema</code>, <code>zt.sma</code>, <code>zt.rsi</code>, <code>zt.crossover</code>, and <code>zt.crossunder</code> operate directly on observed series. Full vectorbt methods may also be imported to compute vectorized signals and multi-asset matrices.
+        </p>
+      </section>
+
+      {/* SIMULATION ASSUMPTIONS */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Explicit simulation assumptions</h2>
+        <p className={styles.sectionPara}>
+          ZTerminal insists on visible execution limits to eliminate look-ahead bias and curve-fitting illusions:
+        </p>
+        <ul className={styles.bulletList}>
+          <li>
+            <strong>Bar-Close Execution:</strong> Signals triggered at completed-bar close fill at the following bar&apos;s open price.
+          </li>
+          <li>
+            <strong>No Fictional Liquidity:</strong> Fills are never manufactured beyond observed market depth.
+          </li>
+          <li>
+            <strong>Single Position Default:</strong> One position at a time, zero unmodeled leverage, no automatic compounding or pyramiding unless explicitly specified.
+          </li>
+          <li>
+            <strong>Mark-to-Market Accounting:</strong> Open positions are marked to market and tracked separately from realized closed-trade statistics.
+          </li>
+        </ul>
+      </section>
+
+      {/* REPRODUCIBILITY */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Reproducible audit archive</h2>
+        <p className={styles.sectionPara}>
+          Every successful simulation run records its complete source code, parameter configuration, observed dataset slice, and cryptographic SHA-256 hash in the local helper archive. You can click any historical trade in the log to inspect exact entry and exit candles without active market data connectivity.
+        </p>
+        <div className={styles.callout}>
+          <strong>Audit Principle:</strong> Research is only evidence if it can be reproduced exactly. ZTerminal ensures every metric traces back to a verified timestamped snapshot.
+        </div>
+      </section>
+
+      {/* QUICK LINKS */}
+      <section className={styles.docSection}>
+        <h2 className={styles.sectionTitle}>Explore the workstation</h2>
+        <p className={styles.sectionPara}>
+          Open the terminal workspace to inspect existing strategy templates or review migration options.
+        </p>
+        <div className={styles.linkRow}>
+          <Link href="/terminal" className={styles.primaryButtonSmall}>
+            Launch web terminal <Arrow />
+          </Link>
+          <Link href="/docs/zscript" className={styles.textLink}>
+            Read ZScript migration notes <Arrow />
+          </Link>
+        </div>
+      </section>
+    </article>
+  );
 }
