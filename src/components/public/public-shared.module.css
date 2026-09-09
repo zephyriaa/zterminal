@@ -2,43 +2,54 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  min-height: 76px;
-  border-bottom: 1px solid var(--pub-border-light);
+  gap: 24px;
+  height: 80px;
+  min-height: 80px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 20;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: var(--pub-text-main);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .16em;
+  gap: 12px;
+  color: #ffffff;
   text-decoration: none;
 }
 
-.brand img {
-  width: 27px;
-  height: 27px;
+.brandLogo {
+  width: 22px;
+  height: 22px;
   object-fit: contain;
+  display: block;
+}
+
+.brandName {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #ffffff;
+  text-transform: uppercase;
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 36px;
 }
 
-.nav a {
-  color: var(--pub-text-sec);
-  font-size: 13px;
+.navLink, .nav a {
+  color: #8c9eb5;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color 0.16s ease;
 }
 
-.nav a:hover {
-  color: #fff;
+.navLink:hover, .nav a:hover {
+  color: #ffffff;
 }
 
 /* Footer */
@@ -91,9 +102,13 @@
 @media (max-width: 680px) {
   .header {
     min-height: 66px;
+    height: 66px;
   }
   .nav {
-    gap: 14px;
+    gap: 16px;
+  }
+  .navLink, .nav a {
+    font-size: 12.5px;
   }
   .footerTop {
     flex-direction: column;
@@ -101,4 +116,3 @@
     gap: 24px;
   }
 }
-

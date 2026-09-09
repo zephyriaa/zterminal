@@ -1,105 +1,276 @@
 .deviceWrapper {
   position: relative;
   width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  perspective: 1400px;
-  z-index: 10;
+  height: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-end;
+  pointer-events: none;
 }
 
-.deviceBezel {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  background: #000;
-  border-radius: 12px 12px 0 0;
-  padding: 14px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  border: 1px solid #1a1e28;
-  border-bottom: none;
-  transform: rotateX(2deg);
-  transform-origin: bottom center;
-}
-
-.deviceScreen {
+.devicePerspective {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #060914;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  perspective: 1500px;
+  perspective-origin: 20% 36%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
 }
 
-.deviceImage {
+.laptop {
+  position: absolute;
+  right: -4vw;
+  top: 1.5vh;
+  width: min(1180px, 66vw);
+  transform-style: preserve-3d;
+  transform: rotateY(-20deg) rotateX(7.5deg) rotateZ(-3.4deg);
+  transition: transform 0.4s ease-out;
+}
+
+/* Screen Lid */
+.lid {
+  position: relative;
   width: 100%;
-  height: auto;
+  aspect-ratio: 16 / 9.8;
+  border-radius: 14px 14px 2px 2px;
+  transform-style: preserve-3d;
+  transform: rotateX(-5.5deg);
+  transform-origin: bottom center;
+  z-index: 2;
+}
+
+.bezel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #080a10;
+  padding: 10px 10px 15px 10px;
+  border-radius: 14px 14px 2px 2px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 
+    0 0 0 1px #030406,
+    0 30px 80px rgba(0, 0, 0, 0.88),
+    0 10px 30px rgba(0, 0, 0, 0.65);
+}
+
+.cameraNotch {
+  position: absolute;
+  top: 3.5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #030406;
+  box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.display {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px 5px 0 0;
+  overflow: hidden;
+  background: #060914;
+}
+
+.screenshot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
-.deviceShine {
+.glassGlare {
   position: absolute;
-  top: 0;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.055) 0%,
+    rgba(255, 255, 255, 0.012) 32%,
+    transparent 52%
+  );
+  border-radius: inherit;
+}
+
+.lidHighlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.24),
+    inset 1px 0 0 rgba(255, 255, 255, 0.11),
+    inset -1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Laptop Base (Keyboard Deck & Trackpad) */
+.base {
+  position: absolute;
+  top: 100%;
+  left: -7%;
+  width: 114%;
+  height: 440px;
+  transform-origin: top center;
+  transform: rotateX(81.5deg) translateZ(-1px);
+  transform-style: preserve-3d;
+  background: linear-gradient(180deg, #181b26 0%, #0c0e15 65%, #141720 100%);
+  border-radius: 0 0 16px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.24),
+    0 35px 95px rgba(0, 0, 0, 0.95);
+  z-index: 1;
+}
+
+.deck {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.keyboardWell {
+  position: absolute;
+  top: 22px;
+  left: 8%;
+  width: 84%;
+  height: 230px;
+  background: #06080e;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.keyboardTexture {
+  position: absolute;
+  inset: 6px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.015) 0px,
+    rgba(255, 255, 255, 0.015) 28px,
+    transparent 28px,
+    transparent 35px
+  );
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.trackpad {
+  position: absolute;
+  bottom: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  height: 125px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+}
+
+.baseFrontEdge {
+  position: absolute;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%);
-  pointer-events: none;
-  border-radius: 12px 12px 0 0;
+  height: 14px;
+  background: linear-gradient(to bottom, #181b26 0%, #07090e 100%);
+  border-radius: 0 0 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.95);
 }
 
-.deviceBase {
-  position: relative;
-  width: 112%;
-  height: 16px;
-  margin-top: -2px;
-  z-index: 12;
-}
-
-.deviceBaseTop {
-  height: 8px;
-  background: linear-gradient(to right, #11141e, #2a3143 15%, #2a3143 85%, #11141e);
-  border-radius: 2px 2px 0 0;
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.15);
-}
-
-.deviceBaseFront {
-  height: 8px;
-  background: linear-gradient(to right, #050609, #151922 10%, #151922 90%, #050609);
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-}
-
-.deviceGlow {
+/* Desk Shadows & Ambient Lighting */
+.contactShadow {
   position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  height: 40%;
-  background: radial-gradient(ellipse at center, rgba(104, 73, 219, 0.15) 0%, transparent 60%);
-  filter: blur(40px);
-  z-index: 1;
+  bottom: -60px;
+  left: -8%;
+  width: 120%;
+  height: 140px;
+  background: radial-gradient(ellipse 65% 45% at 50% 50%, rgba(0, 0, 0, 0.95) 0%, transparent 75%);
+  filter: blur(28px);
   pointer-events: none;
+  z-index: 0;
 }
 
-@media (max-width: 768px) {
-  .deviceBezel {
-    padding: 6px;
-    border-radius: 8px 8px 0 0;
+.ambientReflection {
+  position: absolute;
+  bottom: -80px;
+  left: 6%;
+  width: 95%;
+  height: 160px;
+  background: radial-gradient(ellipse 60% 40% at 52% 50%, rgba(105, 55, 235, 0.20) 0%, rgba(70, 30, 180, 0.06) 45%, transparent 75%);
+  filter: blur(45px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.screenBackdropGlow {
+  position: absolute;
+  top: -16%;
+  right: -6%;
+  width: 950px;
+  height: 800px;
+  background: radial-gradient(
+    ellipse at 60% 35%,
+    rgba(115, 55, 245, 0.26) 0%,
+    rgba(75, 28, 195, 0.09) 45%,
+    transparent 72%
+  );
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Responsiveness */
+@media (max-width: 1200px) {
+  .laptop {
+    width: min(960px, 62vw);
+    transform: rotateY(-18deg) rotateX(6.5deg) rotateZ(-2.5deg);
+    margin-right: -2vw;
   }
-  .deviceBase {
+}
+
+@media (max-width: 900px) {
+  .devicePerspective {
+    perspective: none;
+    justify-content: center;
+  }
+  .laptop {
+    width: 100%;
+    max-width: 680px;
+    transform: none;
+    margin-right: 0;
+    margin-top: 0;
+    top: 0;
+  }
+  .lid {
+    transform: none;
+    border-radius: 10px 10px 0 0;
+  }
+  .bezel {
+    padding: 8px 8px 12px 8px;
+    border-radius: 10px 10px 0 0;
+  }
+  .base {
+    position: relative;
+    top: 0;
+    left: -2%;
     width: 104%;
+    height: 16px;
+    transform: none;
+    border-radius: 0 0 10px 10px;
+  }
+  .keyboardWell, .trackpad {
+    display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .deviceWrapper, .deviceBezel {
-    transform: none;
+  .laptop {
     transition: none;
   }
 }
-
