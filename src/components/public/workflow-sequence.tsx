@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { EASE_OUT_EXPO, useIsReducedMotion } from "@/components/landing/motion-primitives";
 import styles from "./workflow-sequence.module.css";
 
 interface WorkflowStep {
@@ -65,25 +67,51 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
 
 export function WorkflowSequence() {
   const [activeStep, setActiveStep] = useState<number>(0);
+  const reduced = useIsReducedMotion();
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.timelineBar} aria-hidden="true">
-        <div
+        <motion.div
           className={styles.timelineProgress}
-          style={{ width: `${((activeStep + 1) / WORKFLOW_STEPS.length) * 100}%` }}
+          animate={{ width: `${((activeStep + 1) / WORKFLOW_STEPS.length) * 100}%` }}
+          transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
         />
       </div>
 
-      <ol className={styles.sequence}>
+      <motion.ol
+        className={styles.sequence}
+        initial={reduced ? undefined : "hidden"}
+        whileInView={reduced ? undefined : "show"}
+        viewport={{ once: true, margin: "-10%" }}
+        variants={{
+          hidden: {},
+          show: {
+            transition: {
+              staggerChildren: 0.07,
+            },
+          },
+        }}
+      >
         {WORKFLOW_STEPS.map((step, idx) => {
           const isActive = activeStep === idx;
           return (
-            <li
+            <motion.li
               key={step.phase}
               className={`${styles.stepItem} ${isActive ? styles.activeItem : ""}`}
               onMouseEnter={() => setActiveStep(idx)}
               onClick={() => setActiveStep(idx)}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    duration: 0.6,
+                    ease: EASE_OUT_EXPO,
+                  },
+                },
+              }}
             >
               <div className={styles.stepHeader}>
                 <span className={styles.stepNum}>{step.num}</span>
@@ -95,10 +123,10 @@ export function WorkflowSequence() {
               <div className={styles.stepFooter}>
                 <span className={styles.stepSpec}>{step.spec}</span>
               </div>
-            </li>
+            </motion.li>
           );
         })}
-      </ol>
+      </motion.ol>
     </div>
   );
 }
