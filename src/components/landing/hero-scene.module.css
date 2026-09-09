@@ -1,35 +1,29 @@
+/* ==========================================================================
+   HERO SCENE — Exact faithful port of the approved 1672x941 index.html composition
+   ========================================================================== */
+
 .viewport {
   position: relative;
   overflow: hidden;
   width: 100%;
   height: 100vh;
   min-height: 560px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(ellipse at 72% 4%, rgba(21, 21, 47, 0.53) 0, transparent 37%),
-    radial-gradient(ellipse at 46% 84%, rgba(16, 21, 52, 0.4) 0, transparent 43%),
-    linear-gradient(120deg, #050b14, #060a16 67%, #040913);
+  background: #050a15;
 }
 
 .scene {
   position: absolute;
   width: 1672px;
   height: 941px;
-  left: 50%;
-  top: 50%;
-  margin-left: -836px;
-  margin-top: -470.5px;
-  transform-origin: center center;
+  transform-origin: top left;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 72% 4%, rgba(21, 21, 47, 0.53) 0, transparent 37%),
-    radial-gradient(ellipse at 46% 84%, rgba(16, 21, 52, 0.4) 0, transparent 43%),
+    radial-gradient(ellipse at 72% 4%, rgba(21, 21, 47, 0.53) 0%, transparent 37%),
+    radial-gradient(ellipse at 46% 84%, rgba(16, 21, 52, 0.4) 0%, transparent 43%),
     linear-gradient(120deg, #050b14, #060a16 67%, #040913);
 }
 
-.scene:after {
+.scene::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -40,6 +34,7 @@
   z-index: 20;
 }
 
+/* Header */
 .header {
   position: absolute;
   left: 97px;
@@ -56,7 +51,7 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 25px;
+  gap: 20px;
   font-family: var(--public-font-mono), monospace;
   font-weight: 700;
   font-size: 21px;
@@ -74,7 +69,7 @@
   flex: none;
 }
 
-.mark:before {
+.mark::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -82,7 +77,7 @@
   clip-path: polygon(70% 0, 100% 0, 29% 100%, 0 100%);
 }
 
-.mark:after {
+.mark::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -97,37 +92,18 @@
 }
 
 .nav a {
-  position: relative;
   color: #c3cfee;
   text-decoration: none;
   font-size: 16px;
   line-height: 24px;
-  padding-bottom: 2px;
-  transition: color 180ms ease;
-}
-
-.nav a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 1px;
-  background: #c093f5;
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 150ms ease;
 }
 
 .nav a:hover {
   color: #ffffff;
 }
 
-.nav a:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
-}
-
+/* Hero Content */
 .heroCopy {
   position: absolute;
   left: 97px;
@@ -144,12 +120,7 @@
   line-height: 20px;
   letter-spacing: 1.9px;
   color: #c093f5;
-}
-
-.headlineMask {
   display: block;
-  overflow: hidden;
-  padding-bottom: 12px;
 }
 
 .heroCopy h1 {
@@ -175,8 +146,7 @@
   letter-spacing: -3.5px;
   line-height: 104px;
   margin-top: 0;
-  padding-bottom: 8px;
-  padding-right: 18px;
+  padding-bottom: 0;
   background: linear-gradient(#d9baff 10%, #b58ce8 68%, #d1a6fa);
   color: transparent;
   background-clip: text;
@@ -204,7 +174,7 @@
   align-items: center;
   justify-content: center;
   font-family: Arial, sans-serif;
-  font-weight: 500;
+  font-weight: 400;
   font-size: 18px;
   letter-spacing: 0.55px;
   height: 63px;
@@ -212,71 +182,44 @@
   padding: 0 35px;
   color: white;
   text-decoration: none;
-  border: 1px solid rgba(134, 81, 241, 0.4);
+  border: 1px solid rgba(134, 81, 241, 0.33);
   border-radius: 3px;
   background: linear-gradient(110deg, #6527e4, #6225e4 65%, #6426db);
-  box-shadow: 0 0 39px rgba(110, 40, 243, 0.2), inset 0 1px 5px rgba(173, 133, 255, 0.15);
+  box-shadow: 0 0 39px rgba(110, 40, 243, 0.18), inset 0 1px 5px rgba(173, 133, 255, 0.11);
   white-space: nowrap;
   cursor: pointer;
-  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease, border-color 200ms ease;
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms ease;
 }
 
 .primary:hover {
-  transform: translateY(-2px);
-  border-color: rgba(192, 147, 245, 0.6);
-  box-shadow: 0 8px 45px rgba(110, 40, 243, 0.4), inset 0 1px 5px rgba(173, 133, 255, 0.28);
-}
-
-.primary:hover .arrow {
-  transform: translate(3px, -3px);
+  transform: translateY(-1px);
+  box-shadow: 0 0 45px rgba(110, 40, 243, 0.38), inset 0 1px 5px rgba(173, 133, 255, 0.25);
 }
 
 .arrow {
-  display: inline-block;
   margin-left: 10px;
   font-size: 22px;
-  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .secondary {
-  position: relative;
   display: inline-flex;
   align-items: center;
   padding: 11px 0 12px;
   background: none;
   color: #cddbf3;
   border: 0;
+  border-bottom: 1px solid #9670c8;
   font-family: Arial, sans-serif;
   font-size: 17px;
   letter-spacing: 0.55px;
   text-decoration: none;
   cursor: pointer;
-  transition: color 180ms ease;
-}
-
-.secondary::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 8px;
-  width: 100%;
-  height: 1px;
-  background: #9670c8;
-  transform-origin: left;
-  transition: background-color 180ms ease, transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 150ms ease, border-color 150ms ease;
 }
 
 .secondary:hover {
   color: white;
-}
-
-.secondary:hover::after {
-  background: #c093f5;
-  transform: scaleX(1.04);
-}
-
-.secondary:hover .arrow {
-  transform: translate(3px, -3px);
+  border-color: #c093f5;
 }
 
 .secondary .arrow {
@@ -293,12 +236,14 @@
   letter-spacing: 0.06px;
 }
 
+/* Atmosphere & Waves */
 .waves {
   position: absolute;
   inset: 0;
   width: 1672px;
   height: 941px;
   pointer-events: none;
+  z-index: 2;
 }
 
 .glow {
@@ -314,33 +259,18 @@
   pointer-events: none;
 }
 
+/* 3D Computer Workstation */
 .computer {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 3;
-  transform-origin: 1080px 530px;
-  --comp-scale: 0.74;
-  --comp-tx: -100px;
-  --comp-ty: -18px;
-  transform: translate(var(--comp-tx), var(--comp-ty)) scale(var(--comp-scale));
-  transition: transform 180ms ease-out;
 }
 
-@media (max-width: 1440px), (max-height: 850px) {
-  .computer {
-    --comp-scale: 0.69;
-    --comp-tx: -115px;
-    --comp-ty: -12px;
-  }
-}
-
-@media (max-width: 1200px), (max-height: 740px) {
-  .computer {
-    --comp-scale: 0.63;
-    --comp-tx: -130px;
-    --comp-ty: -6px;
-  }
+.laptopMotionStage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .lid {
@@ -500,22 +430,23 @@
   background: linear-gradient(100deg, rgba(34, 38, 55, 0.27), rgba(51, 48, 68, 0.2));
 }
 
-/* Mobile responsive */
+/* ==========================================================================
+   MOBILE RESPONSIVE ADAPTATION (<= 800px)
+   Recomposed cleanly: headline -> body -> CTA -> product visual -> disclaimer
+   No horizontal overflow, no extreme matrix distortion.
+   ========================================================================== */
 @media (max-width: 800px) {
   .viewport {
     height: auto;
     min-height: 100vh;
-    padding-bottom: 60px;
+    padding-bottom: 50px;
   }
 
   .scene {
     position: relative;
-    left: auto;
-    top: auto;
-    margin: 0;
     width: 100%;
     height: auto;
-    min-height: 980px;
+    min-height: 100vh;
     transform: none !important;
   }
 
@@ -556,33 +487,34 @@
     position: relative;
     left: 0;
     top: 0;
-    margin: 36px 20px 0;
+    margin: 32px 20px 0;
     width: auto;
   }
 
   .eyebrow {
     font-size: 11px;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
+    letter-spacing: 1.2px;
+    margin-bottom: 18px;
   }
 
   .heroCopy h1 {
-    font-size: clamp(52px, 12vw, 84px);
-    letter-spacing: -3px;
+    font-size: clamp(48px, 12vw, 84px);
+    letter-spacing: -2.5px;
     line-height: 0.94;
   }
 
   .heroCopy h1 em {
-    font-size: clamp(54px, 12.3vw, 88px);
-    letter-spacing: -3px;
+    font-size: clamp(52px, 12.3vw, 88px);
+    letter-spacing: -2.5px;
     line-height: 0.94;
+    padding-right: 6px;
   }
 
   .description {
     font-size: 17px;
     line-height: 27px;
     width: auto;
-    margin: 24px 0 28px;
+    margin: 22px 0 28px;
   }
 
   .actions {
@@ -610,11 +542,17 @@
 
   .computer {
     position: relative;
-    top: 36px;
+    top: 32px;
     left: 0;
     width: 100%;
-    height: 380px;
+    height: 320px;
     overflow: hidden;
+  }
+
+  .laptopMotionStage {
+    position: relative;
+    width: 100%;
+    height: 100%;
   }
 
   .lid {
@@ -624,6 +562,7 @@
     transform: none;
     padding: 10px;
     border-radius: 12px;
+    border-color: rgba(75, 66, 101, 0.6);
   }
 
   .terminal {
@@ -642,6 +581,7 @@
   }
 
   .glow {
-    top: 600px;
+    top: 500px;
+    width: 400px;
   }
 }

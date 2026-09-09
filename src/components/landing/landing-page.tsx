@@ -30,7 +30,7 @@ export function LandingPage() {
     <main className={`${styles.page} publicScope`} id="main">
       <a className={styles.skipLink} href="#overview">Skip to content</a>
 
-      {/* 01 HERO VIEWPORT: Exact 1672x941 projective laptop, particle waves, and orchestrated entrance */}
+      {/* 01 HERO VIEWPORT: Responsive 2-column architecture, 3D laptop stage, live undulating particle wave, and cinematic entrance */}
       <HeroScene />
 
       <div className={styles.content}>

@@ -6,9 +6,8 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 export const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 export function useIsReducedMotion(): boolean {
-  // Always return false to force the cinematic animation experience
-  // even if the user's OS has disabled animations.
-  return false;
+  const prefersReduced = useReducedMotion();
+  return prefersReduced ?? false;
 }
 
 /**
@@ -55,36 +54,28 @@ export function MaskedHeading({
         }
 
         return (
-          <span
+          <motion.span
             key={idx}
-            style={{
-              display: "block",
-              overflow: "hidden",
-              paddingBottom: "0.08em",
+            style={{ display: "block" }}
+            initial={{ opacity: 0, y: 14 }}
+            {...(triggerOnMount
+              ? { animate: { opacity: 1, y: 0 } }
+              : {
+                  whileInView: { opacity: 1, y: 0 },
+                  viewport: { once: true, margin: "100px 0px" },
+                })}
+            transition={{
+              duration: 0.75,
+              ease: EASE_OUT_EXPO,
+              delay: lineDelay,
             }}
           >
-            <motion.span
-              style={{ display: "block" }}
-              initial={{ y: "110%", opacity: 0 }}
-              {...(triggerOnMount
-                ? { animate: { y: "0%", opacity: 1 } }
-                : {
-                    whileInView: { y: "0%", opacity: 1 },
-                    viewport: { once: true, amount: 0.1 },
-                  })}
-              transition={{
-                duration: 0.85,
-                ease: EASE_OUT_EXPO,
-                delay: lineDelay,
-              }}
-            >
-              {line.italic ? (
-                <em className={line.className}>{line.text}</em>
-              ) : (
-                <span className={line.className}>{line.text}</span>
-              )}
-            </motion.span>
-          </span>
+            {line.italic ? (
+              <em className={line.className}>{line.text}</em>
+            ) : (
+              <span className={line.className}>{line.text}</span>
+            )}
+          </motion.span>
         );
       })}
     </Tag>
@@ -125,7 +116,7 @@ export function FadeInView({
         ? { animate: { opacity: 1, y: 0 } }
         : {
             whileInView: { opacity: 1, y: 0 },
-            viewport: { once: true, amount: 0.1 },
+            viewport: { once: true, margin: "120px 0px" },
           })}
       transition={{
         duration,
@@ -160,7 +151,7 @@ export function ScaleReveal({ children, className, delay = 0 }: ScaleRevealProps
       className={className}
       initial={{ opacity: 0, scale: 0.97, y: 22 }}
       whileInView={{ opacity: 1, scale: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
+      viewport={{ once: true, margin: "120px 0px" }}
       transition={{
         duration: 0.8,
         ease: EASE_OUT_EXPO,
@@ -200,7 +191,7 @@ export function StaggerContainer({
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, amount: 0.1 }}
+      viewport={{ once: true, margin: "120px 0px" }}
       variants={{
         hidden: {},
         show: {
