@@ -59,15 +59,14 @@ export function QuoteManagerDialog({ open, onClose }: QuoteManagerDialogProps) {
   useEffect(() => {
     let active = true;
     if (open) {
-      setLoading(true);
       listCachedDatasets()
         .then((list) => {
-          if (active) setDatasets(list);
+          if (active) {
+            setDatasets(list);
+            setLoading(false);
+          }
         })
         .catch(() => {
-          // ignore cache error
-        })
-        .finally(() => {
           if (active) setLoading(false);
         });
     }

@@ -33,10 +33,10 @@ export function StrategyReportDialog() {
   const [tradeFilter, setTradeFilter] = useState<"all" | "long" | "short" | "win" | "loss">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const trades = lastResult?.trades;
+  const resultTrades = lastResult?.trades;
   const filteredTrades = useMemo(() => {
-    if (!trades) return [];
-    return trades.filter((t) => {
+    if (!resultTrades) return [];
+    return resultTrades.filter((t) => {
       if (tradeFilter === "long" && t.side !== "long") return false;
       if (tradeFilter === "short" && t.side !== "short") return false;
       if (tradeFilter === "win" && t.pnl <= 0) return false;
@@ -50,11 +50,11 @@ export function StrategyReportDialog() {
       }
       return true;
     });
-  }, [trades, tradeFilter, searchQuery]);
+  }, [resultTrades, tradeFilter, searchQuery]);
 
   if (!showReportDialog || !lastResult) return null;
 
-  const { config, metrics, equityCurve, monthlyReturns, slippageSensitivity, monteCarlo } =
+  const { config, metrics, trades, equityCurve, monthlyReturns, slippageSensitivity, monteCarlo } =
     lastResult;
 
   // Formatting helpers
