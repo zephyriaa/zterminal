@@ -23,9 +23,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "ZTerminal — Evidence-led market research",
+  title: "ZTerminal — Institutional Quantitative Trading Workstation",
   description:
-    "Quantitative market research and decision support for traders who want to test ideas, define risk, and keep control of the decision.",
+    "Institutional-grade quantitative workstation for systematic traders. Sub-second backtesting, real-time market structure, and disciplined risk execution with total strategy privacy.",
   keywords: [
     "Z Terminal",
     "quantitative trading",

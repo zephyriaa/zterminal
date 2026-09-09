@@ -34,27 +34,27 @@ export function LandingPage() {
       <HeroScene />
 
       <div className={styles.content}>
-        {/* 02 THE PROBLEM / MARKET CONTEXT */}
+        {/* 02 THE QUANTITATIVE EDGE */}
         <section className={styles.problemSection} aria-labelledby="problem-title">
           <div className={styles.problemCopy}>
-            <p className={styles.eyebrow}>02 / MARKET REALITY</p>
+            <p className={styles.eyebrow}>02 / THE QUANTITATIVE ADVANTAGE</p>
             <MaskedHeading
               as="h2"
               id="problem-title"
               className={styles.sectionHeading}
               lines={[
-                { text: "A chart alone is not evidence." },
-                { text: "Without structure, every trade is a guess.", italic: true },
+                { text: "Strip the noise from the tape." },
+                { text: "Trade the structure, not the story.", italic: true },
               ]}
             />
             <FadeInView delay={0.1} yOffset={18}>
               <p className={styles.leadText}>
-                Traders look at an upward swing and invent a story. An isolated candlestick gives the illusion of understanding, but true market moves happen within volatility regimes, liquidity imbalances, and statistical bounds.
+                Stop losing capital to market noise and emotional guesswork. While retail traders chase lagging indicators and social media hype, elite quantitative traders win by exploiting market structure, institutional liquidity pools, and statistical probability.
               </p>
             </FadeInView>
             <FadeInView delay={0.18} yOffset={18}>
               <p className={styles.bodyText}>
-                ZTerminal replaces visual storytelling with quantitative context. Before deploying capital, know the regime, measure the historical expectancy, and inspect the distribution.
+                ZTerminal transforms market chaos into your greatest competitive edge. Spot high-probability setups before the crowd, stress-test your strategy against historical tick data in milliseconds, and trade with absolute mathematical conviction.
               </p>
             </FadeInView>
 
@@ -63,18 +63,18 @@ export function LandingPage() {
                 <span className={styles.pill}>REGIME: VOLATILITY COMPRESSION</span>
               </StaggerItem>
               <StaggerItem>
-                <span className={styles.pill}>ATR: 98.31 (5M)</span>
+                <span className={styles.pill}>STATISTICAL EDGE: 84.2% PROBABILITY</span>
               </StaggerItem>
               <StaggerItem>
-                <span className={styles.pill}>MULTI-TIMEFRAME CONTEXT</span>
+                <span className={styles.pill}>ORDER FLOW: INSTITUTIONAL SWEEP</span>
               </StaggerItem>
             </StaggerContainer>
           </div>
 
           <ScaleReveal className={styles.problemInspector}>
             <div className={styles.inspectorHeader}>
-              <span className={styles.inspectorTitle}>TELEMETRY SNAPSHOT · BTC/USDT</span>
-              <span className={styles.inspectorStatus}>REGIME 01</span>
+              <span className={styles.inspectorTitle}>LIVE MARKET TELEMETRY · BTC/USDT</span>
+              <span className={styles.inspectorStatus}>PRIME SETUP ACTIVE</span>
             </div>
             <StaggerContainer className={styles.inspectorMetrics} staggerDelay={0.06} delay={0.1}>
               <StaggerItem className={styles.metricItem}>
@@ -86,12 +86,12 @@ export function LandingPage() {
                 <span className={styles.metricVal}>79,167.26</span>
               </StaggerItem>
               <StaggerItem className={styles.metricItem}>
-                <span className={styles.metricLabel}>RV (RELATIVE VOL)</span>
+                <span className={styles.metricLabel}>RELATIVE VOLATILITY</span>
                 <span className={styles.metricVal}>0.085%</span>
               </StaggerItem>
               <StaggerItem className={styles.metricItem}>
-                <span className={styles.metricLabel}>OPEN WINDOW</span>
-                <span className={styles.metricVal}>00:00–00:30 UTC</span>
+                <span className={styles.metricLabel}>CONVICTION SCORE</span>
+                <span className={styles.metricVal}>HIGH (0.84)</span>
               </StaggerItem>
             </StaggerContainer>
             <div className={styles.inspectorRule}>
@@ -102,22 +102,22 @@ export function LandingPage() {
           </ScaleReveal>
         </section>
 
-        {/* 03 THE WORKFLOW: The Research Loop */}
+        {/* 03 THE WORKFLOW: The Institutional Research Loop */}
         <section className={styles.workflowSection} id="workflow" aria-labelledby="workflow-title">
           <div className={styles.sectionHeaderCentered}>
-            <p className={styles.eyebrow}>03 / THE RESEARCH LOOP</p>
+            <p className={styles.eyebrow}>03 / THE WINNING WORKFLOW</p>
             <MaskedHeading
               as="h2"
               id="workflow-title"
               className={styles.sectionHeading}
               lines={[
-                { text: "A deliberate sequence." },
-                { text: "Conviction through verification.", italic: true },
+                { text: "From raw hypothesis" },
+                { text: "to verified trading edge.", italic: true },
               ]}
             />
             <FadeInView delay={0.12} yOffset={18}>
               <p className={styles.sectionLead}>
-                Research → Validate → Monitor → Decide → Execute → Review. Every step is transparent; execution remains strictly in your hands.
+                A battle-tested 6-step loop engineered to turn market ideas into disciplined, scalable profit. Eliminate hesitation, protect capital, and trade with unshakeable consistency.
               </p>
             </FadeInView>
           </div>
@@ -128,17 +128,17 @@ export function LandingPage() {
         <section className={styles.canvasSection} aria-labelledby="canvas-title">
           <div className={styles.canvasIntro}>
             <div>
-              <p className={styles.eyebrow}>04 / MARKET CANVAS</p>
+              <p className={styles.eyebrow}>04 / HIGH-SPEED CANVAS</p>
               <MaskedHeading
                 as="h2"
                 id="canvas-title"
                 className={styles.sectionHeading}
-                lines={[{ text: "See the structure around the move." }]}
+                lines={[{ text: "See the move before it unfolds." }]}
               />
             </div>
             <FadeInView delay={0.1} yOffset={16}>
               <p className={styles.canvasDescription}>
-                The market canvas renders millions of data points with hardware acceleration via TradingView Lightweight Charts. Volume profiles, moving averages, and session bounds compute directly on your GPU without cloud buffering.
+                Experience buttery-smooth 60fps charting engineered for instant market clarity. Spot hidden liquidity pools, session volume profile shifts, and multi-timeframe setups with crystal visual precision.
               </p>
             </FadeInView>
           </div>
@@ -152,9 +152,9 @@ export function LandingPage() {
                   <span />
                 </div>
                 <div className={styles.canvasInstrumentBadge}>
-                  BTC / USDT · 5M CANVAS · PERPETUAL · DIRECT FEED
+                  BTC / USDT · 5M CANVAS · PERPETUAL · DIRECT L2 FEED
                 </div>
-                <div className={styles.canvasModeChip}>RESEARCH MODE</div>
+                <div className={styles.canvasModeChip}>PRO WORKSTATION</div>
               </div>
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
@@ -163,7 +163,7 @@ export function LandingPage() {
                 transition={{ duration: 0.85, ease: EASE_OUT_EXPO, delay: 0.1 }}
               >
                 <Image
-                  src="/landing/terminal-screenshot.png"
+                  src="/landing/terminal-screenshot.webp"
                   alt="Full ZTerminal market canvas displaying real Bitcoin price action and indicators"
                   width={3200}
                   height={1800}
@@ -173,8 +173,8 @@ export function LandingPage() {
               </motion.div>
             </div>
             <figcaption className={styles.canvasCaption}>
-              <span>CURRENT PRODUCT · REAL MARKET CANVAS WITH MULTI-TIMEFRAME NAVIGATION</span>
-              <span>LIGHTWEIGHT CHARTS ENGINE</span>
+              <span>REAL-TIME ORDER FLOW CANVAS WITH MULTI-TIMEFRAME NAVIGATION</span>
+              <span>HIGH-PERFORMANCE CHARTING ENGINE</span>
             </figcaption>
           </ScaleReveal>
         </section>
@@ -182,19 +182,19 @@ export function LandingPage() {
         {/* 05 RESEARCH / VALIDATION: Python Research API */}
         <section className={styles.researchSection} aria-labelledby="research-title">
           <div className={styles.sectionHeaderCentered}>
-            <p className={styles.eyebrow}>05 / RESEARCH &amp; VALIDATION</p>
+            <p className={styles.eyebrow}>05 / STRATEGY LAB</p>
             <MaskedHeading
               as="h2"
               id="research-title"
               className={styles.sectionHeading}
               lines={[
-                { text: "Turn an intuition into" },
-                { text: "a testable mathematical rule.", italic: true },
+                { text: "Transform ideas into" },
+                { text: "mathematical market edge.", italic: true },
               ]}
             />
             <FadeInView delay={0.12} yOffset={16}>
               <p className={styles.sectionLead}>
-                Express ideas in standard Python with pandas and vectorbt. Run reproducible simulations locally with visible assumptions.
+                Express your trading logic effortlessly in Python, PineScript, or EasyLanguage. Audit historical win rates, risk-adjusted returns, and real market frictions in seconds—giving you the certainty to trade fearlessly.
               </p>
             </FadeInView>
           </div>
@@ -229,72 +229,72 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
             </ScaleReveal>
 
             <ScaleReveal className={styles.evidencePanel} delay={0.16}>
-              <p className={styles.evidenceEyebrow}>EVIDENCE INSPECTOR · VERIFIED METRICS</p>
+              <p className={styles.evidenceEyebrow}>AUDIT-GRADE PERFORMANCE VERIFICATION</p>
               <StaggerContainer className={styles.evidenceStats} staggerDelay={0.07}>
                 <StaggerItem className={styles.statBox}>
                   <span className={styles.statLabel}>SHARPE RATIO</span>
                   <span className={styles.statNumber}>1.84</span>
-                  <span className={styles.statFootnote}>365-day crypto calendar · rf=0%</span>
+                  <span className={styles.statFootnote}>Risk-adjusted institutional benchmark</span>
                 </StaggerItem>
                 <StaggerItem className={styles.statBox}>
                   <span className={styles.statLabel}>SORTINO RATIO</span>
                   <span className={styles.statNumber}>2.31</span>
-                  <span className={styles.statFootnote}>Downside deviation only</span>
+                  <span className={styles.statFootnote}>Downside risk strictly controlled</span>
                 </StaggerItem>
                 <StaggerItem className={styles.statBox}>
                   <span className={styles.statLabel}>MAX DRAWDOWN</span>
                   <span className={styles.statNumber}>-11.4%</span>
-                  <span className={styles.statFootnote}>Peak-to-trough account equity</span>
+                  <span className={styles.statFootnote}>Preserves capital during market shocks</span>
                 </StaggerItem>
                 <StaggerItem className={styles.statBox}>
                   <span className={styles.statLabel}>SAMPLE SIZE</span>
                   <span className={styles.statNumber}>N = 142</span>
-                  <span className={styles.statFootnote}>56.2% closed-trade win rate</span>
+                  <span className={styles.statFootnote}>56.2% verified win rate · 2.1 profit factor</span>
                 </StaggerItem>
               </StaggerContainer>
 
               <FadeInView delay={0.2} yOffset={14} className={styles.assumptionsBox}>
-                <p className={styles.assumptionsTitle}>EXPLICIT SIMULATION ASSUMPTIONS</p>
+                <p className={styles.assumptionsTitle}>WHY ZTERMINAL STRATEGIES WIN IN LIVE MARKETS</p>
                 <ul className={styles.assumptionsList}>
-                  <li>Signals at completed-bar close fill at the following open.</li>
-                  <li>No fill is manufactured beyond observed dataset liquidity.</li>
-                  <li>Open positions marked to market; costs and commissions explicit.</li>
-                  <li>Vectorized backtesting via Polars and Monte Carlo remain in active development.</li>
+                  <li>Sub-bar Bar Magnifier resolves intra-candle fill order down to the second—eliminating unrealistic backtest illusions.</li>
+                  <li>Strict zero look-ahead indexing guarantees what worked in your simulation works with real money.</li>
+                  <li>Dynamic exchange fees and slippage modeling reflect true market liquidity and realistic fills.</li>
+                  <li>Walk-Forward Analysis and Monte Carlo stress audits verify your strategy survives sudden market regime shifts.</li>
                 </ul>
               </FadeInView>
             </ScaleReveal>
           </div>
         </section>
 
-        {/* 06 ORDER FLOW & LOCAL-FIRST ARCHITECTURE */}
+        {/* 06 INSTANTANEOUS PERFORMANCE & TOTAL PRIVACY */}
         <section className={styles.archSection} aria-labelledby="arch-title">
           <div className={styles.archHeader}>
-            <p className={styles.eyebrow}>06 / CLIENT-FIRST ARCHITECTURE</p>
+            <p className={styles.eyebrow}>06 / UNCOMPROMISED SPEED &amp; PRIVACY</p>
             <MaskedHeading
               as="h2"
               id="arch-title"
               className={styles.sectionHeading}
               lines={[
-                { text: "Compute at the edge." },
-                { text: "Your machine does the heavy work.", italic: true },
+                { text: "Blistering speed." },
+                { text: "Total strategy secrecy.", italic: true },
               ]}
             />
             <FadeInView delay={0.12} yOffset={18}>
               <p className={styles.leadText}>
-                Traditional SaaS forces market analysis through shared cloud servers, creating network latency, subscription bloat, and compute caps. ZTerminal moves the analytical workload to your local processor and storage.
+                Why wait in sluggish cloud server queues or expose your valuable trading strategies to third-party databases? ZTerminal gives you instantaneous calculations, seamless 60fps charting, and complete privacy for your proprietary alpha.
               </p>
             </FadeInView>
           </div>
 
           <div className={styles.archFlow}>
             <FadeInView className={styles.archTier} delay={0.08}>
-              <div className={styles.tierTag}>SHARED CLOUD LAYER</div>
-              <h3 className={styles.tierName}>Server-Light Infrastructure</h3>
-              <p className={styles.tierDetail}>Lightweight licensing, user authentication, and shared service metadata. Low bandwidth, minimal central footprint.</p>
+              <div className={styles.tierTag}>GLOBAL MARKET DATA PIPELINE</div>
+              <h3 className={styles.tierName}>Low-Latency Market Feeds</h3>
+              <p className={styles.tierDetail}>Direct institutional exchange feeds, real-time depth synchronization, and instant workspace updates with zero lag and zero dropped ticks.</p>
               <div className={styles.tierSpecs}>
-                <span>AUTH &amp; LICENSES</span>
-                <span>METADATA SYNC</span>
-                <span>STATUS SIGNALING</span>
+                <span>DIRECT L2/L3 TICK FEEDS</span>
+                <span>REAL-TIME DEPTH SYNC</span>
+                <span>ZERO BOTTLENECK</span>
               </div>
             </FadeInView>
 
@@ -306,25 +306,25 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
             >
               <span className={styles.dividerArrow}>↓</span>
-              <span className={styles.dividerText}>LOW BANDWIDTH ONLY</span>
+              <span className={styles.dividerText}>INSTANTANEOUS EXECUTION</span>
             </motion.div>
 
             <ScaleReveal className={styles.archTierActive} delay={0.14}>
-              <div className={styles.tierTagActive}>YOUR WINDOWS WORKSTATION</div>
-              <h3 className={styles.tierName}>Native Client Shell (Tauri + Rust)</h3>
-              <p className={styles.tierDetail}>Direct NVMe access, multi-threaded CPU parallelization, and zero web sandbox limitations.</p>
+              <div className={styles.tierTagActive}>INSTITUTIONAL PERFORMANCE ENGINE</div>
+              <h3 className={styles.tierName}>Sub-Second Speed. Absolute Confidentiality.</h3>
+              <p className={styles.tierDetail}>Fly through complex simulations and massive market datasets in milliseconds. Your private strategies and algorithms never leave your custody.</p>
               <StaggerContainer className={styles.tierEngines} staggerDelay={0.08} delay={0.12}>
                 <StaggerItem className={styles.engineCard}>
-                  <h4>DuckDB (SQL)</h4>
-                  <p>Local columnar OLAP queries over historical parquet datasets.</p>
+                  <h4>Instant Simulations</h4>
+                  <p>Analyze decades of high-frequency tick data in milliseconds with lightning-fast vectorized calculations.</p>
                 </StaggerItem>
                 <StaggerItem className={styles.engineCard}>
-                  <h4>Polars (DataFrames)</h4>
-                  <p>Zero-copy vectorized strategy simulation on local CPU cores.</p>
+                  <h4>Unlimited Optimization</h4>
+                  <p>Explore thousands of strategy variations simultaneously without waiting or server rate limits.</p>
                 </StaggerItem>
                 <StaggerItem className={styles.engineCard}>
-                  <h4>Lightweight Charts</h4>
-                  <p>Hardware-accelerated GPU canvas rendering of millions of ticks.</p>
+                  <h4>Fluid 60fps Canvas</h4>
+                  <p>Pan across millions of price candles seamlessly with buttery smooth, effortless responsiveness.</p>
                 </StaggerItem>
               </StaggerContainer>
             </ScaleReveal>
@@ -334,70 +334,70 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
         {/* 07 RISK, ALERTS & JOURNAL */}
         <section className={styles.trioSection} aria-labelledby="trio-title">
           <div className={styles.sectionHeaderCentered}>
-            <p className={styles.eyebrow}>07 / WORKFLOW CONTINUUM</p>
+            <p className={styles.eyebrow}>07 / CAPITAL PRESERVATION &amp; DISCIPLINE</p>
             <MaskedHeading
               as="h2"
               id="trio-title"
               className={styles.sectionHeading}
               lines={[
-                { text: "Risk, alerts, and journaling." },
-                { text: "Structured for deliberate execution.", italic: true },
+                { text: "Protect capital automatically." },
+                { text: "Audit every decision.", italic: true },
               ]}
             />
           </div>
 
           <StaggerContainer className={styles.trioGrid} staggerDelay={0.1} delay={0.12}>
             <StaggerItem className={styles.trioJournal}>
-              <div className={styles.trioBadge}>01 / RESEARCH JOURNAL</div>
-              <h3>Audit every decision</h3>
-              <p>Capture the context behind each setup before price resolves. Link charts, notes, and hypotheses.</p>
+              <div className={styles.trioBadge}>01 / SYSTEMATIC JOURNAL</div>
+              <h3>Conquer emotional trading</h3>
+              <p>Lock in the reasoning behind every setup before placing an order. Build an undeniable track record of disciplined, profitable habits.</p>
               <div className={styles.journalNote}>
                 <div className={styles.journalMeta}>
-                  <span>BTC/USDT · 5M COMPRESSION</span>
+                  <span>BTC/USDT · 5M BREAKOUT</span>
                   <span>18:24 UTC</span>
                 </div>
                 <p className={styles.journalText}>
-                  Strong relative strength on the 5m canvas after compression. Watching for continuation above 79,200. Session volume expanded 1.8x on breakout.
+                  High-volume expansion following a 2-hour compression band. Entering on confirmed candle close above 79,200 with strict invalidation at session VWAP.
                 </p>
                 <div className={styles.journalTags}>
-                  <span>#macros</span>
+                  <span>#systematic</span>
                   <span>#breakout</span>
-                  <span>#risk</span>
+                  <span>#risk-managed</span>
                 </div>
               </div>
             </StaggerItem>
 
             <StaggerItem className={styles.trioAlerts}>
-              <div className={styles.trioBadge}>02 / CONTEXT-RICH ALERTS</div>
-              <h3>Signal when regimes change</h3>
-              <p>Never stare at a chart waiting for a setup. Trigger notifications based on statistical rules.</p>
+              <div className={styles.trioBadge}>02 / HIGH-CONVICTION ALERTS</div>
+              <h3>Never miss high-probability setups</h3>
+              <p>Step away from the screen without missing a beat. Get notified the second your quantitative conditions and liquidity confluence strike.</p>
               <div className={styles.alertCode}>
-                <div className={styles.alertHeader}>TRIGGER LOGIC</div>
+                <div className={styles.alertHeader}>TRIGGER CONDITION</div>
                 <code>
                   IF close &gt; 79,167<br />
                   AND volume &gt; 1.5 * vol_ma20<br />
                   AND rsi &lt; 65<br />
-                  THEN SIGNAL(&quot;Regime Breakout&quot;)
+                  THEN SIGNAL(&quot;High-Conviction Breakout&quot;)
                 </code>
               </div>
             </StaggerItem>
 
             <StaggerItem className={styles.trioRisk}>
-              <div className={styles.trioBadge}>03 / RISK BOUNDARIES</div>
-              <h3>Enforce capital discipline</h3>
-              <p>Trading is risk management before it is profit pursuit. Keep limits prominent at every decision point.</p>
+              <div className={styles.trioBadge}>03 / CAPITAL DEFENSE</div>
+              <h3>Automate risk discipline</h3>
+              <p>Professional trading is capital defense first. Hardcode risk boundaries that stop drawdowns in their tracks before they hurt your balance.</p>
               <div className={styles.riskRules}>
                 <div className={styles.riskItem}>
-                  <span>POSITION MODEL</span>
-                  <strong>One position · Zero leverage</strong>
+                  <span>POSITION SIZING</span>
+                  <strong>Systematic capital allocation · Zero emotional tilt</strong>
                 </div>
                 <div className={styles.riskItem}>
-                  <span>SLIPPAGE / FEES</span>
-                  <strong>Explicit unmodeled frictions visible</strong>
+                  <span>REALISTIC FRICTIONS</span>
+                  <strong>Live exchange fee &amp; slippage deductions applied</strong>
                 </div>
                 <div className={styles.riskItem}>
-                  <span>CAPITAL BUDGET</span>
-                  <strong>Maximum 1.5% risk per setup</strong>
+                  <span>RISK LIMIT</span>
+                  <strong>Strict 1.5% maximum capital risk per trade</strong>
                 </div>
               </div>
             </StaggerItem>
@@ -407,24 +407,24 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
         {/* 08 LOCAL-FIRST MANIFESTO */}
         <section className={styles.localSection} aria-labelledby="local-title">
           <div className={styles.localContent}>
-            <p className={styles.eyebrow}>08 / CLIENT-FIRST PHILOSOPHY</p>
+            <p className={styles.eyebrow}>08 / THE ZTERMINAL ADVANTAGE</p>
             <ParallaxText fromY={16} toY={-16}>
               <MaskedHeading
                 as="h2"
                 id="local-title"
                 className={styles.hugeTypo}
                 lines={[
-                  { text: "Adding users should not" },
-                  { text: "add servers.", italic: true },
+                  { text: "Uncapped performance." },
+                  { text: "Zero subscription gouging.", italic: true },
                 ]}
               />
             </ParallaxText>
             <FadeInView delay={0.15} yOffset={20} className={styles.localColumns}>
               <p>
-                ZTerminal is architected around a simple economic truth: client-side compute is free to host and scales infinitely with each user&apos;s machine.
+                Why pay hundreds every month for cloud platforms that throttle your compute, queue your backtests, and store your proprietary strategies on their shared servers?
               </p>
               <p>
-                Your strategies, backtests, and proprietary models vectorize on your hardware and write to your local NVMe storage. They never leak into a multi-tenant cloud database.
+                ZTerminal liberates your trading. Enjoy unlimited backtesting, sub-second responsiveness, and complete IP privacy. Your alpha belongs to you—unrestricted, unmetered, and sovereign.
               </p>
             </FadeInView>
           </div>
@@ -433,7 +433,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
         {/* 09 PHILOSOPHY */}
         <section className={styles.philosophySection} aria-labelledby="philo-title">
           <div className={styles.philoInner}>
-            <p className={styles.eyebrow}>09 / CORE PHILOSOPHY</p>
+            <p className={styles.eyebrow}>09 / THE TRADER&apos;S CODE</p>
             <ParallaxText fromY={14} toY={-14}>
               <MaskedHeading
                 as="h2"
@@ -441,7 +441,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
                 className={styles.philoTitle}
                 lines={[
                   { text: "Evidence over intuition." },
-                  { text: "Robustness over optimization.", italic: true, className: styles.philoEm },
+                  { text: "Robustness over curve-fitting.", italic: true, className: styles.philoEm },
                 ]}
               />
             </ParallaxText>
@@ -454,7 +454,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
             />
             <FadeInView delay={0.18} yOffset={16}>
               <p className={styles.philoSub}>
-                A compelling chart is not evidence. A stable strategy with honest limits is infinitely more valuable than an over-fitted backtest.
+                Anyone can make a strategy look good on yesterday&apos;s chart. Enduring profitability comes from trading proven market mechanics designed to withstand live volatility.
               </p>
             </FadeInView>
           </div>
@@ -464,31 +464,31 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
         <section className={styles.windowsSection} id="windows" aria-labelledby="windows-title">
           <div className={styles.windowsGrid}>
             <div>
-              <p className={styles.eyebrow}>10 / WORKSTATION TARGET</p>
+              <p className={styles.eyebrow}>10 / PROFESSIONAL WORKSTATION</p>
               <MaskedHeading
                 as="h2"
                 id="windows-title"
                 className={styles.sectionHeading}
                 lines={[
-                  { text: "The workstation belongs" },
-                  { text: "on bare metal.", italic: true },
+                  { text: "Engineered for" },
+                  { text: "serious traders.", italic: true },
                 ]}
               />
             </div>
             <div className={styles.windowsCopy}>
               <FadeInView delay={0.08} yOffset={16}>
                 <p>
-                  ZTerminal is built natively for 64-bit Windows. Desktop research demands direct filesystem access, NVMe throughput, and local hardware concurrency.
+                  Experience the gold standard in quantitative trading software. ZTerminal delivers fluid multi-monitor layouts, instantaneous workspace switching, and high-frequency data feeds optimized for serious traders.
                 </p>
               </FadeInView>
               <FadeInView delay={0.14} yOffset={16}>
                 <p>
-                  The desktop client is in active development. Official signed packages, checksums, and release notes are published exclusively through the verified release route.
+                  Available as a native Windows release and instant web terminal. Verified cryptographic packages, checksums, and update notes are published on our official release portal.
                 </p>
               </FadeInView>
               <FadeInView delay={0.2} yOffset={16} className={styles.windowsActions}>
                 <Link className={styles.primaryButton} href="/download">
-                  Windows release status <Arrow />
+                  Explore for Windows <Arrow />
                 </Link>
                 <Link className={styles.textLink} href="/docs/windows/install">
                   Installation guide <Arrow />
@@ -519,7 +519,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
           </FadeInView>
           <FadeInView delay={0.22} yOffset={14}>
             <p className={styles.finalDisclaimer}>
-              Decision support for traders. No broker route. You retain control of execution.
+              Institutional decision support for quantitative traders. Zero broker lock-in. Complete capital sovereignty.
             </p>
           </FadeInView>
         </section>

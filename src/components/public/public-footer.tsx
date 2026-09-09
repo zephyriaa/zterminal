@@ -17,8 +17,8 @@ export function PublicFooter() {
         </div>
       </div>
       <div className={styles.footerBottom}>
-        <p>Quantitative market research and decision support workstation. Client-first architecture.</p>
-        <p className={styles.disclaimer}>Decision support for traders. No broker route. You retain control of execution.</p>
+        <p>Institutional-grade quantitative workstation for systematic traders.</p>
+        <p className={styles.disclaimer}>Decision support software. Zero broker lock-in. You retain 100% control of execution.</p>
       </div>
     </footer>
   );
