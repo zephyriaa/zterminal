@@ -8,7 +8,7 @@ test("chart documents isolate provider and instrument identity", () => {
   const first = createChartDocument({ instrument: btc, timeframe: "5m", now: 1 });
   const second = createChartDocument({ instrument: { ...btc, nativeSymbol: "ETHUSDT" }, timeframe: "5m", now: 1 });
   assert.notEqual(first.id, second.id);
-  assert.equal(first.schemaVersion, 2);
+  assert.equal(first.schemaVersion, 3);
 });
 
 test("chart settings migration clamps unsafe persisted values", () => {

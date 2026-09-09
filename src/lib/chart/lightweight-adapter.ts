@@ -5,8 +5,11 @@ import {
   type ChartOptions,
   type DeepPartial,
   type IChartApi,
+  type ISeriesApi,
+  type Time,
 } from "lightweight-charts";
 import type { ChartSettingsV2 } from "./contracts";
+import type { DrawingAnchor } from "./contracts";
 
 function scaleMode(settings: ChartSettingsV2) {
   if (settings.scaleMode === "logarithmic") return PriceScaleMode.Logarithmic;
@@ -58,4 +61,17 @@ export function applyVolumePaneLayout(chart: IChartApi, volumeHeight: number) {
   const boundedHeight = Math.min(0.5, Math.max(0.12, volumeHeight));
   panes[0].setStretchFactor(Math.max(0.5, 1 - boundedHeight));
   panes[1].setStretchFactor(boundedHeight);
+}
+
+export function coordinateToDrawingAnchor(chart: IChartApi, series: ISeriesApi<any>, point: { x: number; y: number }): DrawingAnchor | null {
+  const time = chart.timeScale().coordinateToTime(point.x) as Time | null;
+  const price = series.coordinateToPrice(point.y);
+  if (typeof time !== "number" || price == null || !Number.isFinite(price)) return null;
+  return { time: time * 1000, price };
+}
+
+export function drawingAnchorToCoordinate(chart: IChartApi, series: ISeriesApi<any>, anchor: DrawingAnchor) {
+  const x = chart.timeScale().timeToCoordinate((anchor.time / 1000) as Time);
+  const y = series.priceToCoordinate(anchor.price);
+  return x == null || y == null ? null : { x, y };
 }
