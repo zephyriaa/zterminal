@@ -33,17 +33,9 @@ export function StrategyReportDialog() {
   const [tradeFilter, setTradeFilter] = useState<"all" | "long" | "short" | "win" | "loss">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  if (!showReportDialog || !lastResult) return null;
-
-  const { config, metrics, trades, equityCurve, monthlyReturns, slippageSensitivity, monteCarlo } =
-    lastResult;
-
-  // Formatting helpers
-  const fmtMoney = (n: number) =>
-    (n >= 0 ? "+$" : "-$") + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fmtPct = (n: number) => (n >= 0 ? "+" : "") + (n * 100).toFixed(1) + "%";
-
+  const trades = lastResult?.trades;
   const filteredTrades = useMemo(() => {
+    if (!trades) return [];
     return trades.filter((t) => {
       if (tradeFilter === "long" && t.side !== "long") return false;
       if (tradeFilter === "short" && t.side !== "short") return false;
@@ -59,6 +51,16 @@ export function StrategyReportDialog() {
       return true;
     });
   }, [trades, tradeFilter, searchQuery]);
+
+  if (!showReportDialog || !lastResult) return null;
+
+  const { config, metrics, equityCurve, monthlyReturns, slippageSensitivity, monteCarlo } =
+    lastResult;
+
+  // Formatting helpers
+  const fmtMoney = (n: number) =>
+    (n >= 0 ? "+$" : "-$") + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtPct = (n: number) => (n >= 0 ? "+" : "") + (n * 100).toFixed(1) + "%";
 
   // Export handlers
   const exportCsv = () => {
