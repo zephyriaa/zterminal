@@ -464,6 +464,8 @@
   background:
     radial-gradient(ellipse at 12% 50%, rgba(35, 23, 85, 0.2), transparent 45%),
     var(--public-bg);
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
 }
 
 .archHeader {
@@ -598,6 +600,8 @@
 .trioSection {
   padding: clamp(90px, 12vw, 160px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
 }
 
 .trioGrid {
@@ -846,6 +850,8 @@
 .windowsSection {
   padding: clamp(90px, 12vw, 150px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
 }
 
 .windowsGrid {

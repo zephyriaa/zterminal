@@ -74,7 +74,7 @@ export function ParticleWave({
     particlesRef.current = particles;
   }, []);
 
-  // Animation loop with restrained phase drift and pointer interaction
+  // Animation loop with restrained phase drift, opening energy pulse, and IntersectionObserver pausing
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -82,23 +82,63 @@ export function ParticleWave({
     if (!ctx) return;
 
     let time = 0;
-    let isVisible = true;
+    let isDocumentVisible = !document.hidden;
+    let isIntersecting = true;
+    let isRunning = true;
+    const mountTime = performance.now();
 
     function handleVisibility() {
-      isVisible = !document.hidden;
+      isDocumentVisible = !document.hidden;
+      if (isDocumentVisible && isIntersecting && !isRunning) {
+        isRunning = true;
+        animFrameIdRef.current = requestAnimationFrame(render);
+      }
     }
     document.addEventListener("visibilitychange", handleVisibility);
 
+    // Pause rendering when offscreen to achieve 0% idle CPU utilization
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        isIntersecting = entry.isIntersecting;
+        if (isIntersecting && isDocumentVisible && !isRunning) {
+          isRunning = true;
+          animFrameIdRef.current = requestAnimationFrame(render);
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(canvas);
+
     function render() {
-      if (!isVisible || !ctx || !canvas) {
-        animFrameIdRef.current = requestAnimationFrame(render);
+      if (!isDocumentVisible || !isIntersecting || !ctx || !canvas) {
+        isRunning = false;
         return;
       }
 
       ctx.clearRect(0, 0, 1672, 941);
 
+      const now = performance.now();
+      const elapsedSec = (now - mountTime) / 1000;
+
       if (!reduced) {
         time += 0.008;
+      }
+
+      // Opening horizon pulse sweep (0.4s to 1.8s)
+      const pulseDuration = 1.4;
+      const pulseStart = 0.4;
+      let pulseActive = false;
+      let pulseSweepX = -500;
+      let pulseIntensity = 0;
+
+      if (!reduced && elapsedSec >= pulseStart && elapsedSec <= pulseStart + pulseDuration) {
+        pulseActive = true;
+        const norm = (elapsedSec - pulseStart) / pulseDuration;
+        // Smooth sine ease
+        const ease = Math.sin((norm * Math.PI) / 2);
+        pulseSweepX = ease * 2000;
+        pulseIntensity = Math.sin(norm * Math.PI); // peaks at mid-pulse
       }
 
       const particles = particlesRef.current;
@@ -110,6 +150,8 @@ export function ParticleWave({
         // Restrained phase drift (under 3px total displacement)
         let dy = 0;
         let dx = 0;
+        let alphaBoost = 0;
+        let radiusScale = 1;
 
         if (!reduced) {
           const wavePhase = p.baseX / 210 + time;
@@ -121,14 +163,27 @@ export function ParticleWave({
           const mouseDistX = (mouseNormalizedX || 0) * 8 * (1 - p.row / 47);
           dy += mouseDistY;
           dx += mouseDistX;
+
+          // Horizon pulse boost
+          if (pulseActive) {
+            const distFromPulse = Math.abs(p.baseX - pulseSweepX);
+            if (distFromPulse < 280) {
+              const prox = (1 - distFromPulse / 280) * pulseIntensity;
+              alphaBoost = prox * 0.45;
+              radiusScale = 1 + prox * 0.35;
+              dy -= prox * 4 * (1 - p.row / 47);
+            }
+          }
         }
 
         const x = p.baseX + dx;
         const y = p.baseY + dy;
+        const finalAlpha = Math.min(1, p.alpha + alphaBoost);
+        const finalRadius = p.radius * radiusScale;
 
-        ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.alpha})`;
+        ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${finalAlpha})`;
         ctx.beginPath();
-        ctx.arc(x, y, p.radius, 0, Math.PI * 2);
+        ctx.arc(x, y, finalRadius, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -137,11 +192,13 @@ export function ParticleWave({
       }
     }
 
-    render();
+    isRunning = true;
+    animFrameIdRef.current = requestAnimationFrame(render);
 
     return () => {
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
       document.removeEventListener("visibilitychange", handleVisibility);
+      observer.disconnect();
     };
   }, [reduced, mouseNormalizedX, mouseNormalizedY]);
 

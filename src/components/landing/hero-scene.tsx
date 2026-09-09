@@ -141,23 +141,27 @@ export function HeroScene() {
             QUANTITATIVE MARKET RESEARCH
           </motion.span>
 
-          {/* Enormous Headline with Sans + Italic Serif accent */}
+          {/* Enormous Headline with Sans + Italic Serif accent & Line-Masked Reveals */}
           <h1 id="hero-title">
-            <motion.span
-              className={styles.first}
-              initial={reduced ? undefined : { opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.28, ease: EASE_OUT_EXPO }}
-            >
-              See more.
-            </motion.span>
-            <motion.em
-              initial={reduced ? undefined : { opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.42, ease: EASE_OUT_EXPO }}
-            >
-              Guess less.
-            </motion.em>
+            <span className={styles.lineMask}>
+              <motion.span
+                className={styles.first}
+                initial={reduced ? undefined : { y: "115%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.9, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
+              >
+                See more.
+              </motion.span>
+            </span>
+            <span className={styles.lineMask}>
+              <motion.em
+                initial={reduced ? undefined : { y: "115%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.95, delay: 0.48, ease: [0.16, 1, 0.3, 1] }}
+              >
+                Guess less.
+              </motion.em>
+            </span>
           </h1>
 
           {/* Restrained Supporting Copy */}
@@ -165,7 +169,7 @@ export function HeroScene() {
             className={styles.description}
             initial={reduced ? undefined : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.58, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.8, delay: 0.65, ease: EASE_OUT_EXPO }}
           >
             ZTerminal is a quantitative market research workstation for
             better-prepared, evidence-led decisions.
@@ -176,7 +180,7 @@ export function HeroScene() {
             className={styles.actions}
             initial={reduced ? undefined : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.72, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.75, delay: 0.8, ease: EASE_OUT_EXPO }}
           >
             <Link href="/download" className={styles.primary}>
               Explore for Windows <span className={styles.arrow}>↗</span>
@@ -191,7 +195,7 @@ export function HeroScene() {
             className={styles.disclaimer}
             initial={reduced ? undefined : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.84 }}
+            transition={{ duration: 0.6, delay: 0.92 }}
           >
             Decision support for traders. No broker route. User retains control of execution.
           </motion.p>
@@ -208,7 +212,7 @@ export function HeroScene() {
             className={styles.laptopMotionStage}
             initial={reduced ? undefined : { opacity: 0, y: 22, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 1.1, delay: 0.35, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 1.15, delay: 0.3, ease: EASE_OUT_EXPO }}
             style={
               !reduced && isDesktop
                 ? {
@@ -224,9 +228,14 @@ export function HeroScene() {
             <motion.div style={!reduced && isDesktop ? { y: laptopScrollY } : undefined}>
               {/* Laptop Screen Lid with Projective Homography */}
               <div className={styles.lid}>
-                <div className={styles.terminal}>
+                <motion.div
+                  className={styles.terminal}
+                  initial={reduced ? undefined : { opacity: 0.2, filter: "brightness(0.6) contrast(0.92)" }}
+                  animate={{ opacity: 1, filter: "brightness(1) contrast(1)" }}
+                  transition={{ duration: 1.0, delay: 0.45, ease: EASE_OUT_EXPO }}
+                >
                   <Image
-                    src="/landing/terminal-screenshot.png"
+                    src="/landing/terminal-screenshot.webp"
                     alt="Current ZTerminal research workspace with real candlestick chart and indicators"
                     width={3200}
                     height={1800}
@@ -234,8 +243,27 @@ export function HeroScene() {
                     className={styles.screenImage}
                     sizes="(max-width: 800px) 100vw, 1000px"
                   />
+                  {/* Subtle Violet Screen Wake Glow */}
+                  <motion.div
+                    className={styles.screenPowerGlow}
+                    aria-hidden="true"
+                    initial={reduced ? undefined : { opacity: 0 }}
+                    animate={{ opacity: [0, 0.65, 0.2] }}
+                    transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+                  />
+                  {/* Diagonal Specular Sheen Sweep */}
+                  {!reduced && (
+                    <motion.div
+                      className={styles.screenSheen}
+                      aria-hidden="true"
+                      initial={{ x: "-120%", opacity: 0 }}
+                      animate={{ x: "120%", opacity: [0, 1, 0.8, 0] }}
+                      transition={{ duration: 1.25, delay: 0.75, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                  )}
+                  {/* Static Ambient Glass Glare */}
                   <div className={styles.screenGlare} aria-hidden="true" />
-                </div>
+                </motion.div>
               </div>
 
               {/* Metallic Laptop Chassis Base SVG */}
