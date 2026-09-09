@@ -18,7 +18,18 @@ export interface Dataset {
 }
 export interface ScriptRecord {
   id: string; name: string; source: string; savedSource: string;
-  updatedAt: number; revision: number;
+  updatedAt: number; revision: number; kind?: "strategy" | "indicator"; description?: string;
+}
+export interface CodeArtifact extends ScriptRecord { kind: "strategy" | "indicator"; description: string; }
+export interface IndicatorEvaluationResult {
+  version: 1; kind: "indicator_evaluation"; id: string; createdAt: number;
+  artifact: { id: string; revision: number; name: string };
+  sourceHash: string; datasetHash: string; inputHash: string; resultHash: string;
+  params: Record<string, number | string | boolean>;
+  parameters: Record<string, { kind: "integer" | "number" | "boolean" | "string"; default: number | string | boolean; minimum: number | null; maximum: number | null }>;
+  outputs: Record<string, { plot: "line" | "histogram" | "area" | "marker" | "level" | "background"; points: { time: number; value: number }[] }>;
+  diagnostics: Diagnostic[]; logs: string[];
+  engine: { indicator: string; helper: string; python: string; sdk: string };
 }
 export interface ResearchTrade {
   id: string; side: "long" | "short"; entryTime: number; exitTime: number | null;
@@ -45,9 +56,10 @@ export interface ResearchResult {
   observations: string[]; logs: string[]; monteCarlo?: MonteCarloResult;
 }
 export interface ResearchJob {
-  id: string; stage: ResearchStage; diagnostic?: Diagnostic; resultId?: string;
+  id: string; stage: ResearchStage; diagnostic?: Diagnostic; resultId?: string; resultKind?: "strategy" | "indicator";
 }
 export interface RunRequest { name: string; source: string; config: ResearchConfig; dataset: Dataset; params: Record<string, number | string | boolean>; }
+export interface IndicatorEvaluationRequest extends RunRequest { operation: "indicator"; artifact: { id: string; kind: "indicator"; revision: number; name: string }; outputs: Record<string, { plot: IndicatorEvaluationResult["outputs"][string]["plot"] }> }
 
 export function defaultResearchConfig(now = Date.now()): ResearchConfig {
   const to = Math.floor(now / 3_600_000) * 3_600_000;

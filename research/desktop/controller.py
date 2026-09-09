@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -10,7 +11,7 @@ import time
 import uuid
 from collections import OrderedDict
 
-from archive import encode
+from archive import digest, encode
 from process_limits import JobLimits
 
 STAGES = {"validating", "loading_data", "running_strategy", "calculating_report", "saving_result"}
@@ -33,6 +34,16 @@ class Controller:
         captured = encode(request)
         if len(captured.encode()) > 32_000_000:
             raise ValueError("Request exceeds 32 MB")
+        if request.get("operation") == "indicator":
+            artifact, dataset = request.get("artifact", {}), request.get("dataset", {})
+            if isinstance(artifact.get("id"), str) and isinstance(artifact.get("revision"), int) and isinstance(dataset.get("hash"), str) and isinstance(request.get("source"), str):
+                source_hash = hashlib.sha256(request["source"].encode()).hexdigest()
+                input_hash = digest({"artifactId": artifact["id"], "revision": artifact["revision"], "sourceHash": source_hash, "params": request.get("params", {}), "datasetHash": dataset["hash"], "engine": "1.0.0"})
+                cached = self.archive.cached_indicator(input_hash)
+                if cached:
+                    job = {"id": str(uuid.uuid4()), "stage": "complete", "resultId": cached["id"], "resultKind": "indicator"}
+                    self.archive.save_job(job)
+                    return job
         # A completed result is committed before its process resources finish closing.
         # Absorb that short lifecycle edge so an immediate next Backtest stays one-action.
         deadline = time.monotonic() + 2
@@ -110,6 +121,8 @@ class Controller:
                 result_id = request["result"]["id"]
                 self.archive.save_monte_carlo(result_id, result)
                 self.archive.save_job({"id": job["id"], "stage": "complete", "resultId": result_id})
+            elif request.get("operation") == "indicator":
+                self.archive.save_indicator_evaluation(result, job["id"], request["dataset"])
             else:
                 self.archive.save_result(result, job["id"])
         except BaseException as error:

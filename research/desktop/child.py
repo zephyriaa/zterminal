@@ -22,6 +22,8 @@ def main():
         if request.get("operation") == "monte_carlo":
             import analytics
             result = analytics.monte_carlo(request["result"], request["simulations"], request["seed"])
+        elif request.get("operation") == "indicator":
+            result = engine.execute_indicator(request, lambda stage: atomic(folder / "status.json", {"stage": stage}))
         else:
             result = engine.execute(request, lambda stage: atomic(folder / "status.json", {"stage": stage}))
         atomic(folder / "result.json", result)
@@ -30,7 +32,7 @@ def main():
         # Syntax/name errors in strategy.py carry editor positions.
         import traceback
         details = {"message": f"{type(error).__name__}: {error}"}
-        frames = [f for f in traceback.extract_tb(error.__traceback__) if f.filename == "strategy.py"]
+        frames = [f for f in traceback.extract_tb(error.__traceback__) if f.filename in ("strategy.py", "indicator.py")]
         if isinstance(error, SyntaxError):
             details.update(line=error.lineno, column=error.offset)
         elif frames:

@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import http.client
 import json
 from pathlib import Path
@@ -9,7 +10,7 @@ import unittest
 import uuid
 from unittest.mock import patch
 
-from archive import Archive, encode
+from archive import Archive, digest, encode
 from controller import Controller
 from engine import execute
 from server import Service, Server
@@ -35,6 +36,21 @@ class ArchiveTests(unittest.TestCase):
         self.assertEqual(len(self.archive.revisions(a["id"])), 2)
         self.assertEqual(self.archive.scripts(), [])
         self.assertEqual(self.archive.save_script({**b, "source": "restored"})["revision"], 3)
+
+    def test_artifact_migration_revisions_and_indicator_evaluation_are_additive(self):
+        script = self.archive.save_script({"name": "Strategy", "source": "first"})
+        reopened = Archive(self.path)
+        migrated = {item["id"]: item for item in reopened.artifacts()}
+        self.assertEqual(migrated[script["id"]]["kind"], "strategy")
+        indicator = reopened.save_artifact({"kind": "indicator", "name": "EMA", "description": "Example", "source": "def calculate(data, params): pass", "metadata": {"outputs": ["ema"]}})
+        indicator = reopened.save_artifact({**indicator, "source": indicator["source"] + "\n"})
+        self.assertEqual(indicator["revision"], 2)
+        self.assertEqual(len(reopened.artifact_revisions(indicator["id"])), 2)
+        result = {"version": 1, "kind": "indicator_evaluation", "id": "evaluation", "createdAt": 1, "artifact": {"id": indicator["id"], "revision": 2, "name": "EMA"}, "sourceHash": hashlib.sha256(indicator["source"].encode()).hexdigest(), "datasetHash": "d" * 64, "inputHash": "i" * 64, "outputs": {"ema": {"plot": "line", "points": []}}, "diagnostics": [], "logs": [], "engine": {}}
+        result["resultHash"] = digest(result)
+        reopened.save_indicator_evaluation(result, "job")
+        self.assertEqual(reopened.indicator_evaluation("evaluation"), result)
+        self.assertEqual(reopened.get_job("job")["resultKind"], "indicator")
 
     def test_result_reopens_offline_export_roundtrip_and_exact_source(self):
         result = execute(fixture())
@@ -157,11 +173,27 @@ class ProcessTests(unittest.TestCase):
         self.assertEqual(status["stage"], "complete", status)
         self.assertEqual(self.archive.result(status["resultId"])["source"], expected)
 
+    def test_indicator_job_archives_revision_and_reuses_exact_cache_key(self):
+        source = "import zterminal as zt\ndef calculate(data, params):\n    return {'ema': zt.ema(data.close, 2)}\n"
+        artifact = self.archive.save_artifact({"kind": "indicator", "name": "EMA", "source": source})
+        request = fixture(source)
+        request.update(operation="indicator", artifact={"id": artifact["id"], "kind": "indicator", "revision": artifact["revision"], "name": artifact["name"]}, outputs={"ema": {"plot": "line"}})
+        first = self.controller.create(request)
+        first_status = self.wait(first)
+        self.assertEqual(first_status["stage"], "complete", first_status)
+        result = self.archive.indicator_evaluation(first_status["resultId"])
+        self.assertEqual(result["datasetHash"], request["dataset"]["hash"])
+        cached = self.controller.create(request)
+        self.assertEqual(cached["stage"], "complete")
+        self.assertEqual(cached["resultId"], result["id"])
+
     def test_completed_job_allows_immediate_next_run(self):
         first = self.controller.create(fixture())
-        self.assertEqual(self.wait(first)["stage"], "complete")
+        first_status = self.wait(first)
+        self.assertEqual(first_status["stage"], "complete", first_status)
         second = self.controller.create(fixture())
-        self.assertEqual(self.wait(second)["stage"], "complete")
+        second_status = self.wait(second)
+        self.assertEqual(second_status["stage"], "complete", second_status)
 
     def test_one_job_and_cancellation(self):
         request = fixture("while True:\n    pass")

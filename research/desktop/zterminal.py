@@ -12,6 +12,34 @@ class Strategy:
     short_exits: pd.Series | None = None
     plots: dict[str, pd.Series] = field(default_factory=dict)
 
+@dataclass
+class Indicator:
+    outputs: dict[str, pd.Series]
+
+@dataclass(frozen=True)
+class InputSpec:
+    kind: str
+    default: object
+    minimum: float | None = None
+    maximum: float | None = None
+
+class input:
+    @staticmethod
+    def integer(default, min=None, max=None):
+        return InputSpec("integer", default, min, max)
+
+    @staticmethod
+    def number(default, min=None, max=None):
+        return InputSpec("number", default, min, max)
+
+    @staticmethod
+    def boolean(default):
+        return InputSpec("boolean", default)
+
+    @staticmethod
+    def string(default):
+        return InputSpec("string", default)
+
 def sma(series, period=20):
     return series.rolling(_period(period), min_periods=period).mean()
 

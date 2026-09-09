@@ -1,4 +1,4 @@
-import { HELPER_URL, RESEARCH_PROTOCOL, type Dataset, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest } from "./contracts";
+import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest } from "./contracts";
 
 export class HelperError extends Error {
   constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "incompatible" | "request_failed") { super(message); }
@@ -40,11 +40,17 @@ export const helper = {
   saveScript: (script: Partial<ScriptRecord>) => helperRequest<ScriptRecord>("scripts", "POST", script),
   deleteScript: (id: string) => helperRequest<{ deleted: boolean }>(`scripts/${encodeURIComponent(id)}`, "DELETE"),
   revisions: (id: string) => helperRequest<{ revision: number; source: string; hash: string; created: number }[]>(`scripts/${encodeURIComponent(id)}`),
+  artifacts: () => helperRequest<CodeArtifact[]>("artifacts"),
+  saveArtifact: (artifact: Partial<CodeArtifact>) => helperRequest<CodeArtifact>("artifacts", "POST", artifact),
+  deleteArtifact: (id: string) => helperRequest<{ deleted: boolean }>(`artifacts/${encodeURIComponent(id)}`, "DELETE"),
+  artifactRevisions: (id: string) => helperRequest<{ revision: number; kind: string; source: string; hash: string; metadata: Record<string, unknown>; created: number }[]>(`artifacts/${encodeURIComponent(id)}`),
   run: (request: RunRequest) => helperRequest<ResearchJob>("jobs", "POST", request),
+  evaluateIndicator: (request: IndicatorEvaluationRequest) => helperRequest<ResearchJob>("jobs", "POST", request),
   job: (id: string) => helperRequest<ResearchJob>(`jobs/${encodeURIComponent(id)}`),
   cancel: (id: string) => helperRequest<ResearchJob>(`jobs/${encodeURIComponent(id)}`, "DELETE"),
   results: () => helperRequest<{ id: string; name: string; created: number }[]>("results"),
   result: (id: string) => helperRequest<ResearchResult>(`results/${encodeURIComponent(id)}`),
+  evaluation: (id: string) => helperRequest<IndicatorEvaluationResult>(`evaluations/${encodeURIComponent(id)}`),
   monteCarlo: (id: string, seed: number, simulations: number) => helperRequest<ResearchJob>(`results/${encodeURIComponent(id)}/monte-carlo`, "POST", { seed, simulations }),
   importResult: (result: unknown) => helperRequest<{ id: string }>("results", "POST", result),
   importLegacy: (record: unknown) => helperRequest<{ id: string; status: string; reason: string }>("legacy", "POST", record),
