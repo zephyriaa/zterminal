@@ -1,0 +1,16 @@
+{
+  "name": "zterminal-research-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "UNLICENSED",
+  "files": [
+    "research_core_bg.wasm",
+    "research_core.js",
+    "research_core.d.ts"
+  ],
+  "main": "research_core.js",
+  "types": "research_core.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
