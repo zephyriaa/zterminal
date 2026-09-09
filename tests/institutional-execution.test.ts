@@ -251,3 +251,130 @@ def wfa_strat(ctx, fast=inputs.int(5), slow=inputs.int(15)):
   assert.equal(Number.isFinite(wfa.aggregateWfe), true);
   assert.equal(typeof wfa.isRobust, "boolean");
 });
+
+test("Short positions ratchet trailing stop downward as price falls", async () => {
+  const baseTime = 1709251200000;
+  // Bar 0: Enter short at 100 with trailing stop of 5 ticks ($5.0) -> initial stop 105
+  // Bar 1: Price drops to Low 90 -> stop should ratchet down to 95
+  // Bar 2: Price bounces to High 96 -> should trigger trailing stop exit at 95
+  const bars: Bar[] = [
+    { t: baseTime, o: 100, h: 101, l: 99, c: 100, v: 100 },
+    { t: baseTime + 300_000, o: 99, h: 100, l: 90, c: 91, v: 100 },
+    { t: baseTime + 600_000, o: 91, h: 96, l: 91, c: 95, v: 100 },
+  ];
+
+  const shortTrailStrategy = `from zterminal_research import strategy
+
+@strategy(name="Short Trail Test")
+def test_short_trail(ctx):
+    if ctx.index == 0:
+        ctx.enter_short(quantity=1, trailing_stop_ticks=5)
+`;
+
+  const result = await executeLocalBacktest(shortTrailStrategy, bars, {
+    symbol: "BTCUSDT",
+    timeframe: "5m",
+    initialCapital: 10_000,
+    commissionPerContract: 0,
+    slippageTicks: 0,
+    tickSize: 1,
+    multiplier: 1,
+  });
+
+  assert.equal(result.trades.length, 1);
+  assert.equal(result.trades[0].side, "short");
+  assert.equal(result.trades[0].reason, "stop_loss");
+  assert.equal(result.trades[0].exitPrice, 95);
+  assert.equal(result.trades[0].pnl, 4); // Entry at bar 1 open 99, exit at 95 (short profit = 99 - 95 = 4)
+});
+
+test("Commission models (flat, bps, per_contract) apply exact cost structures", async () => {
+  const baseTime = 1709251200000;
+  const bars: Bar[] = [
+    { t: baseTime, o: 100, h: 101, l: 99, c: 100, v: 100 },
+    { t: baseTime + 300_000, o: 100, h: 110, l: 99, c: 108, v: 100 },
+    { t: baseTime + 600_000, o: 108, h: 110, l: 105, c: 107, v: 100 },
+  ];
+
+  const strat = `from zterminal_research import strategy
+
+@strategy(name="Comm Test")
+def test_comm(ctx):
+    if ctx.index == 0:
+        ctx.enter_long(quantity=2, take_profit=110)
+`;
+
+  // 1. Per-contract: $1.50 per contract (entry 2 + exit 2 = 4 contracts total * 1.50 = $6.00 comm)
+  const resContract = await executeLocalBacktest(strat, bars, {
+    symbol: "BTCUSDT",
+    timeframe: "5m",
+    initialCapital: 10_000,
+    commissionPerContract: 1.5,
+    commissionType: "per_contract",
+    slippageTicks: 0,
+    tickSize: 1,
+    multiplier: 1,
+  });
+  assert.equal(resContract.trades.length, 1);
+  // Gross PnL = (110 - 100) * 2 = 20. Net PnL = 20 - 6 = 14.
+  assert.equal(resContract.trades[0].pnl, 14);
+
+  // 2. Flat commission: $4.00 flat per side (entry $4 + exit $4 = $8 total)
+  const resFlat = await executeLocalBacktest(strat, bars, {
+    symbol: "BTCUSDT",
+    timeframe: "5m",
+    initialCapital: 10_000,
+    commissionPerContract: 4.0,
+    commissionType: "flat",
+    slippageTicks: 0,
+    tickSize: 1,
+    multiplier: 1,
+  });
+  // Gross PnL = 20. Net PnL = 20 - 8 = 12.
+  assert.equal(resFlat.trades[0].pnl, 12);
+});
+
+test("Short Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars", async () => {
+  const baseTime = 1709251200000;
+
+  // Master bars: bar 0 enters short, bar 1 has huge range covering both stop (110) and target (90)
+  const masterBars: Bar[] = [
+    { t: baseTime, o: 100, h: 101, l: 99, c: 100, v: 100 },
+    { t: baseTime + 300_000, o: 100, h: 115, l: 85, c: 98, v: 500 },
+    { t: baseTime + 600_000, o: 98, h: 100, l: 97, c: 99, v: 100 },
+  ];
+
+  // Sub-bars where profit target (90) is hit in minute 1, before stop (110) in minute 3
+  const subBarsTargetFirst: Bar[] = [
+    { t: baseTime + 300_000, o: 100, h: 101, l: 88, c: 89, v: 100 }, // Short target (90) hit!
+    { t: baseTime + 360_000, o: 89, h: 95, l: 88, c: 94, v: 100 },
+    { t: baseTime + 420_000, o: 94, h: 114, l: 93, c: 112, v: 100 },  // Stop hit later
+  ];
+
+  const shortBracketStrategy = `from zterminal_research import strategy
+
+@strategy(name="Short Bracket Test")
+def test_short_bracket(ctx):
+    if ctx.index == 0:
+        ctx.enter_short(quantity=1, stop_loss=110, take_profit=90)
+`;
+
+  const resultTargetFirst = await executeLocalBacktest(shortBracketStrategy, masterBars, {
+    symbol: "BTCUSDT",
+    timeframe: "5m",
+    initialCapital: 10_000,
+    commissionPerContract: 0,
+    slippageTicks: 0,
+    tickSize: 1,
+    multiplier: 1,
+    enableBarMagnifier: true,
+    subBars: subBarsTargetFirst,
+  });
+
+  assert.equal(resultTargetFirst.trades.length, 1);
+  assert.equal(resultTargetFirst.trades[0].side, "short");
+  assert.equal(resultTargetFirst.trades[0].reason, "take_profit_magnifier");
+  assert.equal(resultTargetFirst.trades[0].exitPrice, 90);
+  assert.equal(resultTargetFirst.trades[0].pnl > 0, true);
+});
+
