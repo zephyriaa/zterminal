@@ -1,104 +1,123 @@
 import Link from "next/link";
-import { OrderflowVisual } from "./orderflow-visual";
 import styles from "./landing-page.module.css";
-
-const capabilities = [
-  { label: "MARKET CONTEXT", title: "See the structure around the move.", copy: "Price sits beside volume, liquidity, volatility, session structure, and market regime. Context turns a chart into a place you can reason about.", signal: "CONTEXT / LIVE VIEW" },
-  { label: "STRATEGY RESEARCH", title: "Turn a thought into a testable rule.", copy: "Write the hypothesis, test it against history, inspect how it behaves, and put the optimistic backtest under pressure before it earns trust.", signal: "RESEARCH / MEASURED" },
-  { label: "RISK WORKSPACE", title: "Define the loss before the entry.", copy: "Position sizing, invalidation, exposure, and planned risk belong at the beginning of a trade. The terminal keeps that work in the frame.", signal: "RISK / DEFINED" },
-];
-
-const steps = [
-  ["01", "Observe", "Start with the market as it is, not the trade you want it to become."],
-  ["02", "Validate", "Make the rule clear enough for history to challenge it."],
-  ["03", "Decide", "Review the evidence, know the risk, and keep the call human."],
-];
+import "@/components/public/public-theme.css";
+import { PublicHeader } from "@/components/public/public-header";
+import { PublicFooter } from "@/components/public/public-footer";
+import { DeviceFrame } from "@/components/public/device-frame";
+import { WorkflowSequence } from "@/components/public/workflow-sequence";
 
 export function LandingPage() {
   return (
-    <main className={styles.page} id="main">
-      <a className={styles.skipLink} href="#platform">Skip to platform overview</a>
+    <main className={`${styles.page} publicScope`} id="main">
+      <a className={styles.skipLink} href="#platform">Skip to content</a>
       <div className={styles.ambientGrid} aria-hidden="true" />
-
-      <header className={styles.header}>
-        <Link className={styles.brand} href="/" aria-label="ZTerminal home">
-          <img className={styles.headerLogo} src="/landing/zterminal-logo-mark.png" alt="" />
-          <span>ZTERMINAL</span>
-        </Link>
-        <nav className={styles.nav} aria-label="Primary navigation">
-          <a href="#platform">Platform</a><a href="#workflow">Workflow</a><a href="#principles">Principles</a>
-        </nav>
-        <Link className={styles.headerCta} href="/terminal">Launch terminal <span>↗</span></Link>
-      </header>
+      
+      <PublicHeader />
 
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}><span />QUANTITATIVE MARKET INTELLIGENCE</p>
-          <h1 id="hero-title">Read the market<br />behind the <em>candle.</em></h1>
-          <p className={styles.heroLead}>ZTerminal brings market context, strategy research, risk work, alerts, and review into one serious workspace for better-prepared decisions.</p>
+          <p className={styles.eyebrow}>QUANTITATIVE MARKET RESEARCH</p>
+          <h1 id="hero-title">See more.<br /><em>Guess less.</em></h1>
+          <p className={styles.heroLead}>
+            A native client-first quantitative market research workstation designed around 
+            evidence rather than intuition, and robustness over optimization.
+          </p>
           <div className={styles.heroActions}>
-            <Link className={styles.primaryButton} href="/download">Explore ZTerminal for Windows <span>↗</span></Link>
+            <Link className={styles.primaryButton} href="/download">Explore for Windows <span>↗</span></Link>
             <Link className={styles.secondaryButton} href="/terminal">Launch web terminal <span>↗</span></Link>
           </div>
-          <p className={styles.disclaimer}>Decision support for traders. No broker route. You retain control of execution.</p>
         </div>
-        <OrderflowVisual />
-      </section>
-
-      <section className={styles.desktopPreview} aria-labelledby="windows-preview-title">
-        <div>
-          <p className={styles.sectionKicker}>NATIVE WINDOWS APPLICATION</p>
-          <h2 id="windows-preview-title">Professional market analysis,<br /><em>now preparing for Windows.</em></h2>
-        </div>
-        <div className={styles.desktopPreviewCopy}>
-          <p>ZTerminal for Windows is being built as a local-first desktop terminal with a native graphics surface, local data processing, and research-only safeguards. It will be offered here only after Windows validation and signed release verification are complete.</p>
-          <div><Link href="/download" className={styles.desktopPreviewLink}>View Windows release status <span>↗</span></Link><span>Windows x64 · in development</span></div>
+        <div className={styles.heroDevice}>
+          <DeviceFrame />
         </div>
       </section>
 
-      <section className={styles.proofRail} aria-label="Platform focus areas">
-        <div><span className={styles.railMark}>01</span><b>Market intelligence</b><p>Price in context</p></div>
-        <div><span className={styles.railMark}>02</span><b>Quant research</b><p>Rules under pressure</p></div>
-        <div><span className={styles.railMark}>03</span><b>Risk workspace</b><p>Loss before entry</p></div>
-        <div><span className={styles.railMark}>04</span><b>Human control</b><p>Your call, always</p></div>
+      <section className={styles.workflowSection} id="workflow" aria-labelledby="workflow-title">
+        <div className={styles.sectionHeader}>
+          <p className={styles.eyebrow}>THE ZTERMINAL METHOD</p>
+          <h2 id="workflow-title">Research → Validate → Monitor<br />→ Decide → Execute → Review</h2>
+          <p>The entire workspace revolves around a disciplined decision loop.</p>
+        </div>
+        <WorkflowSequence />
       </section>
 
-      <section className={styles.intro} id="platform" aria-labelledby="intro-heading">
-        <p className={styles.sectionKicker}>ONE WORKSPACE. MORE CONTEXT.</p>
-        <div className={styles.introGrid}>
-          <h2 id="intro-heading">Stop collecting signals.<br /><em>Start building a case.</em></h2>
-          <div><p className={styles.introAccent}>The strongest trading idea is the one that survives contact with reality.</p><p>ZTerminal is designed around the work that surrounds the decision: understand the market, express a hypothesis clearly, validate it, define the risk, monitor the setup, and learn from the result.</p></div>
+      <section className={styles.contextSection} aria-labelledby="context-title">
+        <div className={styles.contextGrid}>
+          <div className={styles.contextCopy}>
+            <p className={styles.eyebrow}>MARKET CONTEXT</p>
+            <h2 id="context-title">See the structure<br />around the move.</h2>
+            <p>
+              Price sits beside volume, liquidity, volatility, session structure, and market regime. 
+              Context turns a raw chart into an environment you can reason about, built on high-fidelity 
+              order flow and deep market data.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className={styles.platform} aria-label="ZTerminal capability overview">
-        {capabilities.map((capability, index) => (
-          <article className={styles.capability} key={capability.label}>
-            <div className={styles.capabilityIndex}><span>0{index + 1}</span><i /></div>
-            <p className={styles.capabilityLabel}>{capability.label}</p><h3>{capability.title}</h3><p>{capability.copy}</p>
-            <div className={styles.capabilityVisual} aria-hidden="true">
-              <div className={styles.visualHeader}><span>{capability.signal}</span><i /></div>
-              {index === 0 && <div className={styles.miniMarket}><b /><b /><b /><b /><b /><b /><b /><b /><b /></div>}
-              {index === 1 && <div className={styles.miniResearch}><i /><i /><i /><span>RULES → HISTORY → RESULT</span></div>}
-              {index === 2 && <div className={styles.miniRisk}><i><em /></i><i><em /></i><i><em /></i><span>PLAN THE DOWNSIDE</span></div>}
-            </div>
+      <section className={styles.testSection} aria-labelledby="test-title">
+        <div className={styles.sectionHeader}>
+          <p className={styles.eyebrow}>QUANTITATIVE RESEARCH</p>
+          <h2 id="test-title">Turn a thought into a <em>testable rule.</em></h2>
+        </div>
+        <div className={styles.testFeatures}>
+          <article>
+            <h3>Strategy validation</h3>
+            <p>Write the hypothesis clearly and test it against history before trusting it.</p>
           </article>
-        ))}
+          <article>
+            <h3>Backtesting</h3>
+            <p>High-performance historical execution to verify edge over extended periods.</p>
+          </article>
+          <article>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Monte Carlo
+              <span style={{ fontSize: '10px', padding: '2px 6px', background: 'rgba(214, 166, 104, 0.15)', color: '#d6a668', borderRadius: '4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Planned</span>
+            </h3>
+            <p>Simulate thousands of possible outcome paths to measure true system robustness.</p>
+          </article>
+        </div>
       </section>
 
-      <section className={styles.workflow} id="workflow" aria-labelledby="workflow-heading">
-        <div className={styles.workflowTitle}><p className={styles.sectionKicker}>THE ZTERMINAL METHOD</p><h2 id="workflow-heading">More than a chart.<br /><em>A decision loop.</em></h2><p>Every useful action in the terminal should move the trader from raw data toward a decision they can explain.</p></div>
-        <div className={styles.stepList}>{steps.map(([number, title, copy]) => <article className={styles.step} key={number}><span>{number}</span><div><h3>{title}</h3><p>{copy}</p></div><i>↗</i></article>)}</div>
+      <section className={styles.localFirst} aria-labelledby="local-title">
+        <div className={styles.localFirstContent}>
+          <p className={styles.eyebrow}>ARCHITECTURE</p>
+          <h2 id="local-title">Your machine does the heavy work.</h2>
+          <p>
+            ZTerminal is built as a native Windows application with a client-first, server-light 
+            architecture. Local compute means datasets load instantly, backtests run directly on your hardware, 
+            and security-sensitive operations never leave your machine.
+          </p>
+        </div>
       </section>
 
-      <section className={styles.principles} id="principles" aria-labelledby="principles-heading">
-        <div className={styles.principleVisual} aria-hidden="true"><div className={styles.orbitA} /><div className={styles.orbitB} /><div className={styles.orbitC} /><div className={styles.principleCore}><span>ZT</span><small>DECISION<br />ENVIRONMENT</small></div><p>CONTEXT</p><p>VALIDATION</p><p>RISK</p><p>REVIEW</p></div>
-        <div className={styles.principleCopy}><p className={styles.sectionKicker}>BUILT FOR THE DECISION</p><h2 id="principles-heading">The terminal should support the trader,<br /><em>not replace them.</em></h2><p>ZTerminal is a quantitative research and decision-support environment. It can help with analysis, calculations, validation, monitoring, alerts, and review. It does not guarantee outcomes and it does not remove responsibility.</p><div className={styles.principleStatements}><span>Evidence over intuition</span><span>Risk before conviction</span><span>Human control over blind automation</span></div></div>
+      <section className={styles.philosophy} aria-labelledby="philosophy-title">
+        <div className={styles.philosophyContent}>
+          <h2 id="philosophy-title">Evidence over intuition.<br /><em>Robustness over optimization.</em></h2>
+        </div>
       </section>
 
-      <section className={styles.finalCta} aria-labelledby="cta-heading"><p className={styles.sectionKicker}>OPEN THE WORKSPACE</p><h2 id="cta-heading">Bring more evidence<br />to the <em>decision.</em></h2><p>Use the browser terminal today, or follow the verified Windows release path as the native application becomes available.</p><div className={styles.finalCtaActions}><Link className={styles.primaryButton} href="/terminal">Launch web terminal <span>↗</span></Link><Link className={styles.secondaryButton} href="/download">Windows release status <span>↗</span></Link></div></section>
+      <section className={styles.windowsSection} aria-labelledby="windows-title">
+        <div className={styles.windowsContent}>
+          <p className={styles.eyebrow}>NATIVE WINDOWS</p>
+          <h2 id="windows-title">Professional analysis,<br /><em>built for desktop.</em></h2>
+          <p>
+            Local-first execution with a native graphics surface and research-only safeguards.
+            Follow the signed release verification path as the desktop build matures.
+          </p>
+          <Link href="/download" className={styles.primaryButton}>Windows release status <span>↗</span></Link>
+        </div>
+      </section>
 
-      <footer className={styles.footer}><div className={styles.brand}><img className={styles.headerLogo} src="/landing/zterminal-logo-mark.png" alt="" /><span>ZTERMINAL</span></div><p>Quantitative market research and decision support. Built in the open.</p><div><a href="https://github.com/zephyriaa/zterminal" target="_blank" rel="noreferrer">GitHub</a><a href="/docs/zscript">ZS documentation</a></div></footer>
+      <section className={styles.finalCta} aria-labelledby="cta-title">
+        <h2 id="cta-title">See more.<br /><em>Guess less.</em></h2>
+        <div className={styles.finalCtaActions}>
+          <Link className={styles.primaryButton} href="/download">Explore ZTerminal for Windows <span>↗</span></Link>
+          <Link className={styles.secondaryButton} href="/terminal">Launch web terminal</Link>
+        </div>
+      </section>
+
+      <PublicFooter />
     </main>
   );
 }

@@ -1,0 +1,138 @@
+.workflowContainer {
+  position: relative;
+  height: 250vh; /* gives enough scrolling room */
+  margin: 64px 0;
+}
+
+.stickyTrack {
+  position: sticky;
+  top: 20vh;
+  padding: 20px 0;
+}
+
+.stepGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.stepCard {
+  opacity: 0.3;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  position: relative;
+}
+
+.stepCard.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stepCard.past {
+  opacity: 0.6;
+  transform: translateY(0);
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.stepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(162, 180, 203, 0.3);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: #aebdd0;
+  background: rgba(13, 22, 36, 0.6);
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.active .stepNumber {
+  color: #fff;
+  border-color: #9e8ff4;
+  background: rgba(104, 73, 219, 0.2);
+  box-shadow: 0 0 12px rgba(104, 73, 219, 0.3);
+}
+
+.stepConnector {
+  flex: 1;
+  height: 1px;
+  background: rgba(162, 180, 203, 0.15);
+  margin-left: -4px;
+  z-index: 1;
+}
+
+.stepCard:last-child .stepConnector {
+  display: none;
+}
+
+.stepCard h3 {
+  font-size: 18px;
+  color: #f3f6fb;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.stepCard p {
+  font-size: 13px;
+  color: #98aabd;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 1024px) {
+  .stepGrid {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 40px;
+  }
+  .stepCard:nth-child(3) .stepConnector {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .workflowContainer {
+    height: auto;
+  }
+  .stickyTrack {
+    position: relative;
+    top: 0;
+  }
+  .stepGrid {
+    grid-template-columns: 1fr;
+    row-gap: 24px;
+  }
+  .stepCard {
+    opacity: 1 !important;
+    transform: none !important;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    align-items: start;
+    gap: 16px;
+  }
+  .stepHeader {
+    margin: 0;
+  }
+  .stepConnector {
+    display: none;
+  }
+  .stepCard h3 {
+    margin-top: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stepCard, .stepNumber {
+    transition: none;
+  }
+}
+

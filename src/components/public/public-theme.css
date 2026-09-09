@@ -1,0 +1,24 @@
+/* Shared public-site design tokens */
+.publicScope {
+  --pub-bg: #060914;
+  --pub-bg-elevated: rgba(13, 22, 36, 0.62);
+  --pub-bg-card: rgba(13, 22, 36, 0.4);
+  --pub-text-main: #f3f6fb;
+  --pub-text-sec: #aebdd0;
+  --pub-text-muted: #9fafc0;
+  --pub-text-eyebrow: #9e8ff4;
+  --pub-accent-violet: #6849db;
+  --pub-accent-lilac: #c7bbff;
+  --pub-border-light: rgba(162, 180, 203, 0.14);
+  --pub-border: rgba(159, 178, 203, 0.16);
+  --pub-btn-bg: #e8e1ff;
+  --pub-btn-text: #171126;
+  --pub-btn-sec-bg: rgba(162, 180, 203, 0.1);
+}
+
+.publicLayout {
+  min-height: 100vh;
+  color: var(--pub-text-main);
+  background: var(--pub-bg);
+}
+
