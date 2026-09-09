@@ -24,7 +24,6 @@ import { useMarketStream } from "@/hooks/use-market-stream";
 import { calculateFixedRiskSizing } from "@/domain/risk/sizing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { InstitutionalProtocolLab } from "./institutional-protocol-lab";
 import { ProtocolJournalLedger } from "./protocol-journal-ledger";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -195,7 +194,21 @@ const HYP_TONE: Record<string, { tone: "warn" | "mdata" | "pos" | "research" | "
 
 export function ResearchView() {
   const { setView } = useWorkspace();
-  return <InstitutionalProtocolLab onOpenStrategy={() => setView("strategy")} />;
+  return (
+    <ViewShell title="Research Workstation" icon={FlaskConical} right={<Pill tone="research">Client WASM</Pill>}>
+      <div className="p-6 max-w-xl space-y-4">
+        <h3 className="text-sm font-semibold tracking-wide uppercase text-foreground">Quantitative Research Environment</h3>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          ZTerminal executes deterministic strategy research and validation directly in the browser via Pyodide and WebAssembly.
+        </p>
+        <div className="pt-2">
+          <Button size="sm" onClick={() => setView("strategy")} className="text-xs">
+            Open Strategy Editor
+          </Button>
+        </div>
+      </div>
+    </ViewShell>
+  );
 }
 
 /* ----------------------------- Portfolio ----------------------------- */

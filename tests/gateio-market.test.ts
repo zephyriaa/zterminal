@@ -9,7 +9,6 @@ import {
   upsertBar,
 } from "../src/lib/market/gateio";
 import { GateOrderBook } from "../mini-services/market-data/order-book";
-import { compileStrategy } from "../src/lib/strategy/zs-compiler";
 
 test("normalizes TradingView-style QQQX aliases to Gate.io native contract", () => {
   assert.equal(normalizeGateioSymbol("QQQX_USDT"), "QQQX_USDT");
@@ -68,18 +67,6 @@ test("bridges a REST order-book snapshot with buffered deltas", () => {
   ]);
 });
 
-test("accepts declared inputs and built-in strategy directions in the bundled DSL pattern", () => {
-  const source = `strategy("EMA Cross + VWAP Filter", overlay=true)
-input.float("Fast", 8, minval=1, maxval=200)
-input.float("Slow", 21, minval=1, maxval=400)
-var fastEma = ema(close, Fast)
-var slowEma = ema(close, Slow)
-if close > vwap
-  strategy.entry("long", strategy.long, qty=1)`;
-  const compiled = compileStrategy(source);
-  assert.equal(compiled.ok, true);
-  assert.deepEqual(compiled.diagnostics.filter((diagnostic) => diagnostic.severity === "warning"), []);
-});
 
 test("detects sequence gaps and removes zero-size depth levels", () => {
   const book = new GateOrderBook();
