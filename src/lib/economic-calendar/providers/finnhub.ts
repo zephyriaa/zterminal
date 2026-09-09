@@ -156,3 +156,4 @@ export class FinnhubCalendarProvider implements EconomicCalendarProvider {
     }
   }
 }
+

@@ -56,3 +56,4 @@ class EconomicCalendarCache {
 }
 
 export const calendarCache = new EconomicCalendarCache();
+
