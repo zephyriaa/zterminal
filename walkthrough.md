@@ -80,35 +80,34 @@ All 82 unit tests pass cleanly:
 > nextjs_tailwind_shadcn_ts@0.2.1 test
 > tsx --test tests/*.test.ts
 
-✔ bridges a Binance snapshot using the first depth range that covers the next update id (4.52ms)
-✔ uses Binance pu as the authoritative post-bridge continuity identifier (0.75ms)
-✔ normalizes verified Binance historical klines without padding missing candles (90.2ms)
-✔ Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars (9.71ms)
-✔ Limit orders adhere to touch vs penetrate fill settings (1.57ms)
-✔ Trailing stop ratchets upward as price advances (4.10ms)
-✔ Parameter optimizer sweeps grid and injects parameters cleanly (5.90ms)
-✔ Walk-Forward Analysis calculates Walk-Forward Efficiency (WFE) (26.32ms)
-✔ detects and transpiles TradingView PineScript to zterminal_research Python (3.89ms)
-✔ detects and transpiles MultiCharts EasyLanguage to zterminal_research Python (0.65ms)
-✔ executes deterministic local backtest with realistic slippage and commissions (8.97ms)
-✔ parses custom CSV candles with automatic header detection and sanitization (4.75ms)
-✔ synchronizes multi-data streams with strict zero look-ahead bias (0.53ms)
+✔ bridges a Binance snapshot using the first depth range that covers the next update id
+✔ Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars
+✔ Limit orders adhere to touch vs penetrate fill settings
+✔ Trailing stop ratchets upward as price advances
+✔ Parameter optimizer sweeps grid and injects parameters cleanly
+✔ Walk-Forward Analysis calculates Walk-Forward Efficiency (WFE)
+✔ Short positions ratchet trailing stop downward as price falls
+✔ Commission models (flat, bps, per_contract) apply exact cost structures
+✔ Short Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars
+✔ detects and transpiles TradingView PineScript to zterminal_research Python
+✔ detects and transpiles MultiCharts EasyLanguage to zterminal_research Python
+✔ executes deterministic local backtest with realistic slippage and commissions
+✔ parses custom CSV candles with automatic header detection and sanitization
+✔ synchronizes multi-data streams with strict zero look-ahead bias
 ...
-ℹ tests 82
+ℹ tests 85
 ℹ suites 0
-ℹ pass 82
+ℹ pass 85
 ℹ fail 0
-ℹ duration_ms 1316.8681
+ℹ cancelled 0
+ℹ skipped 0
+ℹ duration_ms 1143.0647
 ```
 
-### Production Build & Endpoint Verification
-- **TypeScript Typecheck (`npx tsc --noEmit`):** Clean exit code 0, zero errors.
-- **Production Build (`npm run build`):** Clean exit code 0, Turbopack bundle compiled in 22.5s across all 25 dynamic and static routes.
-- **Terminal Workstation Route (`/terminal`):** HTTP 200 OK, mounts the complete `IdeWorkstationShell`.
-- **Public Showcase Route (`/`):** HTTP 200 OK.
-- **Local Dev Server:** Running on `http://localhost:3000`.
+### Quality Gates & Deployment Status
+- **Automated Tests (`npm run test`):** 85/85 tests passing (100%).
+- **TypeScript (`npm run typecheck`):** Clean exit code 0, 0 errors.
+- **ESLint (`npm run lint`):** Clean exit code 0, 0 warnings/errors.
+- **Production Build (`npm run build`):** Clean exit code 0, all static and dynamic routes compiled.
+- **Deployed Commit:** `76347bd` pushed to `origin/main`. Render deployment hook triggered automatically.
 
-### TypeScript & Production Build Verification
-- `npx tsc --noEmit`: Exited with code 0 (0 type errors across the entire codebase).
-- `npm run build`: Production build succeeded in 4.1s with all routes optimized.
-- Dev server verified: `GET /terminal 200 OK` in 533ms.
