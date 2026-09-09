@@ -103,6 +103,40 @@
   color: #ffffff;
 }
 
+/* Apple Liquid Glass Floating Pill Navigation */
+.navGlassPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: rgba(14, 18, 38, 0.62);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 9999px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.navGlassLink {
+  color: #c3cfee;
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navGlassLink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
 /* Hero Content */
 .heroCopy {
   position: absolute;
@@ -179,27 +213,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: Arial, sans-serif;
-  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
   font-size: 18px;
-  letter-spacing: 0.55px;
-  height: 63px;
-  min-width: 283px;
-  padding: 0 35px;
+  letter-spacing: 0.3px;
+  height: 60px;
+  min-width: 275px;
+  padding: 0 34px;
   color: white;
   text-decoration: none;
-  border: 1px solid rgba(134, 81, 241, 0.33);
-  border-radius: 3px;
-  background: linear-gradient(110deg, #6527e4, #6225e4 65%, #6426db);
-  box-shadow: 0 0 39px rgba(110, 40, 243, 0.18), inset 0 1px 5px rgba(173, 133, 255, 0.11);
+  border: 1px solid rgba(192, 132, 252, 0.45);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  box-shadow: 0 4px 28px rgba(124, 58, 237, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.25);
   white-space: nowrap;
   cursor: pointer;
   transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms ease;
 }
 
 .primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 45px rgba(110, 40, 243, 0.38), inset 0 1px 5px rgba(173, 133, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 36px rgba(124, 58, 237, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
 .arrow {
@@ -279,7 +313,7 @@
   pointer-events: none;
 }
 
-.lid {
+.lidPositioner {
   position: absolute;
   left: 0;
   top: 0;
@@ -304,6 +338,23 @@
     0,
     1
   );
+  pointer-events: none;
+  perspective: 1200px;
+}
+
+.lidHinge {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.lid {
+  position: relative;
+  width: 100%;
+  height: 100%;
   border: 2px solid rgba(75, 66, 101, 0.41);
   border-radius: 40px 32px 24px 22px;
   background: linear-gradient(140deg, #050711, #010308 75%);
