@@ -1,6 +1,7 @@
 import type { Exchange, ProviderId, Timeframe } from "@/lib/market/types";
 
-export const CHART_DOCUMENT_SCHEMA_VERSION = 2 as const;
+export const CHART_DOCUMENT_SCHEMA_VERSION = 3 as const;
+export const DRAWING_SCHEMA_VERSION = 1 as const;
 export const DEFAULT_WORKSPACE_ID = "local-default";
 export const PRIMARY_CHART_ID = "primary-chart";
 
@@ -47,13 +48,15 @@ export interface ChartPane {
 
 export type DrawingType =
   | "trend-line" | "ray" | "extended-line" | "horizontal-line"
-  | "horizontal-ray" | "vertical-line" | "rectangle" | "text"
-  | "ruler" | "long-position" | "short-position" | "fibonacci-retracement";
+  | "horizontal-ray" | "vertical-line" | "rectangle" | "arrow" | "text"
+  | "price-label" | "ruler" | "price-range" | "date-range"
+  | "long-position" | "short-position" | "fibonacci-retracement";
 
 export interface DrawingAnchor { time: number; price: number; }
-export interface DrawingStyle { color: string; width: number; lineStyle: "solid" | "dashed" | "dotted"; fill?: string; opacity: number; text?: string; textSize?: number; }
+export interface DrawingStyle { color: string; width: number; lineStyle: "solid" | "dashed" | "dotted"; fill?: string; opacity: number; text?: string; textSize?: number; extendStart?: boolean; extendEnd?: boolean; }
 export interface DrawingVisibility { timeframes: Timeframe[] | "all"; }
 export interface DrawingObject {
+  schemaVersion: typeof DRAWING_SCHEMA_VERSION;
   id: string;
   type: DrawingType;
   instrument: InstrumentKey;
@@ -66,6 +69,67 @@ export interface DrawingObject {
   zOrder: number;
   createdAt: number;
   updatedAt: number;
+}
+
+export const DRAWING_TYPES: readonly DrawingType[] = [
+  "trend-line", "ray", "extended-line", "horizontal-line", "horizontal-ray", "vertical-line",
+  "rectangle", "arrow", "text", "price-label", "ruler", "price-range", "date-range",
+  "long-position", "short-position", "fibonacci-retracement",
+];
+
+const TIMEFRAMES: readonly Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
+
+export function sameInstrument(left: InstrumentKey, right: InstrumentKey) {
+  return left.provider === right.provider && left.exchange === right.exchange && left.product === right.product && left.nativeSymbol === right.nativeSymbol;
+}
+
+export function drawingAnchorCount(type: DrawingType) {
+  return ["horizontal-line", "vertical-line", "text", "price-label"].includes(type) ? 1 : 2;
+}
+
+export function defaultDrawingStyle(type: DrawingType): DrawingStyle {
+  const filled = ["rectangle", "long-position", "short-position"].includes(type);
+  return { color: type === "short-position" ? "#fb7185" : "#7dd3fc", width: 1, lineStyle: "solid", opacity: 0.9, ...(filled ? { fill: type === "short-position" ? "#fb7185" : "#34d399" } : {}), ...(["text", "price-label"].includes(type) ? { text: type === "text" ? "Text" : "", textSize: 12 } : {}) };
+}
+
+export function sanitizeDrawing(value: unknown, fallback: { instrument: InstrumentKey; chartId: string }): DrawingObject | null {
+  if (!value || typeof value !== "object") return null;
+  const input = value as Partial<DrawingObject>;
+  if (typeof input.id !== "string" || !input.id || input.id.length > 100 || !DRAWING_TYPES.includes(input.type as DrawingType) || input.chartId !== fallback.chartId || !input.instrument || !sameInstrument(input.instrument, fallback.instrument)) return null;
+  const type = input.type as DrawingType;
+  if (!Array.isArray(input.anchors) || input.anchors.length !== drawingAnchorCount(type)) return null;
+  const anchors = input.anchors.map(anchor => ({ time: finite(anchor?.time, NaN, 0, Number.MAX_SAFE_INTEGER), price: finite(anchor?.price, NaN, -Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER) }));
+  if (anchors.some(anchor => !Number.isFinite(anchor.time) || !Number.isFinite(anchor.price))) return null;
+  const sourceStyle: Partial<DrawingStyle> = input.style && typeof input.style === "object" ? input.style : {};
+  const defaults = defaultDrawingStyle(type);
+  const visibility = input.visibility?.timeframes === "all" ? { timeframes: "all" as const } : { timeframes: Array.isArray(input.visibility?.timeframes) ? input.visibility!.timeframes.filter(timeframe => TIMEFRAMES.includes(timeframe)).slice(0, TIMEFRAMES.length) : "all" as const };
+  const style: DrawingStyle = {
+    ...defaults,
+    color: color(sourceStyle.color, defaults.color),
+    width: finite(sourceStyle.width, defaults.width, 1, 4),
+    lineStyle: ["solid", "dashed", "dotted"].includes(String(sourceStyle.lineStyle)) ? sourceStyle.lineStyle as DrawingStyle["lineStyle"] : defaults.lineStyle,
+    opacity: finite(sourceStyle.opacity, defaults.opacity, 0.05, 1),
+    ...(sourceStyle.fill ? { fill: color(sourceStyle.fill, defaults.fill ?? defaults.color) } : defaults.fill ? { fill: defaults.fill } : {}),
+    ...(typeof sourceStyle.text === "string" ? { text: sourceStyle.text.slice(0, 500) } : defaults.text ? { text: defaults.text } : {}),
+    ...(["text", "price-label"].includes(type) ? { textSize: Math.round(finite(sourceStyle.textSize, defaults.textSize ?? 12, 9, 32)) } : {}),
+    extendStart: sourceStyle.extendStart === true,
+    extendEnd: sourceStyle.extendEnd === true,
+  };
+  return {
+    schemaVersion: DRAWING_SCHEMA_VERSION,
+    id: input.id,
+    type,
+    instrument: fallback.instrument,
+    chartId: fallback.chartId,
+    anchors,
+    style,
+    visibility,
+    locked: input.locked === true,
+    hidden: input.hidden === true,
+    zOrder: Math.round(finite(input.zOrder, 0, -10_000, 10_000)),
+    createdAt: finite(input.createdAt, Date.now(), 0, Number.MAX_SAFE_INTEGER),
+    updatedAt: finite(input.updatedAt, Date.now(), 0, Number.MAX_SAFE_INTEGER),
+  };
 }
 
 export interface IndicatorOutputStyle {
@@ -219,7 +283,7 @@ export function migrateChartDocument(value: unknown, fallback: ChartDocument): C
       { ...DEFAULT_CHART_PANES[1], visible: volume?.visible !== false, height: finite(volume?.height, 0.22, 0.12, 0.45) },
     ],
     indicators: Array.isArray(input.indicators) ? input.indicators : [],
-    drawings: Array.isArray(input.drawings) ? input.drawings.filter(drawing => drawing?.chartId === fallback.chartId && drawing?.instrument?.nativeSymbol === fallback.instrument.nativeSymbol) : [],
+    drawings: Array.isArray(input.drawings) ? input.drawings.map(drawing => sanitizeDrawing(drawing, fallback)).filter((drawing): drawing is DrawingObject => drawing !== null) : [],
     replay: input.replay,
     updatedAt: finite(input.updatedAt, fallback.updatedAt, 0, Number.MAX_SAFE_INTEGER),
   };

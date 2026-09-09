@@ -12,6 +12,12 @@ import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpening
 import type { ChartTimezone } from "@/stores/workspace";
 import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/lib/chart/contracts";
 import { applyVolumePaneLayout, lightweightChartOptions } from "@/lib/chart/lightweight-adapter";
+import { coordinateToDrawingAnchor } from "@/lib/chart/lightweight-adapter";
+import type { DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
+import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
+import { isDrawingVisible } from "@/lib/chart/drawings/geometry";
+import { DrawingPrimitive } from "@/lib/chart/drawings/primitive";
+import { DrawingInteractionLayer } from "./drawing-interaction-layer";
 import {
   createChart,
   IChartApi,
@@ -70,6 +76,16 @@ interface ChartProps {
   timezone?: ChartTimezone;
   onCrosshair?: (b: Bar | null) => void;
   onLatestBar?: (b: Bar | null) => void;
+  drawings?: DrawingObject[];
+  selectedDrawingId?: string | null;
+  drawingTool?: DrawingTool;
+  magnetMode?: MagnetMode;
+  onDrawingTool?: (tool: DrawingTool) => void;
+  onSelectDrawing?: (id: string | null) => void;
+  onCreateDrawing?: (type: DrawingType, anchors: DrawingAnchor[]) => string | null;
+  onUpdateDrawing?: (id: string, patch: Partial<DrawingObject>) => void;
+  onDeleteDrawing?: (id: string) => void;
+  onDuplicateDrawing?: (id: string) => void;
 }
 
 function ema(values: number[], period: number): (number | null)[] {
@@ -208,6 +224,8 @@ export function TerminalChart({
   onCrosshair,
   onLatestBar,
   volumePaneHeight = 0.22,
+  drawings = [], selectedDrawingId = null, drawingTool = "crosshair", magnetMode = "off",
+  onDrawingTool, onSelectDrawing, onCreateDrawing, onUpdateDrawing, onDeleteDrawing, onDuplicateDrawing,
 }: ChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -216,6 +234,9 @@ export function TerminalChart({
   const indicatorSeriesRef = useRef<Map<string, ISeriesApi<any>>>(new Map());
   const markPriceLineRef = useRef<IPriceLine | null>(null);
   const barsRef = useRef<Bar[]>([]);
+  const drawingPrimitiveRef = useRef<DrawingPrimitive | null>(null);
+  const visibleDrawingsRef = useRef<DrawingObject[]>([]);
+  const drawingPreviewRef = useRef<DrawingObject | null>(null);
 
   const [liveBars, setBars] = useState<Bar[]>([]);
   const bars = snapshot ?? liveBars;
@@ -396,7 +417,7 @@ export function TerminalChart({
     return () => {
       resizeObserver.disconnect();
       markerPlugin.current?.detach(); markerPlugin.current = null;
-      chart.remove(); chartRef.current = null; seriesRef.current = null; volumeSeriesRef.current = null; indicatorSeriesRef.current.clear();
+      chart.remove(); chartRef.current = null; seriesRef.current = null; volumeSeriesRef.current = null; drawingPrimitiveRef.current = null; indicatorSeriesRef.current.clear();
     };
   }, []);
 
@@ -444,7 +465,21 @@ export function TerminalChart({
         lineWidth: 2,
       });
     }
+    const mainSeries = seriesRef.current;
+    if (!mainSeries) return;
+    const drawingPrimitive = new DrawingPrimitive();
+    mainSeries.attachPrimitive(drawingPrimitive);
+    drawingPrimitiveRef.current = drawingPrimitive;
   }, [chartType]);
+
+  useEffect(() => {
+    const sorted = [...bars].sort((a, b) => a.t - b.t);
+    const replayCursor = effectiveReplayIndex == null ? undefined : sorted[effectiveReplayIndex]?.t;
+    const visible = drawings.filter(drawing => isDrawingVisible(drawing, timeframe, replayCursor));
+    visibleDrawingsRef.current = visible;
+    const drawingPreview = drawingPreviewRef.current;
+    drawingPrimitiveRef.current?.setDrawings(drawingPreview ? [...visible.filter(drawing => drawing.id !== drawingPreview.id), drawingPreview] : visible, selectedDrawingId);
+  }, [bars, chartType, drawings, effectiveReplayIndex, selectedDrawingId, timeframe]);
 
   useEffect(() => {
     if (!seriesRef.current) return;
@@ -651,6 +686,28 @@ export function TerminalChart({
   return (
     <div className="relative h-full w-full bg-background" onDoubleClick={() => chartRef.current?.timeScale().fitContent()}>
       <div ref={chartContainerRef} className="absolute inset-0 z-10" />
+      {onDrawingTool && onSelectDrawing && onCreateDrawing && onUpdateDrawing && onDeleteDrawing && onDuplicateDrawing && (
+        <DrawingInteractionLayer
+          tool={drawingTool}
+          magnet={magnetMode}
+          bars={bars}
+          drawings={drawings}
+          selectedId={selectedDrawingId}
+          toAnchor={point => chartRef.current && seriesRef.current ? coordinateToDrawingAnchor(chartRef.current, seriesRef.current, point) : null}
+          projected={() => drawingPrimitiveRef.current?.getProjected() ?? []}
+          onTool={onDrawingTool}
+          onSelect={onSelectDrawing}
+          onCreate={onCreateDrawing}
+          onUpdate={onUpdateDrawing}
+          onDelete={onDeleteDrawing}
+          onDuplicate={onDuplicateDrawing}
+          onPreview={drawing => {
+            drawingPreviewRef.current = drawing;
+            const visible = visibleDrawingsRef.current;
+            drawingPrimitiveRef.current?.setDrawings(drawing ? [...visible.filter(item => item.id !== drawing.id), drawing] : visible, selectedDrawingId);
+          }}
+        />
+      )}
       {volumeProfile && <VolumeProfileOverlay profile={volumeProfile} />}
       {marketContext && <MarketContextOverlay context={marketContext} tickSize={contract.tickSize} />}
       
