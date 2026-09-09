@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Bar {
     pub t: i64,
@@ -316,3 +319,28 @@ mod tests {
         assert_eq!(first.result_hash, second.result_hash);
     }
 }
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn replay_wasm(
+    bars_js: JsValue,
+    intents_js: JsValue,
+    initial_capital_js: JsValue,
+    policy_js: JsValue,
+) -> Result<JsValue, JsValue> {
+    let bars: Vec<Bar> = serde_wasm_bindgen::from_value(bars_js)
+        .map_err(|e| JsValue::from_str(&format!("Invalid bars: {}", e)))?;
+    let intents: Vec<Intent> = serde_wasm_bindgen::from_value(intents_js)
+        .map_err(|e| JsValue::from_str(&format!("Invalid intents: {}", e)))?;
+    let initial_capital: Decimal = serde_wasm_bindgen::from_value(initial_capital_js)
+        .map_err(|e| JsValue::from_str(&format!("Invalid initial capital: {}", e)))?;
+    let policy: ExecutionPolicy = serde_wasm_bindgen::from_value(policy_js)
+        .map_err(|e| JsValue::from_str(&format!("Invalid policy: {}", e)))?;
+
+    match replay(&bars, &intents, initial_capital, &policy) {
+        Ok(result) => serde_wasm_bindgen::to_value(&result)
+            .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e))),
+        Err(e) => Err(JsValue::from_str(&e.to_string())),
+    }
+}
+

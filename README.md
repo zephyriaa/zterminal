@@ -100,14 +100,19 @@ The architecture aims to move **compute**, not **trust boundaries**, to the user
 
 ## Roadmap
 
-### Research & Backtesting Engine (Rust / Polars)
+### Research & Strategy Workstation (MultiCharts-Grade Parity)
+
 - [x] Initial research workflow
 - [x] Strategy-oriented foundation
-- [ ] Implement Parquet ingestion pipeline for historical data
-- [ ] Connect DuckDB for localized OLAP queries
-- [ ] Advanced Vectorized backtesting via Polars
-- [ ] Monte Carlo analysis
-- [ ] Walk-forward validation
+- [x] Advanced backtesting (Sub-bar Bar Magnifier, Limit touch/penetrate, Bracket OCOs, Trailing Stops)
+- [x] Monte Carlo analysis (1,000-run bootstrap permutations with 50%, 95%, 99% drawdown bounds)
+- [x] Walk-forward validation (WFA rolling cycles with Walk-Forward Efficiency WFE scoring)
+- [x] Parameter sensitivity (In-browser Grid Search optimizer and 2D response heatmaps)
+- [x] Expanded statistical research (Institutional Tear Sheet, Monthly returns matrix, Slippage sensitivity curve)
+- [x] Web QuoteManager & Data Caching (IndexedDB 0ms cold-start, Multi-Data streams, CSV/Parquet ingestion)
+- [x] PineScript & EasyLanguage to Python transpiler
+- [x] Historical Bar Replay scrubber (1x to 50x speed)
+- [x] On-chart trade execution overlays (BUY/SELL arrows and PnL tags)
 
 ### Market Intelligence
 - [x] Lightweight Charts Integration

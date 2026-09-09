@@ -19,9 +19,46 @@ export type ArchivedResearchResult = {
   runId: string;
   hash: string;
   config: { symbol: string; timeframe: string; initialCapital: number; commissionPerContract: number; slippageTicks: number; spreadTicks: number; positionSize: number; from: number; to: number };
-  trades: { id: string; side: "long" | "short"; entryTime: number; entryPrice: number; exitTime: number; exitPrice: number; qty: number; pnl: number; bars: number }[];
+  trades: { id: string; side: "long" | "short"; entryTime: number; entryPrice: number; exitTime: number; exitPrice: number; qty: number; pnl: number; bars: number; reason?: string }[];
   barsProcessed: number;
-  metrics: { netProfit: number; winRate: number; profitFactor: number; sharpe: number; maxDrawdownPct: number; totalTrades: number };
+  metrics: {
+    netProfit: number;
+    winRate: number;
+    profitFactor: number;
+    sharpe: number;
+    maxDrawdownPct: number;
+    maxDrawdownDollars?: number;
+    totalTrades: number;
+    sortino?: number;
+    calmar?: number;
+    cagr?: number;
+    expectancy?: number;
+    avgTrade?: number;
+    largestWin?: number;
+    largestLoss?: number;
+    maxConsecutiveWins?: number;
+    maxConsecutiveLosses?: number;
+    avgBarsInTrade?: number;
+    grossProfit?: number;
+    grossLoss?: number;
+    longTrades?: number;
+    shortTrades?: number;
+    longWinRate?: number;
+    shortWinRate?: number;
+    longPnL?: number;
+    shortPnL?: number;
+  };
+  equityCurve?: { time: number; equity: number; drawdown: number; drawdownPct?: number }[];
+  monthlyReturns?: { year: number; months: (number | null)[]; total: number }[];
+  slippageSensitivity?: { slippageTicks: number; netProfit: number; sharpe: number }[];
+  monteCarlo?: {
+    iterations: number;
+    medianDrawdownPct: number;
+    p95DrawdownPct: number;
+    p99DrawdownPct: number;
+    medianNetProfit: number;
+    sampleEquityCurves?: { percentile: number; points: { time: number; equity: number }[] }[];
+  };
   dataStatus?: string;
   dataProvenance?: { provider: string; nativeSymbol: string };
 };
@@ -44,6 +81,10 @@ interface StrategyState {
   /** Historical display-only result retained for archived runs; new runs use Research V2 records. */
   lastResult: ArchivedResearchResult | null;
   setLastResult: (result: ArchivedResearchResult | null) => void;
+  showReportDialog: boolean;
+  setShowReportDialog: (open: boolean) => void;
+  showOptimizeDialog: boolean;
+  setShowOptimizeDialog: (open: boolean) => void;
   config: {
     symbol: string;
     timeframe: string;
@@ -69,6 +110,10 @@ export const useStrategy = create<StrategyState>()(
       setParams: (params) => set({ params }),
       lastResult: null,
       setLastResult: (lastResult) => set({ lastResult }),
+      showReportDialog: false,
+      setShowReportDialog: (showReportDialog) => set({ showReportDialog }),
+      showOptimizeDialog: false,
+      setShowOptimizeDialog: (showOptimizeDialog) => set({ showOptimizeDialog }),
       config: { symbol: "BTCUSDT", timeframe: "5m", days: 30, initialCapital: 100_000, commissionPerContract: 2.5, slippageTicks: 1, spreadTicks: 1, positionSize: 1 },
       setConfig: (config) => set((state) => ({ config: { ...state.config, ...config } })),
     }),

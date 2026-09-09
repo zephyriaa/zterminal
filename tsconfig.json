@@ -26,6 +26,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "zterminal-research-wasm": [
+        "./packages/zterminal-research-wasm/research_core.js"
       ]
     }
   },
