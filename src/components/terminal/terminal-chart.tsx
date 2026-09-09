@@ -18,6 +18,9 @@ import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import { isDrawingVisible } from "@/lib/chart/drawings/geometry";
 import { DrawingPrimitive } from "@/lib/chart/drawings/primitive";
 import { DrawingInteractionLayer } from "./drawing-interaction-layer";
+import type { IndicatorInstance } from "@/lib/indicator-library";
+import { createStudy, migrateStudy } from "@/lib/indicator-library";
+import { evaluateIndicator } from "@/lib/chart/indicators/evaluators";
 import {
   createChart,
   IChartApi,
@@ -65,6 +68,7 @@ interface ChartProps {
   timeframe: Timeframe;
   chartType: ChartType;
   indicators: ChartIndicators;
+  indicatorInstances?: IndicatorInstance[];
   replayIndex?: number | null;
   replayEnabled?: boolean;
   markers?: TradeMarker[];
@@ -86,102 +90,6 @@ interface ChartProps {
   onUpdateDrawing?: (id: string, patch: Partial<DrawingObject>) => void;
   onDeleteDrawing?: (id: string) => void;
   onDuplicateDrawing?: (id: string) => void;
-}
-
-function ema(values: number[], period: number): (number | null)[] {
-  const out: (number | null)[] = new Array(values.length).fill(null);
-  if (!values.length) return out;
-  const k = 2 / (period + 1);
-  let prev = values[0];
-  out[0] = prev;
-  for (let i = 1; i < values.length; i++) {
-    prev = values[i] * k + prev * (1 - k);
-    out[i] = prev;
-  }
-  return out;
-}
-
-function sma(values: number[], period: number): (number | null)[] {
-  const out: (number | null)[] = new Array(values.length).fill(null);
-  let sum = 0;
-  for (let i = 0; i < values.length; i++) {
-    sum += values[i];
-    if (i >= period) sum -= values[i - period];
-    if (i >= period - 1) out[i] = sum / period;
-  }
-  return out;
-}
-
-function wma(values: number[], period: number): (number | null)[] {
-  const out: (number | null)[] = new Array(values.length).fill(null);
-  const denominator = (period * (period + 1)) / 2;
-  for (let i = period - 1; i < values.length; i++) {
-    let sum = 0;
-    for (let offset = 0; offset < period; offset++) sum += values[i - period + 1 + offset] * (offset + 1);
-    out[i] = sum / denominator;
-  }
-  return out;
-}
-
-function vwma(bars: Bar[], period: number): (number | null)[] {
-  const out: (number | null)[] = new Array(bars.length).fill(null);
-  let priceVolume = 0;
-  let volume = 0;
-  for (let i = 0; i < bars.length; i++) {
-    priceVolume += bars[i].c * bars[i].v;
-    volume += bars[i].v;
-    if (i >= period) {
-      priceVolume -= bars[i - period].c * bars[i - period].v;
-      volume -= bars[i - period].v;
-    }
-    if (i >= period - 1) out[i] = volume > 0 ? priceVolume / volume : null;
-  }
-  return out;
-}
-
-function standardDeviation(values: number[], period: number, average: (number | null)[]): (number | null)[] {
-  const out: (number | null)[] = new Array(values.length).fill(null);
-  for (let i = period - 1; i < values.length; i++) {
-    const mean = average[i];
-    if (mean == null) continue;
-    let squared = 0;
-    for (let offset = 0; offset < period; offset++) squared += (values[i - offset] - mean) ** 2;
-    out[i] = Math.sqrt(squared / period);
-  }
-  return out;
-}
-
-function rollingExtrema(values: number[], period: number, mode: "max" | "min"): (number | null)[] {
-  const out: (number | null)[] = new Array(values.length).fill(null);
-  for (let i = period - 1; i < values.length; i++) {
-    let result = values[i - period + 1];
-    for (let offset = 1; offset < period; offset++) result = mode === "max" ? Math.max(result, values[i - period + 1 + offset]) : Math.min(result, values[i - period + 1 + offset]);
-    out[i] = result;
-  }
-  return out;
-}
-
-function sessionVWAP(bars: Bar[], timezone: ChartTimezone): (number | null)[] {
-  const out: (number | null)[] = new Array(bars.length).fill(null);
-  let cumPV = 0;
-  let cumV = 0;
-  let dayKey = "";
-  const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" });
-  for (let i = 0; i < bars.length; i++) {
-    const b = bars[i];
-    const parts = formatter.formatToParts(new Date(b.t));
-    const key = `${parts.find((part) => part.type === "year")?.value ?? "0000"}-${parts.find((part) => part.type === "month")?.value ?? "00"}-${parts.find((part) => part.type === "day")?.value ?? "00"}`;
-    if (key !== dayKey) {
-      dayKey = key;
-      cumPV = 0;
-      cumV = 0;
-    }
-    const tp = (b.h + b.l + b.c) / 3;
-    cumPV += tp * b.v;
-    cumV += b.v;
-    out[i] = cumV > 0 ? cumPV / cumV : b.c;
-  }
-  return out;
 }
 
 function themeVar(name: string, fallback: string): string {
@@ -213,6 +121,7 @@ export function TerminalChart({
   timeframe,
   chartType,
   indicators,
+  indicatorInstances,
   replayIndex,
   replayEnabled = false,
   markers,
@@ -530,7 +439,8 @@ export function TerminalChart({
 
   // Feed data to chart
   useEffect(() => {
-    if (!seriesRef.current || !bars.length) return;
+    const chart = chartRef.current;
+    if (!chart || !seriesRef.current || !bars.length) return;
     
     // Sort and deduplicate bars for lightweight-charts
     const uniqueBars = new Map<number, Bar>();
@@ -566,103 +476,36 @@ export function TerminalChart({
       })));
     }
     
-    // Indicators
-    const c = themeColors();
-    const closes = availableBars.map(b => b.c);
-    
-    const drawLine = (id: string, vals: (number | null)[], color: string, lineStyle?: number) => {
-      if (!chartRef.current) return;
-      let series = indicatorSeriesRef.current.get(id);
-      if (!series) {
-        series = chartRef.current.addSeries(LineSeries, { color, lineWidth: 2, crosshairMarkerVisible: false, lineStyle: lineStyle ?? 0 });
-        indicatorSeriesRef.current.set(id, series);
-      } else {
-        series.applyOptions({ color, lineStyle: lineStyle ?? 0 });
-      }
-      
-      const lineData = vals.map((v, i) => ({
-        time: timeData[i],
-        value: v ?? undefined,
-      })).filter(d => d.value !== undefined) as any;
-      
-      series.setData(lineData);
-    };
-
-    if (indicators.vwap) drawLine("vwap", sessionVWAP(availableBars, timezone), c.warn, 2 /* Dashed */);
-    else if (indicatorSeriesRef.current.has("vwap")) {
-      chartRef.current?.removeSeries(indicatorSeriesRef.current.get("vwap")!);
-      indicatorSeriesRef.current.delete("vwap");
-    }
-
-    if (indicators.ema20) drawLine("ema20", ema(closes, 20), c.mdata);
-    else if (indicatorSeriesRef.current.has("ema20")) {
-      chartRef.current?.removeSeries(indicatorSeriesRef.current.get("ema20")!);
-      indicatorSeriesRef.current.delete("ema20");
-    }
-
-    if (indicators.ema50) drawLine("ema50", ema(closes, 50), c.research);
-    else if (indicatorSeriesRef.current.has("ema50")) {
-      chartRef.current?.removeSeries(indicatorSeriesRef.current.get("ema50")!);
-      indicatorSeriesRef.current.delete("ema50");
-    }
-    
-    // Draw Custom Studies
-    const activeStudies = new Set<string>();
-    if (indicators.customStudies) {
-      for (const study of indicators.customStudies) {
-        if (!study.visible) continue;
-        const period = Math.max(1, study.period ?? 20);
-        
-        if (study.kind === "ema") {
-          drawLine(study.id, ema(closes, period), study.color);
-          activeStudies.add(study.id);
-        } else if (study.kind === "sma") {
-          drawLine(study.id, sma(closes, period), study.color);
-          activeStudies.add(study.id);
-        } else if (study.kind === "wma") {
-          drawLine(study.id, wma(closes, period), study.color);
-          activeStudies.add(study.id);
-        } else if (study.kind === "vwma") {
-          drawLine(study.id, vwma(availableBars, period), study.color);
-          activeStudies.add(study.id);
-        } else if (study.kind === "vwap") {
-          drawLine(study.id, sessionVWAP(availableBars, timezone), study.color, 2);
-          activeStudies.add(study.id);
-        } else if (study.kind === "bollinger") {
-          const middle = sma(closes, period);
-          const deviation = standardDeviation(closes, period, middle);
-          const multiplier = Math.max(0.1, study.multiplier ?? 2);
-          const upper = middle.map((val, idx) => val == null || deviation[idx] == null ? null : val + deviation[idx]! * multiplier);
-          const lower = middle.map((val, idx) => val == null || deviation[idx] == null ? null : val - deviation[idx]! * multiplier);
-          
-          drawLine(study.id + "_mid", middle, study.color);
-          drawLine(study.id + "_upper", upper, study.color, 1 /* Dotted */);
-          drawLine(study.id + "_lower", lower, study.color, 1 /* Dotted */);
-          activeStudies.add(study.id + "_mid");
-          activeStudies.add(study.id + "_upper");
-          activeStudies.add(study.id + "_lower");
-        } else if (study.kind === "donchian") {
-          const highs = availableBars.map(b => b.h);
-          const lows = availableBars.map(b => b.l);
-          const upper = rollingExtrema(highs, period, "max");
-          const lower = rollingExtrema(lows, period, "min");
-          drawLine(study.id + "_upper", upper, study.color, 2);
-          drawLine(study.id + "_lower", lower, study.color, 2);
-          activeStudies.add(study.id + "_upper");
-          activeStudies.add(study.id + "_lower");
-        }
+    // Indicator calculations are pure and series are keyed by instance/output.
+    const legacy = [
+      ...(indicators.vwap ? [createStudy("vwap", "legacy-vwap")] : []),
+      ...(indicators.ema20 ? [createStudy("ema20", "legacy-ema20")] : []),
+      ...(indicators.ema50 ? [createStudy("ema50", "legacy-ema50")] : []),
+      ...(indicators.customStudies ?? []).map(study => migrateStudy({ ...study, presetId: study.kind === "ema" && study.period === 50 ? "ema50" : study.kind === "ema" ? "ema20" : study.kind === "sma" ? "sma20" : study.kind === "wma" ? "wma20" : study.kind === "vwma" ? "vwma20" : study.kind === "bollinger" ? "bollinger20" : study.kind === "donchian" ? "donchian20" : "vwap" })).filter((study): study is IndicatorInstance => study !== null),
+    ];
+    const activeOutputs = new Set<string>();
+    for (const study of indicatorInstances ?? legacy) {
+      const timeframeVisible = study.visibility.timeframes === "all" || study.visibility.timeframes.includes(timeframe);
+      if (!study.enabled || !timeframeVisible || study.kind === "volume" || study.kind === "profile") continue;
+      const evaluated = evaluateIndicator(study, availableBars, timezone);
+      for (const output of study.outputs) {
+        const values = evaluated.find(item => item.id === output.id)?.values;
+        if (!output.visible || !values) continue;
+        const key = `${study.id}:${output.id}`;
+        let series = indicatorSeriesRef.current.get(key);
+        const paneIndex = study.paneId === "price" ? 0 : indicators.volume ? 2 : 1;
+        const common = { color: output.color, lineWidth: output.width as 1 | 2 | 3 | 4, lineStyle: output.lineStyle === "dashed" ? LineStyle.Dashed : output.lineStyle === "dotted" ? LineStyle.Dotted : LineStyle.Solid, priceScaleId: study.priceScaleId === "indicator" ? key : study.priceScaleId, priceLineVisible: false, lastValueVisible: true };
+        if (!series) {
+          series = output.plot === "histogram" ? chart.addSeries(HistogramSeries, common, paneIndex) : output.plot === "area" ? chart.addSeries(AreaSeries, { ...common, lineColor: output.color, topColor: `${output.color}55`, bottomColor: `${output.color}05` }, paneIndex) : chart.addSeries(LineSeries, { ...common, crosshairMarkerVisible: false }, paneIndex);
+          indicatorSeriesRef.current.set(key, series);
+        } else { series.applyOptions(common); series.moveToPane(paneIndex); }
+        series.setData(values.map((value, index) => ({ time: timeData[index], value: value ?? undefined })).filter(item => item.value !== undefined) as any);
+        activeOutputs.add(key);
       }
     }
+    for (const [key, series] of indicatorSeriesRef.current) if (!activeOutputs.has(key)) { chart.removeSeries(series); indicatorSeriesRef.current.delete(key); }
     
-    // Cleanup removed custom studies
-    for (const key of indicatorSeriesRef.current.keys()) {
-      if (key !== "vwap" && key !== "ema20" && key !== "ema50" && !activeStudies.has(key)) {
-        chartRef.current?.removeSeries(indicatorSeriesRef.current.get(key)!);
-        indicatorSeriesRef.current.delete(key);
-      }
-    }
-    
-  }, [bars, chartType, indicators, effectiveReplayIndex, settings.candleUpColor, settings.candleDownColor, timezone]);
+  }, [bars, chartType, indicatorInstances, indicators, effectiveReplayIndex, settings.candleUpColor, settings.candleDownColor, timeframe, timezone]);
 
   useEffect(() => {
     if (!seriesRef.current) return;

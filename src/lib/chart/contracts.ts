@@ -1,6 +1,6 @@
 import type { Exchange, ProviderId, Timeframe } from "@/lib/market/types";
 
-export const CHART_DOCUMENT_SCHEMA_VERSION = 3 as const;
+export const CHART_DOCUMENT_SCHEMA_VERSION = 4 as const;
 export const DRAWING_SCHEMA_VERSION = 1 as const;
 export const DEFAULT_WORKSPACE_ID = "local-default";
 export const PRIMARY_CHART_ID = "primary-chart";

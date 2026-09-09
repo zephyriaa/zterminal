@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { CHART_DOCUMENT_SCHEMA_VERSION, createChartDocument, defaultDrawingStyle, drawingAnchorCount, migrateChartDocument, sanitizeDrawing, type ChartDocument, type ChartSettingsV2, type ChartType, type DrawingAnchor, type DrawingObject, type DrawingStyle, type DrawingType, type InstrumentKey } from "@/lib/chart/contracts";
+import { CHART_DOCUMENT_SCHEMA_VERSION, createChartDocument, defaultDrawingStyle, drawingAnchorCount, migrateChartDocument, sanitizeDrawing, type ChartDocument, type ChartSettingsV2, type ChartType, type DrawingAnchor, type DrawingObject, type DrawingStyle, type DrawingType, type IndicatorInstanceV2, type InstrumentKey } from "@/lib/chart/contracts";
 import type { Timeframe } from "@/lib/market/types";
 
 type DocumentSeed = { workspaceId?: string; chartId?: string; instrument: InstrumentKey; timeframe: Timeframe; settings?: Partial<ChartSettingsV2> };
@@ -16,6 +16,7 @@ type State = {
   updateSettings: (id: string, patch: Partial<ChartSettingsV2>) => void;
   resetSettings: (id: string) => void;
   setVolumePane: (id: string, patch: { visible?: boolean; height?: number }) => void;
+  setIndicators: (id: string, indicators: IndicatorInstanceV2[]) => void;
   createDrawing: (id: string, type: DrawingType, anchors: DrawingAnchor[], style?: Partial<DrawingStyle>) => string | null;
   updateDrawing: (id: string, drawingId: string, patch: DrawingPatch) => void;
   deleteDrawing: (id: string, drawingId: string) => void;
@@ -48,6 +49,10 @@ export const useChartDocuments = create<State>()(persist((set, get) => ({
     const document = state.documents[id];
     if (!document) return state;
     return { documents: { ...state.documents, [id]: { ...document, panes: document.panes.map(pane => pane.id === "volume" ? { ...pane, ...patch, height: patch.height === undefined ? pane.height : Math.min(0.45, Math.max(0.12, patch.height)) } : pane), updatedAt: Date.now() } } };
+  }),
+  setIndicators: (id, indicators) => set(state => {
+    const document = state.documents[id];
+    return document ? { documents: { ...state.documents, [id]: { ...document, indicators, updatedAt: Date.now() } } } : state;
   }),
   createDrawing: (id, type, anchors, style) => {
     const document = get().documents[id];
@@ -86,7 +91,7 @@ export const useChartDocuments = create<State>()(persist((set, get) => ({
   },
 }), {
   name: "zterminal.chart-documents",
-  version: 3,
+  version: 4,
   storage: createJSONStorage(() => typeof localStorage === "undefined" ? serverStorage : localStorage),
   skipHydration: true,
   partialize: state => ({ documents: state.documents }),
