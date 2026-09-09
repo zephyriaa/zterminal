@@ -79,6 +79,7 @@ export function ReferenceChartWorkspace() {
   const contract = getContract(symbol);
   const archivedChart = useResearch(s => s.chartResult);
   const selectedTrade = useResearch(s => s.selectedTrade);
+  const pythonEvaluations = useResearch(s => s.indicatorResults);
   const chartSymbol = archivedChart?.dataset.symbol ?? symbol;
   const chartTimeframe = archivedChart?.dataset.timeframe ?? timeframe;
   const selected = archivedChart?.trades.find(t => t.id === selectedTrade);
@@ -207,7 +208,9 @@ export function ReferenceChartWorkspace() {
 
   useEffect(() => {
     const focusChart = () => usePanels.getState().open("chart");
+    const rerunPythonIndicator = (event: Event) => { const detail = (event as CustomEvent<{ artifactId: string; params: Record<string, number | string | boolean> }>).detail; if (detail?.artifactId) void useResearch.get.getState().rerunIndicator(detail.artifactId, detail.params); };
     window.addEventListener("zterminal:focus-chart", focusChart);
+    window.addEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
     const openIndicators = () => setIndicatorsOpen(true);
     const openStrategy = () => { setStrategyOpen(true); setBacktesterOpen(true); usePanels.getState().focus("strategy"); };
     const openBacktester = () => setBacktesterOpen(true);
@@ -224,6 +227,7 @@ export function ReferenceChartWorkspace() {
     window.addEventListener("zterminal:open-terminal-settings", openTerminalSettings);
     return () => {
       window.removeEventListener("zterminal:focus-chart", focusChart);
+      window.removeEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
       window.removeEventListener("zterminal:open-indicators", openIndicators);
       window.removeEventListener("zterminal:open-strategy", openStrategy);
       window.removeEventListener("zterminal:open-backtester", openBacktester);
@@ -261,7 +265,7 @@ export function ReferenceChartWorkspace() {
             <DrawingToolbar tool={drawingTool} magnet={magnetMode} onTool={setDrawingTool} onMagnet={setMagnetMode} />
             <div className="zt-chart-readout"><span>O <b>{formatPrice((crosshairBar ?? latestBar)?.o, contract.tickSize)}</b></span><span>H <b>{formatPrice((crosshairBar ?? latestBar)?.h, contract.tickSize)}</b></span><span>L <b>{formatPrice((crosshairBar ?? latestBar)?.l, contract.tickSize)}</b></span><span>C <b>{formatPrice((crosshairBar ?? latestBar)?.c, contract.tickSize)}</b></span><span>V <b>{(crosshairBar ?? latestBar)?.v?.toLocaleString() ?? "—"}</b></span></div>
             <div className="zt-chart-overlays">{instances.filter(item => item.enabled).slice(0, 6).map(item => <span key={item.id} style={{ color: item.outputs[0]?.color }}>{item.name}</span>)}</div>
-            <TerminalChart symbol={chartSymbol} timeframe={chartTimeframe as Timeframe} snapshot={archivedChart?.dataset.bars} markers={chartSettings.showStrategyTrades ? markers : []} focusRange={focusRange} chartType={chartType} indicators={indicators} indicatorInstances={instances} settings={chartSettings} volumePaneHeight={volumePane.height} replayEnabled={!archivedChart && replay} timezone={archivedChart ? "UTC" : timezone} markPrice={archivedChart || !chartSettings.showMarkPrice ? undefined : derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} drawings={chartDocument.drawings} selectedDrawingId={selectedDrawingId} drawingTool={drawingTool} magnetMode={magnetMode} onDrawingTool={setDrawingTool} onSelectDrawing={setSelectedDrawingId} onCreateDrawing={(type, anchors) => useChartDocuments.getState().createDrawing(chartDocumentId, type, anchors)} onUpdateDrawing={(id, patch) => useChartDocuments.getState().updateDrawing(chartDocumentId, id, patch)} onDeleteDrawing={id => { useChartDocuments.getState().deleteDrawing(chartDocumentId, id); if (selectedDrawingId === id) setSelectedDrawingId(null); }} onDuplicateDrawing={id => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, id); if (duplicate) setSelectedDrawingId(duplicate); }} />
+            <TerminalChart symbol={chartSymbol} timeframe={chartTimeframe as Timeframe} snapshot={archivedChart?.dataset.bars} markers={chartSettings.showStrategyTrades ? markers : []} focusRange={focusRange} chartType={chartType} indicators={indicators} indicatorInstances={instances} pythonEvaluations={pythonEvaluations} settings={chartSettings} volumePaneHeight={volumePane.height} replayEnabled={!archivedChart && replay} timezone={archivedChart ? "UTC" : timezone} markPrice={archivedChart || !chartSettings.showMarkPrice ? undefined : derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} drawings={chartDocument.drawings} selectedDrawingId={selectedDrawingId} drawingTool={drawingTool} magnetMode={magnetMode} onDrawingTool={setDrawingTool} onSelectDrawing={setSelectedDrawingId} onCreateDrawing={(type, anchors) => useChartDocuments.getState().createDrawing(chartDocumentId, type, anchors)} onUpdateDrawing={(id, patch) => useChartDocuments.getState().updateDrawing(chartDocumentId, id, patch)} onDeleteDrawing={id => { useChartDocuments.getState().deleteDrawing(chartDocumentId, id); if (selectedDrawingId === id) setSelectedDrawingId(null); }} onDuplicateDrawing={id => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, id); if (duplicate) setSelectedDrawingId(duplicate); }} />
             {selectedDrawing && <DrawingInspector drawing={selectedDrawing} onChange={patch => useChartDocuments.getState().updateDrawing(chartDocumentId, selectedDrawing.id, patch)} onDuplicate={() => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, selectedDrawing.id); if (duplicate) setSelectedDrawingId(duplicate); }} onDelete={() => { useChartDocuments.getState().deleteDrawing(chartDocumentId, selectedDrawing.id); setSelectedDrawingId(null); }} onClose={() => setSelectedDrawingId(null)} />}
           </div>
         </div>

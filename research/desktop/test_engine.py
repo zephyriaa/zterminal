@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from engine import execute, digest, diagnostic, validate
+from engine import execute, execute_indicator, digest, diagnostic, validate
 from analytics import report, monte_carlo
 
 
@@ -26,6 +26,34 @@ def strategy(data, params):
 
 
 class ExecutionTests(unittest.TestCase):
+    def test_custom_indicator_outputs_are_aligned_hashed_and_bounded_to_input(self):
+        request = fixture('''import zterminal as zt
+def calculate(data, params):
+    return {"fast": zt.ema(data.close, params["length"]), "volume": data.volume}
+''')
+        request.update(operation="indicator", artifact={"id": "indicator-1", "kind": "indicator", "revision": 3, "name": "Fast EMA"}, params={"length": 2}, outputs={"fast": {"plot": "line"}, "volume": {"plot": "histogram"}})
+        result = execute_indicator(request)
+        self.assertEqual(result["kind"], "indicator_evaluation")
+        self.assertEqual(result["artifact"]["revision"], 3)
+        self.assertEqual(result["datasetHash"], request["dataset"]["hash"])
+        self.assertEqual(len(result["outputs"]["volume"]["points"]), len(request["dataset"]["bars"]))
+        self.assertEqual(result["resultHash"], digest({key: value for key, value in result.items() if key != "resultHash"}))
+        truncated = copy.deepcopy(request)
+        truncated["dataset"]["bars"] = truncated["dataset"]["bars"][:3]
+        truncated["config"]["to"] = truncated["config"]["from"] + 3 * 3_600_000
+        truncated["dataset"]["to"] = truncated["config"]["to"]
+        truncated["dataset"]["hash"] = digest([[bar[key] for key in ["t", "o", "h", "l", "c", "v"]] for bar in truncated["dataset"]["bars"]])
+        replay = execute_indicator(truncated)
+        self.assertEqual(len(replay["outputs"]["volume"]["points"]), 3)
+        self.assertNotEqual(replay["inputHash"], result["inputHash"])
+
+    def test_custom_indicator_rejects_misaligned_and_infinite_outputs(self):
+        for expression in ["data.close.reset_index(drop=True)", "data.close * float('inf')"]:
+            request = fixture(f"def calculate(data, params):\n    return {{'bad': {expression}}}")
+            request.update(operation="indicator", artifact={"id": "bad", "kind": "indicator", "revision": 1}, outputs={})
+            with self.assertRaises((ValueError, TypeError)):
+                execute_indicator(request)
+
     def test_next_open_accounting_and_benchmark(self):
         result = execute(fixture())
         trade = result["trades"][0]

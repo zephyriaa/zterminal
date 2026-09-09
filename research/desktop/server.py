@@ -172,9 +172,17 @@ class Handler(BaseHTTPRequestHandler):
                 if method == "DELETE" and identifier:
                     archive.delete_script(identifier)
                     return self.respond(200, {"deleted": True})
+            if route == "artifacts":
+                if method == "GET":
+                    return self.respond(200, archive.artifact_revisions(identifier) if identifier else archive.artifacts())
+                if method == "POST" and not identifier:
+                    return self.respond(200, archive.save_artifact(body))
+                if method == "DELETE" and identifier:
+                    archive.delete_artifact(identifier)
+                    return self.respond(200, {"deleted": True})
             if route == "jobs":
                 if method == "POST" and not identifier:
-                    if body.get("operation"):
+                    if body.get("operation") and body.get("operation") != "indicator":
                         raise ValueError("Use the analysis endpoint for archived results")
                     return self.respond(202, service.controller.create(body))
                 if method == "GET" and identifier:
@@ -190,6 +198,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(201, {"id": body["id"]})
                 if method == "POST" and identifier and len(parts) == 4 and parts[3] == "monte-carlo":
                     return self.respond(202, service.controller.create({"operation": "monte_carlo", "result": archive.result(identifier), "simulations": body.get("simulations", 1000), "seed": body.get("seed", 42)}))
+            if route == "evaluations" and method == "GET" and identifier:
+                return self.respond(200, archive.indicator_evaluation(identifier))
             if route == "legacy":
                 if method == "POST":
                     return self.respond(201, archive.import_legacy(body))

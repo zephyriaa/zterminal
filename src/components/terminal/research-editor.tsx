@@ -23,13 +23,14 @@ export default function ResearchEditor() {
   }, [diagnostic, script.id, script.source, captured]);
   const mount: OnMount = (editor, monaco) => {
     instance.current = editor; api.current = monaco;
-    disposables.current.push(editor.addAction({ id: "zterminal.backtest", label: "Backtest strategy", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter], run: () => { void useResearch.getState().run(); } }));
-    disposables.current.push(editor.addAction({ id: "zterminal.save", label: "Save script", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS], run: () => { void useResearch.getState().save(); } }));
+    disposables.current.push(editor.addAction({ id: "zterminal.run", label: "Run strategy or indicator", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter], run: () => { void useResearch.getState().run(); } }));
+    disposables.current.push(editor.addAction({ id: "zterminal.save", label: "Save artifact", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS], run: () => { void useResearch.getState().save(); } }));
     disposables.current.push(monaco.languages.registerCompletionItemProvider("python", { triggerCharacters: ["."], provideCompletionItems: (model, position) => {
       const word = model.getWordUntilPosition(position);
       const range = { startLineNumber: position.lineNumber, endLineNumber: position.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn };
       return { suggestions: [
         ["Strategy", "Strategy(entries, exits, short_entries=None, short_exits=None, plots={})", "Aligned boolean pandas Series. Entries and exits are shifted to the next open by the engine."],
+        ["Indicator", "Indicator(outputs={})", "Named numeric pandas Series aligned exactly to the selected dataset."],
         ["ema", "ema(data.close, 20)", "Exponential moving average. Uses a full warm-up window."],
         ["sma", "sma(data.close, 20)", "Rolling arithmetic average of closing prices."],
         ["rsi", "rsi(data.close, 14)", "RSI with exponentially smoothed gains and losses."],

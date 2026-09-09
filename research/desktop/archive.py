@@ -32,7 +32,12 @@ class Archive:
                 CREATE TABLE IF NOT EXISTS results(id TEXT PRIMARY KEY, name TEXT NOT NULL, created INTEGER NOT NULL, dataset_hash TEXT NOT NULL REFERENCES datasets(hash), envelope TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, status TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS legacy(id TEXT PRIMARY KEY, payload TEXT NOT NULL, imported INTEGER NOT NULL);
-                PRAGMA user_version=1;
+                CREATE TABLE IF NOT EXISTS artifacts(id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('strategy','indicator')), name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', source TEXT NOT NULL, revision INTEGER NOT NULL, updated INTEGER NOT NULL);
+                CREATE TABLE IF NOT EXISTS artifact_revisions(artifact_id TEXT NOT NULL, revision INTEGER NOT NULL, kind TEXT NOT NULL, source TEXT NOT NULL, hash TEXT NOT NULL, metadata TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(artifact_id, revision));
+                CREATE TABLE IF NOT EXISTS indicator_evaluations(id TEXT PRIMARY KEY, artifact_id TEXT NOT NULL, revision INTEGER NOT NULL, dataset_hash TEXT NOT NULL, input_hash TEXT NOT NULL UNIQUE, result_hash TEXT NOT NULL, created INTEGER NOT NULL, envelope TEXT NOT NULL);
+                INSERT OR IGNORE INTO artifacts(id,kind,name,source,revision,updated) SELECT id,'strategy',name,source,revision,updated FROM scripts;
+                INSERT OR IGNORE INTO artifact_revisions(artifact_id,revision,kind,source,hash,metadata,created) SELECT script_id,revision,'strategy',source,hash,'{}',created FROM revisions;
+                PRAGMA user_version=2;
             ''')
 
     @contextmanager
@@ -72,16 +77,95 @@ class Archive:
             revision = last_revision + 1
             db.execute("INSERT OR REPLACE INTO scripts VALUES(?,?,?,?,?)", (script_id, name.strip(), source, revision, now))
             db.execute("INSERT INTO revisions VALUES(?,?,?,?,?)", (script_id, revision, source, hashlib.sha256(source.encode()).hexdigest(), now))
+            db.execute("INSERT OR REPLACE INTO artifacts VALUES(?,?,?,?,?,?,?)", (script_id, "strategy", name.strip(), "", source, revision, now))
+            db.execute("INSERT OR IGNORE INTO artifact_revisions VALUES(?,?,?,?,?,?,?)", (script_id, revision, "strategy", source, hashlib.sha256(source.encode()).hexdigest(), "{}", now))
             return {"id": script_id, "name": name.strip(), "source": source, "savedSource": source, "revision": revision, "updatedAt": now}
 
     def delete_script(self, script_id):
         # Revisions and immutable run source remain available after deletion.
         with self.connect() as db:
             db.execute("DELETE FROM scripts WHERE id=?", (script_id,))
+            db.execute("DELETE FROM artifacts WHERE id=? AND kind='strategy'", (script_id,))
 
     def revisions(self, script_id):
         with self.connect() as db:
             return [dict(row) for row in db.execute("SELECT revision, source, hash, created FROM revisions WHERE script_id=? ORDER BY revision DESC", (script_id,))]
+
+    @staticmethod
+    def artifact(row):
+        return {"id": row["id"], "kind": row["kind"], "name": row["name"], "description": row["description"], "source": row["source"], "savedSource": row["source"], "revision": row["revision"], "updatedAt": row["updated"]}
+
+    def artifacts(self, kind=None):
+        if kind is not None and kind not in ("strategy", "indicator"):
+            raise ValueError("Unsupported artifact kind")
+        with self.connect() as db:
+            rows = db.execute("SELECT * FROM artifacts" + (" WHERE kind=?" if kind else "") + " ORDER BY updated DESC", (() if kind is None else (kind,))).fetchall()
+            return [self.artifact(row) for row in rows]
+
+    def save_artifact(self, payload):
+        kind, name, source = payload.get("kind"), payload.get("name"), payload.get("source")
+        description = payload.get("description", "")
+        metadata = payload.get("metadata", {})
+        if kind not in ("strategy", "indicator") or not isinstance(name, str) or not name.strip() or len(name) > 120 or not isinstance(description, str) or len(description) > 1000 or not isinstance(source, str) or len(source.encode()) > 256_000 or not isinstance(metadata, dict):
+            raise ValueError("Artifact requires a valid kind, name, description, source, and metadata")
+        artifact_id = str(payload.get("id") or uuid.uuid4())
+        if len(artifact_id) > 100:
+            raise ValueError("Invalid artifact ID")
+        now = int(time.time() * 1000)
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            previous = db.execute("SELECT revision,kind FROM artifacts WHERE id=?", (artifact_id,)).fetchone()
+            if previous and (payload.get("revision") != previous["revision"] or kind != previous["kind"]):
+                raise ValueError("Artifact changed since it was opened; reload or Save As")
+            revision = (db.execute("SELECT MAX(revision) FROM artifact_revisions WHERE artifact_id=?", (artifact_id,)).fetchone()[0] or 0) + 1
+            source_hash = hashlib.sha256(source.encode()).hexdigest()
+            db.execute("INSERT OR REPLACE INTO artifacts VALUES(?,?,?,?,?,?,?)", (artifact_id, kind, name.strip(), description, source, revision, now))
+            db.execute("INSERT INTO artifact_revisions VALUES(?,?,?,?,?,?,?)", (artifact_id, revision, kind, source, source_hash, encode(metadata), now))
+            return {"id": artifact_id, "kind": kind, "name": name.strip(), "description": description, "source": source, "savedSource": source, "revision": revision, "updatedAt": now}
+
+    def artifact_revisions(self, artifact_id):
+        with self.connect() as db:
+            return [{**dict(row), "metadata": json.loads(row["metadata"])} for row in db.execute("SELECT revision,kind,source,hash,metadata,created FROM artifact_revisions WHERE artifact_id=? ORDER BY revision DESC", (artifact_id,))]
+
+    def delete_artifact(self, artifact_id):
+        with self.connect() as db:
+            db.execute("DELETE FROM artifacts WHERE id=?", (artifact_id,))
+
+    def cached_indicator(self, input_hash):
+        with self.connect() as db:
+            row = db.execute("SELECT envelope FROM indicator_evaluations WHERE input_hash=?", (input_hash,)).fetchone()
+            return json.loads(row[0]) if row else None
+
+    def save_indicator_evaluation(self, result, job_id=None, dataset=None):
+        if not isinstance(result, dict) or result.get("version") != 1 or result.get("kind") != "indicator_evaluation" or result.get("resultHash") != digest({key: value for key, value in result.items() if key != "resultHash"}):
+            raise ValueError("Invalid indicator evaluation envelope")
+        artifact = result.get("artifact", {})
+        if not isinstance(artifact.get("id"), str) or not isinstance(artifact.get("revision"), int) or not isinstance(result.get("datasetHash"), str) or not isinstance(result.get("inputHash"), str):
+            raise ValueError("Incomplete indicator provenance")
+        outputs = result.get("outputs")
+        if not isinstance(outputs, dict) or len(outputs) > 12 or any(not isinstance(output, dict) or output.get("plot") not in ("line", "histogram", "area", "marker", "level", "background") or not isinstance(output.get("points"), list) or len(output["points"]) > 100_000 for output in outputs.values()):
+            raise ValueError("Invalid indicator outputs")
+        encode(result)
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            revision = db.execute("SELECT hash FROM artifact_revisions WHERE artifact_id=? AND revision=? AND kind='indicator'", (artifact["id"], artifact["revision"])).fetchone()
+            if not revision or revision["hash"] != result.get("sourceHash"):
+                raise ValueError("Indicator source does not match its immutable archived revision")
+            if dataset is not None:
+                if dataset.get("hash") != result["datasetHash"]:
+                    raise ValueError("Indicator dataset provenance mismatch")
+                dataset_key = digest({key: value for key, value in dataset.items() if key != "bars"})
+                db.execute("INSERT OR IGNORE INTO datasets VALUES(?,?)", (dataset_key, encode(dataset)))
+            db.execute("INSERT OR REPLACE INTO indicator_evaluations VALUES(?,?,?,?,?,?,?,?)", (result["id"], artifact["id"], artifact["revision"], result["datasetHash"], result["inputHash"], result["resultHash"], result["createdAt"], encode(result)))
+            if job_id:
+                db.execute("INSERT OR REPLACE INTO jobs VALUES(?,?)", (job_id, encode({"id": job_id, "stage": "complete", "resultId": result["id"], "resultKind": "indicator"})))
+
+    def indicator_evaluation(self, result_id):
+        with self.connect() as db:
+            row = db.execute("SELECT envelope FROM indicator_evaluations WHERE id=?", (result_id,)).fetchone()
+            if not row:
+                raise KeyError("Indicator evaluation not found")
+            return json.loads(row[0])
 
     def save_job(self, job):
         with self.connect() as db:

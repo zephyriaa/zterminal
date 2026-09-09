@@ -21,6 +21,7 @@ import { DrawingInteractionLayer } from "./drawing-interaction-layer";
 import type { IndicatorInstance } from "@/lib/indicator-library";
 import { createStudy, migrateStudy } from "@/lib/indicator-library";
 import { evaluateIndicator } from "@/lib/chart/indicators/evaluators";
+import type { IndicatorEvaluationResult } from "@/lib/local-research/contracts";
 import {
   createChart,
   IChartApi,
@@ -69,6 +70,7 @@ interface ChartProps {
   chartType: ChartType;
   indicators: ChartIndicators;
   indicatorInstances?: IndicatorInstance[];
+  pythonEvaluations?: Record<string, IndicatorEvaluationResult>;
   replayIndex?: number | null;
   replayEnabled?: boolean;
   markers?: TradeMarker[];
@@ -122,6 +124,7 @@ export function TerminalChart({
   chartType,
   indicators,
   indicatorInstances,
+  pythonEvaluations = {},
   replayIndex,
   replayEnabled = false,
   markers,
@@ -487,7 +490,8 @@ export function TerminalChart({
     for (const study of indicatorInstances ?? legacy) {
       const timeframeVisible = study.visibility.timeframes === "all" || study.visibility.timeframes.includes(timeframe);
       if (!study.enabled || !timeframeVisible || study.kind === "volume" || study.kind === "profile") continue;
-      const evaluated = evaluateIndicator(study, availableBars, timezone);
+      const evaluation = study.kind === "python" && study.artifactId ? pythonEvaluations[study.artifactId] : undefined;
+      const evaluated = evaluation ? Object.entries(evaluation.outputs).map(([id, output]) => { const byTime = new Map(output.points.map(point => [point.time, point.value])); return { id, values: availableBars.map(bar => byTime.get(bar.t) ?? null) }; }) : evaluateIndicator(study, availableBars, timezone);
       for (const output of study.outputs) {
         const values = evaluated.find(item => item.id === output.id)?.values;
         if (!output.visible || !values) continue;
@@ -505,7 +509,7 @@ export function TerminalChart({
     }
     for (const [key, series] of indicatorSeriesRef.current) if (!activeOutputs.has(key)) { chart.removeSeries(series); indicatorSeriesRef.current.delete(key); }
     
-  }, [bars, chartType, indicatorInstances, indicators, effectiveReplayIndex, settings.candleUpColor, settings.candleDownColor, timeframe, timezone]);
+  }, [bars, chartType, indicatorInstances, indicators, effectiveReplayIndex, pythonEvaluations, settings.candleUpColor, settings.candleDownColor, timeframe, timezone]);
 
   useEffect(() => {
     if (!seriesRef.current) return;
