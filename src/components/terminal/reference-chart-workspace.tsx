@@ -17,11 +17,11 @@ import {
 import { PanelTaskStrip } from "./panel-task-strip";
 import { usePanels } from "@/stores/panels";
 import { useStudies } from "@/stores/studies";
+import { migrateStudy, type IndicatorInstance } from "@/lib/indicator-library";
 import { DesktopWindow } from "./desktop-window";
 import {
   TerminalChart,
   type ChartIndicators,
-  type ChartStudy,
 } from "./terminal-chart";
 import { IndicatorsBrowser, type IndicatorToggleId } from "./indicators-browser";
 import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
@@ -106,6 +106,9 @@ export function ReferenceChartWorkspace() {
   const [drawingTool, setDrawingTool] = useState<DrawingTool>("crosshair");
   const [magnetMode, setMagnetMode] = useState<MagnetMode>("off");
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(null);
+  const [studiesHydrated, setStudiesHydrated] = useState(false);
+  const indicatorDocumentRef = useRef<string | null>(null);
+  const indicatorLoadingRef = useRef(false);
   const appearanceHydrated = useRef(false);
   const { quote, trades, lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 600, depth: false });
   const chartProvider = archivedChart?.dataset.provider ?? provider ?? "gateio";
@@ -121,15 +124,15 @@ export function ReferenceChartWorkspace() {
   const volumePane = chartDocument.panes.find(pane => pane.id === "volume") ?? { id: "volume", kind: "volume" as const, visible: true, height: 0.22, order: 1 };
   const indicators: ChartIndicators = useMemo(() => ({
     vwap: false, ema20: false, ema50: false,
-    volume: volumePane.visible && instances.some(p => p.kind === 'volume' && p.visible),
-    profile: instances.some(p => p.kind === 'profile' && p.visible),
-    customStudies: instances.filter(p => !['volume', 'profile'].includes(p.kind)) as ChartStudy[],
+    volume: volumePane.visible && instances.some(item => item.kind === "volume" && item.enabled),
+    profile: instances.some(item => item.kind === "profile" && item.enabled),
+    customStudies: [],
   }), [instances, volumePane.visible]);
   const livePrice = lastTrade?.price ?? derivatives?.markPrice ?? null;
 
 
   useEffect(() => {
-    void useStudies.persist.rehydrate();
+    void Promise.resolve(useStudies.persist.rehydrate()).then(() => setStudiesHydrated(true));
     void Promise.resolve(useChartDocuments.persist.rehydrate()).then(() => { useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings }); });
     const timer = window.setTimeout(() => {
       try {
@@ -147,6 +150,21 @@ export function ReferenceChartWorkspace() {
   useEffect(() => {
     useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings });
   }, [chartDocumentId]);
+
+  useEffect(() => {
+    if (!studiesHydrated) return;
+    if (indicatorDocumentRef.current === chartDocumentId) return;
+    indicatorDocumentRef.current = chartDocumentId;
+    const saved = useChartDocuments.getState().documents[chartDocumentId]?.indicators.map(migrateStudy).filter((item): item is IndicatorInstance => item !== null) ?? [];
+    if (saved.length) { indicatorLoadingRef.current = true; useStudies.getState().replaceInstances(saved); }
+    else useChartDocuments.getState().setIndicators(chartDocumentId, instances);
+  }, [chartDocumentId, storedChartDocument, studiesHydrated]);
+
+  useEffect(() => {
+    if (indicatorDocumentRef.current !== chartDocumentId) return;
+    if (indicatorLoadingRef.current) { indicatorLoadingRef.current = false; return; }
+    useChartDocuments.getState().setIndicators(chartDocumentId, instances);
+  }, [chartDocumentId, instances]);
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
@@ -242,8 +260,8 @@ export function ReferenceChartWorkspace() {
           <div className="zt-chart-stage">
             <DrawingToolbar tool={drawingTool} magnet={magnetMode} onTool={setDrawingTool} onMagnet={setMagnetMode} />
             <div className="zt-chart-readout"><span>O <b>{formatPrice((crosshairBar ?? latestBar)?.o, contract.tickSize)}</b></span><span>H <b>{formatPrice((crosshairBar ?? latestBar)?.h, contract.tickSize)}</b></span><span>L <b>{formatPrice((crosshairBar ?? latestBar)?.l, contract.tickSize)}</b></span><span>C <b>{formatPrice((crosshairBar ?? latestBar)?.c, contract.tickSize)}</b></span><span>V <b>{(crosshairBar ?? latestBar)?.v?.toLocaleString() ?? "—"}</b></span></div>
-            <div className="zt-chart-overlays">{instances.filter(p => p.visible).slice(0, 6).map(p => <span key={p.id} style={{ color: p.color }}>{p.name}</span>)}</div>
-            <TerminalChart symbol={chartSymbol} timeframe={chartTimeframe as Timeframe} snapshot={archivedChart?.dataset.bars} markers={chartSettings.showStrategyTrades ? markers : []} focusRange={focusRange} chartType={chartType} indicators={indicators} settings={chartSettings} volumePaneHeight={volumePane.height} replayEnabled={!archivedChart && replay} timezone={archivedChart ? "UTC" : timezone} markPrice={archivedChart || !chartSettings.showMarkPrice ? undefined : derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} drawings={chartDocument.drawings} selectedDrawingId={selectedDrawingId} drawingTool={drawingTool} magnetMode={magnetMode} onDrawingTool={setDrawingTool} onSelectDrawing={setSelectedDrawingId} onCreateDrawing={(type, anchors) => useChartDocuments.getState().createDrawing(chartDocumentId, type, anchors)} onUpdateDrawing={(id, patch) => useChartDocuments.getState().updateDrawing(chartDocumentId, id, patch)} onDeleteDrawing={id => { useChartDocuments.getState().deleteDrawing(chartDocumentId, id); if (selectedDrawingId === id) setSelectedDrawingId(null); }} onDuplicateDrawing={id => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, id); if (duplicate) setSelectedDrawingId(duplicate); }} />
+            <div className="zt-chart-overlays">{instances.filter(item => item.enabled).slice(0, 6).map(item => <span key={item.id} style={{ color: item.outputs[0]?.color }}>{item.name}</span>)}</div>
+            <TerminalChart symbol={chartSymbol} timeframe={chartTimeframe as Timeframe} snapshot={archivedChart?.dataset.bars} markers={chartSettings.showStrategyTrades ? markers : []} focusRange={focusRange} chartType={chartType} indicators={indicators} indicatorInstances={instances} settings={chartSettings} volumePaneHeight={volumePane.height} replayEnabled={!archivedChart && replay} timezone={archivedChart ? "UTC" : timezone} markPrice={archivedChart || !chartSettings.showMarkPrice ? undefined : derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} drawings={chartDocument.drawings} selectedDrawingId={selectedDrawingId} drawingTool={drawingTool} magnetMode={magnetMode} onDrawingTool={setDrawingTool} onSelectDrawing={setSelectedDrawingId} onCreateDrawing={(type, anchors) => useChartDocuments.getState().createDrawing(chartDocumentId, type, anchors)} onUpdateDrawing={(id, patch) => useChartDocuments.getState().updateDrawing(chartDocumentId, id, patch)} onDeleteDrawing={id => { useChartDocuments.getState().deleteDrawing(chartDocumentId, id); if (selectedDrawingId === id) setSelectedDrawingId(null); }} onDuplicateDrawing={id => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, id); if (duplicate) setSelectedDrawingId(duplicate); }} />
             {selectedDrawing && <DrawingInspector drawing={selectedDrawing} onChange={patch => useChartDocuments.getState().updateDrawing(chartDocumentId, selectedDrawing.id, patch)} onDuplicate={() => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, selectedDrawing.id); if (duplicate) setSelectedDrawingId(duplicate); }} onDelete={() => { useChartDocuments.getState().deleteDrawing(chartDocumentId, selectedDrawing.id); setSelectedDrawingId(null); }} onClose={() => setSelectedDrawingId(null)} />}
           </div>
         </div>

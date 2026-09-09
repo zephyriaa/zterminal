@@ -1,41 +1,43 @@
-import type { ChartStudy } from "@/components/terminal/terminal-chart";
-export type StudyKind = ChartStudy["kind"] | "volume" | "profile";
-export type IndicatorInstance = Omit<ChartStudy, "kind"> & { kind: StudyKind; presetId: string };
-export type IndicatorDefinition = { id: string; name: string; aliases: string; kind: StudyKind; category: "Trend" | "Volatility" | "Volume"; description: string; display: "Overlay" | "Pane"; period?: number; multiplier?: number; color: string };
+import type { IndicatorInstanceV2, IndicatorOutputStyle, IndicatorVisibility } from "@/lib/chart/contracts";
+
+export type StudyKind = "ema" | "sma" | "wma" | "vwma" | "vwap" | "bollinger" | "donchian" | "volume" | "profile";
+export type IndicatorInputDefinition = { id: string; label: string; type: "number" | "boolean" | "select"; defaultValue: number | boolean | string; min?: number; max?: number; step?: number; options?: string[] };
+export type IndicatorOutputDefinition = Omit<IndicatorOutputStyle, "color"> & { defaultColor: string };
+export type IndicatorDefinition = { id: string; name: string; aliases: string; kind: StudyKind; category: "Trend" | "Volatility" | "Volume"; description: string; display: "Overlay" | "Pane"; inputs: IndicatorInputDefinition[]; outputs: IndicatorOutputDefinition[]; defaultPaneId: "price" | "volume" | "indicator"; defaultPriceScaleId: "right" | "left" | "indicator" };
+export type IndicatorInstance = IndicatorInstanceV2 & { presetId: string; kind: StudyKind; source: "native" | "migration" | "python"; period?: number; multiplier?: number; color?: string; visible?: boolean };
+
+const lengthInput: IndicatorInputDefinition = { id: "length", label: "Length", type: "number", defaultValue: 20, min: 1, max: 1000, step: 1 };
+const line = (id: string, label: string, defaultColor: string, lineStyle: IndicatorOutputStyle["lineStyle"] = "solid"): IndicatorOutputDefinition => ({ id, label, plot: "line", defaultColor, width: 2, lineStyle, opacity: 1, visible: true });
+
 export const INDICATOR_LIBRARY: IndicatorDefinition[] = [
-  { id: "vwap", name: "Session VWAP", aliases: "volume weighted average price", kind: "vwap", category: "Trend", description: "Cumulative price weighted by observed volume; resets by the chart session policy.", display: "Overlay", color: "#e5ad57" },
-  { id: "ema20", name: "EMA 20", aliases: "exponential moving average", kind: "ema", category: "Trend", description: "An exponential average of closing prices, weighted toward recent bars.", display: "Overlay", period: 20, color: "#8fa5df" },
-  { id: "ema50", name: "EMA 50", aliases: "exponential moving average", kind: "ema", category: "Trend", description: "A longer exponential average for observing price structure.", display: "Overlay", period: 50, color: "#b39ce4" },
-  { id: "sma20", name: "Simple moving average", aliases: "sma ma", kind: "sma", category: "Trend", description: "The arithmetic mean of closing prices over a rolling window.", display: "Overlay", period: 20, color: "#c89c77" },
-  { id: "wma20", name: "Weighted moving average", aliases: "wma linear", kind: "wma", category: "Trend", description: "A rolling average with linearly increasing weights on recent closes.", display: "Overlay", period: 20, color: "#82bcc7" },
-  { id: "vwma20", name: "Volume-weighted moving average", aliases: "vwma rolling", kind: "vwma", category: "Trend", description: "Closing prices weighted by bar volume over a rolling window.", display: "Overlay", period: 20, color: "#c891b0" },
-  { id: "bollinger20", name: "Bollinger Bands", aliases: "bb standard deviation bands", kind: "bollinger", category: "Volatility", description: "A simple moving average with bands defined by rolling standard deviation.", display: "Overlay", period: 20, multiplier: 2, color: "#bba6df" },
-  { id: "donchian20", name: "Donchian Channels", aliases: "breakout highest lowest channel", kind: "donchian", category: "Volatility", description: "The highest high and lowest low over a rolling window.", display: "Overlay", period: 20, color: "#85bbbc" },
-  { id: "volume", name: "Volume", aliases: "vol histogram", kind: "volume", category: "Volume", description: "Observed exchange-reported volume for each bar.", display: "Pane", color: "#98a4ba" },
-  { id: "profile", name: "Volume Profile", aliases: "vp poc value area", kind: "profile", category: "Volume", description: "OHLCV-based price distribution estimate; not exchange trade-level volume at price.", display: "Overlay", color: "#b599d4" },
+  { id: "vwap", name: "Session VWAP", aliases: "volume weighted average price", kind: "vwap", category: "Trend", description: "Cumulative price weighted by observed volume; resets by the chart session policy.", display: "Overlay", inputs: [], outputs: [line("value", "VWAP", "#e5ad57", "dashed")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "ema20", name: "EMA 20", aliases: "exponential moving average", kind: "ema", category: "Trend", description: "An exponential average of closing prices, weighted toward recent bars.", display: "Overlay", inputs: [lengthInput], outputs: [line("value", "EMA", "#8fa5df")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "ema50", name: "EMA 50", aliases: "exponential moving average", kind: "ema", category: "Trend", description: "A longer exponential average for observing price structure.", display: "Overlay", inputs: [{ ...lengthInput, defaultValue: 50 }], outputs: [line("value", "EMA", "#b39ce4")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "sma20", name: "Simple moving average", aliases: "sma ma", kind: "sma", category: "Trend", description: "The arithmetic mean of closing prices over a rolling window.", display: "Overlay", inputs: [lengthInput], outputs: [line("value", "SMA", "#c89c77")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "wma20", name: "Weighted moving average", aliases: "wma linear", kind: "wma", category: "Trend", description: "A rolling average with linearly increasing weights on recent closes.", display: "Overlay", inputs: [lengthInput], outputs: [line("value", "WMA", "#82bcc7")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "vwma20", name: "Volume-weighted moving average", aliases: "vwma rolling", kind: "vwma", category: "Trend", description: "Closing prices weighted by bar volume over a rolling window.", display: "Overlay", inputs: [lengthInput], outputs: [line("value", "VWMA", "#c891b0")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "bollinger20", name: "Bollinger Bands", aliases: "bb standard deviation bands", kind: "bollinger", category: "Volatility", description: "A simple moving average with bands defined by rolling standard deviation.", display: "Overlay", inputs: [lengthInput, { id: "multiplier", label: "Standard deviations", type: "number", defaultValue: 2, min: .1, max: 10, step: .1 }], outputs: [line("middle", "Middle", "#bba6df"), line("upper", "Upper", "#c4b5fd", "dotted"), line("lower", "Lower", "#c4b5fd", "dotted")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "donchian20", name: "Donchian Channels", aliases: "breakout highest lowest channel", kind: "donchian", category: "Volatility", description: "The highest high and lowest low over a rolling window.", display: "Overlay", inputs: [lengthInput], outputs: [line("upper", "Upper", "#85bbbc", "dashed"), line("lower", "Lower", "#85bbbc", "dashed")], defaultPaneId: "price", defaultPriceScaleId: "right" },
+  { id: "volume", name: "Volume", aliases: "vol histogram", kind: "volume", category: "Volume", description: "Observed exchange-reported volume for each bar.", display: "Pane", inputs: [], outputs: [{ ...line("volume", "Volume", "#98a4ba"), plot: "histogram" }], defaultPaneId: "volume", defaultPriceScaleId: "right" },
+  { id: "profile", name: "Volume Profile", aliases: "vp poc value area", kind: "profile", category: "Volume", description: "OHLCV-based price distribution estimate; not exchange trade-level volume at price.", display: "Overlay", inputs: [], outputs: [], defaultPaneId: "price", defaultPriceScaleId: "right" },
 ];
-function distance(a: string, b: string) {
-  let row = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 0; i < a.length; i++) { const next = [i + 1]; for (let j = 0; j < b.length; j++) next[j + 1] = Math.min(next[j] + 1, row[j + 1] + 1, row[j] + (a[i] === b[j] ? 0 : 1)); row = next; }
-  return row[b.length];
+
+function distance(a: string, b: string) { let row = Array.from({ length: b.length + 1 }, (_, i) => i); for (let i = 0; i < a.length; i++) { const next = [i + 1]; for (let j = 0; j < b.length; j++) next[j + 1] = Math.min(next[j] + 1, row[j + 1] + 1, row[j] + (a[i] === b[j] ? 0 : 1)); row = next; } return row[b.length]; }
+export function searchIndicators(query: string): IndicatorDefinition[] { const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0, 12); return INDICATOR_LIBRARY.map(item => { const text = `${item.name} ${item.aliases} ${item.category}`.toLowerCase(); const tokens = text.split(/[^a-z0-9]+/); const scores = words.map(word => text.includes(word) ? 0 : word.length > 3 && tokens.some(token => distance(word.slice(0, 60), token) <= 2) ? 1 : 100); return { item, score: scores.reduce<number>((a, b) => a + b, 0) }; }).filter(entry => entry.score < 100).sort((a, b) => a.score - b.score).map(entry => entry.item); }
+
+export function createStudy(presetId: string, id: string = crypto.randomUUID()): IndicatorInstance { const definition = INDICATOR_LIBRARY.find(item => item.id === presetId); if (!definition) throw new Error("Unsupported indicator."); return { id, presetId, definitionId: definition.id, name: definition.name, kind: definition.kind, source: "native", inputs: Object.fromEntries(definition.inputs.map(input => [input.id, input.defaultValue])), outputs: definition.outputs.map(output => ({ id: output.id, label: output.label, plot: output.plot, color: output.defaultColor, width: output.width, lineStyle: output.lineStyle, opacity: output.opacity, visible: output.visible })), paneId: definition.defaultPaneId, priceScaleId: definition.defaultPriceScaleId, visibility: { timeframes: "all" }, enabled: true }; }
+
+export function migrateStudy(value: unknown): IndicatorInstance | null {
+  if (!value || typeof value !== "object") return null; const source = value as Partial<IndicatorInstance>; const presetId = source.presetId ?? source.definitionId; const definition = INDICATOR_LIBRARY.find(item => item.id === presetId || item.kind === source.kind); if (!definition || typeof source.id !== "string" || !source.id) return null;
+  const created = createStudy(definition.id, source.id); const legacyColor = source.color;
+  const outputs = Array.isArray(source.outputs) ? created.outputs.map(defaultOutput => { const saved = source.outputs!.find(output => output?.id === defaultOutput.id); return saved ? { ...defaultOutput, ...saved, id: defaultOutput.id, label: typeof saved.label === "string" ? saved.label.slice(0, 80) : defaultOutput.label } : defaultOutput; }) : created.outputs.map(output => ({ ...output, ...(legacyColor ? { color: legacyColor } : {}) }));
+  return { ...created, name: typeof source.name === "string" ? source.name : created.name, source: source.source ?? "migration", inputs: { ...created.inputs, ...source.inputs, ...(source.period !== undefined ? { length: source.period } : {}), ...(source.multiplier !== undefined ? { multiplier: source.multiplier } : {}) }, outputs, paneId: typeof source.paneId === "string" ? source.paneId : created.paneId, priceScaleId: typeof source.priceScaleId === "string" ? source.priceScaleId : created.priceScaleId, visibility: source.visibility as IndicatorVisibility ?? created.visibility, enabled: source.enabled ?? source.visible ?? true };
 }
-export function searchIndicators(query: string): IndicatorDefinition[] {
-  const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0, 12);
-  return INDICATOR_LIBRARY.map(item => {
-    const text = `${item.name} ${item.aliases} ${item.category}`.toLowerCase();
-    const tokens = text.split(/[^a-z0-9]+/);
-    const scores = words.map(word => text.includes(word) ? 0 : word.length > 3 && tokens.some(token => distance(word.slice(0, 60), token) <= 2) ? 1 : 100);
-    return { item, score: scores.reduce<number>((a, b) => a + b, 0) };
-  }).filter(entry => entry.score < 100).sort((a, b) => a.score - b.score).map(entry => entry.item);
-}
+
 export function validateStudy(study: IndicatorInstance) {
-  if (!INDICATOR_LIBRARY.some(p => p.kind === study.kind)) throw new Error("Unsupported indicator calculation.");
-  if (!["vwap", "volume", "profile"].includes(study.kind) && (!Number.isInteger(study.period) || study.period! < 1 || study.period! > 1000)) throw new Error("Length must be a whole number from 1 to 1,000.");
-  if (study.kind === "bollinger" && (!Number.isFinite(study.multiplier) || study.multiplier! < .1 || study.multiplier! > 10)) throw new Error("Standard deviations must be between 0.1 and 10.");
-  if (!/^#[0-9a-f]{6}$/i.test(study.color) || !study.name.trim() || study.name.length > 80) throw new Error("Use a name up to 80 characters and a valid color.");
+  const definition = INDICATOR_LIBRARY.find(item => item.id === study.definitionId); if (!definition) throw new Error("Unsupported indicator calculation."); if (!study.name.trim() || study.name.length > 80) throw new Error("Use a name up to 80 characters.");
+  for (const input of definition.inputs) { const value = study.inputs[input.id]; if (input.type === "number" && (typeof value !== "number" || !Number.isFinite(value) || value < (input.min ?? -Infinity) || value > (input.max ?? Infinity) || input.step === 1 && !Number.isInteger(value))) throw new Error(`${input.label} must be between ${input.min} and ${input.max}.`); }
+  if (study.period !== undefined && (!Number.isInteger(study.period) || study.period < 1 || study.period > 1000)) throw new Error("Length must be a whole number from 1 to 1,000."); if (study.multiplier !== undefined && (!Number.isFinite(study.multiplier) || study.multiplier < .1 || study.multiplier > 10)) throw new Error("Standard deviations must be between 0.1 and 10.");
+  if (!Array.isArray(study.outputs) || study.outputs.some(output => !/^#[0-9a-f]{6}$/i.test(output.color) || output.width < 1 || output.width > 4 || output.opacity < 0 || output.opacity > 1)) throw new Error("Each output needs valid style settings."); if (!study.paneId || !study.priceScaleId) throw new Error("Choose a pane and price scale.");
 }
-export function createStudy(presetId: string, id: string = crypto.randomUUID()): IndicatorInstance {
-  const preset = INDICATOR_LIBRARY.find(p => p.id === presetId);
-  if (!preset) throw new Error("Unsupported indicator.");
-  return { id, presetId, name: preset.name, kind: preset.kind, period: preset.period, multiplier: preset.multiplier, color: preset.color, visible: true, source: "native" };
-}
+export function resetStudy(instance: IndicatorInstance) { return createStudy(instance.definitionId!, instance.id); }

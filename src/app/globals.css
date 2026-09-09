@@ -1190,6 +1190,13 @@ html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 
 .zt-study-settings input[type=color] { height:38px; padding:3px; }
 .zt-study-settings button { padding:8px 12px; border:1px solid #5e477e; }
 .zt-study-settings [role=alert] { color:#eaa5ad; margin-bottom:12px; }
+.zt-study-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin-bottom:16px; border-bottom:1px solid #302b39; }
+.zt-study-tabs button { border:0; border-bottom:2px solid transparent; color:#8d859a; text-transform:capitalize; }
+.zt-study-tabs button[aria-selected=true] { border-bottom-color:#a78bfa; color:#e4d8f4; }
+.zt-study-output { margin-bottom:12px; padding:10px; border:1px solid #302b39; }
+.zt-study-output legend { padding:0 5px; color:#c9b8dc; }
+.zt-study-settings-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.zt-study-settings-actions button { display:flex; align-items:center; gap:4px; }
 .zt-panel-task-strip { position:absolute; bottom:0; left:0; right:0; height:34px; z-index:1000; display:flex; align-items:stretch; gap:1px; overflow-x:auto; background:#0c0c13; border-top:1px solid #292735; font:9px ui-monospace,monospace; white-space:nowrap; }
 .zt-panel-task-strip button { padding:0 14px; border-right:1px solid #292735; color:#9f9aad; }
 .zt-panel-task-strip button[aria-current] { color:#ddd6ff; border-top:2px solid #a78bfa; background:#1a1625; }
