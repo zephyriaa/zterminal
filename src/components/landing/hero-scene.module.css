@@ -4,13 +4,24 @@
   width: 100%;
   height: 100vh;
   min-height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 72% 4%, rgba(21, 21, 47, 0.53) 0, transparent 37%),
+    radial-gradient(ellipse at 46% 84%, rgba(16, 21, 52, 0.4) 0, transparent 43%),
+    linear-gradient(120deg, #050b14, #060a16 67%, #040913);
 }
 
 .scene {
   position: absolute;
   width: 1672px;
   height: 941px;
-  transform-origin: top left;
+  left: 50%;
+  top: 50%;
+  margin-left: -836px;
+  margin-top: -470.5px;
+  transform-origin: center center;
   overflow: hidden;
   background:
     radial-gradient(ellipse at 72% 4%, rgba(21, 21, 47, 0.53) 0, transparent 37%),
@@ -255,6 +266,28 @@
   inset: 0;
   pointer-events: none;
   z-index: 3;
+  transform-origin: 1080px 530px;
+  --comp-scale: 0.74;
+  --comp-tx: -100px;
+  --comp-ty: -18px;
+  transform: translate(var(--comp-tx), var(--comp-ty)) scale(var(--comp-scale));
+  transition: transform 180ms ease-out;
+}
+
+@media (max-width: 1440px), (max-height: 850px) {
+  .computer {
+    --comp-scale: 0.69;
+    --comp-tx: -115px;
+    --comp-ty: -12px;
+  }
+}
+
+@media (max-width: 1200px), (max-height: 740px) {
+  .computer {
+    --comp-scale: 0.63;
+    --comp-tx: -130px;
+    --comp-ty: -6px;
+  }
 }
 
 .lid {
@@ -424,6 +457,9 @@
 
   .scene {
     position: relative;
+    left: auto;
+    top: auto;
+    margin: 0;
     width: 100%;
     height: auto;
     min-height: 980px;

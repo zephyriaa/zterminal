@@ -25,9 +25,12 @@ export function HeroScene() {
       const height = window.innerHeight;
       if (width > 800) {
         setIsDesktop(true);
-        const s = width / 1672;
+        const scaleX = width / 1672;
+        const scaleY = height / 941;
+        // Balance width and height constraints so the hero never overflows 100vh
+        const s = Math.min(scaleX, Math.max(0.68, scaleY));
         setScale(s);
-        setHeroHeight(Math.max(941 * s, height));
+        setHeroHeight(height);
       } else {
         setIsDesktop(false);
         setScale(1);
@@ -86,7 +89,6 @@ export function HeroScene() {
         id="overview"
         style={isDesktop ? { transform: `scale(${scale})` } : undefined}
       >
-        <div className={styles.glow} aria-hidden="true" />
         <canvas
           ref={canvasRef}
           className={styles.waves}
@@ -138,6 +140,7 @@ export function HeroScene() {
           role="img"
           aria-label="Angled ZTerminal workstation showing the real market canvas"
         >
+          <div className={styles.glow} aria-hidden="true" />
           <div className={styles.lid}>
             <div className={styles.terminal}>
               <Image
