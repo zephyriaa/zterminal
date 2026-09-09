@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { publicWindowsRelease } from "@/lib/releases/windows-release";
+import { PublicHeader } from "@/components/public/public-header";
+import { PublicFooter } from "@/components/public/public-footer";
+import "@/components/public/public-theme.css";
 
 import styles from "./download.module.css";
 
@@ -30,17 +33,8 @@ export default function DownloadPage() {
   const release = publicWindowsRelease();
 
   return (
-    <main className={styles.page} id="main">
-      <header className={styles.header}>
-        <Link href="/" className={styles.brand} aria-label="ZTerminal home">
-          <img src="/landing/zterminal-logo-mark.png" alt="" />
-          <span>ZTERMINAL</span>
-        </Link>
-        <nav aria-label="Download page navigation">
-          <Link href="/">Overview</Link>
-          <Link href="/terminal">Web terminal</Link>
-        </nav>
-      </header>
+    <main className={`${styles.page} publicScope`} id="main">
+      <PublicHeader />
 
       <section className={styles.hero} aria-labelledby="download-title">
         <p className={styles.eyebrow}>ZTERMINAL FOR WINDOWS</p>
@@ -110,6 +104,8 @@ export default function DownloadPage() {
           that is not linked from this page.
         </p>
       </section>
+
+      <PublicFooter />
     </main>
   );
 }
