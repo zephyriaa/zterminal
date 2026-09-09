@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -46,7 +46,7 @@ export function QuoteManagerDialog({ open, onClose }: QuoteManagerDialogProps) {
   const [forcedTf, setForcedTf] = useState<Timeframe>("5m");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const reloadDatasets = async () => {
+  const reloadDatasets = useCallback(async () => {
     setLoading(true);
     try {
       const list = await listCachedDatasets();
@@ -54,12 +54,26 @@ export function QuoteManagerDialog({ open, onClose }: QuoteManagerDialogProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    let active = true;
     if (open) {
-      void reloadDatasets();
+      setLoading(true);
+      listCachedDatasets()
+        .then((list) => {
+          if (active) setDatasets(list);
+        })
+        .catch(() => {
+          // ignore cache error
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
     }
+    return () => {
+      active = false;
+    };
   }, [open]);
 
   if (!open) return null;
