@@ -138,7 +138,7 @@ export function HeroScene() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15, ease: EASE_OUT_EXPO }}
           >
-            QUANTITATIVE MARKET RESEARCH
+            INSTITUTIONAL QUANTITATIVE WORKSTATION
           </motion.span>
 
           {/* Enormous Headline with Sans + Italic Serif accent & Line-Masked Reveals */}
@@ -164,15 +164,15 @@ export function HeroScene() {
             </span>
           </h1>
 
-          {/* Restrained Supporting Copy */}
+          {/* Marketing-Driven Supporting Copy */}
           <motion.p
             className={styles.description}
             initial={reduced ? undefined : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.65, ease: EASE_OUT_EXPO }}
           >
-            ZTerminal is a quantitative market research workstation for
-            better-prepared, evidence-led decisions.
+            Gain an institutional edge with real-time market structure, sub-second backtesting,
+            and disciplined risk management. Stop guessing—start trading with mathematical conviction.
           </motion.p>
 
           {/* Actions */}
@@ -197,7 +197,7 @@ export function HeroScene() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.92 }}
           >
-            Decision support for traders. No broker route. User retains control of execution.
+            Institutional decision intelligence. Zero broker lock-in. Complete capital sovereignty.
           </motion.p>
         </motion.section>
 
