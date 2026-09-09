@@ -99,3 +99,4 @@ export interface EconomicCalendarProvider {
   isConfigured(): boolean;
   fetchEvents(request: CalendarRequest): Promise<EconomicCalendarProviderResult>;
 }
+

@@ -153,3 +153,4 @@ export class FredCalendarProvider implements EconomicCalendarProvider {
     }
   }
 }
+

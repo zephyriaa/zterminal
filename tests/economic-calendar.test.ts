@@ -408,3 +408,4 @@ test("12. getNextUpcomingEvent computes countdown accurately to nearest high-imp
   assert.equal(next.diffMs, 15 * 60 * 1000);
   assert.equal(next.countdownText, "00:15:00");
 });
+
