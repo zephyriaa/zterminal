@@ -208,7 +208,7 @@ export function ReferenceChartWorkspace() {
 
   useEffect(() => {
     const focusChart = () => usePanels.getState().open("chart");
-    const rerunPythonIndicator = (event: Event) => { const detail = (event as CustomEvent<{ artifactId: string; params: Record<string, number | string | boolean> }>).detail; if (detail?.artifactId) void useResearch.get.getState().rerunIndicator(detail.artifactId, detail.params); };
+    const rerunPythonIndicator = (event: Event) => { const detail = (event as CustomEvent<{ artifactId: string; params: Record<string, number | string | boolean> }>).detail; if (detail?.artifactId) void useResearch.getState().rerunIndicator(detail.artifactId, detail.params); };
     window.addEventListener("zterminal:focus-chart", focusChart);
     window.addEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
     const openIndicators = () => setIndicatorsOpen(true);
