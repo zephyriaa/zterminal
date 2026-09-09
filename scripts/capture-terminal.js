@@ -6,7 +6,7 @@ async function run() {
   console.log('Launching browser...');
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
+    viewport: { width: 1600, height: 900 },
     deviceScaleFactor: 2,
     colorScheme: 'dark'
   });
@@ -17,11 +17,14 @@ async function run() {
   
   await page.waitForTimeout(4000); // let charts load
   
-  const dest = path.join(__dirname, 'public', 'landing', 'terminal-screenshot.png');
+  const dest = path.join(__dirname, '..', 'public', 'landing', 'terminal-screenshot.png');
   await page.screenshot({ path: dest });
   
-  console.log('Done.');
+  console.log('Done. Captured at ' + dest);
   await browser.close();
 }
 
-run().catch(console.error);
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
