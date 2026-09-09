@@ -5,16 +5,14 @@ export function PublicHeader() {
   return (
     <header className={styles.header}>
       <Link href="/" className={styles.brand} aria-label="ZTerminal home">
-        <img src="/landing/zterminal-logo-mark.png" alt="" />
-        <span>ZTERMINAL</span>
+        <img src="/landing/zterminal-logo-mark.png" alt="" className={styles.brandLogo} />
+        <span className={styles.brandName}>ZTERMINAL</span>
       </Link>
       <nav aria-label="Primary public navigation" className={styles.nav}>
-        <Link href="/">Overview</Link>
-        <Link href="/#workflow">Workflow</Link>
-        <Link href="/download">Windows</Link>
-        <Link href="/terminal">Web terminal</Link>
+        <Link href="/" className={styles.navLink}>Overview</Link>
+        <Link href="/#workflow" className={styles.navLink}>Workflow</Link>
+        <Link href="/terminal" className={styles.navLink}>Web terminal</Link>
       </nav>
     </header>
   );
 }
-
