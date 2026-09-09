@@ -65,10 +65,11 @@ export function ChartPanel({ layers, customStudies, onToggleLayer }: ChartPanelP
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Compute on-chart execution markers from strategy backtest trades
+  const trades = lastResult?.trades;
   const tradeMarkers: TradeMarker[] = useMemo(() => {
-    if (!showTrades || !lastResult?.trades || lastResult.trades.length === 0) return [];
+    if (!showTrades || !trades || trades.length === 0) return [];
     const markers: TradeMarker[] = [];
-    for (const t of lastResult.trades) {
+    for (const t of trades) {
       // Entry marker
       markers.push({
         t: t.entryTime,
@@ -88,7 +89,7 @@ export function ChartPanel({ layers, customStudies, onToggleLayer }: ChartPanelP
       });
     }
     return markers;
-  }, [showTrades, lastResult?.trades]);
+  }, [showTrades, trades]);
 
   const { lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(
     symbol,
