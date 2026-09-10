@@ -84,7 +84,7 @@ export function DrawingInteractionLayer(props: Props) {
       if (!hit || hit.drawing.locked) return;
       const anchor = anchorFor(event);
       if (!anchor) return;
-      const handle = hit.points.findIndex(value => distance(value, screen) <= 7);
+      const handle = hit.points.findIndex(value => distance(value, screen) <= 8);
       gesture.current = handle >= 0 ? { kind: "anchor", drawing: hit.drawing, anchorIndex: handle } : { kind: "move", drawing: hit.drawing, start: anchor };
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
@@ -108,10 +108,26 @@ export function DrawingInteractionLayer(props: Props) {
     const anchor = anchorFor(event);
     if (!anchor) return;
     if (current.kind === "create") props.onPreview(preview(current.type, [current.start, anchor]));
-    if (current.kind === "anchor") props.onPreview(preview(current.drawing.type, current.drawing.anchors.map((value, index) => index === current.anchorIndex ? anchor : value), current.drawing));
+    if (current.kind === "anchor") {
+      if (current.anchorIndex === 2 && (current.drawing.type === "long-position" || current.drawing.type === "short-position")) {
+        props.onPreview({
+          ...current.drawing,
+          style: { ...current.drawing.style, stopPrice: anchor.price },
+          updatedAt: Date.now(),
+        });
+      } else {
+        props.onPreview(preview(current.drawing.type, current.drawing.anchors.map((value, index) => index === current.anchorIndex ? anchor : value), current.drawing));
+      }
+    }
     if (current.kind === "move") {
       const dt = anchor.time - current.start.time, dp = anchor.price - current.start.price;
-      props.onPreview(preview(current.drawing.type, current.drawing.anchors.map(value => ({ time: value.time + dt, price: value.price + dp })), current.drawing));
+      const stopPrice = current.drawing.style.stopPrice != null ? current.drawing.style.stopPrice + dp : undefined;
+      props.onPreview({
+        ...current.drawing,
+        anchors: current.drawing.anchors.map(value => ({ time: value.time + dt, price: value.price + dp })),
+        style: stopPrice !== undefined ? { ...current.drawing.style, stopPrice } : current.drawing.style,
+        updatedAt: Date.now(),
+      });
     }
   };
   const finish = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -119,9 +135,49 @@ export function DrawingInteractionLayer(props: Props) {
     if (!current) return;
     const anchor = anchorFor(event);
     if (anchor) {
-      if (current.kind === "create") { const id = props.onCreate(current.type, [current.start, anchor]); props.onSelect(id); props.onTool("cursor"); }
-      if (current.kind === "anchor") props.onUpdate(current.drawing.id, { anchors: current.drawing.anchors.map((value, index) => index === current.anchorIndex ? anchor : value) });
-      if (current.kind === "move") { const dt = anchor.time - current.start.time, dp = anchor.price - current.start.price; props.onUpdate(current.drawing.id, { anchors: current.drawing.anchors.map(value => ({ time: value.time + dt, price: value.price + dp })) }); }
+      if (current.kind === "create") {
+        const isPosition = current.type === "long-position" || current.type === "short-position";
+        const isClick = Math.abs(anchor.time - current.start.time) < 1000 && Math.abs(anchor.price - current.start.price) / Math.max(1, current.start.price) < 0.001;
+        if (isPosition && isClick) {
+          const barDuration = props.bars.length > 1
+            ? Math.abs(props.bars[props.bars.length - 1].t - props.bars[0].t) / (props.bars.length - 1)
+            : 3600000;
+          const forwardTime = current.start.time + Math.max(barDuration * 16, 3600000 * 12);
+          const targetPct = current.type === "long-position" ? 0.02 : -0.02;
+          const targetPrice = current.start.price * (1 + targetPct);
+          const id = props.onCreate(current.type, [current.start, { time: forwardTime, price: targetPrice }]);
+          props.onSelect(id);
+          props.onTool("cursor");
+        } else {
+          const id = props.onCreate(current.type, [current.start, anchor]);
+          props.onSelect(id);
+          props.onTool("cursor");
+        }
+      }
+      if (current.kind === "anchor") {
+        if (current.anchorIndex === 2 && (current.drawing.type === "long-position" || current.drawing.type === "short-position")) {
+          const entryPrice = current.drawing.anchors[0].price;
+          const targetPrice = current.drawing.anchors[1].price;
+          const targetDelta = Math.abs(targetPrice - entryPrice);
+          const stopDelta = Math.abs(entryPrice - anchor.price);
+          const riskReward = stopDelta > 0 ? Number((targetDelta / stopDelta).toFixed(2)) : current.drawing.style.riskReward;
+          props.onUpdate(current.drawing.id, {
+            style: { ...current.drawing.style, stopPrice: anchor.price, riskReward },
+          });
+        } else {
+          props.onUpdate(current.drawing.id, { anchors: current.drawing.anchors.map((value, index) => index === current.anchorIndex ? anchor : value) });
+        }
+      }
+      if (current.kind === "move") {
+        const dt = anchor.time - current.start.time, dp = anchor.price - current.start.price;
+        const patch: Partial<DrawingObject> = {
+          anchors: current.drawing.anchors.map(value => ({ time: value.time + dt, price: value.price + dp })),
+        };
+        if (current.drawing.style.stopPrice != null) {
+          patch.style = { ...current.drawing.style, stopPrice: current.drawing.style.stopPrice + dp };
+        }
+        props.onUpdate(current.drawing.id, patch);
+      }
     }
     gesture.current = null; props.onPreview(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);

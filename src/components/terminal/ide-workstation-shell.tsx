@@ -12,6 +12,8 @@ import { useStrategy } from "@/stores/strategy";
 import { CloudSyncBridge } from "@/components/auth/cloud-sync-bridge";
 import { StrategyReportDialog } from "./strategy-report-dialog";
 import { OptimizerDialog } from "./optimizer-dialog";
+import { TerminalStatusBar } from "./terminal-status-bar";
+import { CommandPalette } from "./command-palette";
 import type { ChartStudy } from "./terminal-chart";
 import type { IndicatorToggleId } from "./indicators-browser";
 
@@ -213,6 +215,8 @@ export function IdeWorkstationShell() {
       {/* Institutional Strategy Dialogs */}
       <StrategyReportDialog />
       <OptimizerDialog />
+      <TerminalStatusBar />
+      <CommandPalette />
     </div>
   );
 }

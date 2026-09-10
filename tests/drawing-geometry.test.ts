@@ -29,3 +29,37 @@ test("drawing movement and replay visibility cannot reveal future anchors", () =
   assert.equal(isDrawingVisible({ ...base, hidden: true }, "5m", 200), false);
   assert.equal(isDrawingVisible({ ...base, visibility: { timeframes: ["1h"] } }, "5m", 200), false);
 });
+
+test("long and short position drawings have TradingView defaults and 3-point hit testing", () => {
+  const longStyle = defaultDrawingStyle("long-position");
+  assert.equal(longStyle.targetColor, "#22c55e");
+  assert.equal(longStyle.stopColor, "#ef4444");
+  assert.equal(longStyle.riskReward, 2);
+
+  const shortStyle = defaultDrawingStyle("short-position");
+  assert.equal(shortStyle.targetColor, "#22c55e");
+  assert.equal(shortStyle.stopColor, "#ef4444");
+  assert.equal(shortStyle.riskReward, 2);
+
+  const longDrawing: DrawingObject = {
+    ...base,
+    id: "pos-1",
+    type: "long-position",
+    style: longStyle,
+  };
+
+  // Points: [Entry (0, 50), Target (50, 20), Stop (50, 80)]
+  const projectedLong = {
+    drawing: longDrawing,
+    points: [{ x: 0, y: 50 }, { x: 50, y: 20 }, { x: 50, y: 80 }],
+  };
+
+  // Target profit zone (y between 20 and 50)
+  assert.equal(drawingHit(projectedLong, { x: 25, y: 35 }, 2), true);
+  // Stop loss zone (y between 50 and 80)
+  assert.equal(drawingHit(projectedLong, { x: 25, y: 65 }, 2), true);
+  // Stop anchor hit test
+  assert.equal(nearestAnchor(projectedLong, { x: 50, y: 80 }, 3), 2);
+  // Outside
+  assert.equal(drawingHit(projectedLong, { x: 100, y: 35 }, 2), false);
+});

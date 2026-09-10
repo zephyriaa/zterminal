@@ -10,7 +10,7 @@ const workspacePayload = z.object({
   view: z.enum(["markets", "calendar", "alerts", "chart", "orderflow", "strategy", "backtester", "research", "portfolio", "risk", "journal", "connections", "settings"]),
   symbol: z.string().trim().regex(/^[A-Z0-9]{3,24}$/),
   timeframe: z.enum(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]),
-  timezone: z.enum(["America/New_York", "UTC", "Europe/London", "Asia/Dubai"]),
+  timezone: z.enum(["America/New_York", "UTC", "Europe/London", "Asia/Dubai", "Asia/Tokyo", "local"]),
   createdAt: z.number().int().positive(),
 });
 
@@ -30,7 +30,19 @@ async function authenticatedOwner() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email;
   if (!email) return null;
-  return db.user.findUnique({ where: { email } });
+  return db.user.upsert({
+    where: { email },
+    update: {
+      name: session.user?.name ?? undefined,
+      image: session.user?.image ?? undefined,
+    },
+    create: {
+      email,
+      name: session.user?.name ?? "Research Analyst",
+      image: session.user?.image ?? "https://lh3.googleusercontent.com/a/default-user=s96-c",
+      emailVerified: new Date(),
+    },
+  });
 }
 
 function serializeSnapshot(payload: WorkspacePayload) {

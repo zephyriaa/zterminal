@@ -53,7 +53,24 @@ export type DrawingType =
   | "long-position" | "short-position" | "fibonacci-retracement";
 
 export interface DrawingAnchor { time: number; price: number; }
-export interface DrawingStyle { color: string; width: number; lineStyle: "solid" | "dashed" | "dotted"; fill?: string; opacity: number; text?: string; textSize?: number; extendStart?: boolean; extendEnd?: boolean; }
+export interface DrawingStyle {
+  color: string;
+  width: number;
+  lineStyle: "solid" | "dashed" | "dotted";
+  fill?: string;
+  opacity: number;
+  text?: string;
+  textSize?: number;
+  extendStart?: boolean;
+  extendEnd?: boolean;
+  targetColor?: string;
+  targetFill?: string;
+  stopColor?: string;
+  stopFill?: string;
+  stopPrice?: number;
+  riskReward?: number;
+  compactLabels?: boolean;
+}
 export interface DrawingVisibility { timeframes: Timeframe[] | "all"; }
 export interface DrawingObject {
   schemaVersion: typeof DRAWING_SCHEMA_VERSION;
@@ -89,7 +106,27 @@ export function drawingAnchorCount(type: DrawingType) {
 
 export function defaultDrawingStyle(type: DrawingType): DrawingStyle {
   const filled = ["rectangle", "long-position", "short-position"].includes(type);
-  return { color: type === "short-position" ? "#fb7185" : "#7dd3fc", width: 1, lineStyle: "solid", opacity: 0.9, ...(filled ? { fill: type === "short-position" ? "#fb7185" : "#34d399" } : {}), ...(["text", "price-label"].includes(type) ? { text: type === "text" ? "Text" : "", textSize: 12 } : {}) };
+  if (type === "long-position" || type === "short-position") {
+    return {
+      color: "#38bdf8",
+      width: 1,
+      lineStyle: "solid",
+      opacity: 0.85,
+      targetColor: "#22c55e",
+      targetFill: "#22c55e",
+      stopColor: "#ef4444",
+      stopFill: "#ef4444",
+      riskReward: 2,
+    };
+  }
+  return {
+    color: "#7dd3fc",
+    width: 1,
+    lineStyle: "solid",
+    opacity: 0.9,
+    ...(filled ? { fill: "#34d399" } : {}),
+    ...(["text", "price-label"].includes(type) ? { text: type === "text" ? "Text" : "", textSize: 12 } : {}),
+  };
 }
 
 export function sanitizeDrawing(value: unknown, fallback: { instrument: InstrumentKey; chartId: string }): DrawingObject | null {
@@ -114,6 +151,13 @@ export function sanitizeDrawing(value: unknown, fallback: { instrument: Instrume
     ...(["text", "price-label"].includes(type) ? { textSize: Math.round(finite(sourceStyle.textSize, defaults.textSize ?? 12, 9, 32)) } : {}),
     extendStart: sourceStyle.extendStart === true,
     extendEnd: sourceStyle.extendEnd === true,
+    ...(sourceStyle.targetColor ? { targetColor: color(sourceStyle.targetColor, defaults.targetColor ?? "#22c55e") } : defaults.targetColor ? { targetColor: defaults.targetColor } : {}),
+    ...(sourceStyle.targetFill ? { targetFill: color(sourceStyle.targetFill, defaults.targetFill ?? "#22c55e") } : defaults.targetFill ? { targetFill: defaults.targetFill } : {}),
+    ...(sourceStyle.stopColor ? { stopColor: color(sourceStyle.stopColor, defaults.stopColor ?? "#ef4444") } : defaults.stopColor ? { stopColor: defaults.stopColor } : {}),
+    ...(sourceStyle.stopFill ? { stopFill: color(sourceStyle.stopFill, defaults.stopFill ?? "#ef4444") } : defaults.stopFill ? { stopFill: defaults.stopFill } : {}),
+    ...(typeof sourceStyle.stopPrice === "number" && Number.isFinite(sourceStyle.stopPrice) ? { stopPrice: sourceStyle.stopPrice } : {}),
+    ...(typeof sourceStyle.riskReward === "number" && Number.isFinite(sourceStyle.riskReward) ? { riskReward: Math.max(0.1, Math.min(100, sourceStyle.riskReward)) } : {}),
+    compactLabels: sourceStyle.compactLabels === true,
   };
   return {
     schemaVersion: DRAWING_SCHEMA_VERSION,

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { EASE_OUT_EXPO, useIsReducedMotion } from "@/components/landing/motion-primitives";
+import React, { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import styles from "./workflow-sequence.module.css";
 
 interface WorkflowStep {
@@ -67,66 +67,90 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
 
 export function WorkflowSequence() {
   const [activeStep, setActiveStep] = useState<number>(0);
-  const reduced = useIsReducedMotion();
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLUListElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isDesktop = window.matchMedia("(min-width: 900px)").matches;
+
+    if (prefersReduced || !isDesktop) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const wrapper = wrapperRef.current;
+    const track = trackRef.current;
+    if (!wrapper || !track) return;
+
+    // Calculate maximum horizontal travel distance
+    const totalScrollWidth = track.scrollWidth;
+    const containerWidth = wrapper.clientWidth;
+    const xDistance = Math.max(0, totalScrollWidth - containerWidth);
+
+    if (xDistance === 0) return;
+
+    const trigger = ScrollTrigger.create({
+      trigger: wrapper,
+      start: "center center",
+      end: () => `+=${xDistance + 200}`,
+      pin: true,
+      scrub: 0.6,
+      anticipatePin: 1,
+      onUpdate: (self) => {
+        const progress = self.progress;
+        gsap.set(track, { x: -progress * xDistance });
+
+        // Calculate active step
+        const stepIdx = Math.min(
+          WORKFLOW_STEPS.length - 1,
+          Math.floor(progress * WORKFLOW_STEPS.length),
+        );
+        setActiveStep(stepIdx);
+      },
+    });
+
+    return () => {
+      trigger.kill();
+    };
+  }, []);
 
   return (
-    <div className={styles.wrapper}>
+    <div ref={wrapperRef} className={styles.wrapper}>
       <div className={styles.timelineBar} aria-hidden="true">
-        <motion.div
+        <div
           className={styles.timelineProgress}
-          animate={{ width: `${((activeStep + 1) / WORKFLOW_STEPS.length) * 100}%` }}
-          transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
+          style={{ width: `${((activeStep + 1) / WORKFLOW_STEPS.length) * 100}%` }}
         />
       </div>
 
-      <motion.ol
-        className={styles.sequence}
-        initial={reduced ? undefined : "hidden"}
-        whileInView={reduced ? undefined : "show"}
-        viewport={{ once: true, margin: "120px 0px" }}
-        variants={{
-          hidden: {},
-          show: {
-            transition: {
-              staggerChildren: 0.07,
-            },
-          },
-        }}
-      >
-        {WORKFLOW_STEPS.map((step, idx) => {
-          const isActive = activeStep === idx;
-          return (
-            <motion.li
-              key={step.phase}
-              className={`${styles.stepItem} ${isActive ? styles.activeItem : ""}`}
-              onMouseEnter={() => setActiveStep(idx)}
-              onClick={() => setActiveStep(idx)}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: {
-                  opacity: 1,
-                  y: 0,
-                  transition: {
-                    duration: 0.6,
-                    ease: EASE_OUT_EXPO,
-                  },
-                },
-              }}
-            >
-              <div className={styles.stepHeader}>
-                <span className={styles.stepNum}>{step.num}</span>
-                <span className={styles.stepTag}>{step.tag}</span>
-              </div>
-              <h3 className={styles.stepPhase}>{step.phase}</h3>
-              <p className={styles.stepLead}>{step.lead}</p>
-              <p className={styles.stepDetails}>{step.details}</p>
-              <div className={styles.stepFooter}>
-                <span className={styles.stepSpec}>{step.spec}</span>
-              </div>
-            </motion.li>
-          );
-        })}
-      </motion.ol>
+      <div className={styles.trackContainer}>
+        <ul ref={trackRef} className={styles.sequence}>
+          {WORKFLOW_STEPS.map((step, idx) => {
+            const isActive = activeStep === idx;
+            return (
+              <li
+                key={step.phase}
+                className={`${styles.stepItem} ${isActive ? styles.activeItem : ""}`}
+                onMouseEnter={() => setActiveStep(idx)}
+                onClick={() => setActiveStep(idx)}
+              >
+                <div className={styles.stepHeader}>
+                  <span className={styles.stepNum}>{step.num}</span>
+                  <span className={styles.stepTag}>{step.tag}</span>
+                </div>
+                <h3 className={styles.stepPhase}>{step.phase}</h3>
+                <p className={styles.stepLead}>{step.lead}</p>
+                <p className={styles.stepDetails}>{step.details}</p>
+                <div className={styles.stepFooter}>
+                  <span className={styles.stepSpec}>{step.spec}</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

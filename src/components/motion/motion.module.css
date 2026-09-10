@@ -1,0 +1,59 @@
+/* Restrained Institutional Motion System */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(var(--y-offset, 24px));
+  transition:
+    opacity var(--motion-reveal, 600ms) var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform var(--motion-reveal, 600ms) var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1));
+  will-change: opacity, transform;
+}
+
+.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Header Auto-Hide & Progress */
+.headerWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: transform var(--motion-ui, 200ms) var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1));
+  will-change: transform;
+}
+
+.headerHidden {
+  transform: translateY(-100%);
+}
+
+.headerVisible {
+  transform: translateY(0);
+}
+
+.progressBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #38bdf8);
+  width: 0%;
+  transition: width 80ms linear;
+  z-index: 1001;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .headerWrapper {
+    transition: none !important;
+  }
+  .progressBar {
+    display: none !important;
+  }
+}

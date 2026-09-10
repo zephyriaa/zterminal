@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import { HeroScene } from "./hero-scene";
 import { WorkflowSequence } from "@/components/public/workflow-sequence";
 import { PublicFooter } from "@/components/public/public-footer";
+import { StickyCanvasShowcase } from "./sticky-canvas-showcase";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 import {
   MaskedHeading,
   FadeInView,
@@ -124,60 +126,8 @@ export function LandingPage() {
           <WorkflowSequence />
         </section>
 
-        {/* 04 MARKET CONTEXT: Real Interface Showcase */}
-        <section className={styles.canvasSection} aria-labelledby="canvas-title">
-          <div className={styles.canvasIntro}>
-            <div>
-              <p className={styles.eyebrow}>04 / HIGH-SPEED CANVAS</p>
-              <MaskedHeading
-                as="h2"
-                id="canvas-title"
-                className={styles.sectionHeading}
-                lines={[{ text: "Read the market in context." }]}
-              />
-            </div>
-            <FadeInView delay={0.1} yOffset={16}>
-              <p className={styles.canvasDescription}>
-                A responsive charting surface for following price, volume and session structure across timeframes—built to keep market context legible when it matters.
-              </p>
-            </FadeInView>
-          </div>
-
-          <ScaleReveal className={styles.canvasShowcase}>
-            <div className={styles.canvasFrame}>
-              <div className={styles.canvasBar}>
-                <div className={styles.canvasDots}>
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div className={styles.canvasInstrumentBadge}>
-                  BTC / USDT · 5M CANVAS · PERPETUAL · DIRECT L2 FEED
-                </div>
-                <div className={styles.canvasModeChip}>PRO WORKSTATION</div>
-              </div>
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.85, ease: EASE_OUT_EXPO, delay: 0.1 }}
-              >
-                <Image
-                  src="/landing/terminal-screenshot.webp"
-                  alt="Full ZTerminal market canvas displaying real Bitcoin price action and indicators"
-                  width={3200}
-                  height={1800}
-                  sizes="(max-width: 900px) 95vw, 85vw"
-                  className={styles.canvasImage}
-                />
-              </motion.div>
-            </div>
-            <figcaption className={styles.canvasCaption}>
-              <span>REAL-TIME ORDER FLOW CANVAS WITH MULTI-TIMEFRAME NAVIGATION</span>
-              <span>HIGH-PERFORMANCE CHARTING ENGINE</span>
-            </figcaption>
-          </ScaleReveal>
-        </section>
+        {/* 04 MARKET CONTEXT: Sticky Pinned Interface Showcase */}
+        <StickyCanvasShowcase />
 
         {/* 05 RESEARCH / VALIDATION: Python Research API */}
         <section className={styles.researchSection} aria-labelledby="research-title">

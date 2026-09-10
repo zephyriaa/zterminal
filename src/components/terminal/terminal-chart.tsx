@@ -330,7 +330,153 @@ export function TerminalChart({
     resizeObserver.observe(chartContainerRef.current);
     handleResize();
 
+function applyZTerminalWatermark(
+  sourceCanvas: HTMLCanvasElement,
+  symbolText?: string,
+  timeframeText?: string
+): HTMLCanvasElement {
+  const ctx = sourceCanvas.getContext("2d");
+  if (!ctx) return sourceCanvas;
+
+  const width = sourceCanvas.width;
+  const height = sourceCanvas.height;
+  const scale = Math.max(1, Math.min(width, height) / 900);
+
+  ctx.save();
+
+  // 1. Sleek Branded Watermark Pill in Bottom-Left
+  const badgeX = Math.round(18 * scale);
+  const badgeHeight = Math.round(28 * scale);
+  const badgeY = height - badgeHeight - Math.round(16 * scale);
+  const badgeRadius = Math.round(4 * scale);
+
+  const brand = "ZTERMINAL";
+  const instrument = symbolText ? (timeframeText ? `${symbolText} · ${timeframeText}` : symbolText) : "RESEARCH WORKSTATION";
+
+  ctx.font = `bold ${Math.round(11 * scale)}px "Geist Mono", "JetBrains Mono", monospace, sans-serif`;
+  const brandWidth = ctx.measureText(brand).width;
+
+  ctx.font = `600 ${Math.round(10.5 * scale)}px "Geist Mono", monospace, sans-serif`;
+  const instWidth = ctx.measureText(instrument).width;
+
+  const totalWidth = brandWidth + instWidth + Math.round(36 * scale);
+
+  // Background pill with dark terminal styling
+  ctx.fillStyle = "rgba(8, 12, 22, 0.88)";
+  ctx.beginPath();
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(badgeX, badgeY, totalWidth, badgeHeight, badgeRadius);
+  } else {
+    ctx.rect(badgeX, badgeY, totalWidth, badgeHeight);
+  }
+  ctx.fill();
+
+  // Accent hairline border
+  ctx.strokeStyle = "rgba(142, 114, 232, 0.45)";
+  ctx.lineWidth = Math.max(1, Math.round(1 * scale));
+  ctx.stroke();
+
+  // Draw Brand Name
+  ctx.fillStyle = "#a78bfa";
+  ctx.font = `bold ${Math.round(11 * scale)}px "Geist Mono", "JetBrains Mono", monospace, sans-serif`;
+  ctx.textBaseline = "middle";
+  ctx.fillText(brand, badgeX + Math.round(10 * scale), badgeY + badgeHeight / 2);
+
+  // Dot separator
+  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+  ctx.fillText("·", badgeX + Math.round(10 * scale) + brandWidth + Math.round(6 * scale), badgeY + badgeHeight / 2);
+
+  // Instrument / Timeframe
+  ctx.fillStyle = "#e2e8f0";
+  ctx.font = `600 ${Math.round(10.5 * scale)}px "Geist Mono", monospace, sans-serif`;
+  ctx.fillText(instrument, badgeX + Math.round(10 * scale) + brandWidth + Math.round(16 * scale), badgeY + badgeHeight / 2);
+
+  // 2. Subtle Timestamp & Domain Pill in Bottom-Right
+  const timestamp = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  const footerText = `${timestamp}  ·  zterminal.app`;
+  ctx.font = `500 ${Math.round(9.5 * scale)}px "Geist Mono", monospace, sans-serif`;
+  const footerWidth = ctx.measureText(footerText).width;
+  const footerHeight = Math.round(20 * scale);
+  const footerX = width - footerWidth - Math.round(28 * scale);
+  const footerY = height - footerHeight - Math.round(16 * scale);
+
+  ctx.fillStyle = "rgba(8, 12, 22, 0.75)";
+  ctx.beginPath();
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(footerX - Math.round(6 * scale), footerY, footerWidth + Math.round(12 * scale), footerHeight, Math.round(3 * scale));
+  } else {
+    ctx.rect(footerX - Math.round(6 * scale), footerY, footerWidth + Math.round(12 * scale), footerHeight);
+  }
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(135, 152, 190, 0.2)";
+  ctx.lineWidth = Math.max(1, Math.round(1 * scale));
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(148, 163, 184, 0.85)";
+  ctx.textBaseline = "middle";
+  ctx.fillText(footerText, footerX, footerY + footerHeight / 2);
+
+  ctx.restore();
+  return sourceCanvas;
+}
+
+    const onCapture = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        mode: "download" | "copy";
+        filename: string;
+        symbol?: string;
+        timeframe?: string;
+        onComplete?: (success: boolean, message?: string) => void;
+      }>;
+      if (!chartRef.current) {
+        customEvent.detail?.onComplete?.(false, "Chart is not ready for capture");
+        return;
+      }
+      try {
+        const rawCanvas = chartRef.current.takeScreenshot();
+        const canvas = applyZTerminalWatermark(
+          rawCanvas,
+          customEvent.detail?.symbol || symbol,
+          customEvent.detail?.timeframe || timeframe
+        );
+        if (customEvent.detail.mode === "download") {
+          const dataUrl = canvas.toDataURL("image/png");
+          const a = document.createElement("a");
+          a.href = dataUrl;
+          a.download = customEvent.detail.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          customEvent.detail.onComplete?.(true, "Chart downloaded as PNG");
+        } else if (customEvent.detail.mode === "copy") {
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              customEvent.detail.onComplete?.(false, "Failed to render chart image blob");
+              return;
+            }
+            try {
+              if (navigator.clipboard && window.ClipboardItem) {
+                await navigator.clipboard.write([
+                  new ClipboardItem({ "image/png": blob })
+                ]);
+                customEvent.detail.onComplete?.(true, "Chart copied to clipboard");
+              } else {
+                customEvent.detail.onComplete?.(false, "Clipboard copy not supported in this browser");
+              }
+            } catch (err: any) {
+              customEvent.detail.onComplete?.(false, err?.message || "Failed to copy image to clipboard");
+            }
+          }, "image/png");
+        }
+      } catch (err: any) {
+        customEvent.detail.onComplete?.(false, err?.message || "Failed to take chart screenshot");
+      }
+    };
+    window.addEventListener("zterminal:capture-chart", onCapture);
+
     return () => {
+      window.removeEventListener("zterminal:capture-chart", onCapture);
       resizeObserver.disconnect();
       markerPlugin.current?.detach(); markerPlugin.current = null;
       chart.remove(); chartRef.current = null; seriesRef.current = null; volumeSeriesRef.current = null; drawingPrimitiveRef.current = null; indicatorSeriesRef.current.clear();

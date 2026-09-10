@@ -13,6 +13,8 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Settings2,
+  Waves,
+  Zap,
 } from "lucide-react";
 import { PanelTaskStrip } from "./panel-task-strip";
 import { usePanels } from "@/stores/panels";
@@ -32,7 +34,7 @@ import { intervalMs } from "@/lib/local-research/dataset";
 import type { TradeMarker } from "./terminal-chart";
 import { AlertsView, JournalView } from "@/components/views/secondary-views";
 import { EconomicCalendarTable } from "./economic-calendar/economic-calendar-table";
-import { getContract } from "@/lib/market/contracts";
+import { getContract, formatSymbol } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
@@ -43,6 +45,10 @@ import { useChartDocuments } from "@/stores/chart-documents";
 import { DrawingToolbar } from "./drawing-toolbar";
 import { DrawingInspector } from "./drawing-inspector";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
+import { MultiChartGrid } from "./multi-chart-grid";
+import { useMultiChart } from "@/stores/multi-chart";
+import { OrderFlowView } from "@/components/views/orderflow-view";
+import { GexView } from "@/components/views/gex-view";
 
 type TerminalAppearance = {
   preset: string;
@@ -64,10 +70,6 @@ const APPEARANCE_PRESETS: Record<string, Omit<TerminalAppearance, "preset">> = {
 
 const DEFAULT_APPEARANCE: TerminalAppearance = { preset: "Graphite", ...APPEARANCE_PRESETS.Graphite };
 const APPEARANCE_STORAGE_KEY = "zterminal:appearance";
-
-function formatSymbol(symbol: string) {
-  return symbol.includes("_") ? symbol.replace("_", " / ") : symbol.endsWith("USDT") ? `${symbol.slice(0, -4)} / USDT` : symbol;
-}
 
 function formatPrice(value: number | undefined | null, tick: number) {
   if (value == null || !Number.isFinite(value)) return "—";
@@ -101,6 +103,10 @@ export function ReferenceChartWorkspace() {
   const setContextOpen = (open: boolean) => { if (open) usePanels.getState().open("context"); else usePanels.getState().patch("context", { status: "closed" }); };
   const setCalendarOpen = (open: boolean) => { if (open) usePanels.getState().open("economic-calendar"); else usePanels.getState().patch("economic-calendar", { status: "closed" }); };
   const setTerminalSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("terminal-settings"); else usePanels.getState().patch("terminal-settings", { status: "closed" }); };
+  const setOrderFlowOpen = (open: boolean) => { if (open) usePanels.getState().open("orderflow"); else usePanels.getState().patch("orderflow", { status: "closed" }); };
+  const setGexOpen = (open: boolean) => { if (open) usePanels.getState().open("gex"); else usePanels.getState().patch("gex", { status: "closed" }); };
+  const { layout: multiChartLayout, setLayout: setMultiChartLayout } = useMultiChart();
+  const [selectedProvider, setSelectedProvider] = useState<string>("gateio");
   const instances = useStudies(s => s.instances);
   const [appearance, setAppearance] = useState<TerminalAppearance>(DEFAULT_APPEARANCE);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
@@ -219,6 +225,8 @@ export function ReferenceChartWorkspace() {
     const openContext = () => setContextOpen(true);
     const openCalendar = () => setCalendarOpen(true);
     const openTerminalSettings = () => setTerminalSettingsOpen(true);
+    const openOrderFlow = () => setOrderFlowOpen(true);
+    const openGex = () => setGexOpen(true);
     window.addEventListener("zterminal:open-indicators", openIndicators);
     window.addEventListener("zterminal:open-strategy", openStrategy);
     window.addEventListener("zterminal:open-backtester", openBacktester);
@@ -226,6 +234,8 @@ export function ReferenceChartWorkspace() {
     window.addEventListener("zterminal:open-context", openContext);
     window.addEventListener("zterminal:open-calendar", openCalendar);
     window.addEventListener("zterminal:open-terminal-settings", openTerminalSettings);
+    window.addEventListener("zterminal:open-orderflow", openOrderFlow);
+    window.addEventListener("zterminal:open-gex", openGex);
     return () => {
       window.removeEventListener("zterminal:focus-chart", focusChart);
       window.removeEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
@@ -236,6 +246,8 @@ export function ReferenceChartWorkspace() {
       window.removeEventListener("zterminal:open-context", openContext);
       window.removeEventListener("zterminal:open-calendar", openCalendar);
       window.removeEventListener("zterminal:open-terminal-settings", openTerminalSettings);
+      window.removeEventListener("zterminal:open-orderflow", openOrderFlow);
+      window.removeEventListener("zterminal:open-gex", openGex);
     };
   }, []);
 
@@ -246,9 +258,9 @@ export function ReferenceChartWorkspace() {
       <DesktopWindow id="journal" title="Journal" initialBounds={{ x: 100, y: 80, width: 700, height: 480 }} onClose={() => usePanels.getState().patch("journal", { status: "closed" })}><div className="h-full overflow-auto"><JournalView /></div></DesktopWindow>
       <DesktopWindow
         id="chart"
-        title={`${formatSymbol(chartSymbol)} · ${chartTimeframe.toUpperCase()}`}
-        subtitle={archivedChart ? "ARCHIVED RESEARCH DATASET" : "VERIFIED MARKET CANVAS"}
-        initialBounds={{ x: 12, y: 10, width: 940, height: 610 }}
+        title={`${formatSymbol(chartSymbol)} · ${chartTimeframe.toUpperCase()}${multiChartLayout !== "1" ? ` · [${multiChartLayout.toUpperCase()} GRID]` : ""}`}
+        subtitle={archivedChart ? "ARCHIVED RESEARCH DATASET" : "VERIFIED MULTI-FEED MARKET CANVAS"}
+        initialBounds={{ x: 12, y: 10, width: 960, height: 620 }}
         minWidth={560}
         minHeight={360}
         icon={<CandlestickChart className="h-3.5 w-3.5" />}
@@ -261,14 +273,94 @@ export function ReferenceChartWorkspace() {
         }
       >
         <div className="zt-chart-content">
-          <ChartToolbar symbol={formatSymbol(chartSymbol)} productLabel={archivedChart ? "ARCHIVED" : "PERPETUAL"} timeframe={chartTimeframe as Timeframe} archived={Boolean(archivedChart)} price={formatPrice(livePrice, contract.tickSize)} providerLabel={(provider ?? chartProvider).toUpperCase()} dataStatus={dataStatus} statusReason={reason ?? health?.reason} chartType={chartType} indicatorsOpen={indicatorsOpen} onTimeframe={next => { setTimeframe(next); useChartDocuments.getState().setTimeframe(chartDocumentId, next); }} onChartType={next => useChartDocuments.getState().setChartType(chartDocumentId, next)} onIndicators={() => setIndicatorsOpen(true)} onContext={() => setContextOpen(true)} onSettings={() => setSettingsOpen(true)} onReturnLive={() => useResearch.setState({ chartResult: null, selectedTrade: null })} />
-          <div className="zt-chart-stage">
-            <DrawingToolbar tool={drawingTool} magnet={magnetMode} onTool={setDrawingTool} onMagnet={setMagnetMode} />
-            <div className="zt-chart-readout"><span>O <b>{formatPrice((crosshairBar ?? latestBar)?.o, contract.tickSize)}</b></span><span>H <b>{formatPrice((crosshairBar ?? latestBar)?.h, contract.tickSize)}</b></span><span>L <b>{formatPrice((crosshairBar ?? latestBar)?.l, contract.tickSize)}</b></span><span>C <b>{formatPrice((crosshairBar ?? latestBar)?.c, contract.tickSize)}</b></span><span>V <b>{(crosshairBar ?? latestBar)?.v?.toLocaleString() ?? "—"}</b></span></div>
-            <div className="zt-chart-overlays">{instances.filter(item => item.enabled).slice(0, 6).map(item => <span key={item.id} style={{ color: item.outputs[0]?.color }}>{item.name}</span>)}</div>
-            <TerminalChart symbol={chartSymbol} timeframe={chartTimeframe as Timeframe} snapshot={archivedChart?.dataset.bars} markers={chartSettings.showStrategyTrades ? markers : []} focusRange={focusRange} chartType={chartType} indicators={indicators} indicatorInstances={instances} pythonEvaluations={pythonEvaluations} settings={chartSettings} volumePaneHeight={volumePane.height} replayEnabled={!archivedChart && replay} timezone={archivedChart ? "UTC" : timezone} markPrice={archivedChart || !chartSettings.showMarkPrice ? undefined : derivatives?.markPrice} onCrosshair={setCrosshairBar} onLatestBar={setLatestBar} drawings={chartDocument.drawings} selectedDrawingId={selectedDrawingId} drawingTool={drawingTool} magnetMode={magnetMode} onDrawingTool={setDrawingTool} onSelectDrawing={setSelectedDrawingId} onCreateDrawing={(type, anchors) => useChartDocuments.getState().createDrawing(chartDocumentId, type, anchors)} onUpdateDrawing={(id, patch) => useChartDocuments.getState().updateDrawing(chartDocumentId, id, patch)} onDeleteDrawing={id => { useChartDocuments.getState().deleteDrawing(chartDocumentId, id); if (selectedDrawingId === id) setSelectedDrawingId(null); }} onDuplicateDrawing={id => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, id); if (duplicate) setSelectedDrawingId(duplicate); }} />
-            {selectedDrawing && <DrawingInspector drawing={selectedDrawing} onChange={patch => useChartDocuments.getState().updateDrawing(chartDocumentId, selectedDrawing.id, patch)} onDuplicate={() => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, selectedDrawing.id); if (duplicate) setSelectedDrawingId(duplicate); }} onDelete={() => { useChartDocuments.getState().deleteDrawing(chartDocumentId, selectedDrawing.id); setSelectedDrawingId(null); }} onClose={() => setSelectedDrawingId(null)} />}
-          </div>
+          <ChartToolbar
+            symbol={formatSymbol(chartSymbol)}
+            productLabel={archivedChart ? "ARCHIVED" : "PERPETUAL"}
+            timeframe={chartTimeframe as Timeframe}
+            archived={Boolean(archivedChart)}
+            price={formatPrice(livePrice, contract.tickSize)}
+            providerLabel={(selectedProvider || provider || chartProvider).toUpperCase()}
+            dataStatus={dataStatus}
+            statusReason={reason ?? health?.reason}
+            chartType={chartType}
+            indicatorsOpen={indicatorsOpen}
+            layout={multiChartLayout}
+            onTimeframe={next => { setTimeframe(next); useChartDocuments.getState().setTimeframe(chartDocumentId, next); }}
+            onChartType={next => useChartDocuments.getState().setChartType(chartDocumentId, next)}
+            onIndicators={() => setIndicatorsOpen(true)}
+            onContext={() => setContextOpen(true)}
+            onSettings={() => setSettingsOpen(true)}
+            onReturnLive={() => useResearch.setState({ chartResult: null, selectedTrade: null })}
+            onLayoutChange={setMultiChartLayout}
+            onOpenOrderFlow={() => setOrderFlowOpen(true)}
+            onOpenGex={() => setGexOpen(true)}
+            onProviderChange={setSelectedProvider}
+          />
+          <MultiChartGrid
+            primarySymbol={chartSymbol}
+            primaryTimeframe={chartTimeframe as Timeframe}
+            indicators={indicators}
+            indicatorInstances={instances}
+            pythonEvaluations={pythonEvaluations}
+            settings={chartSettings}
+            volumePaneHeight={volumePane.height}
+            replayEnabled={!archivedChart && replay}
+            timezone={archivedChart ? "UTC" : timezone}
+            markPrice={archivedChart || !chartSettings.showMarkPrice ? undefined : derivatives?.markPrice}
+            crosshairBar={crosshairBar}
+            latestBar={latestBar}
+            onCrosshair={setCrosshairBar}
+            onLatestBar={setLatestBar}
+            drawings={chartDocument.drawings}
+            selectedDrawingId={selectedDrawingId}
+            drawingTool={drawingTool}
+            magnetMode={magnetMode}
+            onDrawingTool={setDrawingTool}
+            onMagnetMode={setMagnetMode}
+            onSelectDrawing={setSelectedDrawingId}
+            onCreateDrawing={(type, anchors) => useChartDocuments.getState().createDrawing(chartDocumentId, type, anchors)}
+            onUpdateDrawing={(id, patch) => useChartDocuments.getState().updateDrawing(chartDocumentId, id, patch)}
+            onDeleteDrawing={id => { useChartDocuments.getState().deleteDrawing(chartDocumentId, id); if (selectedDrawingId === id) setSelectedDrawingId(null); }}
+            onDuplicateDrawing={id => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, id); if (duplicate) setSelectedDrawingId(duplicate); }}
+            onClearDrawings={chartDocument.drawings.length > 0 ? () => {
+              chartDocument.drawings.forEach(d => useChartDocuments.getState().deleteDrawing(chartDocumentId, d.id));
+              setSelectedDrawingId(null);
+            } : undefined}
+            selectedDrawing={selectedDrawing}
+            markers={chartSettings.showStrategyTrades ? markers : []}
+            focusRange={focusRange}
+            archivedBars={archivedChart?.dataset.bars}
+          />
+        </div>
+      </DesktopWindow>
+
+      <DesktopWindow
+        id="orderflow"
+        title="Order Flow & Microstructure"
+        subtitle="TAPE · FOOTPRINT · CVD · BOOK IMBALANCE"
+        initialBounds={{ x: 80, y: 40, width: 920, height: 600 }}
+        minWidth={480}
+        minHeight={360}
+        icon={<Waves className="h-3.5 w-3.5 text-cyan-400" />}
+        onClose={() => setOrderFlowOpen(false)}
+      >
+        <div className="h-full overflow-hidden bg-background">
+          <OrderFlowView />
+        </div>
+      </DesktopWindow>
+
+      <DesktopWindow
+        id="gex"
+        title="Crypto Options Gamma Exposure (GEX)"
+        subtitle="DERIBIT REAL-TIME OPTIONS ORDERFLOW"
+        initialBounds={{ x: 120, y: 60, width: 940, height: 580 }}
+        minWidth={480}
+        minHeight={360}
+        icon={<Zap className="h-3.5 w-3.5 text-amber-400" />}
+        onClose={() => setGexOpen(false)}
+      >
+        <div className="h-full overflow-hidden bg-background">
+          <GexView />
         </div>
       </DesktopWindow>
 

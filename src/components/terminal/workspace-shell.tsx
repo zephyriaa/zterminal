@@ -11,6 +11,7 @@ import { MarketsView } from "@/components/views/markets-view";
 import { PythonStrategyView } from "@/components/views/python-strategy-view";
 import { BacktesterView } from "@/components/views/backtester-view";
 import { OrderFlowView } from "@/components/views/orderflow-view";
+import { GexView } from "@/components/views/gex-view";
 import {
   CalendarView,
   AlertsView,
@@ -28,6 +29,7 @@ const REGISTRY: Record<ViewId, React.ComponentType> = {
   strategy: PythonStrategyView,
   backtester: BacktesterView,
   orderflow: OrderFlowView,
+  gex: GexView,
   calendar: CalendarView,
   alerts: AlertsView,
   research: ResearchView,
@@ -44,6 +46,7 @@ const SHORTCUTS: Record<string, ViewId> = {
   "g s": "strategy",
   "g b": "backtester",
   "g o": "orderflow",
+  "g x": "gex",
   "g m": "markets",
 };
 

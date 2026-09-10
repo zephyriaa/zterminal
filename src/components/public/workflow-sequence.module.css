@@ -16,40 +16,49 @@
 .timelineProgress {
   height: 100%;
   background: linear-gradient(90deg, #6527e4, #c093f5);
-  transition: width 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.trackContainer {
+  overflow: hidden;
+  width: 100%;
 }
 
 .sequence {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 20px;
+  display: flex;
+  gap: 24px;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 8px 0 24px;
+  will-change: transform;
 }
 
 .stepItem {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 24px 20px;
+  flex: 0 0 320px;
+  min-height: 280px;
+  padding: 24px 22px;
   border: 1px solid rgba(133, 153, 195, 0.14);
-  background: rgba(8, 12, 26, 0.4);
-  border-radius: 4px;
+  background: rgba(8, 12, 26, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 6px;
   cursor: pointer;
-  transition: border-color 220ms ease, background 220ms ease, transform 220ms ease;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
 .stepItem:hover {
-  border-color: rgba(192, 147, 245, 0.4);
-  background: rgba(18, 23, 46, 0.55);
+  border-color: rgba(192, 147, 245, 0.45);
+  background: rgba(18, 23, 46, 0.75);
   transform: translateY(-2px);
 }
 
 .activeItem {
-  border-color: rgba(192, 147, 245, 0.65);
-  background: rgba(22, 27, 56, 0.7);
-  box-shadow: 0 8px 32px rgba(101, 39, 228, 0.15), inset 0 1px 1px rgba(192, 147, 245, 0.2);
+  border-color: rgba(192, 147, 245, 0.7);
+  background: rgba(22, 27, 56, 0.85);
+  box-shadow: 0 10px 32px rgba(101, 39, 228, 0.2), inset 0 1px 1px rgba(192, 147, 245, 0.25);
 }
 
 .stepHeader {
@@ -128,21 +137,18 @@
   color: #c093f5;
 }
 
-@media (max-width: 1200px) {
-  .sequence {
-    grid-template-columns: repeat(3, 1fr);
+@media (max-width: 899px) {
+  .trackContainer {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
   }
-}
-
-@media (max-width: 768px) {
   .sequence {
-    grid-template-columns: 1fr;
     gap: 16px;
   }
-  .timelineBar {
-    display: none;
-  }
   .stepItem {
-    padding: 18px 16px;
+    flex: 0 0 280px;
+    scroll-snap-align: start;
   }
 }

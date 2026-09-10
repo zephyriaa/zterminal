@@ -68,6 +68,7 @@ export function HeroScene() {
   const copyScrollY = useTransform(scrollYProgress, [0, 0.7], [0, -45]);
   const copyScrollOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0.15]);
   const laptopScrollY = useTransform(scrollYProgress, [0, 0.7], [0, -25]);
+  const laptopScale = useTransform(scrollYProgress, [0, 0.6], [1.03, 1.0]);
   const particleScrollOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.2]);
 
   return (
@@ -136,18 +137,18 @@ export function HeroScene() {
             <span className={styles.lineMask}>
               <motion.span
                 className={styles.first}
-                initial={reduced ? undefined : { y: "115%", opacity: 0 }}
+                initial={reduced ? undefined : { y: 24, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.9, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               >
-                See more.
+                Look further.
               </motion.span>
             </span>
             <span className={styles.lineMask}>
               <motion.em
-                initial={reduced ? undefined : { y: "115%", opacity: 0 }}
+                initial={reduced ? undefined : { y: 24, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.95, delay: 0.48, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.7, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
               >
                 Guess less.
               </motion.em>
@@ -157,9 +158,9 @@ export function HeroScene() {
           {/* Marketing-Driven Supporting Copy */}
           <motion.p
             className={styles.description}
-            initial={reduced ? undefined : { opacity: 0, y: 14 }}
+            initial={reduced ? undefined : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.65, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.7, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
             Gain an institutional edge with real-time market structure, sub-second backtesting,
             and disciplined risk management. Stop guessing—start trading with mathematical conviction.
@@ -168,9 +169,9 @@ export function HeroScene() {
           {/* Actions */}
           <motion.div
             className={styles.actions}
-            initial={reduced ? undefined : { opacity: 0, y: 12 }}
+            initial={reduced ? undefined : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 0.8, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.7, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
           >
             <Link href="/download" className={styles.primary}>
               Explore for Windows <span className={styles.arrow}>↗</span>
@@ -185,7 +186,7 @@ export function HeroScene() {
             className={styles.disclaimer}
             initial={reduced ? undefined : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.92 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
             Institutional decision intelligence. Zero broker lock-in. Complete capital sovereignty.
           </motion.p>
@@ -200,51 +201,23 @@ export function HeroScene() {
         >
           <motion.div
             className={styles.laptopMotionStage}
-            initial={reduced ? undefined : { opacity: 0, y: 16, scale: 0.99 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 1.1, delay: 0.2, ease: EASE_OUT_EXPO }}
+            initial={reduced ? undefined : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/* Scroll depth delta */}
-            <motion.div style={!reduced && isDesktop ? { y: laptopScrollY } : undefined}>
-              {/* Laptop Screen Lid with Projective Homography & Cinematic 3D Opening Hinge */}
+            {/* Scroll depth delta + subtle 1.03 -> 1.0 scale scrub */}
+            <motion.div style={!reduced && isDesktop ? { y: laptopScrollY, scale: laptopScale } : undefined}>
+              {/* Laptop Screen Lid with Projective Homography */}
               <div className={styles.lidPositioner}>
-                <motion.div
-                  className={styles.lidHinge}
-                  initial={reduced ? undefined : { rotateX: 48, opacity: 0.8 }}
-                  animate={{ rotateX: 0, opacity: 1 }}
-                  transition={{ duration: 1.4, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                >
+                <div className={styles.lidHinge}>
                   <div className={styles.lid}>
-                    <motion.div
-                      className={styles.terminal}
-                      initial={reduced ? undefined : { opacity: 0.25, filter: "brightness(0.3) contrast(0.9)" }}
-                      animate={{ opacity: 1, filter: "brightness(1) contrast(1)" }}
-                      transition={{ duration: 1.1, delay: 0.55, ease: EASE_OUT_EXPO }}
-                    >
+                    <div className={styles.terminal}>
                       <AAPLWorkstationScreen />
-                      {/* Subtle Violet Screen Wake Glow */}
-                      <motion.div
-                        className={styles.screenPowerGlow}
-                        aria-hidden="true"
-                        initial={reduced ? undefined : { opacity: 0 }}
-                        animate={{ opacity: [0, 0.7, 0.2] }}
-                        transition={{ duration: 1.3, delay: 0.65, ease: "easeOut" }}
-                      />
-                      {/* Diagonal Specular Sheen Sweep */}
-                      {!reduced && (
-                        <motion.div
-                          className={styles.screenSheen}
-                          aria-hidden="true"
-                          initial={{ x: "-120%", opacity: 0 }}
-                          animate={{ x: "120%", opacity: [0, 1, 0.8, 0] }}
-                          transition={{ duration: 1.25, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                        />
-                      )}
                       {/* Static Ambient Glass Glare */}
                       <div className={styles.screenGlare} aria-hidden="true" />
-                    </motion.div>
+                    </div>
                   </div>
-                </motion.div>
+                </div>
               </div>
 
               {/* Metallic Laptop Chassis Base SVG */}

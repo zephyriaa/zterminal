@@ -2,11 +2,17 @@
 
 import { useEffect } from "react";
 import {
+  Activity,
+  Camera,
   CandlestickChart,
   Code2,
   FlaskConical,
+  Layers3,
   LayoutDashboard,
+  Maximize2,
+  RotateCcw,
   Save,
+  Sidebar as SidebarIcon,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -17,17 +23,18 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { useWorkspace, type ViewId } from "@/stores/workspace";
+import { useWorkspace } from "@/stores/workspace";
 import { useContractCatalogue } from "@/hooks/use-contract-catalog";
 import { usePanels } from "@/stores/panels";
 
-const VIEWS: { id: ViewId; label: string; icon: React.ComponentType<{ className?: string }>; group: string }[] = [
-  { id: "chart", label: "Open Chart", icon: CandlestickChart, group: "Go to" },
-  { id: "strategy", label: "Open Strategy Developer", icon: Code2, group: "Go to" },
-  { id: "backtester", label: "Open Research Report", icon: FlaskConical, group: "Go to" },
-  { id: "calendar", label: "Open Calendar", icon: LayoutDashboard, group: "Go to" },
-  { id: "alerts", label: "Open Alerts", icon: LayoutDashboard, group: "Go to" },
-  { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard, group: "Go to" },
+const VIEWS: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; action: () => void }[] = [
+  { id: "chart", label: "Open Chart", icon: CandlestickChart, action: () => usePanels.getState().open("chart") },
+  { id: "indicators", label: "Open Indicators", icon: Layers3, action: () => usePanels.getState().open("indicators") },
+  { id: "strategy", label: "Open Strategy Developer", icon: Code2, action: () => { usePanels.getState().open("strategy"); usePanels.getState().open("backtester"); usePanels.getState().focus("strategy"); } },
+  { id: "backtester", label: "Open Research Report", icon: FlaskConical, action: () => usePanels.getState().open("backtester") },
+  { id: "context", label: "Open Market Context", icon: Activity, action: () => usePanels.getState().open("context") },
+  { id: "calendar", label: "Open Economic Calendar", icon: LayoutDashboard, action: () => usePanels.getState().open("economic-calendar") },
+  { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard, action: () => usePanels.getState().open("terminal-settings") },
 ];
 
 export function CommandPalette() {
@@ -37,7 +44,9 @@ export function CommandPalette() {
     setView,
     setSymbol,
     symbol,
+    timeframe,
     saveWorkspace,
+    toggleSidebar,
   } = useWorkspace();
   const catalogue = useContractCatalogue();
 
@@ -57,20 +66,6 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", handler);
   }, [commandOpen, setCommandOpen]);
 
-  const go = (id: ViewId) => {
-    const panelId: Partial<Record<ViewId, string>> = {
-      chart: "chart",
-      strategy: "strategy",
-      backtester: "backtester",
-      calendar: "economic-calendar",
-      alerts: "alerts",
-      settings: "terminal-settings",
-    };
-    const target = panelId[id];
-    if (target) usePanels.getState().open(target);
-    setView("chart");
-    setCommandOpen(false);
-  };
   const openSymbol = (s: string) => {
     setSymbol(s);
     setView("chart");
@@ -100,14 +95,17 @@ export function CommandPalette() {
           {!catalogue.loading && !catalogue.contracts.length && <CommandItem value="no verified symbols"><span className="text-muted-foreground">{catalogue.error ?? "No verified symbols available"}</span></CommandItem>}
         </CommandGroup>
         <CommandSeparator />
-        <CommandGroup heading="Go to">
+        <CommandGroup heading="Terminal Sections">
           {VIEWS.map((v) => {
             const Icon = v.icon;
             return (
               <CommandItem
                 key={v.id}
                 value={`go ${v.label}`}
-                onSelect={() => go(v.id)}
+                onSelect={() => {
+                  v.action();
+                  setCommandOpen(false);
+                }}
                 className="flex items-center gap-2"
               >
                 <Icon className="w-3.5 h-3.5 text-muted-foreground" />
@@ -121,7 +119,7 @@ export function CommandPalette() {
           <CommandItem
             value="save workspace layout"
             onSelect={() => {
-              const name = window.prompt("Workspace name", "Research");
+              const name = window.prompt("Workspace name", "Research Workspace");
               if (name) saveWorkspace(name);
               setCommandOpen(false);
             }}
@@ -129,6 +127,64 @@ export function CommandPalette() {
           >
             <Save className="w-3.5 h-3.5 text-muted-foreground" />
             <span>Save current workspace</span>
+          </CommandItem>
+          <CommandItem
+            value="reset layout restore default panels"
+            onSelect={() => {
+              window.dispatchEvent(new Event("zterminal:reset-layout"));
+              setCommandOpen(false);
+            }}
+            className="flex items-center gap-2"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Reset chart layout</span>
+          </CommandItem>
+          <CommandItem
+            value="toggle sidebar hide collapse"
+            onSelect={() => {
+              toggleSidebar();
+              setCommandOpen(false);
+            }}
+            className="flex items-center gap-2"
+          >
+            <SidebarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Toggle navigation sidebar</span>
+          </CommandItem>
+          <CommandItem
+            value="fullscreen focus mode maximize"
+            onSelect={() => {
+              if (!document.fullscreenElement) {
+                void document.documentElement.requestFullscreen();
+              } else {
+                void document.exitFullscreen();
+              }
+              setCommandOpen(false);
+            }}
+            className="flex items-center gap-2"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Toggle fullscreen</span>
+          </CommandItem>
+          <CommandItem
+            value="screenshot capture chart image png watermark"
+            onSelect={() => {
+              const today = new Date().toISOString().slice(0, 10);
+              window.dispatchEvent(
+                new CustomEvent("zterminal:capture-chart", {
+                  detail: {
+                    mode: "download",
+                    filename: `zterminal-${symbol}-${timeframe}-${today}.png`,
+                    symbol,
+                    timeframe,
+                  },
+                })
+              );
+              setCommandOpen(false);
+            }}
+            className="flex items-center gap-2"
+          >
+            <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Capture chart screenshot (with watermark)</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>
