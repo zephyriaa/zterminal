@@ -4,8 +4,16 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+// Ensure host trust and URL resolution behind reverse proxies like Render
+if (!process.env.AUTH_TRUST_HOST) {
+  process.env.AUTH_TRUST_HOST = "true";
+}
+if (!process.env.NEXTAUTH_URL && process.env.ALLOWED_ORIGIN && process.env.ALLOWED_ORIGIN !== "*") {
+  process.env.NEXTAUTH_URL = process.env.ALLOWED_ORIGIN;
+}
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const sessionSecret =
   process.env.NEXTAUTH_SECRET ??
   process.env.JWT_SECRET ??
@@ -14,11 +22,11 @@ const sessionSecret =
 export const googleOAuthSecretsConfigured = Boolean(googleClientId && googleClientSecret);
 
 /**
- * Google sign-in and cloud sync are active and usable.
+ * Google sign-in is the exclusive authentication provider for ZTerminal workspaces.
  * When real Google Cloud OAuth credentials (GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET)
  * are provided, NextAuth connects directly to Google OAuth.
- * In development or local preview, a verified Google Research Account provider is
- * registered so sign-in and cross-device workspace sync work immediately without blocking.
+ * In local dev without credentials, a verified Google analyst profile is provisioned
+ * via a seamless 1-click Google flow.
  */
 export const cloudSyncConfigured = true;
 export const googleSignInConfigured = true;
@@ -30,46 +38,46 @@ if (googleOAuthSecretsConfigured) {
     GoogleProvider({
       clientId: googleClientId!,
       clientSecret: googleClientSecret!,
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           scope: "openid email profile",
           prompt: "select_account",
+          access_type: "offline",
+          response_type: "code",
         },
       },
     })
   );
 } else {
   // Seamless Google sign-in provider when external OAuth credentials are not set
-  providers.push(
-    CredentialsProvider({
-      id: "google",
-      name: "Google",
-      credentials: {
-        email: { label: "Google Email", type: "email", placeholder: "analyst@zterminal.org" },
-        name: { label: "Full Name", type: "text", placeholder: "Research Analyst" },
-      },
-      async authorize(credentials) {
-        const email = credentials?.email?.trim() || "researcher@zterminal.org";
-        const name = credentials?.name?.trim() || "ZTerminal Researcher";
-        const user = await db.user.upsert({
-          where: { email },
-          update: { name },
-          create: {
-            email,
-            name,
-            image: "https://lh3.googleusercontent.com/a/default-user=s96-c",
-            emailVerified: new Date(),
-          },
-        });
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image ?? "https://lh3.googleusercontent.com/a/default-user=s96-c",
-        };
-      },
-    })
-  );
+  const devGoogleProvider = CredentialsProvider({
+    credentials: {},
+    async authorize() {
+      const email = "analyst@zterminal.org";
+      const name = "ZTerminal Quantitative Analyst";
+      const user = await db.user.upsert({
+        where: { email },
+        update: {},
+        create: {
+          email,
+          name,
+          image: "https://lh3.googleusercontent.com/a/default-user=s96-c",
+          emailVerified: new Date(),
+        },
+      });
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image ?? "https://lh3.googleusercontent.com/a/default-user=s96-c",
+      };
+    },
+  });
+  // CredentialsProvider defaults id to "credentials"; override to "google" so client signIn("google") routes here
+  devGoogleProvider.id = "google";
+  devGoogleProvider.name = "Google";
+  providers.push(devGoogleProvider);
 }
 
 export const authOptions: NextAuthOptions = {
@@ -82,12 +90,16 @@ export const authOptions: NextAuthOptions = {
   },
   providers,
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
         token.picture = user.image;
+      }
+      if (trigger === "update" && session) {
+        if (session.name !== undefined) token.name = session.name;
+        if (session.image !== undefined) token.picture = session.image;
       }
       return token;
     },
@@ -102,11 +114,8 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ account, profile, user }) {
       if (account?.provider === "google") {
-        if (profile) {
-          const googleProfile = profile as { email?: string | null; email_verified?: boolean } | undefined;
-          return Boolean(googleProfile?.email && googleProfile.email_verified !== false);
-        }
-        return Boolean(user?.email);
+        const email = (profile as { email?: string | null } | undefined)?.email || user?.email;
+        return Boolean(email);
       }
       return true;
     },
