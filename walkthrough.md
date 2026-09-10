@@ -155,5 +155,27 @@ All 82 unit tests pass cleanly:
    - Passed `npm run lint` (0 warnings).
    - Passed `npm run test` (85/85 tests passed).
    - Passed `npm run build` (Next.js production build succeeded with all static/dynamic pages).
-   - Pushed commit `8bbcac6` to `origin/main` to trigger the verified Render build.
+   - **Deployed Commit:** `ba3c523` pushed to `origin/main`.
 
+---
+
+## 7. Native Windows Desktop Application & Download Channel
+
+### 1. Native Windows Executable & NSIS Installer Built
+- **Tauri v2 Native Desktop Shell (`src-tauri/`):**
+  - Configured with `tauri = "2"`, `tauri-build = "2"`, and `tauri-plugin-global-shortcut = "2"`.
+  - Configured `src-tauri/tauri.conf.json` to wrap the full workstation at `/terminal` (`http://localhost:3000/terminal` in development, `https://zterminal.onrender.com/terminal` in production).
+  - App window initialized with native decorations, title `"ZTerminal — Quantitative Workstation"`, 1440×900 default resolution (min 1024×680), and custom application icons.
+- **Compiled Binaries:**
+  - **Standalone Executable:** [`src-tauri/target/release/zterminal-desktop.exe`](file:///c:/Users/aykhank/Documents/ZT/zterminal/src-tauri/target/release/zterminal-desktop.exe) (8.7 MB)
+  - **NSIS Setup Installer:** [`src-tauri/target/release/bundle/nsis/ZTerminal_0.2.2_x64-setup.exe`](file:///c:/Users/aykhank/Documents/ZT/zterminal/src-tauri/target/release/bundle/nsis/ZTerminal_0.2.2_x64-setup.exe) (1.85 MB)
+  - **SHA-256 Checksum:** `e91ca915f18075dd9e4bf88a1de38b5df84af06fac03beb49074a0d0e010c933`
+
+### 2. Desktop Scripts in `package.json`
+- `"desktop:dev"`: Launches the native Tauri desktop window connected to local development.
+- `"desktop:build"`: Compiles the release binary and packages the NSIS installer via `makensis`.
+- `"tauri"`: CLI command proxy.
+
+### 3. Download Portal Activation (`/download` & `/download/windows`)
+- Updated `src/lib/releases/windows-release.ts` to support both `.exe` and `.msix` signed packages.
+- Configured production release environment variables in `render.yaml` so the official download portal activates seamlessly.
