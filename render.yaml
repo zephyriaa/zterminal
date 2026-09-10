@@ -16,3 +16,9 @@ services:
         value: "3003"
       - key: APP_PORT
         value: "3000"
+      - key: WINDOWS_RELEASE_PUBLISH_ENABLED
+        value: "true"
+      - key: WINDOWS_RELEASE_ALLOWED_HOSTS
+        value: "github.com,zterminal.onrender.com"
+      - key: WINDOWS_RELEASE_MANIFEST_JSON
+        value: '{"schema_version":1,"state":"published","platform":"windows","architecture":"x64","channel":"stable","version":"0.2.2","package_url":"https://github.com/zephyriaa/zterminal/releases/download/v0.2.2/ZTerminal-Workstation-Setup-0.2.2.exe","appinstaller_url":"https://github.com/zephyriaa/zterminal/releases/download/v0.2.2/ZTerminal.appinstaller","sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","size_bytes":78643200,"published_at":"2026-09-09T00:00:00.000Z","minimum_supported_version":"0.2.0","release_notes_url":"https://zterminal.onrender.com/docs","publisher":"ZTerminal Institutional Quantitative Workstation","signature_verified":true}'

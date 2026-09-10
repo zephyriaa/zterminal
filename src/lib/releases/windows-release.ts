@@ -42,13 +42,19 @@ function allowedArtifactHosts(): Set<string> {
   );
 }
 
-function isAllowedHttpsUrl(value: string, allowedHosts: Set<string>, expectedSuffix?: string): boolean {
+function isAllowedHttpsUrl(value: string, allowedHosts: Set<string>, expectedSuffixes?: string | string[]): boolean {
   try {
     const url = new URL(value);
+    const pathname = url.pathname.toLowerCase();
+    const suffixMatch =
+      expectedSuffixes === undefined ||
+      (Array.isArray(expectedSuffixes)
+        ? expectedSuffixes.some((suffix) => pathname.endsWith(suffix.toLowerCase()))
+        : pathname.endsWith(expectedSuffixes.toLowerCase()));
     return (
       url.protocol === "https:" &&
       allowedHosts.has(url.hostname.toLowerCase()) &&
-      (expectedSuffix === undefined || url.pathname.toLowerCase().endsWith(expectedSuffix))
+      suffixMatch
     );
   } catch {
     return false;
@@ -60,8 +66,8 @@ function recordHasApprovedTargets(release: WindowsRelease): boolean {
   if (hosts.size === 0) return false;
 
   return (
-    isAllowedHttpsUrl(release.package_url, hosts, ".msix") &&
-    isAllowedHttpsUrl(release.appinstaller_url, hosts, ".appinstaller") &&
+    isAllowedHttpsUrl(release.package_url, hosts, [".msix", ".exe"]) &&
+    isAllowedHttpsUrl(release.appinstaller_url, hosts, [".appinstaller", ".json"]) &&
     isAllowedHttpsUrl(release.release_notes_url, new Set(["zterminal.onrender.com"]))
   );
 }
