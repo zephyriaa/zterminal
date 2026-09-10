@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ZTerminal",
+  "version": "0.2.2",
+  "identifier": "com.zterminal.workstation",
+  "build": {
+    "beforeDevCommand": null,
+    "beforeBuildCommand": null,
+    "devUrl": "http://localhost:3000/terminal",
+    "frontendDist": "https://zterminal.onrender.com/terminal"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "ZTerminal — Quantitative Workstation",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 680,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    }
+  }
+}

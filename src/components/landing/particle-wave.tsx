@@ -30,7 +30,13 @@ export function ParticleWave({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameIdRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
+  const pointerRef = useRef({ x: mouseNormalizedX, y: mouseNormalizedY });
   const reduced = useIsReducedMotion();
+
+  // Pointer updates must not restart the rendering loop.
+  useEffect(() => {
+    pointerRef.current = { x: mouseNormalizedX, y: mouseNormalizedY };
+  }, [mouseNormalizedX, mouseNormalizedY]);
 
   // Generate deterministic particles matching the exact seed & formula from index.html
   useEffect(() => {
@@ -149,8 +155,10 @@ export function ParticleWave({
 
       const particles = particlesRef.current;
       const count = particles.length;
+      // The distant mesh keeps its density while reducing draw calls on normal laptops.
+      const stride = reduced ? 3 : 2;
 
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < count; i += stride) {
         const p = particles[i];
 
         // Restrained phase drift (under 3px total displacement)
@@ -165,8 +173,8 @@ export function ParticleWave({
           dx = Math.cos(wavePhase * 0.7) * 1.0;
 
           // Gentle pointer influence
-          const mouseDistY = (mouseNormalizedY || 0) * 12 * (1 - p.row / 47);
-          const mouseDistX = (mouseNormalizedX || 0) * 8 * (1 - p.row / 47);
+          const mouseDistY = pointerRef.current.y * 12 * (1 - p.row / 47);
+          const mouseDistX = pointerRef.current.x * 8 * (1 - p.row / 47);
           dy += mouseDistY;
           dx += mouseDistX;
 
@@ -206,7 +214,7 @@ export function ParticleWave({
       document.removeEventListener("visibilitychange", handleVisibility);
       observer.disconnect();
     };
-  }, [reduced, mouseNormalizedX, mouseNormalizedY]);
+  }, [reduced]);
 
   return (
     <canvas

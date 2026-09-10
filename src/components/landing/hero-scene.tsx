@@ -18,31 +18,29 @@ const KEY_ROWS = [
 
 export function HeroScene() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [scale, setScale] = useState(1);
-  const [heroHeight, setHeroHeight] = useState<number | null>(null);
-  const [isDesktop, setIsDesktop] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const reduced = useIsReducedMotion();
 
-  // Resize handler matching index.html desktop scaling
+  // Keep the interface responsive in CSS; JS only gates input-specific effects.
   useEffect(() => {
     function onResize() {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      if (width > 800) {
-        setIsDesktop(true);
-        const s = width / 1672;
-        setScale(s);
-        setHeroHeight(Math.max(941 * s, height));
-      } else {
-        setIsDesktop(false);
-        setScale(1);
-        setHeroHeight(null);
-      }
+      setIsDesktop(window.matchMedia("(min-width: 801px)").matches);
     }
 
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    function onScroll() {
+      setIsScrolled(window.scrollY > 18);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Subtle mouse tracking for gentle particle wave interaction
@@ -73,16 +71,8 @@ export function HeroScene() {
   const particleScrollOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.2]);
 
   return (
-    <div
-      ref={containerRef}
-      className={styles.viewport}
-      style={heroHeight ? { height: `${heroHeight}px` } : undefined}
-    >
-      <div
-        className={styles.scene}
-        id="overview"
-        style={isDesktop ? { transform: `scale(${scale})` } : undefined}
-      >
+    <div ref={containerRef} className={styles.viewport} id="overview">
+      <div className={styles.scene}>
         {/* Violet ambient glow beneath laptop */}
         <div className={styles.glow} aria-hidden="true" />
 
@@ -101,14 +91,24 @@ export function HeroScene() {
         </motion.div>
 
         {/* Apple-style floating liquid frosted-glass navigation */}
-        <header className={styles.header}>
+        <header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ""}`}>
           <Link href="/" className={styles.brand} aria-label="ZTerminal home">
             <i className={styles.mark} aria-hidden="true" />
             <span>ZTERMINAL</span>
           </Link>
-          <nav aria-label="Main navigation" className={styles.navGlassPill}>
-            <a href="#overview" className={styles.navGlassLink}>Overview</a>
-            <a href="#workflow" className={styles.navGlassLink}>Workflow</a>
+          <button
+            className={styles.menuToggle}
+            type="button"
+            aria-expanded={navOpen}
+            aria-controls="landing-navigation"
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            <span className={styles.menuIcon} aria-hidden="true" />
+            <span className={styles.menuLabel}>Menu</span>
+          </button>
+          <nav id="landing-navigation" aria-label="Main navigation" className={`${styles.navGlassPill} ${navOpen ? styles.navOpen : ""}`}>
+            <a href="#overview" className={styles.navGlassLink} onClick={() => setNavOpen(false)}>Overview</a>
+            <a href="#workflow" className={styles.navGlassLink} onClick={() => setNavOpen(false)}>Workflow</a>
             <Link href="/download" className={styles.navGlassLink}>Windows</Link>
             <Link href="/docs" className={styles.navGlassLink}>Docs</Link>
             <Link href="/terminal" className={styles.navGlassLink}>Web terminal</Link>

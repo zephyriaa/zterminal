@@ -49,12 +49,12 @@ export function LandingPage() {
             />
             <FadeInView delay={0.1} yOffset={18}>
               <p className={styles.leadText}>
-                Stop losing capital to market noise and emotional guesswork. While retail traders chase lagging indicators and social media hype, elite quantitative traders win by exploiting market structure, institutional liquidity pools, and statistical probability.
+                Market data is abundant; usable context is not. ZTerminal brings structure, liquidity and statistical context into one research surface so decisions can be examined before they are acted on.
               </p>
             </FadeInView>
             <FadeInView delay={0.18} yOffset={18}>
               <p className={styles.bodyText}>
-                ZTerminal transforms market chaos into your greatest competitive edge. Spot high-probability setups before the crowd, stress-test your strategy against historical tick data in milliseconds, and trade with absolute mathematical conviction.
+                Build and test a repeatable view of the market, inspect assumptions against historical data, and keep risk conditions visible alongside every research decision.
               </p>
             </FadeInView>
 
@@ -105,7 +105,7 @@ export function LandingPage() {
         {/* 03 THE WORKFLOW: The Institutional Research Loop */}
         <section className={styles.workflowSection} id="workflow" aria-labelledby="workflow-title">
           <div className={styles.sectionHeaderCentered}>
-            <p className={styles.eyebrow}>03 / THE WINNING WORKFLOW</p>
+            <p className={styles.eyebrow}>03 / THE RESEARCH WORKFLOW</p>
             <MaskedHeading
               as="h2"
               id="workflow-title"
@@ -117,7 +117,7 @@ export function LandingPage() {
             />
             <FadeInView delay={0.12} yOffset={18}>
               <p className={styles.sectionLead}>
-                A battle-tested 6-step loop engineered to turn market ideas into disciplined, scalable profit. Eliminate hesitation, protect capital, and trade with unshakeable consistency.
+                A six-step research loop for moving from an observation to a tested, documented decision—without separating the chart, the model and the risk context.
               </p>
             </FadeInView>
           </div>
@@ -133,12 +133,12 @@ export function LandingPage() {
                 as="h2"
                 id="canvas-title"
                 className={styles.sectionHeading}
-                lines={[{ text: "See the move before it unfolds." }]}
+                lines={[{ text: "Read the market in context." }]}
               />
             </div>
             <FadeInView delay={0.1} yOffset={16}>
               <p className={styles.canvasDescription}>
-                Experience buttery-smooth 60fps charting engineered for instant market clarity. Spot hidden liquidity pools, session volume profile shifts, and multi-timeframe setups with crystal visual precision.
+                A responsive charting surface for following price, volume and session structure across timeframes—built to keep market context legible when it matters.
               </p>
             </FadeInView>
           </div>
@@ -194,7 +194,7 @@ export function LandingPage() {
             />
             <FadeInView delay={0.12} yOffset={16}>
               <p className={styles.sectionLead}>
-                Express your trading logic effortlessly in Python, PineScript, or EasyLanguage. Audit historical win rates, risk-adjusted returns, and real market frictions in seconds—giving you the certainty to trade fearlessly.
+                Express research logic in Python, PineScript or EasyLanguage. Review historical outcomes, risk-adjusted returns and modeled market frictions with assumptions kept explicit.
               </p>
             </FadeInView>
           </div>
@@ -254,7 +254,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               </StaggerContainer>
 
               <FadeInView delay={0.2} yOffset={14} className={styles.assumptionsBox}>
-                <p className={styles.assumptionsTitle}>WHY ZTERMINAL STRATEGIES WIN IN LIVE MARKETS</p>
+                <p className={styles.assumptionsTitle}>RESEARCH ASSUMPTIONS, MADE EXPLICIT</p>
                 <ul className={styles.assumptionsList}>
                   <li>Sub-bar Bar Magnifier resolves intra-candle fill order down to the second—eliminating unrealistic backtest illusions.</li>
                   <li>Strict zero look-ahead indexing guarantees what worked in your simulation works with real money.</li>
@@ -275,8 +275,8 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               id="arch-title"
               className={styles.sectionHeading}
               lines={[
-                { text: "Blistering speed." },
-                { text: "Total strategy secrecy.", italic: true },
+                { text: "Fast local research." },
+                { text: "Private by design.", italic: true },
               ]}
             />
             <FadeInView delay={0.12} yOffset={18}>
