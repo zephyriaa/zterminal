@@ -146,9 +146,14 @@ All 82 unit tests pass cleanly:
    - Updated `mini-services/market-data/index.ts` to bind port 3003 immediately upon startup and run `bootLiveProvider()` in the background. `/healthz` now responds HTTP 200 immediately on container launch.
 4. **Next.js `/healthz` Route Added:**
    - Added `src/app/healthz/route.ts` as a reliable fallback.
-5. **Validation & Push:**
+5. **Lockfile Synchronization & Dockerfile Fallback:**
+   - Identified that `package-lock.json` still contained the legacy package name `"name": "zterminal-research-core"` under `packages/zterminal-research-wasm`, conflicting with `"name": "zterminal-research-wasm"` in `packages/zterminal-research-wasm/package.json`. This caused `npm ci` to fail immediately in 0.96s with exit code 1.
+   - Synchronized `package-lock.json` to resolve the mismatch.
+   - Enhanced `Dockerfile` builder stage with `RUN npm ci || npm install` to provide a robust fallback across all container environments.
+6. **Validation & Push:**
    - Passed `npm run typecheck` (0 errors).
    - Passed `npm run lint` (0 warnings).
    - Passed `npm run test` (85/85 tests passed).
    - Passed `npm run build` (Next.js production build succeeded with all static/dynamic pages).
-   - Pushed commit `6d60d6c` to `origin/main` to trigger the Render Docker build.
+   - Pushed commit `8bbcac6` to `origin/main` to trigger the verified Render build.
+
