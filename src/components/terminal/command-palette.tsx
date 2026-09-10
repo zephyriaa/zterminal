@@ -6,8 +6,6 @@ import {
   Code2,
   FlaskConical,
   LayoutDashboard,
-  Plug,
-  Radio,
   Save,
 } from "lucide-react";
 import {
@@ -21,21 +19,15 @@ import {
 } from "@/components/ui/command";
 import { useWorkspace, type ViewId } from "@/stores/workspace";
 import { useContractCatalogue } from "@/hooks/use-contract-catalog";
+import { usePanels } from "@/stores/panels";
 
 const VIEWS: { id: ViewId; label: string; icon: React.ComponentType<{ className?: string }>; group: string }[] = [
   { id: "chart", label: "Open Chart", icon: CandlestickChart, group: "Go to" },
-  { id: "strategy", label: "Open Strategy Builder", icon: Code2, group: "Go to" },
-  { id: "backtester", label: "Open Backtester", icon: FlaskConical, group: "Go to" },
-  { id: "orderflow", label: "Open Order Flow", icon: Radio, group: "Go to" },
-  { id: "markets", label: "Open Markets", icon: LayoutDashboard, group: "Go to" },
-  { id: "research", label: "Open Research Lab", icon: FlaskConical, group: "Go to" },
-  { id: "portfolio", label: "Open Portfolio", icon: LayoutDashboard, group: "Go to" },
-  { id: "risk", label: "Open Risk", icon: LayoutDashboard, group: "Go to" },
-  { id: "journal", label: "Open Journal", icon: LayoutDashboard, group: "Go to" },
+  { id: "strategy", label: "Open Strategy Developer", icon: Code2, group: "Go to" },
+  { id: "backtester", label: "Open Research Report", icon: FlaskConical, group: "Go to" },
   { id: "calendar", label: "Open Calendar", icon: LayoutDashboard, group: "Go to" },
   { id: "alerts", label: "Open Alerts", icon: LayoutDashboard, group: "Go to" },
-  { id: "connections", label: "Open Connections", icon: Plug, group: "Go to" },
-  { id: "settings", label: "Open Settings", icon: LayoutDashboard, group: "Go to" },
+  { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard, group: "Go to" },
 ];
 
 export function CommandPalette() {
@@ -52,6 +44,9 @@ export function CommandPalette() {
   // Keyboard shortcut Ctrl/Cmd+K
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const editable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      if (editable && !commandOpen) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setCommandOpen(!commandOpen);
@@ -63,24 +58,17 @@ export function CommandPalette() {
   }, [commandOpen, setCommandOpen]);
 
   const go = (id: ViewId) => {
-    const dockTab: Partial<Record<ViewId, string>> = {
-      strategy: "script",
-      research: "research",
-      markets: "data",
+    const panelId: Partial<Record<ViewId, string>> = {
+      chart: "chart",
+      strategy: "strategy",
+      backtester: "backtester",
+      calendar: "economic-calendar",
       alerts: "alerts",
+      settings: "terminal-settings",
     };
-    if (id === "backtester") {
-      setView("chart");
-      window.dispatchEvent(new Event("zterminal:open-backtester"));
-    } else if (dockTab[id]) {
-      setView("chart");
-      window.dispatchEvent(new CustomEvent("zterminal:open-dock", { detail: dockTab[id] }));
-    } else if (id === "orderflow") {
-      setView("chart");
-      window.dispatchEvent(new Event("zterminal:context"));
-    } else {
-      setView(id);
-    }
+    const target = panelId[id];
+    if (target) usePanels.getState().open(target);
+    setView("chart");
     setCommandOpen(false);
   };
   const openSymbol = (s: string) => {
@@ -95,7 +83,7 @@ export function CommandPalette() {
       <CommandList className="scroll-thin">
         <CommandEmpty>No results.</CommandEmpty>
         <CommandGroup heading="Symbols">
-          {catalogue.contracts.map((c) => (
+          {catalogue.contracts.slice(0, 120).map((c) => (
             <CommandItem
               key={c.symbol}
               value={`symbol ${c.symbol} ${c.description}`}
@@ -133,7 +121,7 @@ export function CommandPalette() {
           <CommandItem
             value="save workspace layout"
             onSelect={() => {
-              const name = window.prompt("Workspace name", "Trading");
+              const name = window.prompt("Workspace name", "Research");
               if (name) saveWorkspace(name);
               setCommandOpen(false);
             }}

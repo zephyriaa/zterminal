@@ -1,5 +1,5 @@
-import { IdeWorkstationShell } from "@/components/terminal/ide-workstation-shell";
+import { FloatingWorkstationShell } from "@/components/terminal/floating-workstation-shell";
 
 export default function TerminalPage() {
-  return <IdeWorkstationShell />;
+  return <FloatingWorkstationShell />;
 }

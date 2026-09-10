@@ -149,6 +149,7 @@ export function TerminalChart({
   const drawingPrimitiveRef = useRef<DrawingPrimitive | null>(null);
   const visibleDrawingsRef = useRef<DrawingObject[]>([]);
   const drawingPreviewRef = useRef<DrawingObject | null>(null);
+  const settingsRef = useRef(settings);
 
   const [liveBars, setBars] = useState<Bar[]>([]);
   const bars = snapshot ?? liveBars;
@@ -318,7 +319,10 @@ export function TerminalChart({
       if (chartContainerRef.current) {
         const width = chartContainerRef.current.clientWidth;
         const height = chartContainerRef.current.clientHeight;
-        if (width > 0 && height > 0) chart.resize(width, height);
+        if (width > 0 && height > 0) {
+          chart.resize(width, height);
+          chart.applyOptions({ timeScale: { rightOffset: width < 640 ? Math.min(5, settingsRef.current.futureBars) : settingsRef.current.futureBars } });
+        }
       }
     };
 
@@ -335,8 +339,11 @@ export function TerminalChart({
 
   // Sync settings when they change
   useEffect(() => {
+    settingsRef.current = settings;
     if (chartRef.current) {
       chartRef.current.applyOptions(lightweightChartOptions(settings, themeColors().axisText));
+      const width = chartContainerRef.current?.clientWidth ?? 0;
+      chartRef.current.applyOptions({ timeScale: { rightOffset: width < 640 ? Math.min(5, settings.futureBars) : settings.futureBars } });
     }
   }, [settings]);
 
