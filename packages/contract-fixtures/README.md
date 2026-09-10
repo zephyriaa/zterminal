@@ -10,5 +10,10 @@ Every fixture case records its protocol version, source status, event sequence, 
 | `trades-gap-v1.json` | Stream-discontinuity parity | A gap produces an explicit unavailable/gap state; no filler trade or bar is invented. |
 | `indicator-vectors-v1.json` | Incremental indicator parity | Each output is reproducible from declared input and parameters. |
 | `backtest-vectors-v1.json` | Research-engine parity | Results preserve the declared anti-lookahead model and deterministic run hash. |
+| `microstructure-phase0-v1.json` | Event-contract compatibility | Exact units and recorded availability order survive every language boundary. |
 
 The Phase 0 Rust unit tests use equivalent embedded vectors while the TypeScript parity runner is added in the next extraction step. A fixture file must not introduce a provider-specific field into the normalized contract without a versioned schema change.
+
+The microstructure fixture contains offline synthetic values only. It exercises
+instrument units, ingress provenance, and equal-availability replay ordering;
+it is not evidence of a live provider connection.

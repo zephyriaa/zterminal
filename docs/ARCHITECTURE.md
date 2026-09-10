@@ -1,5 +1,10 @@
 # ARCHITECTURE
 
+> For event market data, microstructure research, and options data, the
+> authoritative current contract is [MICROSTRUCTURE_ARCHITECTURE.md](MICROSTRUCTURE_ARCHITECTURE.md).
+> This legacy overview describes the web workspace generation and contains
+> historical file references.
+
 Z TERMINAL is a single-route Next.js 16 application with a client-side workspace
 shell. All market data flows through a provider abstraction layer, normalizes
 into a single internal model, and is delivered to the UI either via REST API

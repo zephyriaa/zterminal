@@ -1,5 +1,8 @@
 # P0 Market-Data Architecture Audit
 
+> Historical web-gateway audit. The authoritative contract for the local
+> microstructure program is [MICROSTRUCTURE_ARCHITECTURE.md](MICROSTRUCTURE_ARCHITECTURE.md).
+
 ## Current implementation
 
 ZTerminal is a Next.js application with a separate Node.js and Socket.IO gateway at `mini-services/market-data`. The Render container starts the Next.js application on port 3000, the market-data gateway on port 3003, and proxies both through Caddy. The current gateway is demand-driven: it discovers contracts, starts a provider subscription when the first browser client requests a symbol, and stops it when the last browser client disconnects.

@@ -16,6 +16,61 @@ export interface Dataset {
   symbol: string; timeframe: string; from: number; to: number;
   bars: Bar[]; hash: string;
 }
+
+/** Phase-0 event contracts. Version-1 candle requests above remain unchanged. */
+export const MICROSTRUCTURE_CONTRACT_VERSION = 1 as const;
+export const EVENT_DATASET_VERSION = 2 as const;
+export type ResearchMode = "candle" | "event";
+export type TradeGranularity = "individual" | "aggregate" | "unknown";
+export type EventIntegrity = "verified" | "gap" | "corrupt" | "incomplete" | "unavailable";
+export type EventFreshness = "live" | "historical" | "delayed" | "stale";
+
+export interface InstrumentUnitsV1 {
+  instrumentId: string; venue: string; product: string;
+  priceIncrement: string; sizeIncrement: string;
+  priceCurrency: string; sizeUnit: string; settlementCurrency: string;
+  contractMultiplier: string; multiplierUnit: string;
+  validFromNs: string; validToNs?: string; observedAtNs: string; revision: number;
+}
+
+export interface IngressProvenanceV1 {
+  streamId: string; subscriptionGeneration: string; ingressOrdinal: string;
+  receivedAtNs: string; monotonicReceivedNs: string; availableAtNs: string;
+  adapterVersion: string; nativeEventId?: string;
+  firstUpdateId?: string; finalUpdateId?: string; previousUpdateId?: string;
+  checksum?: string; tradeGranularity: TradeGranularity; batchIndex: number;
+}
+
+export interface FeedQualityEpochV1 {
+  streamId: string; epoch: string; integrity: EventIntegrity; freshness: EventFreshness;
+  effectiveAtNs: string; observedAtNs: string; reason?: string; lastAcceptedSequence?: string;
+}
+
+export interface EventDatasetFragmentV1 {
+  path: string; dataType: string; startAvailableNs: string; endAvailableNs: string;
+  rows: string; sha256: string; compression: "zstd";
+}
+
+export interface EventDatasetManifestV2 {
+  version: typeof EVENT_DATASET_VERSION;
+  contractVersion: typeof MICROSTRUCTURE_CONTRACT_VERSION;
+  datasetId: string; createdAtNs: string; instruments: string[];
+  fragments: EventDatasetFragmentV1[]; manifestSha256: string;
+  integrity: EventIntegrity; timestampProvenance: "exchange_and_receive" | "exchange_time_only";
+  ordering: "available_at_ns,ingress_ordinal,stream_id,batch_index";
+  gaps: { startAvailableNs: string; endAvailableNs: string; reason: string }[];
+}
+
+export interface ResearchDataRequirementsV1 {
+  mode: ResearchMode; dataTypes: string[]; requireVerified: boolean;
+}
+
+export interface EventRunRequestV2 {
+  version: 2; name: string; source: string; mode: "event";
+  dataset: { manifestId: string; manifestSha256: string };
+  requirements: ResearchDataRequirementsV1;
+  params: Record<string, number | string | boolean>;
+}
 export interface ScriptRecord {
   id: string; name: string; source: string; savedSource: string;
   updatedAt: number; revision: number; kind?: "strategy" | "indicator"; description?: string;
