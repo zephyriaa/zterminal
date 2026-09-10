@@ -15,6 +15,18 @@
   --public-font-serif: Georgia, "Times New Roman", serif;
   --public-font-mono: var(--font-geist-mono), monospace;
 
+  /* Landing-only aliases keep the marketing surface coherent with the terminal. */
+  --zt-surface-0: var(--public-bg);
+  --zt-surface-1: var(--public-bg-soft);
+  --zt-border-subtle: var(--public-line-soft);
+  --zt-text-primary: var(--public-ink);
+  --zt-text-secondary: var(--public-copy);
+  --zt-accent: var(--public-lilac);
+  --zt-glass-bg: rgba(8, 13, 28, 0.48);
+  --zt-glass-border: rgba(177, 193, 230, 0.16);
+  --zt-radius-control: 6px;
+  --zt-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
   min-height: 100vh;
   background: var(--public-bg);
   color: var(--public-ink);
