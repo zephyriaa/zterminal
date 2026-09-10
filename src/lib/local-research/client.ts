@@ -1,7 +1,7 @@
 import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest } from "./contracts";
 
 export class HelperError extends Error {
-  constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "incompatible" | "request_failed") { super(message); }
+  constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed") { super(message); }
 }
 const TOKEN_KEY = "zterminal.local-research.token.v1";
 let memoryToken: string | null = null;
@@ -19,8 +19,12 @@ export async function helperRequest<T>(path: string, method = "GET", body?: unkn
     } catch (permissionError) { if (permissionError instanceof HelperError) throw permissionError; }
     throw new HelperError("Cannot reach the local helper. Start ZTerminal Research Helper on this Windows computer. If it is running, check this site's local network permission.", "unavailable");
   }
-  const payload = await response.json();
-  if (!response.ok) throw new HelperError(payload.error ?? `Helper request failed (${response.status}).`, response.status === 403 ? "unpaired" : "request_failed");
+  const payload = await response.json().catch(() => ({})) as { error?: string };
+  if (!response.ok) {
+    if (path === "pair" && [400, 401, 403].includes(response.status)) throw new HelperError("That connection code is invalid or expired. Open ZTerminal Helper and copy a new code.", "invalid_code");
+    if ([401, 403].includes(response.status)) throw new HelperError("ZTerminal Helper needs to be paired with this browser session.", "unpaired");
+    throw new HelperError("ZTerminal Helper could not complete that request. Try again after checking that it is running.", "request_failed");
+  }
   return payload as T;
 }
 export async function capabilities() {

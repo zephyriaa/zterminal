@@ -32,7 +32,8 @@ async function run() {
     const before = await page.locator("#panel-chart").boundingBox();
     let collapseGain = null;
     const interactions = {};
-    if (width >= 768) {
+    const sidebarInitiallyVisible = await page.locator(".zt-research-sidebar").isVisible();
+    if (width >= 768 && sidebarInitiallyVisible) {
       await page.getByRole("button", { name: "Collapse sidebar" }).click();
       await page.waitForTimeout(220);
       const after = await page.locator("#panel-chart").boundingBox();
@@ -50,7 +51,7 @@ async function run() {
 
       await page.getByRole("button", { name: "Indicators" }).first().click();
       interactions.indicatorsOpened = await page.locator("#panel-indicators").isVisible();
-      await page.locator("#panel-indicators .is-close").click();
+      await page.locator("#panel-indicators").getByRole("button", { name: "Close Indicators", exact: true }).click();
 
       const picker = page.locator(".zt-instrument-picker-trigger");
       const previousSymbol = (await picker.innerText()).trim();

@@ -15,10 +15,18 @@ export function distanceToSegment(point: ScreenPoint, start: ScreenPoint, end: S
 export function drawingHit(projected: ProjectedDrawing, point: ScreenPoint, tolerance = 7) {
   const [a, b = a] = projected.points;
   const type = projected.drawing.type;
-  if (["rectangle", "long-position", "short-position", "price-range", "date-range"].includes(type)) {
+  if (["long-position", "short-position"].includes(type)) {
+    const c = projected.points[2] ?? b;
+    const left = Math.min(a.x, b.x) - tolerance;
+    const right = Math.max(a.x, b.x) + tolerance;
+    const top = Math.min(a.y, b.y, c.y) - tolerance;
+    const bottom = Math.max(a.y, b.y, c.y) + tolerance;
+    return point.x >= left && point.x <= right && point.y >= top && point.y <= bottom;
+  }
+  if (["rectangle", "price-range", "date-range"].includes(type)) {
     const left = Math.min(a.x, b.x), right = Math.max(a.x, b.x), top = Math.min(a.y, b.y), bottom = Math.max(a.y, b.y);
     const inside = point.x >= left - tolerance && point.x <= right + tolerance && point.y >= top - tolerance && point.y <= bottom + tolerance;
-    return inside && (Math.min(Math.abs(point.x - left), Math.abs(point.x - right), Math.abs(point.y - top), Math.abs(point.y - bottom)) <= tolerance || ["long-position", "short-position"].includes(type));
+    return inside && (Math.min(Math.abs(point.x - left), Math.abs(point.x - right), Math.abs(point.y - top), Math.abs(point.y - bottom)) <= tolerance || type === "price-range");
   }
   if (["horizontal-line", "price-label"].includes(type)) return Math.abs(point.y - a.y) <= tolerance;
   if (type === "vertical-line") return Math.abs(point.x - a.x) <= tolerance;

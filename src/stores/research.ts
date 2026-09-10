@@ -11,10 +11,10 @@ import { useStudies } from "./studies";
 import { createPythonStudy } from "@/lib/indicator-library";
 
 const initial: ScriptRecord = { id: "welcome-example", name: "Moving-average crossover", kind: "strategy", source: EXAMPLES[0].source, savedSource: "", updatedAt: 0, revision: 0 };
-type Connection = "unchecked" | "checking" | "connected" | "unpaired" | "unavailable" | "permission_denied" | "incompatible";
+type Connection = "unchecked" | "checking" | "connected" | "unpaired" | "invalid_code" | "unavailable" | "permission_denied" | "incompatible";
 type State = {
   drafts: Record<string, ScriptRecord>; activeId: string; config: ResearchConfig; params: Record<string, number | string | boolean>; minimap: boolean;
-  connection: Connection; error: string; diagnostic: Diagnostic | null; job: ResearchJob | null; result: ResearchResult | null; indicatorResults: Record<string, IndicatorEvaluationResult>; archived: { id: string; name: string; created: number }[]; chartResult: ResearchResult | null; selectedTrade: string | null;
+  connection: Connection; helperVersion: string | null; error: string; diagnostic: Diagnostic | null; job: ResearchJob | null; result: ResearchResult | null; indicatorResults: Record<string, IndicatorEvaluationResult>; archived: { id: string; name: string; created: number }[]; chartResult: ResearchResult | null; selectedTrade: string | null;
   capturedScript: { id: string; source: string } | null;
   instrument: { provider: string; symbol: string; multiplier: number; quantityStep: number; verifiedAt: number } | null;
   verifyInstrument: () => Promise<void>;
@@ -27,7 +27,7 @@ const finished = (job: ResearchJob | null) => !job || ["complete", "failed", "ca
 
 export const useResearch = create<State>()(persist((set, get) => ({
   drafts: { [initial.id]: initial }, activeId: initial.id, config: defaultResearchConfig(), params: {}, minimap: false,
-  connection: "unchecked", error: "", diagnostic: null, job: null, result: null, indicatorResults: {}, archived: [], chartResult: null, selectedTrade: null, reportTab: "Overview",
+  connection: "unchecked", helperVersion: null, error: "", diagnostic: null, job: null, result: null, indicatorResults: {}, archived: [], chartResult: null, selectedTrade: null, reportTab: "Overview",
   capturedScript: null, instrument: null,
   verifyInstrument: async () => {
     const { provider, symbol } = get().config;
@@ -53,10 +53,10 @@ export const useResearch = create<State>()(persist((set, get) => ({
       if (code) await pairHelper(code);
       const [scripts, artifacts, archived] = await Promise.all([helper.scripts(), helper.artifacts(), helper.results()]);
       const records = [...scripts.map(script => ({ ...script, kind: "strategy" as const })), ...artifacts.filter(artifact => artifact.kind === "indicator")];
-      set(s => ({ connection: "connected", archived, drafts: { ...s.drafts, ...Object.fromEntries(records.map(record => [record.id, s.drafts[record.id] && s.drafts[record.id].source !== s.drafts[record.id].savedSource ? s.drafts[record.id] : record])) } }));
+      set(s => ({ connection: "connected", helperVersion: caps.version, archived, drafts: { ...s.drafts, ...Object.fromEntries(records.map(record => [record.id, s.drafts[record.id] && s.drafts[record.id].source !== s.drafts[record.id].savedSource ? s.drafts[record.id] : record])) } }));
       const pending = caps.activeJob ?? (!finished(get().job) && get().job?.id !== "preparing" ? get().job?.id : null);
       if (pending) { const job = await helper.job(pending); set({ job }); void watch(job.id); }
-    } catch (error) { set({ connection: error instanceof HelperError ? error.code === "request_failed" ? "unavailable" : error.code : "unavailable", error: (error as Error).message }); }
+    } catch (error) { set({ connection: error instanceof HelperError ? error.code === "request_failed" ? "unavailable" : error.code : "unavailable", helperVersion: null, error: (error as Error).message }); }
   },
   save: async (name, copy = false) => {
     const snapshot = structuredClone(get().drafts[get().activeId]);
@@ -172,7 +172,7 @@ async function watch(id: string) {
         return;
       }
     } catch (error) {
-      useResearch.setState({ connection: "unavailable", error: `Helper disconnected during the run. Reconnect to recover its status. ${(error as Error).message}` });
+      useResearch.setState({ connection: "unavailable", helperVersion: null, error: "Connection to ZTerminal Helper was lost. Reconnect to recover its status." });
       return;
     }
     await new Promise(resolve => setTimeout(resolve, 400));

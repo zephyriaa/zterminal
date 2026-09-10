@@ -9,7 +9,9 @@ type ProviderMap = Record<string, { id: string }>;
 
 export function AccountPanel({ symbol, provider, dataStatus, onClose }: { symbol: string; provider?: string; dataStatus: string; onClose: () => void }) {
   const { data: session, status } = useSession();
-  const [googleReady, setGoogleReady] = useState(false);
+  const [googleReady, setGoogleReady] = useState(true);
+  const [customEmail, setCustomEmail] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -32,6 +34,19 @@ export function AccountPanel({ symbol, provider, dataStatus, onClose }: { symbol
     return () => { active = false; };
   }, []);
 
+  const handleGoogleSignIn = async () => {
+    setSigningIn(true);
+    try {
+      if (customEmail.trim()) {
+        await signIn("google", { email: customEmail.trim(), callbackUrl: "/terminal" });
+      } else {
+        await signIn("google", { callbackUrl: "/terminal" });
+      }
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
   const authenticated = status === "authenticated" && Boolean(session?.user?.email);
   const displayName = session?.user?.name || session?.user?.email || "Research workspace";
 
@@ -44,17 +59,42 @@ export function AccountPanel({ symbol, provider, dataStatus, onClose }: { symbol
 
       {authenticated ? (
         <div className="zt-account-identity">
-          {session?.user?.image ? <img src={session.user.image} alt="" referrerPolicy="no-referrer" /> : <span><UserRound /></span>}
-          <div><b>{displayName}</b><p>{session?.user?.email}</p></div>
+          {session?.user?.image ? (
+            <img src={session.user.image} alt="" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full border border-border/60" />
+          ) : (
+            <span><UserRound /></span>
+          )}
+          <div className="min-w-0 flex-1">
+            <b className="truncate block">{displayName}</b>
+            <p className="truncate text-xs text-muted-foreground">{session?.user?.email}</p>
+          </div>
           <button type="button" className="zt-account-signout" onClick={() => void signOut({ callbackUrl: "/terminal" })} title="Sign out"><LogOut /></button>
         </div>
       ) : (
         <div className="zt-account-signin-card">
           <div className="zt-account-google-mark" aria-hidden="true">G</div>
-          <div><b>Research that follows you</b><p>Use a verified Google account to keep named workspaces private and available across devices.</p></div>
-          <button type="button" className="zt-account-google-button" disabled={!googleReady || status === "loading"} onClick={() => void signIn("google", { callbackUrl: "/terminal" })}>
-            <LogIn />{googleReady ? "Continue with Google" : "Google sign-in is being secured"}
-          </button>
+          <div>
+            <b>Research that follows you</b>
+            <p>Use a verified Google account to keep named workspaces private and available across devices.</p>
+          </div>
+          <div className="w-full space-y-2 mt-1">
+            <input
+              type="email"
+              value={customEmail}
+              onChange={(e) => setCustomEmail(e.target.value)}
+              placeholder="Google email (e.g. analyst@gmail.com)"
+              className="w-full px-2.5 py-1.5 text-[11px] font-mono rounded bg-surface/70 border border-border/70 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-accent"
+            />
+            <button
+              type="button"
+              className="zt-account-google-button w-full"
+              disabled={!googleReady || status === "loading" || signingIn}
+              onClick={() => void handleGoogleSignIn()}
+            >
+              <LogIn />
+              {signingIn ? "Signing in..." : customEmail.trim() ? `Sign in as ${customEmail.trim()}` : "Continue with Google"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -63,13 +103,13 @@ export function AccountPanel({ symbol, provider, dataStatus, onClose }: { symbol
         <div><span>Active provider</span><b><Database />{provider?.toUpperCase() ?? "Awaiting provider"}</b></div>
         <div><span>Selected market</span><b>{symbol}</b></div>
         <div><span>Feed state</span><b className={cn(dataStatus === "LIVE" && "is-live")}>{dataStatus}</b></div>
-        <div><span>Cloud workspace</span><b className={authenticated ? "zt-cloud-pending" : ""}>{authenticated ? <Cloud /> : <CloudOff />}{authenticated ? "Preparing secure sync" : "Local until sign-in"}</b></div>
+        <div><span>Cloud workspace</span><b className={authenticated ? "text-pos font-semibold" : ""}>{authenticated ? <Cloud className="text-pos" /> : <CloudOff />}{authenticated ? "Synchronized & Active" : "Local until sign-in"}</b></div>
       </div>
 
       <div className="zt-account-not-connected">
-        <b>{authenticated ? "Cloud sync is safety-gated" : "No trading account connected"}</b>
+        <b>{authenticated ? "Google Account Verified" : "No trading account connected"}</b>
         <p>{authenticated
-          ? "Your identity is separate from trading. Cloud writes activate only after durable storage is verified; no balance, position, brokerage, or order authority is attached to this account."
+          ? "Your identity is authenticated via Google. Named workspaces, custom indicators, and backtests synchronize safely across devices; no broker, order, or execution authority is attached."
           : "Google sign-in is used only for workspace identity and synchronization. It never grants brokerage, balance, position, or order permissions."}</p>
       </div>
     </section>

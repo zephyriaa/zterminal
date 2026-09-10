@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ZTerminalSessionProvider } from "@/components/auth/session-provider";
+import { SmoothScrollProvider } from "@/components/motion/smooth-scroll-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,7 +54,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ZTerminalSessionProvider>
-            {children}
+            <SmoothScrollProvider>
+              {children}
+            </SmoothScrollProvider>
             <Toaster />
           </ZTerminalSessionProvider>
         </ThemeProvider>

@@ -24,7 +24,7 @@ export function panelBounds(layout: PanelLayout, id: string, width: number, heig
   return { x: left, y: 0, width: centralWidth, height: height - bottom };
 }
 export function defaultPlacement(id: string): Placement {
-  return id === "chart" ? "center" : ["strategy", "context"].includes(id) ? "right" : id === "backtester" ? "bottom" : id === "indicators" ? "left" : "floating";
+  return id === "chart" ? "center" : ["strategy", "context"].includes(id) ? "right" : id === "backtester" ? "bottom" : id === "indicators" ? "left" : ["orderflow", "gex"].includes(id) ? "center" : "floating";
 }
 
 /** Old records are copied, never removed. Malformed or offscreen values are clamped. */

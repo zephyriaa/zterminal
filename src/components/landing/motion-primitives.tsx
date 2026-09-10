@@ -3,7 +3,8 @@
 import React, { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
-export const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
+export const EASE_OUT_QUINT = [0.22, 1, 0.36, 1] as const;
+export const EASE_OUT_EXPO = EASE_OUT_QUINT;
 
 export function useIsReducedMotion(): boolean {
   const prefersReduced = useReducedMotion();
@@ -34,7 +35,7 @@ export function MaskedHeading({
   id,
   lines,
   delay = 0,
-  stagger = 0.14,
+  stagger = 0.08,
   triggerOnMount = false,
 }: MaskedHeadingProps) {
   const reduced = useIsReducedMotion();
@@ -57,7 +58,7 @@ export function MaskedHeading({
           <motion.span
             key={idx}
             style={{ display: "block" }}
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 0, y: 24 }}
             {...(triggerOnMount
               ? { animate: { opacity: 1, y: 0 } }
               : {
@@ -65,7 +66,7 @@ export function MaskedHeading({
                   viewport: { once: true, margin: "100px 0px" },
                 })}
             transition={{
-              duration: 0.75,
+              duration: 0.65,
               ease: EASE_OUT_EXPO,
               delay: lineDelay,
             }}
@@ -98,8 +99,8 @@ export function FadeInView({
   children,
   className,
   delay = 0,
-  yOffset = 20,
-  duration = 0.65,
+  yOffset = 24,
+  duration = 0.6,
   triggerOnMount = false,
 }: FadeInViewProps) {
   const reduced = useIsReducedMotion();
@@ -130,7 +131,7 @@ export function FadeInView({
 }
 
 /**
- * ScaleReveal provides subtle scale (0.97 -> 1.0) and opacity entrance for frames,
+ * ScaleReveal provides subtle scale (0.985 -> 1.0) and opacity entrance for frames,
  * screenshots, or inspector panels.
  */
 interface ScaleRevealProps {
@@ -149,11 +150,11 @@ export function ScaleReveal({ children, className, delay = 0 }: ScaleRevealProps
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, scale: 0.97, y: 22 }}
+      initial={{ opacity: 0, scale: 0.985, y: 24 }}
       whileInView={{ opacity: 1, scale: 1, y: 0 }}
       viewport={{ once: true, margin: "120px 0px" }}
       transition={{
-        duration: 0.8,
+        duration: 0.65,
         ease: EASE_OUT_EXPO,
         delay,
       }}
