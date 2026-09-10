@@ -12,6 +12,10 @@ services:
         value: gateio
       - key: ALLOWED_ORIGIN
         value: https://zterminal.onrender.com
+      - key: NEXTAUTH_URL
+        value: https://zterminal.onrender.com
+      - key: AUTH_TRUST_HOST
+        value: "true"
       - key: MARKET_DATA_PORT
         value: "3003"
       - key: APP_PORT

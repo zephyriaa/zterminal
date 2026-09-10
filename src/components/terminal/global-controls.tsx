@@ -29,6 +29,7 @@ import { useWorkspace } from "@/stores/workspace";
 import { usePanels } from "@/stores/panels";
 import { useToast } from "@/hooks/use-toast";
 import { AccountPanel } from "./account-panel";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 interface GlobalControlsProps {
@@ -40,7 +41,12 @@ interface GlobalControlsProps {
 
 export function GlobalControls({ symbol, timeframe, provider, dataStatus }: GlobalControlsProps) {
   const { setCommandOpen, sidebarCollapsed, toggleSidebar, saveWorkspace } = useWorkspace();
-  const [accountOpen, setAccountOpen] = useState(false);
+  const { data: session } = useSession();
+  const [accountOpen, setAccountOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("account") === "signin" || params.get("account") === "profile" || Boolean(params.get("error"));
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
   const panels = usePanels((s) => s.panels);
@@ -278,19 +284,34 @@ export function GlobalControls({ symbol, timeframe, provider, dataStatus }: Glob
       {/* DIVIDER */}
       <span className="zt-strip-divider mx-0.5" aria-hidden="true" />
 
-      {/* 6. RESEARCH MODE ON FAR RIGHT */}
+      {/* 6. RESEARCH ACCOUNT ON FAR RIGHT */}
       <button
         type="button"
         className="zt-research-account"
         onClick={() => setAccountOpen((open) => !open)}
         aria-expanded={accountOpen}
-        aria-label="Open research account information"
-        title="Research mode · Read only (click to inspect account state)"
+        aria-label="Open research account and profile information"
+        title={session?.user ? `${session.user.name || session.user.email} (Click to manage profile)` : "Research mode · Google sign-in"}
       >
-        <span>R</span>
+        {session?.user?.image ? (
+          <img
+            src={session.user.image}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="w-4 h-4 rounded-full object-cover shrink-0 border border-accent/60"
+          />
+        ) : session?.user?.name ? (
+          <span className="w-4 h-4 rounded-full bg-accent text-accent-foreground text-[10px] font-bold grid place-items-center shrink-0">
+            {session.user.name[0]?.toUpperCase()}
+          </span>
+        ) : (
+          <span>R</span>
+        )}
         <div className="zt-research-account-copy hidden sm:flex">
-          <b>Research mode</b>
-          <small>Read only</small>
+          <b className="truncate max-w-[84px]">{session?.user?.name ? session.user.name.split(" ")[0] : "Research"}</b>
+          <small className={session?.user ? "text-pos font-medium" : ""}>
+            {session?.user ? "Google active" : "Read only"}
+          </small>
         </div>
       </button>
 
