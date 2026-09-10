@@ -1,0 +1,40 @@
+{
+  "contractVersion": 1,
+  "instrument": {
+    "instrumentId": "BTCUSDT-PERP.BINANCE", "venue": "BINANCE", "product": "perpetual",
+    "priceIncrement": "0.10", "sizeIncrement": "0.001", "priceCurrency": "USDT",
+    "sizeUnit": "BTC", "settlementCurrency": "USDT", "contractMultiplier": "1",
+    "multiplierUnit": "BTC/BTC", "validFromNs": "1700000000000000000",
+    "observedAtNs": "1700000000001000000"
+  },
+  "provenance": [
+    {
+      "label": "third", "streamId": "binance:future:BTCUSDT:depth",
+      "subscriptionGeneration": "7", "ingressOrdinal": "12",
+      "receivedAtNs": "1700000000003000000", "monotonicReceivedNs": "900003000",
+      "availableAtNs": "1700000000003000000",
+      "adapterVersion": "nautilus-1.231.0+zt-contract-1",
+      "firstUpdateId": "103", "finalUpdateId": "104", "previousUpdateId": "102",
+      "tradeGranularity": "aggregate", "batchIndex": 0
+    },
+    {
+      "label": "first", "streamId": "binance:future:BTCUSDT:depth",
+      "subscriptionGeneration": "7", "ingressOrdinal": "10",
+      "receivedAtNs": "1700000000003000000", "monotonicReceivedNs": "900001000",
+      "availableAtNs": "1700000000003000000",
+      "adapterVersion": "nautilus-1.231.0+zt-contract-1",
+      "firstUpdateId": "100", "finalUpdateId": "101", "previousUpdateId": "99",
+      "tradeGranularity": "aggregate", "batchIndex": 0
+    },
+    {
+      "label": "second", "streamId": "binance:future:BTCUSDT:depth",
+      "subscriptionGeneration": "7", "ingressOrdinal": "11",
+      "receivedAtNs": "1700000000003000000", "monotonicReceivedNs": "900002000",
+      "availableAtNs": "1700000000003000000",
+      "adapterVersion": "nautilus-1.231.0+zt-contract-1",
+      "firstUpdateId": "102", "finalUpdateId": "102", "previousUpdateId": "101",
+      "tradeGranularity": "aggregate", "batchIndex": 0
+    }
+  ],
+  "expectedReplayOrder": ["first", "second", "third"]
+}

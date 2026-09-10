@@ -1,0 +1,4 @@
+# Phase-0 compatibility pin for the optional event-research runtime.
+# This file is deliberately separate from requirements.in so version-1 candle
+# research packaging remains unchanged until the Phase-1 recorder cutover.
+nautilus_trader==1.231.0
