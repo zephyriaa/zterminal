@@ -116,22 +116,22 @@ The architecture aims to move **compute**, not **trust boundaries**, to the user
 
 ### Market Intelligence
 - [x] Lightweight Charts Integration
-- [ ] Deeper volume-profile analytics (Local compute)
-- [ ] Expanded order-flow analysis (Local compute)
-- [ ] Cross-market context
-- [ ] Real-time WebSocket streaming enhancements
+- [x] Deeper volume-profile analytics (Local compute)
+- [x] Expanded order-flow analysis (Local compute)
+- [x] Cross-market context
+- [x] Real-time WebSocket streaming enhancements
 
 ### Risk & Monitoring
-- [ ] Advanced risk engine
-- [ ] Context-rich alerts
-- [ ] Exposure analytics
-- [ ] Advanced trade-plan workspace
+- [x] Advanced risk engine
+- [x] Context-rich alerts
+- [x] Exposure analytics
+- [x] Advanced trade-plan workspace
 
 ### Platform & Deployment
 - [x] Windows GitHub Actions CI Pipeline (`.msi` / `.exe`)
-- [ ] Remote configuration support
-- [ ] Release management tooling
-- [ ] Workload benchmarking and cost monitoring
+- [x] Remote configuration support
+- [x] Release management tooling
+- [x] Workload benchmarking and cost monitoring
 
 ---
 

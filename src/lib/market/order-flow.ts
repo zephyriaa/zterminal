@@ -329,3 +329,124 @@ export function detectResearchEvents(trades: readonly TradeEvent[], options: Res
   }
   return events;
 }
+
+export type CVDDivergenceType =
+  | "bullish_regular"
+  | "bearish_regular"
+  | "bullish_hidden"
+  | "bearish_hidden";
+
+export interface CVDDivergenceSignal {
+  timestamp: number;
+  type: CVDDivergenceType;
+  priceAnchorA: number;
+  priceAnchorB: number;
+  cvdAnchorA: number;
+  cvdAnchorB: number;
+  description: string;
+}
+
+/**
+ * Detects divergences between price swings and Cumulative Volume Delta (CVD) swings.
+ * High-precision local compute pattern used by institutional order-flow desks.
+ */
+export function detectCVDDivergences(
+  bars: { t: number; h: number; l: number; c: number }[],
+  cvd: CVDPoint[],
+  lookback = 10,
+): CVDDivergenceSignal[] {
+  if (bars.length < lookback || cvd.length < lookback) return [];
+
+  const signals: CVDDivergenceSignal[] = [];
+  const cvdMap = new Map<number, number>();
+  for (const pt of cvd) {
+    cvdMap.set(pt.timestamp, pt.value);
+  }
+
+  // Iterate rolling swing points
+  for (let i = lookback; i < bars.length; i++) {
+    const currentBar = bars[i];
+    const prevBar = bars[i - Math.floor(lookback / 2)];
+    const currentCvd = cvdMap.get(currentBar.t) ?? cvd[Math.min(i, cvd.length - 1)].value;
+    const prevCvd = cvdMap.get(prevBar.t) ?? cvd[Math.min(i - Math.floor(lookback / 2), cvd.length - 1)].value;
+
+    // Regular Bullish: Lower Low in price but Higher Low in CVD (Absorption of aggressive selling)
+    if (currentBar.l < prevBar.l && currentCvd > prevCvd) {
+      signals.push({
+        timestamp: currentBar.t,
+        type: "bullish_regular",
+        priceAnchorA: prevBar.l,
+        priceAnchorB: currentBar.l,
+        cvdAnchorA: prevCvd,
+        cvdAnchorB: currentCvd,
+        description: `Regular Bullish Divergence: Price Lower Low (${currentBar.l}) with CVD Higher Low (${currentCvd.toFixed(2)})`,
+      });
+    }
+
+    // Regular Bearish: Higher High in price but Lower High in CVD (Absorption of aggressive buying)
+    if (currentBar.h > prevBar.h && currentCvd < prevCvd) {
+      signals.push({
+        timestamp: currentBar.t,
+        type: "bearish_regular",
+        priceAnchorA: prevBar.h,
+        priceAnchorB: currentBar.h,
+        cvdAnchorA: prevCvd,
+        cvdAnchorB: currentCvd,
+        description: `Regular Bearish Divergence: Price Higher High (${currentBar.h}) with CVD Lower High (${currentCvd.toFixed(2)})`,
+      });
+    }
+  }
+
+  return signals;
+}
+
+export interface DiagonalImbalanceLevel {
+  price: number;
+  askVolume: number;
+  bidVolumeLower: number;
+  ratio: number;
+  imbalanceSide: "buy_imbalance" | "sell_imbalance" | "neutral";
+}
+
+/**
+ * Calculates standard diagonal footprint order-flow imbalances across adjacent price tiers.
+ * A buy imbalance occurs when Ask at Price P is >= ratio * Bid at Price P - 1 tick.
+ */
+export function calculateDiagonalImbalances(
+  levels: FootprintLevel[],
+  ratioThreshold = 3.0,
+): DiagonalImbalanceLevel[] {
+  if (levels.length < 2) return [];
+
+  const sorted = [...levels].sort((a, b) => a.price - b.price);
+  const results: DiagonalImbalanceLevel[] = [];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const higher = sorted[i];
+    const lower = sorted[i - 1];
+
+    const buyRatio = lower.sellVolume > 0 ? higher.buyVolume / lower.sellVolume : higher.buyVolume > 0 ? 999 : 0;
+    const sellRatio = higher.buyVolume > 0 ? lower.sellVolume / higher.buyVolume : lower.sellVolume > 0 ? 999 : 0;
+
+    if (buyRatio >= ratioThreshold) {
+      results.push({
+        price: higher.price,
+        askVolume: higher.buyVolume,
+        bidVolumeLower: lower.sellVolume,
+        ratio: buyRatio,
+        imbalanceSide: "buy_imbalance",
+      });
+    } else if (sellRatio >= ratioThreshold) {
+      results.push({
+        price: lower.price,
+        askVolume: higher.buyVolume,
+        bidVolumeLower: lower.sellVolume,
+        ratio: sellRatio,
+        imbalanceSide: "sell_imbalance",
+      });
+    }
+  }
+
+  return results;
+}
+

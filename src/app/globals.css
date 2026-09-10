@@ -1228,6 +1228,99 @@ html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 
   .zt-panel-task-strip > span { display:none; }
 }
 @media (max-width: 639px) { .zt-preference-presets { grid-template-columns: 1fr; } .zt-preference-grid { gap: 9px; } }
+
+/* P0 workstation refinement: matte application chrome keeps the market canvas
+   visually dominant. Depth comes from the surface ramp and one-pixel rules. */
+.zt-reference-terminal {
+  --zt-bg: #06090f;
+  --zt-panel: #0a0e16;
+  --zt-panel-strong: #0d121c;
+  --zt-line: rgba(139, 155, 184, 0.16);
+  --zt-line-bright: rgba(158, 176, 209, 0.28);
+  --zt-text: #d6deeb;
+  --zt-muted: #748197;
+  --zt-accent: #8173bb;
+  --zt-accent-soft: rgba(129, 115, 187, 0.13);
+  --zt-mint: #59c7af;
+  background: var(--zt-app-bg, var(--zt-bg));
+}
+
+.zt-reference-header {
+  background: color-mix(in srgb, var(--zt-app-bg, var(--zt-bg)) 91%, #151b27);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
+}
+
+.zt-reference-canvas {
+  background: var(--zt-app-bg, #070a10);
+}
+
+.zt-research-sidebar,
+.zt-reference-toolrail {
+  background: color-mix(in srgb, var(--zt-panel-bg, var(--zt-panel)) 94%, #05080d);
+}
+
+.zt-sidebar-tool.is-active {
+  border-color: rgba(125, 175, 201, 0.24);
+  background: rgba(92, 139, 161, 0.09);
+  color: #89c7dc;
+}
+
+.zt-sidebar-tool.is-active::before {
+  background: #6db4cf;
+  box-shadow: none;
+}
+
+.zt-managed-panel,
+.zt-managed-panel .zt-desktop-window-titlebar {
+  background: var(--zt-panel-bg, var(--zt-panel));
+}
+
+.zt-reference-chart-window .zt-desktop-window-titlebar {
+  background: color-mix(in srgb, var(--zt-panel-bg, var(--zt-panel)) 88%, #141827);
+}
+
+.zt-reference-chart-window::before { display: none; }
+
+.zt-chart-toolbar {
+  background: color-mix(in srgb, var(--zt-chart-bg, #070a10) 90%, #111722);
+}
+
+.zt-chart-feed-indicator.is-live i,
+.zt-context-status.is-live i {
+  box-shadow: 0 0 0 2px rgba(80, 190, 164, 0.09);
+}
+
+.zt-reference-terminal :is(button, select, input, textarea):focus-visible {
+  outline: 1px solid #96b8cb;
+  outline-offset: 1px;
+}
+
+.zt-instrument-picker-trigger { white-space: nowrap; }
+.zt-instrument-picker-trigger > span { overflow: hidden; text-overflow: ellipsis; }
+
+@media (max-width: 1023px) {
+  .zt-workspace-label { display: none; }
+}
+
+@media (max-width: 767px) {
+  .zt-header-secondary-action { display: none; }
+  .zt-reference-header { gap: 5px; }
+  .zt-instrument-picker { max-width: none; }
+  .zt-chart-readout span:nth-child(2),
+  .zt-chart-readout span:nth-child(3),
+  .zt-chart-readout span:nth-child(5) { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zt-reference-terminal *,
+  .zt-reference-terminal *::before,
+  .zt-reference-terminal *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
 /* Connected local research workspace: compact controls around a persistent editor. */
 .zt-research-workbench,.zt-research-report { height:100%; min-height:0; display:flex; flex-direction:column; color:#d3d0dc; background:#111017; font-size:12px; overflow:auto; }
 .zt-research-workbench button,.zt-research-report button,.zt-report-import { border:1px solid #35313f; padding:5px 9px; background:#1b1923; color:#d3ccdf; transition:background 140ms,border-color 140ms; cursor:pointer; }

@@ -64,8 +64,7 @@ server.log
 
 # local process artifacts
 *.pid
-
-# Rust research-core build artifacts
+# Rust research-core build artifacts
 /research/core/target/
 
 # Native desktop workspace build artifacts
@@ -74,3 +73,4 @@ server.log
 # Python research API build/test artifacts
 __pycache__/
 .pytest_cache/
+artifacts/
