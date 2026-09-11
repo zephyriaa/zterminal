@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  Activity,
   AreaChart,
   BarChart3,
   CandlestickChart,
@@ -13,8 +12,6 @@ import {
   Maximize2,
   Rows2,
   SlidersHorizontal,
-  Waves,
-  Zap,
 } from "lucide-react";
 import type { ChartType } from "@/lib/chart/contracts";
 import type { Timeframe } from "@/lib/market/types";
@@ -54,12 +51,9 @@ type Props = {
   onTimeframe: (timeframe: Timeframe) => void;
   onChartType: (chartType: ChartType) => void;
   onIndicators: () => void;
-  onContext: () => void;
   onSettings: () => void;
   onReturnLive: () => void;
   onLayoutChange?: (layout: MultiChartLayout) => void;
-  onOpenOrderFlow?: () => void;
-  onOpenGex?: () => void;
   onProviderChange?: (provider: string) => void;
 };
 
@@ -109,30 +103,6 @@ export function ChartToolbar(props: Props) {
         <Layers3 className="h-3 w-3" />
         Indicators
       </button>
-
-      {props.onOpenOrderFlow && (
-        <button
-          type="button"
-          className="zt-chart-toolbar-button hidden sm:inline-flex"
-          onClick={props.onOpenOrderFlow}
-          title="Open Order Flow & Tape Workbench"
-        >
-          <Waves className="h-3 w-3 text-cyan-400" />
-          <span>Order Flow</span>
-        </button>
-      )}
-
-      {props.onOpenGex && (
-        <button
-          type="button"
-          className="zt-chart-toolbar-button hidden sm:inline-flex"
-          onClick={props.onOpenGex}
-          title="Open Crypto Gamma Exposure (GEX) Workbench"
-        >
-          <Zap className="h-3 w-3 text-amber-400" />
-          <span>Crypto GEX</span>
-        </button>
-      )}
 
       <span className="zt-toolbar-divider hidden md:block" aria-hidden="true" />
 
@@ -331,15 +301,6 @@ export function ChartToolbar(props: Props) {
           <AreaChart className="h-3.5 w-3.5" />
         </ChartTypeButton>
 
-        <button
-          type="button"
-          className="zt-chart-toolbar-button is-icon"
-          onClick={props.onContext}
-          aria-label="Open market context"
-          title="Market context"
-        >
-          <Activity className="h-3.5 w-3.5" />
-        </button>
         <button
           type="button"
           className="zt-chart-toolbar-button is-icon"

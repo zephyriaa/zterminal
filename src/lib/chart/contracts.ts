@@ -1,6 +1,7 @@
 import type { Exchange, ProviderId, Timeframe } from "@/lib/market/types";
+import { sanitizeChartOverlay, type ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 
-export const CHART_DOCUMENT_SCHEMA_VERSION = 4 as const;
+export const CHART_DOCUMENT_SCHEMA_VERSION = 5 as const;
 export const DRAWING_SCHEMA_VERSION = 1 as const;
 export const DEFAULT_WORKSPACE_ID = "local-default";
 export const PRIMARY_CHART_ID = "primary-chart";
@@ -219,6 +220,7 @@ export interface ChartDocument {
   settings: ChartSettingsV2;
   panes: ChartPane[];
   indicators: IndicatorInstanceV2[];
+  overlays: ChartOverlayInstance[];
   drawings: DrawingObject[];
   replay?: ReplaySession;
   updatedAt: number;
@@ -277,6 +279,7 @@ export function createChartDocument(input: { workspaceId?: string; chartId?: str
     settings: sanitizeChartSettings(input.settings),
     panes: DEFAULT_CHART_PANES.map(pane => ({ ...pane })),
     indicators: [],
+    overlays: [],
     drawings: [],
     updatedAt: input.now ?? Date.now(),
   };
@@ -327,6 +330,9 @@ export function migrateChartDocument(value: unknown, fallback: ChartDocument): C
       { ...DEFAULT_CHART_PANES[1], visible: volume?.visible !== false, height: finite(volume?.height, 0.22, 0.12, 0.45) },
     ],
     indicators: Array.isArray(input.indicators) ? input.indicators : [],
+    overlays: Array.isArray(input.overlays)
+      ? input.overlays.map(sanitizeChartOverlay).filter((overlay): overlay is ChartOverlayInstance => overlay !== null)
+      : [],
     drawings: Array.isArray(input.drawings) ? input.drawings.map(drawing => sanitizeDrawing(drawing, fallback)).filter((drawing): drawing is DrawingObject => drawing !== null) : [],
     replay: input.replay,
     updatedAt: finite(input.updatedAt, fallback.updatedAt, 0, Number.MAX_SAFE_INTEGER),

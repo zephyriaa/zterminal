@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { getContract } from "@/lib/market/contracts";
 import type { Bar } from "@/lib/market/types";
-import { useMarketStream } from "@/hooks/use-market-stream";
+import { subscribeMarketTrades, useMarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import { normalizeChartBars } from "@/lib/market/chart-data";
@@ -14,6 +14,10 @@ import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/
 import { applyVolumePaneLayout, lightweightChartOptions } from "@/lib/chart/lightweight-adapter";
 import { coordinateToDrawingAnchor } from "@/lib/chart/lightweight-adapter";
 import type { DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
+import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
+import { bigTradesSettings } from "@/lib/chart/overlays/contracts";
+import { BigTradesBuffer, type BigTradeCluster } from "@/lib/chart/overlays/big-trades";
+import { BigTradesPrimitive } from "@/lib/chart/overlays/big-trades-primitive";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import { isDrawingVisible } from "@/lib/chart/drawings/geometry";
 import { DrawingPrimitive } from "@/lib/chart/drawings/primitive";
@@ -92,6 +96,7 @@ interface ChartProps {
   onUpdateDrawing?: (id: string, patch: Partial<DrawingObject>) => void;
   onDeleteDrawing?: (id: string) => void;
   onDuplicateDrawing?: (id: string) => void;
+  overlays?: ChartOverlayInstance[];
 }
 
 function themeVar(name: string, fallback: string): string {
@@ -138,6 +143,7 @@ export function TerminalChart({
   volumePaneHeight = 0.22,
   drawings = [], selectedDrawingId = null, drawingTool = "crosshair", magnetMode = "off",
   onDrawingTool, onSelectDrawing, onCreateDrawing, onUpdateDrawing, onDeleteDrawing, onDuplicateDrawing,
+  overlays = [],
 }: ChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -147,6 +153,9 @@ export function TerminalChart({
   const markPriceLineRef = useRef<IPriceLine | null>(null);
   const barsRef = useRef<Bar[]>([]);
   const drawingPrimitiveRef = useRef<DrawingPrimitive | null>(null);
+  const bigTradesPrimitiveRef = useRef<BigTradesPrimitive | null>(null);
+  const bigTradesBufferRef = useRef(new BigTradesBuffer(4_000));
+  const bigTradesFrameRef = useRef<number>(0);
   const visibleDrawingsRef = useRef<DrawingObject[]>([]);
   const drawingPreviewRef = useRef<DrawingObject | null>(null);
   const settingsRef = useRef(settings);
@@ -158,10 +167,12 @@ export function TerminalChart({
   const [err, setErr] = useState<string | null>(null);
   const [internalReplayIndex, setInternalReplayIndex] = useState<number | null>(null);
   const [replayPlaying, setReplayPlaying] = useState(false);
+  const [hoveredBigTrade, setHoveredBigTrade] = useState<BigTradeCluster | null>(null);
 
   const contract = getContract(symbol);
   const tfSec = TIMEFRAME_SECONDS[timeframe];
   const effectiveReplayIndex = replayIndex ?? (replayEnabled ? internalReplayIndex : null);
+  const activeBigTradesSettings = useMemo(() => bigTradesSettings(overlays), [overlays]);
 
   useEffect(() => { barsRef.current = bars; }, [bars]);
 
@@ -479,7 +490,8 @@ function applyZTerminalWatermark(
       window.removeEventListener("zterminal:capture-chart", onCapture);
       resizeObserver.disconnect();
       markerPlugin.current?.detach(); markerPlugin.current = null;
-      chart.remove(); chartRef.current = null; seriesRef.current = null; volumeSeriesRef.current = null; drawingPrimitiveRef.current = null; indicatorSeriesRef.current.clear();
+      if (bigTradesFrameRef.current) cancelAnimationFrame(bigTradesFrameRef.current);
+      chart.remove(); chartRef.current = null; seriesRef.current = null; volumeSeriesRef.current = null; drawingPrimitiveRef.current = null; bigTradesPrimitiveRef.current = null; indicatorSeriesRef.current.clear();
     };
   }, []);
 
@@ -535,7 +547,47 @@ function applyZTerminalWatermark(
     const drawingPrimitive = new DrawingPrimitive();
     mainSeries.attachPrimitive(drawingPrimitive);
     drawingPrimitiveRef.current = drawingPrimitive;
+    const bigTradesPrimitive = new BigTradesPrimitive(setHoveredBigTrade);
+    mainSeries.attachPrimitive(bigTradesPrimitive);
+    bigTradesPrimitiveRef.current = bigTradesPrimitive;
   }, [chartType]);
+
+  useEffect(() => {
+    const primitive = bigTradesPrimitiveRef.current;
+    if (!primitive) return;
+    primitive.setClusters(
+      activeBigTradesSettings
+        ? bigTradesBufferRef.current.snapshot(contract.tickSize, activeBigTradesSettings).clusters
+        : [],
+      activeBigTradesSettings,
+    );
+  }, [activeBigTradesSettings, chartType, contract.tickSize]);
+
+  useEffect(() => {
+    bigTradesBufferRef.current.clear();
+    if (!activeBigTradesSettings) {
+      bigTradesPrimitiveRef.current?.setClusters([], null);
+      return;
+    }
+    const updateRenderer = () => {
+      bigTradesFrameRef.current = 0;
+      const primitive = bigTradesPrimitiveRef.current;
+      if (!primitive) return;
+      primitive.setClusters(
+        bigTradesBufferRef.current.snapshot(contract.tickSize, activeBigTradesSettings).clusters,
+        activeBigTradesSettings,
+      );
+    };
+    const unsubscribe = subscribeMarketTrades(symbol, trade => {
+      bigTradesBufferRef.current.push(trade);
+      if (!bigTradesFrameRef.current) bigTradesFrameRef.current = requestAnimationFrame(updateRenderer);
+    });
+    return () => {
+      unsubscribe();
+      if (bigTradesFrameRef.current) cancelAnimationFrame(bigTradesFrameRef.current);
+      bigTradesFrameRef.current = 0;
+    };
+  }, [activeBigTradesSettings, contract.tickSize, symbol]);
 
   useEffect(() => {
     const sorted = [...bars].sort((a, b) => a.t - b.t);
@@ -686,6 +738,24 @@ function applyZTerminalWatermark(
   return (
     <div className="relative h-full w-full bg-background" onDoubleClick={() => chartRef.current?.timeScale().fitContent()}>
       <div ref={chartContainerRef} className="absolute inset-0 z-10" />
+      {hoveredBigTrade && (
+        <div className="pointer-events-none absolute left-3 top-3 z-50 min-w-56 border hairline bg-panel/95 px-3 py-2 font-mono text-[10px] shadow-lg backdrop-blur">
+          <div className="mb-1 flex items-center justify-between gap-4 text-foreground">
+            <span>BIG TRADES</span>
+            <span className={hoveredBigTrade.side === "buy" ? "text-pos" : "text-neg"}>{hoveredBigTrade.side.toUpperCase()}</span>
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-muted-foreground">
+            <span>Provider</span><span className="text-right text-foreground">{hoveredBigTrade.provider}</span>
+            <span>Symbol</span><span className="text-right text-foreground">{hoveredBigTrade.symbol}</span>
+            <span>Price</span><span className="text-right text-foreground">{hoveredBigTrade.price.toLocaleString()}</span>
+            <span>Quantity</span><span className="text-right text-foreground">{hoveredBigTrade.quantity.toLocaleString()}</span>
+            <span>Notional</span><span className="text-right text-foreground">${hoveredBigTrade.notional.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            <span>Prints</span><span className="text-right text-foreground">{hoveredBigTrade.count}</span>
+            <span>First / last</span><span className="text-right text-foreground">{new Date(hoveredBigTrade.firstTimestamp).toLocaleTimeString()} / {new Date(hoveredBigTrade.lastTimestamp).toLocaleTimeString()}</span>
+            <span>Granularity</span><span className="text-right text-foreground">{hoveredBigTrade.granularity}</span>
+          </div>
+        </div>
+      )}
       {onDrawingTool && onSelectDrawing && onCreateDrawing && onUpdateDrawing && onDeleteDrawing && onDuplicateDrawing && (
         <DrawingInteractionLayer
           tool={drawingTool}

@@ -11,8 +11,6 @@ export type ViewId =
   | "calendar"
   | "alerts"
   | "chart"
-  | "orderflow"
-  | "gex"
   | "strategy"
   | "backtester"
   | "research"
@@ -87,8 +85,9 @@ function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
     ? persisted.timezone as ChartTimezone
     : "America/New_York";
   const workspaces = Array.isArray(persisted.workspaces)
-    ? persisted.workspaces.map((workspace) => ({
+      ? persisted.workspaces.map((workspace) => ({
         ...workspace,
+        view: ["orderflow", "gex"].includes(workspace.view as string) ? "chart" : workspace.view,
         symbol: P0_DEFAULT_SYMBOL,
         timeframe: P0_TIMEFRAMES.has(workspace.timeframe) ? workspace.timeframe : "5m",
         timezone: SUPPORTED_TIMEZONES.has(workspace.timezone as ChartTimezone) ? workspace.timezone : timezone,
@@ -174,7 +173,7 @@ export const useWorkspace = create<WorkspaceState>()(
     }),
     {
       name: "zterminal-workspace",
-      version: 4,
+      version: 5,
       migrate: (persistedState) => migratePersistedWorkspace(persistedState),
       partialize: (s) => ({
         activeWorkspaceId: s.activeWorkspaceId,

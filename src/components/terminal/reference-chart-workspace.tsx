@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity,
   Palette,
   CalendarDays,
   CandlestickChart,
@@ -13,8 +12,6 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Settings2,
-  Waves,
-  Zap,
 } from "lucide-react";
 import { PanelTaskStrip } from "./panel-task-strip";
 import { usePanels } from "@/stores/panels";
@@ -46,9 +43,8 @@ import { DrawingToolbar } from "./drawing-toolbar";
 import { DrawingInspector } from "./drawing-inspector";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import { MultiChartGrid } from "./multi-chart-grid";
+import { FeedInspector } from "./feed-inspector";
 import { useMultiChart } from "@/stores/multi-chart";
-import { OrderFlowView } from "@/components/views/orderflow-view";
-import { GexView } from "@/components/views/gex-view";
 
 type TerminalAppearance = {
   preset: string;
@@ -100,11 +96,8 @@ export function ReferenceChartWorkspace() {
   const setStrategyOpen = (open: boolean) => { if (open) usePanels.getState().open("strategy"); else usePanels.getState().patch("strategy", { status: "closed" }); };
   const setBacktesterOpen = (open: boolean) => { if (open) usePanels.getState().open("backtester"); else usePanels.getState().patch("backtester", { status: "closed" }); };
   const setSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("settings"); else usePanels.getState().patch("settings", { status: "closed" }); };
-  const setContextOpen = (open: boolean) => { if (open) usePanels.getState().open("context"); else usePanels.getState().patch("context", { status: "closed" }); };
   const setCalendarOpen = (open: boolean) => { if (open) usePanels.getState().open("economic-calendar"); else usePanels.getState().patch("economic-calendar", { status: "closed" }); };
   const setTerminalSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("terminal-settings"); else usePanels.getState().patch("terminal-settings", { status: "closed" }); };
-  const setOrderFlowOpen = (open: boolean) => { if (open) usePanels.getState().open("orderflow"); else usePanels.getState().patch("orderflow", { status: "closed" }); };
-  const setGexOpen = (open: boolean) => { if (open) usePanels.getState().open("gex"); else usePanels.getState().patch("gex", { status: "closed" }); };
   const { layout: multiChartLayout, setLayout: setMultiChartLayout } = useMultiChart();
   const [selectedProvider, setSelectedProvider] = useState<string>("gateio");
   const instances = useStudies(s => s.instances);
@@ -118,7 +111,7 @@ export function ReferenceChartWorkspace() {
   const indicatorDocumentRef = useRef<string | null>(null);
   const indicatorLoadingRef = useRef(false);
   const appearanceHydrated = useRef(false);
-  const { quote, trades, lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 600, depth: false });
+  const { lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
   const chartProvider = archivedChart?.dataset.provider ?? provider ?? "gateio";
   const chartContract = getContract(chartSymbol);
   const instrument = useMemo<InstrumentKey>(() => ({ provider: chartProvider, exchange: chartContract.exchange, product: "perpetual", nativeSymbol: chartSymbol }), [chartContract.exchange, chartProvider, chartSymbol]);
@@ -222,20 +215,14 @@ export function ReferenceChartWorkspace() {
     const openStrategy = () => { setStrategyOpen(true); setBacktesterOpen(true); usePanels.getState().focus("strategy"); };
     const openBacktester = () => setBacktesterOpen(true);
     const openSettings = () => setSettingsOpen(true);
-    const openContext = () => setContextOpen(true);
     const openCalendar = () => setCalendarOpen(true);
     const openTerminalSettings = () => setTerminalSettingsOpen(true);
-    const openOrderFlow = () => setOrderFlowOpen(true);
-    const openGex = () => setGexOpen(true);
     window.addEventListener("zterminal:open-indicators", openIndicators);
     window.addEventListener("zterminal:open-strategy", openStrategy);
     window.addEventListener("zterminal:open-backtester", openBacktester);
     window.addEventListener("zterminal:open-settings", openSettings);
-    window.addEventListener("zterminal:open-context", openContext);
     window.addEventListener("zterminal:open-calendar", openCalendar);
     window.addEventListener("zterminal:open-terminal-settings", openTerminalSettings);
-    window.addEventListener("zterminal:open-orderflow", openOrderFlow);
-    window.addEventListener("zterminal:open-gex", openGex);
     return () => {
       window.removeEventListener("zterminal:focus-chart", focusChart);
       window.removeEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
@@ -243,11 +230,8 @@ export function ReferenceChartWorkspace() {
       window.removeEventListener("zterminal:open-strategy", openStrategy);
       window.removeEventListener("zterminal:open-backtester", openBacktester);
       window.removeEventListener("zterminal:open-settings", openSettings);
-      window.removeEventListener("zterminal:open-context", openContext);
       window.removeEventListener("zterminal:open-calendar", openCalendar);
       window.removeEventListener("zterminal:open-terminal-settings", openTerminalSettings);
-      window.removeEventListener("zterminal:open-orderflow", openOrderFlow);
-      window.removeEventListener("zterminal:open-gex", openGex);
     };
   }, []);
 
@@ -288,17 +272,15 @@ export function ReferenceChartWorkspace() {
             onTimeframe={next => { setTimeframe(next); useChartDocuments.getState().setTimeframe(chartDocumentId, next); }}
             onChartType={next => useChartDocuments.getState().setChartType(chartDocumentId, next)}
             onIndicators={() => setIndicatorsOpen(true)}
-            onContext={() => setContextOpen(true)}
             onSettings={() => setSettingsOpen(true)}
             onReturnLive={() => useResearch.setState({ chartResult: null, selectedTrade: null })}
             onLayoutChange={setMultiChartLayout}
-            onOpenOrderFlow={() => setOrderFlowOpen(true)}
-            onOpenGex={() => setGexOpen(true)}
             onProviderChange={setSelectedProvider}
           />
           <MultiChartGrid
             primarySymbol={chartSymbol}
             primaryTimeframe={chartTimeframe as Timeframe}
+            chartType={chartType}
             indicators={indicators}
             indicatorInstances={instances}
             pythonEvaluations={pythonEvaluations}
@@ -330,48 +312,19 @@ export function ReferenceChartWorkspace() {
             markers={chartSettings.showStrategyTrades ? markers : []}
             focusRange={focusRange}
             archivedBars={archivedChart?.dataset.bars}
+            overlays={chartDocument.overlays}
           />
+          {!archivedChart && <FeedInspector provider={provider} dataStatus={dataStatus} health={health} reason={reason} />}
         </div>
       </DesktopWindow>
 
-      <DesktopWindow
-        id="orderflow"
-        title="Order Flow & Microstructure"
-        subtitle="TAPE · FOOTPRINT · CVD · BOOK IMBALANCE"
-        initialBounds={{ x: 80, y: 40, width: 920, height: 600 }}
-        minWidth={480}
-        minHeight={360}
-        icon={<Waves className="h-3.5 w-3.5 text-cyan-400" />}
-        onClose={() => setOrderFlowOpen(false)}
-      >
-        <div className="h-full overflow-hidden bg-background">
-          <OrderFlowView />
-        </div>
-      </DesktopWindow>
-
-      <DesktopWindow
-        id="gex"
-        title="Crypto Options Gamma Exposure (GEX)"
-        subtitle="DERIBIT REAL-TIME OPTIONS ORDERFLOW"
-        initialBounds={{ x: 120, y: 60, width: 940, height: 580 }}
-        minWidth={480}
-        minHeight={360}
-        icon={<Zap className="h-3.5 w-3.5 text-amber-400" />}
-        onClose={() => setGexOpen(false)}
-      >
-        <div className="h-full overflow-hidden bg-background">
-          <GexView />
-        </div>
-      </DesktopWindow>
-
-      <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser /></DesktopWindow>
+      <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser overlays={chartDocument.overlays} onSetOverlay={overlay => useChartDocuments.getState().setOverlay(chartDocumentId, overlay)} onRemoveOverlay={overlayId => useChartDocuments.getState().removeOverlay(chartDocumentId, overlayId)} /></DesktopWindow>
 
       <DesktopWindow id="strategy" title="Strategy research" subtitle="PYTHON / LOCAL PREVIEW" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={360} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><ResearchWorkbench /></DesktopWindow>
       <DesktopWindow id="backtester" title="Research report" subtitle="LOCAL ARCHIVE" initialBounds={{ x: 180, y: 80, width: 900, height: 600 }} minWidth={360} minHeight={250} icon={<FlaskConical className="h-3.5 w-3.5" />} onClose={() => setBacktesterOpen(false)}><ResearchReport /></DesktopWindow>
 
       <DesktopWindow id="settings" title="Chart settings" subtitle="PER-MARKET" initialBounds={{ x: 780, y: 110, width: 440, height: 500 }} minWidth={360} minHeight={380} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><ChartSettingsPanel settings={chartSettings} instrument={formatSymbol(chartSymbol)} provider={chartProvider.toUpperCase()} volumeVisible={volumePane.visible} volumeHeight={volumePane.height} onChange={patch => useChartDocuments.getState().updateSettings(chartDocumentId, patch)} onVolume={patch => useChartDocuments.getState().setVolumePane(chartDocumentId, patch)} onReset={() => useChartDocuments.getState().resetSettings(chartDocumentId)} /></DesktopWindow>
 
-      <DesktopWindow id="context" title="Market context" subtitle="VERIFIED RESEARCH" initialBounds={{ x: 972, y: 50, width: 330, height: 420 }} minWidth={300} minHeight={280} icon={<Activity className="h-3.5 w-3.5" />} onClose={() => setContextOpen(false)}><ContextWindow symbol={symbol} tickSize={contract.tickSize} quote={quote} lastPrice={livePrice} derivatives={derivatives} dataStatus={dataStatus} provider={provider} healthReason={health?.reason ?? reason} /></DesktopWindow>
       <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 70, width: 680, height: 440 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow /></DesktopWindow>
       <DesktopWindow id="terminal-settings" title="Terminal preferences" subtitle="WORKSTATION" initialBounds={{ x: 850, y: 120, width: 360, height: 520 }} minWidth={320} minHeight={420} icon={<Settings2 className="h-3.5 w-3.5" />} onClose={() => setTerminalSettingsOpen(false)}><TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} appearance={appearance} onAppearanceChange={updateAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)} /></DesktopWindow>
 
@@ -381,18 +334,6 @@ export function ReferenceChartWorkspace() {
 
 function PreferenceRange({ label, value, min, max, suffix, onChange }: { label: string; value: number; min: number; max: number; suffix: string; onChange: (value: number) => void }) {
   return <label className="mt-4 block text-muted-foreground"><span className="flex justify-between"><span>{label}</span><b className="font-mono-num text-foreground">{value}{suffix}</b></span><input className="mt-2 w-full accent-[var(--zt-accent)]" type="range" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
-}
-
-function ContextWindow({ symbol, tickSize, quote, lastPrice, derivatives, dataStatus, provider, healthReason }: { symbol: string; tickSize: number; quote: { bid: number; ask: number; bidSize: number; askSize: number } | null; lastPrice: number | null; derivatives: { markPrice?: number; fundingRate?: number } | null; dataStatus: string; provider?: string; healthReason?: string }) {
-  const rows = [
-    ["Last", formatPrice(lastPrice, tickSize)],
-    ["Bid", quote ? formatPrice(quote.bid, tickSize) : "—"],
-    ["Ask", quote ? formatPrice(quote.ask, tickSize) : "—"],
-    ["Spread", quote ? formatPrice(quote.ask - quote.bid, tickSize) : "Awaiting quote"],
-    ["Mark", formatPrice(derivatives?.markPrice, tickSize)],
-    ["Funding", derivatives?.fundingRate === undefined ? "Unavailable" : `${(derivatives.fundingRate * 100).toFixed(4)}%`],
-  ];
-  return <div className="zt-context-window"><div className="zt-context-contract"><span>{formatSymbol(symbol)}</span><b>{provider?.toUpperCase() ?? "BINANCE"} · PERPETUAL</b></div><div className="zt-context-stats">{rows.map(([label, value]) => <div key={label}><span>{label}</span><b>{value}</b></div>)}</div><div className={cn("zt-context-status", dataStatus === "LIVE" && "is-live")}><i />{dataStatus === "LIVE" ? "Observed public stream" : "Research feed not live"}</div>{healthReason && <p className="zt-context-warning">{healthReason}</p>}<p className="zt-context-footnote">Depth, footprint, and open-interest research remain withheld until their source data is independently available and verified.</p></div>;
 }
 
 const TIMEZONE_OPTIONS: { value: ChartTimezone; label: string }[] = [
