@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import {
-  Activity,
   Camera,
   CandlestickChart,
   Code2,
@@ -32,7 +31,6 @@ const VIEWS: { id: string; label: string; icon: React.ComponentType<{ className?
   { id: "indicators", label: "Open Indicators", icon: Layers3, action: () => usePanels.getState().open("indicators") },
   { id: "strategy", label: "Open Strategy Developer", icon: Code2, action: () => { usePanels.getState().open("strategy"); usePanels.getState().open("backtester"); usePanels.getState().focus("strategy"); } },
   { id: "backtester", label: "Open Research Report", icon: FlaskConical, action: () => usePanels.getState().open("backtester") },
-  { id: "context", label: "Open Market Context", icon: Activity, action: () => usePanels.getState().open("context") },
   { id: "calendar", label: "Open Economic Calendar", icon: LayoutDashboard, action: () => usePanels.getState().open("economic-calendar") },
   { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard, action: () => usePanels.getState().open("terminal-settings") },
 ];

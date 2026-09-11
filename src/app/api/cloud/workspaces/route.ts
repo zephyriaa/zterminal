@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 const workspacePayload = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(80),
-  view: z.enum(["markets", "calendar", "alerts", "chart", "orderflow", "strategy", "backtester", "research", "portfolio", "risk", "journal", "connections", "settings"]),
+  view: z.enum(["markets", "calendar", "alerts", "chart", "strategy", "backtester", "research", "portfolio", "risk", "journal", "connections", "settings"]),
   symbol: z.string().trim().regex(/^[A-Z0-9]{3,24}$/),
   timeframe: z.enum(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]),
   timezone: z.enum(["America/New_York", "UTC", "Europe/London", "Asia/Dubai", "Asia/Tokyo", "local"]),

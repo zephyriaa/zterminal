@@ -22,7 +22,8 @@ import {
 import { DrawingToolbar } from "./drawing-toolbar";
 import { DrawingInspector } from "./drawing-inspector";
 import type { Bar, Timeframe } from "@/lib/market/types";
-import type { DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
+import type { ChartType, DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
+import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import type { IndicatorInstance } from "@/lib/indicator-library";
 import type { IndicatorEvaluationResult } from "@/lib/local-research/contracts";
@@ -61,6 +62,7 @@ const POPULAR_TICKERS = [
 interface MultiChartGridProps {
   primarySymbol: string;
   primaryTimeframe: Timeframe;
+  chartType: ChartType;
   indicators: ChartIndicators;
   indicatorInstances: IndicatorInstance[];
   pythonEvaluations: Record<string, IndicatorEvaluationResult>;
@@ -89,6 +91,7 @@ interface MultiChartGridProps {
   markers?: TradeMarker[];
   focusRange?: { from: number; to: number } | null;
   archivedBars?: Bar[];
+  overlays?: ChartOverlayInstance[];
 }
 
 export function MultiChartGrid(props: MultiChartGridProps) {
@@ -161,7 +164,7 @@ export function MultiChartGrid(props: MultiChartGridProps) {
           snapshot={props.archivedBars}
           markers={props.markers}
           focusRange={props.focusRange}
-          chartType="candles"
+          chartType={props.chartType}
           indicators={props.indicators}
           indicatorInstances={props.indicatorInstances}
           pythonEvaluations={props.pythonEvaluations}
@@ -182,6 +185,7 @@ export function MultiChartGrid(props: MultiChartGridProps) {
           onUpdateDrawing={props.onUpdateDrawing}
           onDeleteDrawing={props.onDeleteDrawing}
           onDuplicateDrawing={props.onDuplicateDrawing}
+          overlays={props.overlays}
         />
         {selectedDrawing && (
           <DrawingInspector
@@ -284,7 +288,7 @@ export function MultiChartGrid(props: MultiChartGridProps) {
                 snapshot={props.archivedBars}
                 markers={props.markers}
                 focusRange={props.focusRange}
-                chartType="candles"
+                chartType={props.chartType}
                 indicators={props.indicators}
                 indicatorInstances={props.indicatorInstances}
                 pythonEvaluations={props.pythonEvaluations}
@@ -305,6 +309,7 @@ export function MultiChartGrid(props: MultiChartGridProps) {
                 onUpdateDrawing={props.onUpdateDrawing}
                 onDeleteDrawing={props.onDeleteDrawing}
                 onDuplicateDrawing={props.onDuplicateDrawing}
+                overlays={props.overlays}
               />
             </div>
           ) : (

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createChartDocument, migrateChartDocument, sanitizeChartSettings } from "../src/lib/chart/contracts";
+import { createBigTradesOverlay } from "../src/lib/chart/overlays/contracts";
 
 const btc = { provider: "binance" as const, exchange: "BINANCE" as const, product: "perpetual" as const, nativeSymbol: "BTCUSDT" };
 
@@ -8,7 +9,16 @@ test("chart documents isolate provider and instrument identity", () => {
   const first = createChartDocument({ instrument: btc, timeframe: "5m", now: 1 });
   const second = createChartDocument({ instrument: { ...btc, nativeSymbol: "ETHUSDT" }, timeframe: "5m", now: 1 });
   assert.notEqual(first.id, second.id);
-  assert.equal(first.schemaVersion, 4);
+  assert.equal(first.schemaVersion, 5);
+});
+
+test("chart document migration persists overlay settings but never live payloads", () => {
+  const fallback = createChartDocument({ instrument: btc, timeframe: "5m", now: 1 });
+  const migrated = migrateChartDocument({ ...fallback, overlays: [{ ...createBigTradesOverlay(), settings: { minimumNotional: 750_000, maxVisible: 999 } }, { id: "malformed", type: "unknown" }] }, fallback);
+  assert.equal(migrated.overlays.length, 1);
+  assert.equal(migrated.overlays[0].settings.minimumNotional, 750_000);
+  assert.equal(migrated.overlays[0].settings.maxVisible, 500);
+  assert.equal("clusters" in migrated.overlays[0], false);
 });
 
 test("chart settings migration clamps unsafe persisted values", () => {

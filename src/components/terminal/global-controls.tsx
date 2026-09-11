@@ -208,12 +208,9 @@ export function GlobalControls({ symbol, timeframe, provider, dataStatus }: Glob
             </button>
             {[
               { id: "chart", label: "Chart Window" },
-              { id: "orderflow", label: "Order Flow & Tape" },
-              { id: "gex", label: "Crypto GEX (Gamma)" },
               { id: "indicators", label: "Indicators" },
               { id: "strategy", label: "Strategy Dev" },
               { id: "economic-calendar", label: "Calendar" },
-              { id: "context", label: "Context" },
             ].map((p) => {
               const isOpen = panels[p.id]?.status === "open";
               return (

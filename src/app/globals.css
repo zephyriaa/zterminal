@@ -1042,7 +1042,7 @@ html.lenis, html.lenis body {
 .zt-window-task { position:absolute; bottom:12px; display:flex; height:31px; align-items:center; gap:7px; padding:0 10px; border:1px solid rgba(142,114,232,.48); border-radius:4px; background:rgba(15,21,37,.96); box-shadow:0 10px 24px rgba(0,0,0,.35); color:#cfc6fb; font-family:var(--font-geist-mono, ui-monospace, monospace); font-size:10px; }
 .zt-window-task svg { width:13px; height:13px; color:#aa96fa; }.zt-window-task:hover { background:rgba(43,37,79,.95); }
 
-.zt-chart-content { display:flex; height:100%; min-height:0; flex-direction:column; background:#090d17; }
+.zt-chart-content { position:relative; display:flex; height:100%; min-height:0; flex-direction:column; background:#090d17; }
 .zt-chart-toolbar { display:flex; min-height:35px; flex:0 0 35px; align-items:center; gap:5px; padding:0 9px; overflow-x:auto; border-bottom:1px solid rgba(139,155,192,.14); background:rgba(10,15,27,.82); scrollbar-width:none; }
 .zt-chart-toolbar::-webkit-scrollbar { display:none; }
 .zt-chart-contract { flex:0 0 auto; color:#c6d2e8; font-family:var(--font-geist-mono, ui-monospace, monospace); font-size:9px; font-weight:700; white-space:nowrap; }

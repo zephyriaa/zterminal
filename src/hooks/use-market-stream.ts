@@ -105,6 +105,22 @@ function subscribeSet<T>(map: Map<string, Set<(value: T) => void>>, symbol: stri
   };
 }
 
+/**
+ * Renderer-facing subscription for high-rate overlays. Unlike the hook, this
+ * never copies prints into React state; callers own a bounded mutable buffer
+ * and schedule their own canvas updates.
+ */
+export function subscribeMarketTrades(symbol: string, listener: (trade: TradeEvent) => void) {
+  const normalizedSymbol = symbol.toUpperCase();
+  const activeSocket = ensureSocket();
+  const remove = subscribeSet(tradeSubscribers, normalizedSymbol, listener);
+  activeSocket.emit("subscribe", { symbol: normalizedSymbol, types: streamTypes });
+  return () => {
+    remove();
+    if (!allSymbols().has(normalizedSymbol)) activeSocket.emit("unsubscribe", { symbol: normalizedSymbol });
+  };
+}
+
 export interface MarketStream {
   trades: TradeEvent[];
   lastTrade: TradeEvent | null;
