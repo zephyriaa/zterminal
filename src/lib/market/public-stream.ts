@@ -456,14 +456,20 @@ export class PublicMarketDataProvider {
   // --- Message Handling ---
 
   private handleMessage(message: Record<string, unknown>) {
-    if (this.provider === "binance") {
-      this.handleBinanceMessage(message);
-    } else if (this.provider === "gateio") {
-      this.handleGateioMessage(message);
-    } else if (this.provider === "bybit") {
-      this.handleBybitMessage(message);
-    } else if (this.provider === "coinbase") {
-      this.handleCoinbaseMessage(message);
+    try {
+      if (this.provider === "binance") {
+        this.handleBinanceMessage(message);
+      } else if (this.provider === "gateio") {
+        this.handleGateioMessage(message);
+      } else if (this.provider === "bybit") {
+        this.handleBybitMessage(message);
+      } else if (this.provider === "coinbase") {
+        this.handleCoinbaseMessage(message);
+      }
+    } catch (error) {
+      // Exchanges occasionally send control/error frames with missing numeric fields.
+      // Ignore only those malformed frames; a valid stream must remain connected.
+      if (!String(error).includes("Invalid numeric value")) throw error;
     }
   }
 
@@ -551,6 +557,13 @@ export class PublicMarketDataProvider {
     if (channel === "futures.trades" && Array.isArray(result)) {
       for (const value of result) {
         const trade = value as Record<string, unknown>;
+        if (
+          trade.size == null ||
+          trade.price == null ||
+          trade.contract == null ||
+          trade.id == null ||
+          (trade.create_time_ms == null && trade.create_time == null)
+        ) continue;
         const size = safeNumber(trade.size);
         const symbol = String(trade.contract);
         this.emit(symbol, {
@@ -569,7 +582,9 @@ export class PublicMarketDataProvider {
         });
       }
     } else if (channel === "futures.book_ticker") {
+      if (!result || typeof result !== "object") return;
       const quote = result as Record<string, unknown>;
+      if (quote.s == null || quote.b == null || quote.a == null || quote.B == null || quote.A == null) return;
       const symbol = String(quote.s);
       this.emit(symbol, {
         type: "quote",
@@ -590,6 +605,7 @@ export class PublicMarketDataProvider {
   }
 
   private handleGateioDepth(raw: Record<string, unknown>) {
+    if (!raw || typeof raw !== "object" || raw.s == null) return;
     const symbol = String(raw.s);
     const book = this.gateBooks.get(symbol) ?? {
       bids: new Map<number, number>(),
@@ -601,6 +617,7 @@ export class PublicMarketDataProvider {
     const apply = (levels: unknown, target: Map<number, number>) => {
       for (const level of Array.isArray(levels) ? levels : []) {
         const entry = level as Record<string, unknown>;
+        if (entry.p == null || entry.s == null) continue;
         const price = safeNumber(entry.p);
         const size = Math.abs(safeNumber(entry.s));
         if (size > 0) target.set(price, size);
