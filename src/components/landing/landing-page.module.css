@@ -84,7 +84,7 @@
   grid-template-columns: 1.2fr 1fr;
   gap: clamp(48px, 6vw, 96px);
   align-items: center;
-  padding: clamp(90px, 12vw, 160px) var(--public-gutter);
+  padding: clamp(64px, 8vw, 108px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
   background:
     radial-gradient(ellipse at 88% 50%, rgba(38, 25, 87, 0.22), transparent 45%),
@@ -197,7 +197,7 @@
 
 /* 03 THE WORKFLOW SECTION */
 .workflowSection {
-  padding: clamp(90px, 12vw, 150px) var(--public-gutter);
+  padding: clamp(64px, 8vw, 108px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
 }
 
@@ -317,7 +317,7 @@
 
 /* 05 RESEARCH / VALIDATION SECTION */
 .researchSection {
-  padding: clamp(90px, 12vw, 160px) var(--public-gutter);
+  padding: clamp(64px, 8vw, 108px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
 }
 
@@ -459,7 +459,7 @@
 
 /* 06 ARCHITECTURE & LOCAL COMPUTE */
 .archSection {
-  padding: clamp(90px, 12vw, 160px) var(--public-gutter);
+  padding: clamp(64px, 8vw, 108px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
   background:
     radial-gradient(ellipse at 12% 50%, rgba(35, 23, 85, 0.2), transparent 45%),
@@ -598,7 +598,7 @@
 
 /* 07 RISK, ALERTS & JOURNAL */
 .trioSection {
-  padding: clamp(90px, 12vw, 160px) var(--public-gutter);
+  padding: clamp(64px, 8vw, 108px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
   content-visibility: auto;
   contain-intrinsic-size: 1px 700px;
@@ -756,7 +756,7 @@
 
 /* 08 LOCAL-FIRST MANIFESTO */
 .localSection {
-  padding: clamp(100px, 14vw, 180px) var(--public-gutter);
+  padding: clamp(72px, 9vw, 116px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
   background:
     radial-gradient(ellipse at 50% 50%, rgba(45, 27, 105, 0.25), transparent 55%),
@@ -801,7 +801,7 @@
 
 /* 09 PHILOSOPHY */
 .philosophySection {
-  padding: clamp(100px, 14vw, 180px) var(--public-gutter);
+  padding: clamp(72px, 9vw, 116px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
   text-align: center;
 }
@@ -848,7 +848,7 @@
 
 /* 10 NATIVE WINDOWS */
 .windowsSection {
-  padding: clamp(90px, 12vw, 150px) var(--public-gutter);
+  padding: clamp(64px, 8vw, 108px) var(--public-gutter);
   border-bottom: 1px solid var(--public-line-soft);
   content-visibility: auto;
   contain-intrinsic-size: 1px 700px;
@@ -941,7 +941,7 @@
 
 /* 11 FINAL CTA */
 .finalCta {
-  padding: clamp(100px, 15vw, 200px) var(--public-gutter);
+  padding: clamp(72px, 9vw, 128px) var(--public-gutter);
   text-align: center;
 }
 

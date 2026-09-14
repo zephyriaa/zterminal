@@ -1,28 +1,12 @@
 .showcasePinContainer {
   position: relative;
   width: 100%;
-}
-
-@media (min-width: 900px) {
-  .showcasePinContainer {
-    height: 220vh;
-  }
+  padding: clamp(48px, 6vw, 72px) 0;
 }
 
 .showcaseSticky {
   position: relative;
   width: 100%;
-}
-
-@media (min-width: 900px) {
-  .showcaseSticky {
-    position: sticky;
-    top: 90px;
-    height: calc(100vh - 110px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
 }
 
 .intro {

@@ -93,16 +93,17 @@ export function WorkflowSequence() {
 
     const trigger = ScrollTrigger.create({
       trigger: wrapper,
-      start: "center center",
-      end: () => `+=${xDistance + 200}`,
+      start: "top 110px",
+      end: () => `+=${xDistance}`,
       pin: true,
-      scrub: 0.6,
+      scrub: 0.4,
       anticipatePin: 1,
+      invalidateOnRefresh: true,
       onUpdate: (self) => {
         const progress = self.progress;
         gsap.set(track, { x: -progress * xDistance });
 
-        // Calculate active step
+        // Calculate active step smoothly across progress
         const stepIdx = Math.min(
           WORKFLOW_STEPS.length - 1,
           Math.floor(progress * WORKFLOW_STEPS.length),
@@ -111,7 +112,13 @@ export function WorkflowSequence() {
       },
     });
 
+    // Refresh after DOM layout settling
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 100);
+
     return () => {
+      clearTimeout(timer);
       trigger.kill();
     };
   }, []);

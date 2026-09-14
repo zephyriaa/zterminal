@@ -59,17 +59,17 @@ export function HeroScene() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [reduced, isDesktop]);
 
-  // Natural scroll depth transition
+  // Natural scroll depth transition - calibrated so hero never crashes into header or drops opacity abruptly
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
 
-  const copyScrollY = useTransform(scrollYProgress, [0, 0.7], [0, -45]);
-  const copyScrollOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0.15]);
-  const laptopScrollY = useTransform(scrollYProgress, [0, 0.7], [0, -25]);
-  const laptopScale = useTransform(scrollYProgress, [0, 0.6], [1.03, 1.0]);
-  const particleScrollOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.2]);
+  const copyScrollY = useTransform(scrollYProgress, [0, 0.85], [0, -16]);
+  const copyScrollOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.65]);
+  const laptopScrollY = useTransform(scrollYProgress, [0, 0.85], [0, -12]);
+  const laptopScale = useTransform(scrollYProgress, [0, 0.85], [1.015, 1.0]);
+  const particleScrollOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.4]);
 
   return (
     <div ref={containerRef} className={styles.viewport} id="overview">
@@ -81,7 +81,7 @@ export function HeroScene() {
         <motion.div
           initial={reduced ? undefined : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, delay: 0.75, ease: EASE_OUT_EXPO }}
+          transition={{ duration: 0.8, delay: 0.25, ease: EASE_OUT_EXPO }}
           style={{ opacity: particleScrollOpacity }}
         >
           <ParticleWave
@@ -117,17 +117,17 @@ export function HeroScene() {
         </header>
 
         {/* Hero Editorial Copy */}
-        <motion.section
+        <section
           className={styles.heroCopy}
           aria-labelledby="hero-title"
-          style={{ y: copyScrollY, opacity: copyScrollOpacity }}
         >
+          <motion.div style={{ y: copyScrollY, opacity: copyScrollOpacity }}>
           {/* Eyebrow */}
           <motion.span
             className={styles.eyebrow}
-            initial={reduced ? undefined : { opacity: 0, y: 12 }}
+            initial={reduced ? undefined : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.5, delay: 0.06, ease: EASE_OUT_EXPO }}
           >
             INSTITUTIONAL QUANTITATIVE WORKSTATION
           </motion.span>
@@ -137,18 +137,18 @@ export function HeroScene() {
             <span className={styles.lineMask}>
               <motion.span
                 className={styles.first}
-                initial={reduced ? undefined : { y: 24, opacity: 0 }}
+                initial={reduced ? undefined : { y: 14, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.55, delay: 0.08, ease: EASE_OUT_EXPO }}
               >
                 Look further.
               </motion.span>
             </span>
             <span className={styles.lineMask}>
               <motion.em
-                initial={reduced ? undefined : { y: 24, opacity: 0 }}
+                initial={reduced ? undefined : { y: 14, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.7, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.55, delay: 0.14, ease: EASE_OUT_EXPO }}
               >
                 Guess less.
               </motion.em>
@@ -158,9 +158,9 @@ export function HeroScene() {
           {/* Marketing-Driven Supporting Copy */}
           <motion.p
             className={styles.description}
-            initial={reduced ? undefined : { opacity: 0, y: 24 }}
+            initial={reduced ? undefined : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.5, delay: 0.18, ease: EASE_OUT_EXPO }}
           >
             Gain an institutional edge with real-time market structure, sub-second backtesting,
             and disciplined risk management. Stop guessing—start trading with mathematical conviction.
@@ -169,9 +169,9 @@ export function HeroScene() {
           {/* Actions */}
           <motion.div
             className={styles.actions}
-            initial={reduced ? undefined : { opacity: 0, y: 20 }}
+            initial={reduced ? undefined : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.45, delay: 0.22, ease: EASE_OUT_EXPO }}
           >
             <Link href="/download" className={styles.primary}>
               Explore for Windows <span className={styles.arrow}>↗</span>
@@ -186,11 +186,12 @@ export function HeroScene() {
             className={styles.disclaimer}
             initial={reduced ? undefined : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.28 }}
           >
             Institutional decision intelligence. Zero broker lock-in. Complete capital sovereignty.
           </motion.p>
-        </motion.section>
+          </motion.div>
+        </section>
 
         {/* Approved 3D Physical Laptop Composition with Real Product UI */}
         <div
@@ -201,11 +202,11 @@ export function HeroScene() {
         >
           <motion.div
             className={styles.laptopMotionStage}
-            initial={reduced ? undefined : { opacity: 0, y: 24 }}
+            initial={reduced ? undefined : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.6, delay: 0.16, ease: EASE_OUT_EXPO }}
           >
-            {/* Scroll depth delta + subtle 1.03 -> 1.0 scale scrub */}
+            {/* Scroll depth delta + subtle 1.015 -> 1.0 scale scrub */}
             <motion.div style={!reduced && isDesktop ? { y: laptopScrollY, scale: laptopScale } : undefined}>
               {/* Laptop Screen Lid with Projective Homography */}
               <div className={styles.lidPositioner}>
