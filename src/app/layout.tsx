@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ZTerminalSessionProvider } from "@/components/auth/session-provider";
 import { SmoothScrollProvider } from "@/components/motion/smooth-scroll-provider";
 
 const geistSans = Geist({
@@ -61,12 +60,10 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <ZTerminalSessionProvider>
-            <SmoothScrollProvider>
-              {children}
-            </SmoothScrollProvider>
-            <Toaster />
-          </ZTerminalSessionProvider>
+          <SmoothScrollProvider>
+            {children}
+          </SmoothScrollProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

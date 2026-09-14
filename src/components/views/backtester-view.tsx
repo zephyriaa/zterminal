@@ -6,7 +6,8 @@ import { useWorkspace } from "@/stores/workspace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { bootstrapMean, createWalkForwardWindows, simulateTradeSequence } from "@/domain/validation/resampling";
-import type { Bar, ProviderId } from "@/lib/market/types";
+import type { Bar, ProviderId, Timeframe } from "@/lib/market/types";
+import { fetchBarsDeduplicated } from "@/lib/market/bars-dedup";
 
 type RunState = "idle" | "loading" | "ready" | "error";
 type Result = {
@@ -58,14 +59,13 @@ export function BacktesterView() {
   async function loadAndRun() {
     setState("loading"); setError(null);
     try {
-      const response = await fetch(`/api/bars?provider=${provider}&symbol=${encodeURIComponent(symbol)}&tf=${timeframe}&bars=1000`, { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok || !Array.isArray(payload.bars)) throw new Error(payload.error ?? "Historical data unavailable");
+      const nextBars = await fetchBarsDeduplicated(provider, symbol, timeframe as Timeframe, Date.now(), 1000);
+      if (!Array.isArray(nextBars) || nextBars.length === 0) throw new Error("Historical data unavailable");
       const fastPeriod = Math.max(1, Math.min(200, Number(fast) || 20)); const slowPeriod = Math.max(2, Math.min(400, Number(slow) || 50));
       if (fastPeriod >= slowPeriod) throw new Error("Fast EMA must be smaller than slow EMA.");
       const riskFraction = Math.max(0.0001, Math.min(1, (Number(riskPct) || 0) / 100));
       if (!Number.isFinite(riskFraction) || riskFraction <= 0) throw new Error("Declared risk must be greater than zero.");
-      const nextBars = payload.bars as Bar[]; const returns = runEmaCross(nextBars, fastPeriod, slowPeriod);
+      const returns = runEmaCross(nextBars, fastPeriod, slowPeriod);
       if (returns.length < 10) throw new Error("The verified window does not contain enough EMA-cross trades for validation.");
       const sensitivity = [12, 20, 30].flatMap((fastValue) => [35, 50, 75].filter((slowValue) => fastValue < slowValue).map((slowValue) => {
         const sample = runEmaCross(nextBars, fastValue, slowValue); let equity = 1;

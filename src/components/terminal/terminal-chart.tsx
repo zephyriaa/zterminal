@@ -8,6 +8,7 @@ import { subscribeMarketTrades, useMarketStream } from "@/hooks/use-market-strea
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import { normalizeChartBars } from "@/lib/market/chart-data";
+import { fetchBarsDeduplicated } from "@/lib/market/bars-dedup";
 import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpeningRange, type VolumeProfile } from "@/domain/analytics/market";
 import type { ChartTimezone } from "@/stores/workspace";
 import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/lib/chart/contracts";
@@ -208,11 +209,9 @@ export function TerminalChart({
         const barsCount = 600;
         const from = to - barsCount * tfSec * 1000;
         const historicalProvider = provider === "binance" ? "binance" : "gateio";
-        const r = await fetch(`/api/bars?provider=${historicalProvider}&symbol=${encodeURIComponent(symbol)}&tf=${timeframe}&to=${to}&bars=${barsCount}`);
-        if (!r.ok) throw new Error("fetch failed");
-        const json = await r.json();
+        const normalizedBars = await fetchBarsDeduplicated(historicalProvider, symbol, timeframe, to, barsCount);
         if (cancelled) return;
-        setBars(normalizeChartBars(json.bars));
+        setBars(normalizedBars);
         setLoading(false);
       } catch (e) {
         if (!cancelled) {
