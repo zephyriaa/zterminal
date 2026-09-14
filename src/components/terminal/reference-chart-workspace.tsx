@@ -33,6 +33,7 @@ import { AlertsView, JournalView } from "@/components/views/secondary-views";
 import { EconomicCalendarTable } from "./economic-calendar/economic-calendar-table";
 import { getContract, formatSymbol } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
+import { publicMarketData, type StreamProvider } from "@/lib/market/public-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 import { ChartToolbar } from "./chart-toolbar";
@@ -99,7 +100,7 @@ export function ReferenceChartWorkspace() {
   const setCalendarOpen = (open: boolean) => { if (open) usePanels.getState().open("economic-calendar"); else usePanels.getState().patch("economic-calendar", { status: "closed" }); };
   const setTerminalSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("terminal-settings"); else usePanels.getState().patch("terminal-settings", { status: "closed" }); };
   const { layout: multiChartLayout, setLayout: setMultiChartLayout } = useMultiChart();
-  const [selectedProvider, setSelectedProvider] = useState<string>("gateio");
+  const [selectedProvider, setSelectedProvider] = useState<StreamProvider | undefined>();
   const instances = useStudies(s => s.instances);
   const [appearance, setAppearance] = useState<TerminalAppearance>(DEFAULT_APPEARANCE);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
@@ -112,6 +113,11 @@ export function ReferenceChartWorkspace() {
   const indicatorLoadingRef = useRef(false);
   const appearanceHydrated = useRef(false);
   const { lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
+  useEffect(() => {
+    if (selectedProvider && selectedProvider !== provider) {
+      publicMarketData.setProvider(selectedProvider);
+    }
+  }, [provider, selectedProvider]);
   const chartProvider = archivedChart?.dataset.provider ?? provider ?? "gateio";
   const chartContract = getContract(chartSymbol);
   const instrument = useMemo<InstrumentKey>(() => ({ provider: chartProvider, exchange: chartContract.exchange, product: "perpetual", nativeSymbol: chartSymbol }), [chartContract.exchange, chartProvider, chartSymbol]);
@@ -275,7 +281,11 @@ export function ReferenceChartWorkspace() {
             onSettings={() => setSettingsOpen(true)}
             onReturnLive={() => useResearch.setState({ chartResult: null, selectedTrade: null })}
             onLayoutChange={setMultiChartLayout}
-            onProviderChange={setSelectedProvider}
+            onProviderChange={next => {
+              if (next === "binance" || next === "gateio" || next === "bybit" || next === "coinbase") {
+                setSelectedProvider(next);
+              }
+            }}
           />
           <MultiChartGrid
             primarySymbol={chartSymbol}
