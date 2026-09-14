@@ -5,6 +5,10 @@
   "compatibility_date": "2026-09-14",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
+  "vars": {
+    "NEXTAUTH_URL": "https://zterminal-web.zephyria-inc.workers.dev",
+    "AUTH_TRUST_HOST": "true"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
