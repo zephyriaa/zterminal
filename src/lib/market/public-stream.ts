@@ -1,6 +1,7 @@
 "use client";
 
 import { BinanceDepthSynchronizer, type BinanceDepth, type BinanceSnapshot } from "./public-stream/binance-depth";
+import { LocalOrderBook } from "./public-stream/local-book";
 import type { DepthEvent, DepthLevel, DerivativesEvent, FeedHealth, LiquidationEvent, QuoteEvent, TradeEvent } from "./types";
 
 export type StreamEvent = TradeEvent | QuoteEvent | DepthEvent | DerivativesEvent | LiquidationEvent;
@@ -70,6 +71,8 @@ export class PublicMarketDataProvider {
 
   // Gate.io local books
   private gateBooks = new Map<string, { bids: Map<number, number>; asks: Map<number, number>; sequence: number; valid: boolean }>();
+  private bybitBooks = new Map<string, { book: LocalOrderBook; sequence: number; valid: boolean }>();
+  private coinbaseBooks = new Map<string, { book: LocalOrderBook; sequence: number; valid: boolean }>();
 
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private watchdogTimer: ReturnType<typeof setInterval> | undefined;
@@ -87,6 +90,8 @@ export class PublicMarketDataProvider {
     this.cleanupSocket();
     this.binanceSyncs.clear();
     this.gateBooks.clear();
+    this.bybitBooks.clear();
+    this.coinbaseBooks.clear();
     this.fetchingSnapshots.clear();
     for (const timer of this.snapshotRetryTimers.values()) clearTimeout(timer);
     this.snapshotRetryTimers.clear();
@@ -129,6 +134,8 @@ export class PublicMarketDataProvider {
         this.listeners.delete(normalized);
         this.binanceSyncs.delete(normalized);
         this.gateBooks.delete(normalized);
+        this.bybitBooks.delete(normalized);
+        this.coinbaseBooks.delete(normalized);
         this.symbolLastActivity.delete(normalized);
         this.sendSubscription(normalized, "UNSUBSCRIBE");
 
@@ -216,6 +223,8 @@ export class PublicMarketDataProvider {
         this.socket = null;
         this.stopWatchdog();
         this.snapshotCache.clear();
+        this.bybitBooks.clear();
+        this.coinbaseBooks.clear();
 
         if (this.listeners.size === 0) return;
 
@@ -327,13 +336,9 @@ export class PublicMarketDataProvider {
       );
     } else if (this.provider === "coinbase") {
       const type = action === "SUBSCRIBE" ? "subscribe" : "unsubscribe";
-      this.socket.send(
-        JSON.stringify({
-          type,
-          product_ids: [symbol],
-          channel: "ticker",
-        })
-      );
+      for (const channel of ["ticker", "level2"]) {
+        this.socket.send(JSON.stringify({ type, product_ids: [symbol], channel }));
+      }
     }
   }
 
@@ -666,6 +671,35 @@ export class PublicMarketDataProvider {
     const data = message.data;
     if (!topic || !data) return;
 
+    if (topic.startsWith("orderbook.")) {
+      const payload = data as Record<string, unknown>;
+      const symbol = String(payload.s ?? topic.split(".").at(-1) ?? "");
+      const updateId = safeNumber(payload.u);
+      const current = this.bybitBooks.get(symbol) ?? { book: new LocalOrderBook(), sequence: 0, valid: false };
+      const type = String(message.type ?? "");
+      if (type === "snapshot") {
+        current.book.clear();
+        current.sequence = updateId;
+        current.valid = true;
+      } else if (!current.valid || updateId <= current.sequence || updateId > current.sequence + 1) {
+        current.valid = false;
+        this.bybitBooks.set(symbol, current);
+        this.announce("syncing", "STALE", `Bybit ${symbol} order-book sequence gap; resync required`);
+        return;
+      }
+      const apply = (rows: unknown, side: "buy" | "sell") => {
+        for (const row of Array.isArray(rows) ? rows : []) {
+          if (!Array.isArray(row) || row.length < 2) continue;
+          current.book.apply(side, String(row[0]), String(row[1]));
+        }
+      };
+      apply(payload.b, "buy"); apply(payload.a, "sell");
+      current.sequence = updateId;
+      this.bybitBooks.set(symbol, current);
+      if (current.valid) this.emitDepth(symbol, "bybit", "BYBIT", current.book, current.sequence);
+      return;
+    }
+
     if (topic.startsWith("publicTrade.")) {
       const trades = Array.isArray(data) ? data : [data];
       for (const t of trades) {
@@ -706,6 +740,31 @@ export class PublicMarketDataProvider {
   }
 
   private handleCoinbaseMessage(message: Record<string, unknown>) {
+    if (message.channel === "l2_data" && Array.isArray(message.events)) {
+      const sequence = safeNumber(message.sequence_num);
+      for (const event of message.events as Record<string, unknown>[]) {
+        const symbol = String(event.product_id);
+        const updates = Array.isArray(event.updates) ? event.updates : [];
+        const current = this.coinbaseBooks.get(symbol) ?? { book: new LocalOrderBook(), sequence: -1, valid: false };
+        if (event.type === "snapshot") {
+          current.book.clear(); current.valid = true;
+        } else if (!current.valid || sequence <= current.sequence || sequence > current.sequence + 1) {
+          current.valid = false;
+          this.coinbaseBooks.set(symbol, current);
+          this.announce("syncing", "STALE", `Coinbase ${symbol} level2 sequence gap; resync required`);
+          continue;
+        }
+        for (const update of updates as Record<string, unknown>[]) {
+          const side = update.side === "bid" ? "buy" : update.side === "offer" ? "sell" : undefined;
+          if (!side || update.price_level == null || update.new_quantity == null) continue;
+          current.book.apply(side, String(update.price_level), String(update.new_quantity));
+        }
+        current.sequence = sequence;
+        this.coinbaseBooks.set(symbol, current);
+        if (current.valid) this.emitDepth(symbol, "coinbase", "COINBASE", current.book, current.sequence);
+      }
+      return;
+    }
     if (message.channel === "ticker" && Array.isArray(message.events)) {
       for (const event of message.events as Record<string, unknown>[]) {
         if (Array.isArray(event.tickers)) {
@@ -728,6 +787,14 @@ export class PublicMarketDataProvider {
         }
       }
     }
+  }
+
+  private emitDepth(symbol: string, provider: "bybit" | "coinbase", exchange: "BYBIT" | "COINBASE", book: LocalOrderBook, sequence: number) {
+    this.emit(symbol, {
+      type: "depth", provider, environment: "live", symbol, exchange,
+      timestamp: Date.now(), sequence,
+      levels: [...book.top("buy", 100), ...book.top("sell", 100)],
+    });
   }
 }
 
