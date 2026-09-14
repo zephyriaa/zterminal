@@ -47,6 +47,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
+        {/* OpenNext/Workers can evaluate next-themes' inline helper before esbuild's
+            generated __name shim is present. Keep the helper harmlessly available
+            so theme hydration does not emit a browser console error at the edge. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "globalThis.__name=globalThis.__name||((fn)=>fn);",
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
