@@ -19,14 +19,13 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
-        // The route split is intentional: the landing page lives at / and the
-        // floating research workstation at /terminal. Do not retain an older
-        // HTML shell after either route is released.
+        // Public landing page: revalidate in browser on fresh session, but allow Cloudflare Edge
+        // to cache the prerendered static shell (s-maxage) without invoking the Worker repeatedly.
         source: "/",
         headers: [
           {
             key: "Cache-Control",
-            value: "no-store, max-age=0, must-revalidate",
+            value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
           },
         ],
       },
@@ -35,7 +34,17 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Cache-Control",
-            value: "no-store, max-age=0, must-revalidate",
+            value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
+        // Static marketing and brand media assets.
+        source: "/(landing|brand)/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
           },
         ],
       },

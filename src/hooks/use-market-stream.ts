@@ -192,8 +192,30 @@ export function useMarketStream(symbol: string, options?: { trades?: number; dep
         });
       }
     });
-    const removeQuote = subscribeSet(quoteSubscribers, sym, setQuote);
-    const removeDepth = wantDepth ? subscribeSet(depthSubscribers, sym, setDepth) : () => undefined;
+    let lastQ: QuoteEvent | null = null;
+    let lastD: DepthLevel[] = [];
+
+    const removeQuote = subscribeSet(quoteSubscribers, sym, (q) => {
+      lastQ = q;
+      if (typeof document !== "undefined" && document.hidden) return;
+      setQuote(q);
+    });
+    const removeDepth = wantDepth
+      ? subscribeSet(depthSubscribers, sym, (d) => {
+          lastD = d;
+          if (typeof document !== "undefined" && document.hidden) return;
+          setDepth(d);
+        })
+      : () => undefined;
+
+    const onVisibilityChange = () => {
+      if (typeof document === "undefined" || document.hidden) return;
+      if (lastQ) setQuote(lastQ);
+      if (wantDepth && lastD.length > 0) setDepth(lastD);
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibilityChange);
+    }
     const removeDerivatives = subscribeSet(derivativesSubscribers, sym, (event) => {
       setDerivatives(event);
       setDerivativesHistory((previous) => {
@@ -216,6 +238,9 @@ export function useMarketStream(symbol: string, options?: { trades?: number; dep
     requestHealth();
     const healthTimer = window.setInterval(requestHealth, 2_000);
     return () => {
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      }
       removeTrade();
       removeQuote();
       removeDepth();

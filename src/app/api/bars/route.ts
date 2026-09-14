@@ -197,5 +197,9 @@ export async function GET(request: NextRequest) {
   };
 
   cacheResponse(cacheKey, payload);
-  return NextResponse.json(payload);
+  return NextResponse.json(payload, {
+    headers: {
+      "Cache-Control": "public, max-age=10, s-maxage=30, stale-while-revalidate=60",
+    },
+  });
 }

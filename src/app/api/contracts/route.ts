@@ -39,6 +39,11 @@ export async function GET() {
       state: "connected",
       contracts: staticContracts,
     },
-    { status: 200, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+    {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+      },
+    }
   );
 }

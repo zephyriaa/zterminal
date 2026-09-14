@@ -1,5 +1,10 @@
 import { FloatingWorkstationShell } from "@/components/terminal/floating-workstation-shell";
+import { ZTerminalSessionProvider } from "@/components/auth/session-provider";
 
 export default function TerminalPage() {
-  return <FloatingWorkstationShell />;
+  return (
+    <ZTerminalSessionProvider>
+      <FloatingWorkstationShell />
+    </ZTerminalSessionProvider>
+  );
 }
