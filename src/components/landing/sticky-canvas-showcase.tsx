@@ -53,23 +53,26 @@ export function StickyCanvasShowcase() {
     const imageWrapper = imageWrapperRef.current;
     if (!container || !imageWrapper) return;
 
-    // Scroll scrub: scale canvas 1.03 -> 1.0 and advance active card
+    // Scroll scrub: subtle scale canvas 1.015 -> 1.0 and advance active card
     const trigger = ScrollTrigger.create({
       trigger: container,
       start: "top 90px",
-      end: "bottom bottom",
-      scrub: 0.5,
+      end: "+=650",
+      pin: true,
+      scrub: 0.35,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
       onUpdate: (self) => {
         const progress = self.progress; // 0 to 1
 
-        // Scale 1.03 -> 1.0
-        const scale = 1.03 - progress * 0.03;
+        // Subtle grounding scale 1.015 -> 1.0
+        const scale = 1.015 - progress * 0.015;
         gsap.set(imageWrapper, { scale });
 
-        // Update card index
-        if (progress < 0.33) {
+        // Advance active capability card smoothly
+        if (progress < 0.36) {
           setActiveIdx(0);
-        } else if (progress < 0.66) {
+        } else if (progress < 0.72) {
           setActiveIdx(1);
         } else {
           setActiveIdx(2);
@@ -77,7 +80,12 @@ export function StickyCanvasShowcase() {
       },
     });
 
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 100);
+
     return () => {
+      clearTimeout(timer);
       trigger.kill();
     };
   }, []);

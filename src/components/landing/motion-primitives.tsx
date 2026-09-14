@@ -6,6 +6,32 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 export const EASE_OUT_QUINT = [0.22, 1, 0.36, 1] as const;
 export const EASE_OUT_EXPO = EASE_OUT_QUINT;
 
+/** Unified ZTerminal motion design system tokens */
+export const MOTION_EASE = {
+  out: [0.22, 1, 0.36, 1] as const,
+  standard: [0.25, 0.1, 0.25, 1] as const,
+} as const;
+
+export const MOTION_DURATION = {
+  fast: 0.22,
+  normal: 0.38,
+  heading: 0.45,
+  showcase: 0.55,
+} as const;
+
+export const MOTION_DISTANCE = {
+  micro: 8,
+  small: 12,
+  medium: 16,
+} as const;
+
+/** Calibrated viewport reveal settings: triggers just as content crosses reading zone */
+export const VIEWPORT_CONFIG = {
+  once: true,
+  amount: 0.15,
+  margin: "0px 0px -40px 0px",
+} as const;
+
 export function useIsReducedMotion(): boolean {
   const prefersReduced = useReducedMotion();
   return prefersReduced ?? false;
@@ -13,7 +39,7 @@ export function useIsReducedMotion(): boolean {
 
 /**
  * MaskedHeading renders lines of text inside an overflow-hidden mask.
- * Each line smoothly slides up from 100% to 0% with ease-out-expo.
+ * Smoothly slides up from small offset with crisp ease-out.
  */
 interface MaskedHeadingProps {
   as?: "h1" | "h2" | "h3" | "h4" | "p" | "div";
@@ -35,7 +61,7 @@ export function MaskedHeading({
   id,
   lines,
   delay = 0,
-  stagger = 0.08,
+  stagger = 0.04,
   triggerOnMount = false,
 }: MaskedHeadingProps) {
   const reduced = useIsReducedMotion();
@@ -58,16 +84,16 @@ export function MaskedHeading({
           <motion.span
             key={idx}
             style={{ display: "block" }}
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: MOTION_DISTANCE.small }}
             {...(triggerOnMount
               ? { animate: { opacity: 1, y: 0 } }
               : {
                   whileInView: { opacity: 1, y: 0 },
-                  viewport: { once: true, margin: "100px 0px" },
+                  viewport: VIEWPORT_CONFIG,
                 })}
             transition={{
-              duration: 0.65,
-              ease: EASE_OUT_EXPO,
+              duration: MOTION_DURATION.heading,
+              ease: MOTION_EASE.out,
               delay: lineDelay,
             }}
           >
@@ -84,7 +110,8 @@ export function MaskedHeading({
 }
 
 /**
- * FadeInView provides restrained fade + vertical slide.
+ * FadeInView provides restrained fade + subtle vertical slide.
+ * Content becomes readable immediately without forcing the user to wait.
  */
 interface FadeInViewProps {
   children: React.ReactNode;
@@ -99,8 +126,8 @@ export function FadeInView({
   children,
   className,
   delay = 0,
-  yOffset = 24,
-  duration = 0.6,
+  yOffset = MOTION_DISTANCE.small,
+  duration = MOTION_DURATION.normal,
   triggerOnMount = false,
 }: FadeInViewProps) {
   const reduced = useIsReducedMotion();
@@ -117,11 +144,11 @@ export function FadeInView({
         ? { animate: { opacity: 1, y: 0 } }
         : {
             whileInView: { opacity: 1, y: 0 },
-            viewport: { once: true, margin: "120px 0px" },
+            viewport: VIEWPORT_CONFIG,
           })}
       transition={{
         duration,
-        ease: EASE_OUT_EXPO,
+        ease: MOTION_EASE.out,
         delay,
       }}
     >
@@ -131,8 +158,8 @@ export function FadeInView({
 }
 
 /**
- * ScaleReveal provides subtle scale (0.985 -> 1.0) and opacity entrance for frames,
- * screenshots, or inspector panels.
+ * ScaleReveal provides subtle scale (0.99 -> 1.0) and opacity entrance for frames,
+ * keeping screenshots and inspector panels crisp and physically stable.
  */
 interface ScaleRevealProps {
   children: React.ReactNode;
@@ -150,12 +177,12 @@ export function ScaleReveal({ children, className, delay = 0 }: ScaleRevealProps
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, scale: 0.985, y: 24 }}
+      initial={{ opacity: 0, scale: 0.99, y: MOTION_DISTANCE.small }}
       whileInView={{ opacity: 1, scale: 1, y: 0 }}
-      viewport={{ once: true, margin: "120px 0px" }}
+      viewport={VIEWPORT_CONFIG}
       transition={{
-        duration: 0.65,
-        ease: EASE_OUT_EXPO,
+        duration: MOTION_DURATION.showcase,
+        ease: MOTION_EASE.out,
         delay,
       }}
     >
@@ -165,8 +192,7 @@ export function ScaleReveal({ children, className, delay = 0 }: ScaleRevealProps
 }
 
 /**
- * StaggerContainer and StaggerItem coordinate sequential reveals of cards,
- * metrics, or chips.
+ * StaggerContainer and StaggerItem coordinate restrained sequential reveals.
  */
 interface StaggerContainerProps {
   children: React.ReactNode;
@@ -178,7 +204,7 @@ interface StaggerContainerProps {
 export function StaggerContainer({
   children,
   className,
-  staggerDelay = 0.08,
+  staggerDelay = 0.04,
   delay = 0,
 }: StaggerContainerProps) {
   const reduced = useIsReducedMotion();
@@ -192,7 +218,7 @@ export function StaggerContainer({
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, margin: "120px 0px" }}
+      viewport={VIEWPORT_CONFIG}
       variants={{
         hidden: {},
         show: {
@@ -214,7 +240,7 @@ interface StaggerItemProps {
   yOffset?: number;
 }
 
-export function StaggerItem({ children, className, yOffset = 16 }: StaggerItemProps) {
+export function StaggerItem({ children, className, yOffset = MOTION_DISTANCE.micro }: StaggerItemProps) {
   const reduced = useIsReducedMotion();
 
   if (reduced) {
@@ -230,8 +256,8 @@ export function StaggerItem({ children, className, yOffset = 16 }: StaggerItemPr
           opacity: 1,
           y: 0,
           transition: {
-            duration: 0.6,
-            ease: EASE_OUT_EXPO,
+            duration: MOTION_DURATION.normal,
+            ease: MOTION_EASE.out,
           },
         },
       }}
@@ -242,7 +268,8 @@ export function StaggerItem({ children, className, yOffset = 16 }: StaggerItemPr
 }
 
 /**
- * ParallaxText applies a subtle scroll-linked vertical translation to display copy.
+ * ParallaxText applies a subtle, grounded vertical offset.
+ * Calibrated to never detach text from its reading context.
  */
 interface ParallaxTextProps {
   children: React.ReactNode;
@@ -251,7 +278,7 @@ interface ParallaxTextProps {
   toY?: number;
 }
 
-export function ParallaxText({ children, className, fromY = 24, toY = -24 }: ParallaxTextProps) {
+export function ParallaxText({ children, className, fromY = 8, toY = -8 }: ParallaxTextProps) {
   const ref = useRef<HTMLDivElement | null>(null);
   const reduced = useIsReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -270,3 +297,4 @@ export function ParallaxText({ children, className, fromY = 24, toY = -24 }: Par
     </div>
   );
 }
+

@@ -49,18 +49,18 @@ export function LandingPage() {
                 { text: "Trade the structure, not the story.", italic: true },
               ]}
             />
-            <FadeInView delay={0.1} yOffset={18}>
+            <FadeInView delay={0.04} yOffset={12}>
               <p className={styles.leadText}>
                 Market data is abundant; usable context is not. ZTerminal brings structure, liquidity and statistical context into one research surface so decisions can be examined before they are acted on.
               </p>
             </FadeInView>
-            <FadeInView delay={0.18} yOffset={18}>
+            <FadeInView delay={0.08} yOffset={12}>
               <p className={styles.bodyText}>
                 Build and test a repeatable view of the market, inspect assumptions against historical data, and keep risk conditions visible alongside every research decision.
               </p>
             </FadeInView>
 
-            <StaggerContainer className={styles.telemetryPills} staggerDelay={0.06} delay={0.22}>
+            <StaggerContainer className={styles.telemetryPills} staggerDelay={0.03} delay={0.08}>
               <StaggerItem>
                 <span className={styles.pill}>REGIME: VOLATILITY COMPRESSION</span>
               </StaggerItem>
@@ -73,12 +73,12 @@ export function LandingPage() {
             </StaggerContainer>
           </div>
 
-          <ScaleReveal className={styles.problemInspector}>
+          <ScaleReveal className={styles.problemInspector} delay={0.06}>
             <div className={styles.inspectorHeader}>
               <span className={styles.inspectorTitle}>LIVE MARKET TELEMETRY · BTC/USDT</span>
               <span className={styles.inspectorStatus}>PRIME SETUP ACTIVE</span>
             </div>
-            <StaggerContainer className={styles.inspectorMetrics} staggerDelay={0.06} delay={0.1}>
+            <StaggerContainer className={styles.inspectorMetrics} staggerDelay={0.03} delay={0.06}>
               <StaggerItem className={styles.metricItem}>
                 <span className={styles.metricLabel}>LAST PRICE</span>
                 <span className={styles.metricVal}>79,049.00</span>
@@ -117,7 +117,7 @@ export function LandingPage() {
                 { text: "to verified trading edge.", italic: true },
               ]}
             />
-            <FadeInView delay={0.12} yOffset={18}>
+            <FadeInView delay={0.04} yOffset={12}>
               <p className={styles.sectionLead}>
                 A six-step research loop for moving from an observation to a tested, documented decision—without separating the chart, the model and the risk context.
               </p>
@@ -142,7 +142,7 @@ export function LandingPage() {
                 { text: "mathematical market edge.", italic: true },
               ]}
             />
-            <FadeInView delay={0.12} yOffset={16}>
+            <FadeInView delay={0.04} yOffset={12}>
               <p className={styles.sectionLead}>
                 Express research logic in Python, PineScript or EasyLanguage. Review historical outcomes, risk-adjusted returns and modeled market frictions with assumptions kept explicit.
               </p>
@@ -150,7 +150,7 @@ export function LandingPage() {
           </div>
 
           <div className={styles.researchSplit}>
-            <ScaleReveal className={styles.codeWindow} delay={0.08}>
+            <ScaleReveal className={styles.codeWindow} delay={0.04}>
               <div className={styles.codeHeader}>
                 <span className={styles.codeFile}>strategy_ema_cross.py</span>
                 <span className={styles.codeLang}>PYTHON RESEARCH API</span>
@@ -178,9 +178,9 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               </pre>
             </ScaleReveal>
 
-            <ScaleReveal className={styles.evidencePanel} delay={0.16}>
+            <ScaleReveal className={styles.evidencePanel} delay={0.08}>
               <p className={styles.evidenceEyebrow}>AUDIT-GRADE PERFORMANCE VERIFICATION</p>
-              <StaggerContainer className={styles.evidenceStats} staggerDelay={0.07}>
+              <StaggerContainer className={styles.evidenceStats} staggerDelay={0.03} delay={0.04}>
                 <StaggerItem className={styles.statBox}>
                   <span className={styles.statLabel}>SHARPE RATIO</span>
                   <span className={styles.statNumber}>1.84</span>
@@ -203,7 +203,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
                 </StaggerItem>
               </StaggerContainer>
 
-              <FadeInView delay={0.2} yOffset={14} className={styles.assumptionsBox}>
+              <FadeInView delay={0.08} yOffset={10} className={styles.assumptionsBox}>
                 <p className={styles.assumptionsTitle}>RESEARCH ASSUMPTIONS, MADE EXPLICIT</p>
                 <ul className={styles.assumptionsList}>
                   <li>Sub-bar Bar Magnifier resolves intra-candle fill order down to the second—eliminating unrealistic backtest illusions.</li>
@@ -229,7 +229,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
                 { text: "Private by design.", italic: true },
               ]}
             />
-            <FadeInView delay={0.12} yOffset={18}>
+            <FadeInView delay={0.04} yOffset={12}>
               <p className={styles.leadText}>
                 Why wait in sluggish cloud server queues or expose your valuable trading strategies to third-party databases? ZTerminal gives you instantaneous calculations, seamless 60fps charting, and complete privacy for your proprietary alpha.
               </p>
@@ -237,7 +237,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
           </div>
 
           <div className={styles.archFlow}>
-            <FadeInView className={styles.archTier} delay={0.08}>
+            <FadeInView className={styles.archTier} delay={0.04} yOffset={12}>
               <div className={styles.tierTag}>GLOBAL MARKET DATA PIPELINE</div>
               <h3 className={styles.tierName}>Low-Latency Market Feeds</h3>
               <p className={styles.tierDetail}>Direct institutional exchange feeds, real-time depth synchronization, and instant workspace updates with zero lag and zero dropped ticks.</p>
@@ -250,20 +250,20 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
 
             <motion.div
               className={styles.archDivider}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
+              transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
             >
               <span className={styles.dividerArrow}>↓</span>
               <span className={styles.dividerText}>INSTANTANEOUS EXECUTION</span>
             </motion.div>
 
-            <ScaleReveal className={styles.archTierActive} delay={0.14}>
+            <ScaleReveal className={styles.archTierActive} delay={0.06}>
               <div className={styles.tierTagActive}>INSTITUTIONAL PERFORMANCE ENGINE</div>
               <h3 className={styles.tierName}>Sub-Second Speed. Absolute Confidentiality.</h3>
               <p className={styles.tierDetail}>Fly through complex simulations and massive market datasets in milliseconds. Your private strategies and algorithms never leave your custody.</p>
-              <StaggerContainer className={styles.tierEngines} staggerDelay={0.08} delay={0.12}>
+              <StaggerContainer className={styles.tierEngines} staggerDelay={0.03} delay={0.06}>
                 <StaggerItem className={styles.engineCard}>
                   <h4>Instant Simulations</h4>
                   <p>Analyze decades of high-frequency tick data in milliseconds with lightning-fast vectorized calculations.</p>
@@ -296,7 +296,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
             />
           </div>
 
-          <StaggerContainer className={styles.trioGrid} staggerDelay={0.1} delay={0.12}>
+          <StaggerContainer className={styles.trioGrid} staggerDelay={0.04} delay={0.06}>
             <StaggerItem className={styles.trioJournal}>
               <div className={styles.trioBadge}>01 / SYSTEMATIC JOURNAL</div>
               <h3>Conquer emotional trading</h3>
@@ -358,7 +358,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
         <section className={styles.localSection} aria-labelledby="local-title">
           <div className={styles.localContent}>
             <p className={styles.eyebrow}>08 / THE ZTERMINAL ADVANTAGE</p>
-            <ParallaxText fromY={16} toY={-16}>
+            <ParallaxText fromY={6} toY={-6}>
               <MaskedHeading
                 as="h2"
                 id="local-title"
@@ -369,7 +369,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
                 ]}
               />
             </ParallaxText>
-            <FadeInView delay={0.15} yOffset={20} className={styles.localColumns}>
+            <FadeInView delay={0.06} yOffset={12} className={styles.localColumns}>
               <p>
                 Why pay hundreds every month for cloud platforms that throttle your compute, queue your backtests, and store your proprietary strategies on their shared servers?
               </p>
@@ -384,7 +384,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
         <section className={styles.philosophySection} aria-labelledby="philo-title">
           <div className={styles.philoInner}>
             <p className={styles.eyebrow}>09 / THE TRADER&apos;S CODE</p>
-            <ParallaxText fromY={14} toY={-14}>
+            <ParallaxText fromY={6} toY={-6}>
               <MaskedHeading
                 as="h2"
                 id="philo-title"
@@ -400,9 +400,9 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: EASE_OUT_EXPO, delay: 0.1 }}
+              transition={{ duration: 0.5, ease: EASE_OUT_EXPO, delay: 0.06 }}
             />
-            <FadeInView delay={0.18} yOffset={16}>
+            <FadeInView delay={0.06} yOffset={12}>
               <p className={styles.philoSub}>
                 Anyone can make a strategy look good on yesterday&apos;s chart. Enduring profitability comes from trading proven market mechanics designed to withstand live volatility.
               </p>
@@ -426,17 +426,17 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               />
             </div>
             <div className={styles.windowsCopy}>
-              <FadeInView delay={0.08} yOffset={16}>
+              <FadeInView delay={0.04} yOffset={12}>
                 <p>
                   Experience the gold standard in quantitative trading software. ZTerminal delivers fluid multi-monitor layouts, instantaneous workspace switching, and high-frequency data feeds optimized for serious traders.
                 </p>
               </FadeInView>
-              <FadeInView delay={0.14} yOffset={16}>
+              <FadeInView delay={0.08} yOffset={12}>
                 <p>
                   Available as a native Windows release and instant web terminal. Verified cryptographic packages, checksums, and update notes are published on our official release portal.
                 </p>
               </FadeInView>
-              <FadeInView delay={0.2} yOffset={16} className={styles.windowsActions}>
+              <FadeInView delay={0.12} yOffset={12} className={styles.windowsActions}>
                 <Link className={styles.primaryButton} href="/download">
                   Explore for Windows <Arrow />
                 </Link>
@@ -459,7 +459,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               { text: "Guess less.", italic: true },
             ]}
           />
-          <FadeInView delay={0.14} yOffset={18} className={styles.finalActions}>
+          <FadeInView delay={0.04} yOffset={12} className={styles.finalActions}>
             <Link className={styles.primaryButton} href="/download">
               Explore for Windows <Arrow />
             </Link>
@@ -467,7 +467,7 @@ def strategy(df: pd.DataFrame) -> zt.Strategy:
               Launch web terminal <Arrow />
             </Link>
           </FadeInView>
-          <FadeInView delay={0.22} yOffset={14}>
+          <FadeInView delay={0.08} yOffset={10}>
             <p className={styles.finalDisclaimer}>
               Institutional decision support for quantitative traders. Zero broker lock-in. Complete capital sovereignty.
             </p>
