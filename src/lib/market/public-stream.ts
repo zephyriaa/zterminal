@@ -356,6 +356,9 @@ export class PublicMarketDataProvider {
     }
   }
 
+  private static binanceGlobalNextAllowedAt = 0;
+  private static binanceInFlight = new Map<string, Promise<BinanceSnapshot>>();
+
   // --- Binance Depth Synchronization ---
 
   private initBinanceDepth(symbol: string) {
@@ -387,31 +390,63 @@ export class PublicMarketDataProvider {
 
   private async fetchBinanceSnapshot(symbol: string) {
     if (this.fetchingSnapshots.has(symbol)) return;
-    const wait = (this.snapshotNextAllowedAt.get(symbol) ?? 0) - Date.now();
+
+    const cached = this.snapshotCache.get(symbol);
+    if (cached && Date.now() - cached.at < 15_000) {
+      this.bridgeBinanceSnapshot(symbol, cached.snapshot);
+      return;
+    }
+
+    const now = Date.now();
+    const globalWait = Math.max(0, PublicMarketDataProvider.binanceGlobalNextAllowedAt - now);
+    const symbolWait = Math.max(0, (this.snapshotNextAllowedAt.get(symbol) ?? 0) - now);
+    const wait = Math.max(globalWait, symbolWait);
     if (wait > 0) {
       this.scheduleBinanceSnapshot(symbol, wait);
       return;
     }
 
-    const cached = this.snapshotCache.get(symbol);
-    if (cached && Date.now() - cached.at < 500) {
-      this.bridgeBinanceSnapshot(symbol, cached.snapshot);
+    // Reuse in-flight promise if another component already requested this symbol
+    const existingPromise = PublicMarketDataProvider.binanceInFlight.get(symbol);
+    if (existingPromise) {
+      try {
+        const data = await existingPromise;
+        this.bridgeBinanceSnapshot(symbol, data);
+      } catch {
+        // Handled by original caller
+      }
       return;
     }
 
     this.fetchingSnapshots.add(symbol);
+    // Pace snapshots globally: at least 1,000ms between REST requests across all symbols
+    PublicMarketDataProvider.binanceGlobalNextAllowedAt = Date.now() + 1_000;
 
-    try {
-      const url = `${BINANCE_REST_DEPTH_URL}/fapi/v1/depth?symbol=${encodeURIComponent(symbol)}&limit=1000`;
+    const fetchPromise = (async () => {
+      // Use limit=100 (weight 5 vs weight 20 for limit=1000)
+      const url = `${BINANCE_REST_DEPTH_URL}/fapi/v1/depth?symbol=${encodeURIComponent(symbol)}&limit=100`;
       const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) {
         const retryAfter = Number(response.headers.get("retry-after"));
         const retryAfterMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1_000 : undefined;
         const delay = this.snapshotRetryDelay(symbol, response.status, retryAfterMs);
+        const globalBlock = response.status === 418 ? 120_000 : response.status === 429 ? 30_000 : 0;
+        if (globalBlock > 0) {
+          PublicMarketDataProvider.binanceGlobalNextAllowedAt = Math.max(
+            PublicMarketDataProvider.binanceGlobalNextAllowedAt,
+            Date.now() + (retryAfterMs ?? globalBlock),
+          );
+        }
         this.snapshotNextAllowedAt.set(symbol, Date.now() + delay);
         throw new Error(`Binance depth snapshot HTTP ${response.status}; retrying in ${delay}ms`);
       }
-      const data = (await response.json()) as BinanceSnapshot;
+      return (await response.json()) as BinanceSnapshot;
+    })();
+
+    PublicMarketDataProvider.binanceInFlight.set(symbol, fetchPromise);
+
+    try {
+      const data = await fetchPromise;
       this.snapshotFailures.delete(symbol);
       this.snapshotNextAllowedAt.delete(symbol);
       this.snapshotCache.set(symbol, { snapshot: data, at: Date.now() });
@@ -423,6 +458,7 @@ export class PublicMarketDataProvider {
       this.scheduleBinanceSnapshot(symbol, Math.max(0, delay - Date.now()));
     } finally {
       this.fetchingSnapshots.delete(symbol);
+      PublicMarketDataProvider.binanceInFlight.delete(symbol);
     }
   }
 
@@ -432,6 +468,10 @@ export class PublicMarketDataProvider {
     const bridged = sync.bridge(data);
     if (bridged && sync.status === "LIVE") {
       this.emitBinanceDepth(symbol, sync);
+      return;
+    }
+    // If status is still SYNCING, the snapshot is pending while buffered deltas catch up
+    if (sync.status === "SYNCING") {
       return;
     }
     this.announce("syncing", "STALE", `Binance ${symbol} snapshot bridging failed; waiting for a safe resync`);
@@ -533,7 +573,9 @@ export class PublicMarketDataProvider {
       } else if (sync.status === "ERROR") {
         this.announce("syncing", "STALE", `Binance ${symbol} depth sequence gap detected; resyncing`);
         this.binanceSyncs.delete(symbol);
-        this.initBinanceDepth(symbol);
+        const delay = this.snapshotRetryDelay(symbol);
+        this.snapshotNextAllowedAt.set(symbol, Date.now() + delay);
+        this.scheduleBinanceSnapshot(symbol, delay);
       }
     } else if (eventType === "forceOrder") {
       const order = raw.o as Record<string, unknown> | undefined;

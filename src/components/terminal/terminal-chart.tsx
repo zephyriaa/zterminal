@@ -177,20 +177,28 @@ export function TerminalChart({
 
   useEffect(() => { barsRef.current = bars; }, [bars]);
 
+  const availableBars = useMemo(() => {
+    if (!bars.length) return [];
+    const uniqueBars = new Map<number, Bar>();
+    for (const b of bars) uniqueBars.set(b.t, b);
+    const sorted = Array.from(uniqueBars.values()).sort((a, b) => a.t - b.t);
+    return effectiveReplayIndex == null ? sorted : sorted.slice(0, effectiveReplayIndex + 1);
+  }, [bars, effectiveReplayIndex]);
+
   const volumeProfile = useMemo<VolumeProfile | null>(() => {
-    if (!indicators.profile || bars.length < 2) return null;
-    try { return buildVolumeProfile(bars, contract.tickSize); } catch { return null; }
-  }, [bars, contract.tickSize, indicators.profile]);
+    if (!indicators.profile || availableBars.length < 2) return null;
+    try { return buildVolumeProfile(availableBars, contract.tickSize); } catch { return null; }
+  }, [availableBars, contract.tickSize, indicators.profile]);
 
   const marketContext = useMemo(() => {
-    if (bars.length < 3) return null;
-    const volatility = calculateVolatility(bars, Math.min(50, bars.length));
-    const regime = classifyRegime(bars, { lookback: Math.min(50, bars.length), trendThreshold: 0.01, compressionThreshold: 0.002 });
-    const latest = bars.at(-1)!;
+    if (availableBars.length < 3) return null;
+    const volatility = calculateVolatility(availableBars, Math.min(50, availableBars.length));
+    const regime = classifyRegime(availableBars, { lookback: Math.min(50, availableBars.length), trendThreshold: 0.01, compressionThreshold: 0.002 });
+    const latest = availableBars.at(-1)!;
     const utcDayStart = Date.UTC(new Date(latest.t).getUTCFullYear(), new Date(latest.t).getUTCMonth(), new Date(latest.t).getUTCDate());
-    const openingRange = computeOpeningRange(bars, utcDayStart, utcDayStart + 30 * 60 * 1_000);
+    const openingRange = computeOpeningRange(availableBars, utcDayStart, utcDayStart + 30 * 60 * 1_000);
     return { volatility, regime, openingRange };
-  }, [bars]);
+  }, [availableBars]);
 
   const { lastTrade, provider } = useMarketStream(symbol, { trades: 1, depth: false });
 
@@ -647,14 +655,7 @@ function applyZTerminalWatermark(
   // Feed data to chart
   useEffect(() => {
     const chart = chartRef.current;
-    if (!chart || !seriesRef.current || !bars.length) return;
-    
-    // Sort and deduplicate bars for lightweight-charts
-    const uniqueBars = new Map<number, Bar>();
-    for (const b of bars) uniqueBars.set(b.t, b);
-    const sortedBars = Array.from(uniqueBars.values()).sort((a, b) => a.t - b.t);
-    
-    const availableBars = effectiveReplayIndex == null ? sortedBars : sortedBars.slice(0, effectiveReplayIndex + 1);
+    if (!chart || !seriesRef.current || !availableBars.length) return;
     
     const timeData = availableBars.map(b => (b.t / 1000) as Time);
     
@@ -713,7 +714,7 @@ function applyZTerminalWatermark(
     }
     for (const [key, series] of indicatorSeriesRef.current) if (!activeOutputs.has(key)) { chart.removeSeries(series); indicatorSeriesRef.current.delete(key); }
     
-  }, [bars, chartType, indicatorInstances, indicators, effectiveReplayIndex, pythonEvaluations, settings.candleUpColor, settings.candleDownColor, timeframe, timezone]);
+  }, [availableBars, chartType, indicatorInstances, indicators, pythonEvaluations, settings.candleUpColor, settings.candleDownColor, timeframe, timezone]);
 
   useEffect(() => {
     if (!seriesRef.current) return;

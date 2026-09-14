@@ -1019,6 +1019,8 @@ html.lenis, html.lenis body {
 
 .zt-desktop-window { position:absolute; display:flex; flex-direction:column; min-width:0; min-height:0; overflow:visible; border:1px solid rgba(137,156,203,.35); border-radius:6px; background:linear-gradient(145deg, rgba(13,18,31,.985), rgba(7,11,20,.99)); box-shadow:0 24px 60px rgba(0,0,0,.44), inset 0 1px rgba(255,255,255,.04); }
 .zt-desktop-window.is-maximized { border-radius:0; }
+.zt-desktop-window.zt-minimized-panel { border-radius:6px; overflow:hidden; box-shadow:0 12px 36px rgba(0,0,0,.5), inset 0 1px rgba(255,255,255,.08); }
+.zt-desktop-window.zt-minimized-panel .zt-desktop-window-titlebar { min-height:32px; height:32px; border-bottom:0; border-radius:6px; }
 .zt-desktop-window-titlebar { display:flex; min-height:36px; align-items:center; justify-content:space-between; gap:8px; padding:0 8px 0 10px; border-bottom:1px solid rgba(139,155,192,.18); border-radius:6px 6px 0 0; background:linear-gradient(90deg, rgba(77,41,154,.42), rgba(20,23,40,.93) 56%, rgba(11,16,29,.98)); cursor:move; user-select:none; }
 .zt-desktop-window.is-maximized .zt-desktop-window-titlebar { border-radius:0; }
 .zt-window-title-group { display:flex; min-width:0; align-items:center; gap:7px; }
