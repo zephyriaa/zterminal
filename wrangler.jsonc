@@ -9,6 +9,12 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "r2_buckets": [
+    {
+      "binding": "ZTERMINAL_ARTIFACTS",
+      "bucket_name": "zterminal-prod-artifacts"
+    }
+  ],
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
