@@ -70,7 +70,11 @@ server.log
 # Native desktop workspace build artifacts
 /target/
 
+# OpenNext Cloudflare build output
+.open-next/
+
 # Python research API build/test artifacts
 __pycache__/
 .pytest_cache/
 artifacts/
+.dev.vars

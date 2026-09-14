@@ -48,29 +48,36 @@ export function DesktopWindow({ id, title, subtitle, children, initialBounds, ic
   const { width, height } = state.viewport;
   const narrow = width < 768;
   const selected = state.panels[state.active]?.status === "open" ? state.active : Object.values(state.panels).find(p => p.status === "open")?.id;
-  const hidden = panel.status !== "open" || (narrow && selected !== id);
+  const isMinimized = panel.status === "minimized";
+  const hidden = panel.status === "closed" || (narrow && selected !== id) || (isMinimized && panel.placement !== "floating");
   const bounds = preview ?? panelBounds(state, id, width, height);
+  const minimizedWidth = Math.min(bounds.width, 220);
   const begin = (event: PointerEvent, move: boolean) => {
-    if (event.button !== 0 || narrow || panel.maximized || (move && panel.placement !== "floating")) return;
+    if (event.button !== 0 || narrow || (!isMinimized && panel.maximized) || (move && panel.placement !== "floating")) return;
     if (move && (event.target as HTMLElement).closest("button, select, input, a")) return;
     event.preventDefault();
     drag.current = { x: event.clientX, y: event.clientY, bounds, move, placement: panel.placement, last: bounds };
   };
   const focus = () => { if (state.active !== id) state.focus(id); };
-  return <section id={`panel-${id}`} tabIndex={-1} hidden={hidden} aria-label={`${title} panel`} onFocusCapture={focus} onPointerDown={focus} className={cn("zt-desktop-window zt-managed-panel", panel.placement !== "floating" && "zt-docked-panel", className)} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height, zIndex: panel.maximized ? 500 : panel.placement === "floating" ? 50 + panel.order : 1, display: hidden ? "none" : "flex" }}>
-    <header className="zt-desktop-window-titlebar" onPointerDown={event => begin(event, true)}>
-      <div className="zt-window-title-group">{icon}<div className="min-w-0"><div className="zt-window-title">{title}</div>{subtitle && <div className="zt-window-subtitle">{subtitle}</div>}</div></div>
+  return <section id={`panel-${id}`} tabIndex={-1} hidden={hidden} aria-label={`${title} panel`} onFocusCapture={focus} onPointerDown={focus} className={cn("zt-desktop-window zt-managed-panel", panel.placement !== "floating" && "zt-docked-panel", isMinimized && "zt-minimized-panel cursor-move", className)} style={{ left: bounds.x, top: bounds.y, width: isMinimized ? minimizedWidth : bounds.width, height: isMinimized ? 32 : bounds.height, zIndex: panel.maximized ? 500 : panel.placement === "floating" ? 50 + panel.order : 1, display: hidden ? "none" : "flex" }}>
+    <header className="zt-desktop-window-titlebar" onPointerDown={event => begin(event, true)} onDoubleClick={() => state.patch(id, { status: isMinimized ? "open" : "minimized" })}>
+      <div className="zt-window-title-group">{icon}<div className="min-w-0"><div className="zt-window-title truncate">{title}</div>{!isMinimized && subtitle && <div className="zt-window-subtitle">{subtitle}</div>}</div></div>
       <div className="zt-window-title-actions" onPointerDown={event => event.stopPropagation()}>
-        {headerActions}<select aria-label={`Place ${title} panel`} value={panel.placement} onChange={event => state.place(id, event.target.value as Placement)} className="zt-panel-placement">
-          {id === "chart" && <option value="center">Center</option>}<option value="left">Left</option><option value="right">Right</option><option value="bottom">Bottom</option><option value="floating">Float</option>
-        </select>
-        <button type="button" onClick={() => state.patch(id, { status: "minimized" })} aria-label={`Minimize ${title}`} title="Minimize to task strip"><Minus /></button>
-        <button type="button" onClick={() => state.patch(id, { maximized: !panel.maximized })} aria-label={`${panel.maximized ? "Restore" : "Maximize"} ${title}`} title="Maximize or restore">{panel.maximized ? <Minimize2 /> : <Maximize2 />}</button>
+        {!isMinimized && <>
+          {headerActions}<select aria-label={`Place ${title} panel`} value={panel.placement} onChange={event => state.place(id, event.target.value as Placement)} className="zt-panel-placement">
+            {id === "chart" && <option value="center">Center</option>}<option value="left">Left</option><option value="right">Right</option><option value="bottom">Bottom</option><option value="floating">Float</option>
+          </select>
+          <button type="button" onClick={() => state.patch(id, { status: "minimized" })} aria-label={`Minimize ${title}`} title="Minimize to task strip"><Minus /></button>
+          <button type="button" onClick={() => state.patch(id, { maximized: !panel.maximized })} aria-label={`${panel.maximized ? "Restore" : "Maximize"} ${title}`} title="Maximize or restore">{panel.maximized ? <Minimize2 /> : <Maximize2 />}</button>
+        </>}
+        {isMinimized && (
+          <button type="button" onClick={() => state.patch(id, { status: "open" })} aria-label={`Restore ${title}`} title="Restore window"><Maximize2 /></button>
+        )}
         {onClose && <button type="button" onClick={() => state.patch(id, { status: "closed" })} aria-label={`Close ${title}`} title="Close panel; keep work"><X /></button>}
       </div>
     </header>
-    <div className="zt-desktop-window-body">{(opened || panel.status === "open") && children}</div>
-    {!narrow && !panel.maximized && panel.placement !== "center" && <button type="button" className={`zt-panel-resizer at-${panel.placement}`} aria-label={`Resize ${title} panel; use arrow keys`} onPointerDown={event => begin(event, false)} onKeyDown={event => {
+    {!isMinimized && <div className="zt-desktop-window-body">{(opened || panel.status === "open") && children}</div>}
+    {!isMinimized && !narrow && !panel.maximized && panel.placement !== "center" && <button type="button" className={`zt-panel-resizer at-${panel.placement}`} aria-label={`Resize ${title} panel; use arrow keys`} onPointerDown={event => begin(event, false)} onKeyDown={event => {
       if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
       event.preventDefault();
       const delta = ["ArrowRight", "ArrowDown"].includes(event.key) ? 20 : -20;

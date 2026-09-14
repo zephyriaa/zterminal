@@ -17,7 +17,7 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const sessionSecret =
   process.env.NEXTAUTH_SECRET ??
   process.env.JWT_SECRET ??
-  "zterminal-local-secret-3982847291-safe-jwt-auth-key";
+  (process.env.NODE_ENV === "production" ? undefined : "zterminal-local-development-secret");
 
 export const googleOAuthSecretsConfigured = Boolean(googleClientId && googleClientSecret);
 
