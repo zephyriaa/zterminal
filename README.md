@@ -1,183 +1,111 @@
-<p align="center">
-  <img src="zterminal.png" alt="ZTerminal" width="180" />
-</p>
+# ZTerminal
 
-<h1 align="center">ZTerminal</h1>
+ZTerminal is a chart-first quantitative research workspace for the disciplined
+cycle: **hypothesis → code → configure → run → understand → change one thing → rerun**.
 
-<p align="center">
-  <strong>A Native Windows Quantitative Research Workstation.</strong>
-</p>
+It is under active development. The implementation is deliberately local-first:
+the web terminal uses a separate Windows Helper for local research compute and
+secure persistent secrets; the native Windows workstation will consume the same
+serialized datasets, strategy revisions, and experiment artifacts.
 
-<p align="center">
-  Research • Market Context • Order Flow • Risk • Alerts • Journaling
-</p>
+## Current, truthful status
 
-<p align="center">
-  <img src="https://img.shields.io/badge/status-in%20development-111827?style=flat-square" />
-  <img src="https://img.shields.io/badge/platform-native%20windows-111827?style=flat-square" />
-  <img src="https://img.shields.io/badge/focus-quant%20research-111827?style=flat-square" />
-  <img src="https://img.shields.io/badge/architecture-client%20first-111827?style=flat-square" />
-</p>
+Available today:
 
-<p align="center">
-  <img src="assets/dashboard.png" alt="ZTerminal dashboard" width="900" />
-</p>
+- Next.js 16 terminal with the active `FloatingWorkstationShell`, Lightweight
+  Charts, drawings, studies, multi-chart scaffolding, and persisted chart
+  documents.
+- Gate.io and Binance public market adapters, sequence-aware local books, feed
+  health states, deterministic order-flow calculations, and a Big Trades chart
+  overlay.
+- A Windows Local Helper loopback API with pairing, immutable result archives,
+  cancellation, data hashing, next-bar fills, and Monte Carlo primitives.
+- Prisma data models for workspaces, strategy versions, datasets, runs,
+  lineage, and one-variable experiment changes.
 
----
+Not yet available as a production claim:
 
-## What is ZTerminal?
+- Durable workspace envelopes and conflict-safe cloud synchronization.
+- AI coding/analysis, historical microstructure recording, Deribit options/GEX,
+  authoritative replay, or web/native workstation release parity.
+- A security sandbox for pasted or AI-generated Python. The Helper uses the
+  current Windows user's permissions, so code must be treated as trusted only
+  after review.
 
-**ZTerminal is a Native Windows Quantitative Research Workstation—not a browser-first platform.** 
+The canonical architecture and phased delivery plan live in
+[docs/INSTITUTIONAL_RESEARCH_WORKSPACE_PLAN.md](docs/INSTITUTIONAL_RESEARCH_WORKSPACE_PLAN.md).
+The data-reality matrix is [docs/DATA_CAPABILITY_MATRIX.md](docs/DATA_CAPABILITY_MATRIX.md).
 
-Built for high-performance market analysis, ZTerminal operates on a strictly **client-first, server-light** architecture. Rather than relying on expensive cloud compute and suffering from network latency, ZTerminal is engineered as a highly optimized native desktop application for traders who want rigorous statistical validation without the overhead of cloud infrastructure.
-
-> **Don't trade because a chart looks right. Trade because you understand the setup.**
-
-**Research → Validate → Monitor → Decide → Execute → Review**
-
----
-
-## Core Architecture
-
-ZTerminal is built around moving compute to the edge. The server is minimized to acting purely as a lightweight signaling, licensing, and shared services layer. 
-
-- **Native Windows Desktop (Tauri & Rust):** Wraps a React/Next.js frontend in a highly optimized native shell, granting the UI direct access to the local filesystem and OS-level APIs without browser sandbox constraints.
-- **Local Data Ingestion (DuckDB & Parquet):** Historical tick and Market-By-Order (MBO) data are downloaded, compressed into highly efficient `.parquet` files, and saved directly to your hard drive. 
-- **Zero-Copy Analytics (Polars):** Backtesting, Monte Carlo simulations, and Walk-Forward optimizations are vectorized using Rust and Polars natively on your machine, preventing look-ahead bias and offloading virtually all computational load from any central server.
-- **Professional Charting:** Uses TradingView Lightweight Charts for lag-free rendering of millions of data points, including Volume Profiles, CVD, and Order Flow computed directly on your machine.
+## Architecture
 
 ```text
-                  Cloud Infrastructure
-          ┌───────────────────────────────────┐
-          │ Lightweight API / Auth / Metadata │
-          └─────────────────┬─────────────────┘
-                            │ (Low Bandwidth)
-                            ▼
-                  Native Windows App
-          ┌───────────────────────────────────┐
-          │ ┌───────────────┐ ┌─────────────┐ │
-          │ │ Rust (Tauri)  │ │ React / JS  │ │
-          │ ├───────────────┤ ├─────────────┤ │
-          │ │ DuckDB (SQL)  │ │ Lightweight │ │
-          │ │ Polars (DFs)  │ │ Charts      │ │
-          │ │ Parquet I/O   │ │ UI Engine   │ │
-          │ └───────────────┘ └─────────────┘ │
-          └───────────────────────────────────┘
-               (Heavy CPU / RAM Compute)
+Auth.js + Supabase PostgreSQL
+identity, ownership, metadata, revisioned sync
+                 ▲
+                 │
+Shared versioned domain contracts
+Workspace │ Chart │ Dataset │ Strategy │ Experiment │ Replay │ Indicators
+       ┌─────────┴─────────┐
+       │                   │
+Next.js web terminal    Native Windows workstation
+Lightweight Charts      D3D/native renderer
+IndexedDB repository    Rust local repository
+       └──── ZTerminal Local Engine Protocol ────┘
+                         │
+Windows Helper / native sidecars
+OS secret vault │ Python/vectorbt worker │ Rust event engine │ dataset archive
+                         │
+Gate/Binance public data │ Deribit options │ imported datasets
 ```
 
----
+Parity means matching contracts, calculations, datasets, experiment identity,
+and failure semantics. It does not require pixel-identical renderers.
 
-## Scalable by design
+### Product boundaries
 
-ZTerminal's architecture is intentionally designed so that **adding users does not mean adding the same amount of server-side compute**.
+- `/terminal` and `FloatingWorkstationShell` are the active web product shell.
+- The separate Windows Helper is the canonical web-local execution boundary.
+- Native Track B is the intended Windows workstation. The hosted Tauri wrapper
+  is compatibility preview work, not a production workstation claim.
+- Auth.js remains the identity layer. Cloud sync stays disabled unless Google
+  OAuth, a session secret, and PostgreSQL are all configured.
+- Gemini will be the first AI adapter through a provider-neutral contract.
+- BTC/ETH Deribit options are the first options/GEX source. Gross gamma and OI
+  walls are distinct from signed GEX estimates; estimates must be labelled.
 
-The preferred scaling model is:
+## Local development and verification
 
-```text
-More users
-    =
-More client-side compute (Free to host)
-    +
-Minimal growth in shared backend traffic
+```powershell
+npm install
+npm run dev
+npm run typecheck
+npm test
+npm run lint
+cargo test --workspace --all-targets
 ```
 
-This drastically improves the cost profile of analytics-heavy features because the compute required for one user's massive backtest or tick-data analysis is supplied entirely by that user's own machine.
+Python suites require the repository's locked Python 3.12 environment; the
+machine-global interpreter is not a supported test runner:
 
----
+```powershell
+npm run test:python
+```
 
-## Security boundary
+Production authentication requires all of the following:
 
-Client-first does **not** mean trusting the client with authoritative decisions. The server remains the source of truth for security-sensitive operations. 
+```env
+NEXTAUTH_SECRET=<long-random-secret>
+GOOGLE_CLIENT_ID=<google-oauth-client-id>
+GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
+DATABASE_URL=postgresql://...
+```
 
-- Authentication and entitlements are server-controlled.
-- Subscription state is validated centrally.
-- Sensitive server secrets are never embedded in the client.
+No shared development analyst identity, fallback session secret, API key, or
+Helper pairing token may be synchronized to cloud state.
 
-The architecture aims to move **compute**, not **trust boundaries**, to the user's machine.
+## Safety and research integrity
 
----
-
-## Roadmap
-
-### Research & Strategy Workstation (MultiCharts-Grade Parity)
-
-- [x] Initial research workflow
-- [x] Strategy-oriented foundation
-- [x] Advanced backtesting (Sub-bar Bar Magnifier, Limit touch/penetrate, Bracket OCOs, Trailing Stops)
-- [x] Monte Carlo analysis (1,000-run bootstrap permutations with 50%, 95%, 99% drawdown bounds)
-- [x] Walk-forward validation (WFA rolling cycles with Walk-Forward Efficiency WFE scoring)
-- [x] Parameter sensitivity (In-browser Grid Search optimizer and 2D response heatmaps)
-- [x] Expanded statistical research (Institutional Tear Sheet, Monthly returns matrix, Slippage sensitivity curve)
-- [x] Web QuoteManager & Data Caching (IndexedDB 0ms cold-start, Multi-Data streams, CSV/Parquet ingestion)
-- [x] PineScript & EasyLanguage to Python transpiler
-- [x] Historical Bar Replay scrubber (1x to 50x speed)
-- [x] On-chart trade execution overlays (BUY/SELL arrows and PnL tags)
-
-### Market Intelligence
-- [x] Lightweight Charts Integration
-- [x] Deeper volume-profile analytics (Local compute)
-- [x] Expanded order-flow analysis (Local compute)
-- [x] Cross-market context
-- [x] Real-time WebSocket streaming enhancements
-
-### Risk & Monitoring
-- [x] Advanced risk engine
-- [x] Context-rich alerts
-- [x] Exposure analytics
-- [x] Advanced trade-plan workspace
-
-### Platform & Deployment
-- [x] Windows GitHub Actions CI Pipeline (`.msi` / `.exe`)
-- [x] Remote configuration support
-- [x] Release management tooling
-- [x] Workload benchmarking and cost monitoring
-
----
-
-## Philosophy
-
-**Evidence over intuition.** A compelling chart is not evidence by itself.
-
-**Robustness over optimization.** A stable strategy is more interesting than a perfectly optimized backtest.
-
-**Local compute where it makes sense.** Use the user's hardware when it is efficient, safe and reliable to do so. A native Windows app outperforms a web app for heavy data lifting.
-
-**Centralize what must be centralized.** Identity, entitlements, authoritative state and shared services belong where centralized control provides real value.
-
-**Minimize unnecessary infrastructure.** Server capacity should be spent on shared platform responsibilities, not avoidable per-user computation.
-
----
-
-## Status
-
-ZTerminal is an **actively developing project**.
-
-The primary implementation target for this repository is the **Native Windows Desktop Application**. While a web fallback exists for testing and lightweight monitoring, all heavy analytical workflows, backtesting, and advanced charting computations are explicitly designed to run via the native Tauri/Rust client on the user's local operating system.
-
----
-
-## Contributing
-
-ZTerminal is being developed with a focus on quantitative correctness, reliable market data, research integrity, risk management, performance, security, scalable architecture and maintainability.
-
-Before proposing a large feature, ask:
-
-> **Does this make the trading research and decision workflow meaningfully better?**
-
-And for implementation:
-
-> **Does this really need server-side compute, or can the user's machine handle it natively?**
-
----
-
-## Disclaimer
-
-ZTerminal is software for market analysis, research and decision support. It does not guarantee profitability or future performance. Backtested results are hypothetical and do not guarantee future results. Market data may be delayed, incomplete or inaccurate. Trading involves substantial risk. Users are responsible for their own decisions and losses.
-
----
-
-<p align="center">
-<strong>ZTerminal</strong><br />
-<sub>Quantitative market intelligence / a high-performance, client-first native analysis terminal.</sub>
-</p>
+ZTerminal is research and decision-support software. Backtests are hypothetical;
+market data can be delayed or incomplete. Missing microstructure/options data is
+an unavailable input, never a zero or fabricated signal. The software does not
+place orders or guarantee outcomes.

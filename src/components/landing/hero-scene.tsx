@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useIsReducedMotion, EASE_OUT_EXPO } from "./motion-primitives";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { useIsReducedMotion, EASE_OUT_EXPO, EASE_HYPER_EXPO } from "./motion-primitives";
 import { ParticleWave } from "./particle-wave";
-import { AAPLWorkstationScreen } from "./aapl-workstation-screen";
 import styles from "./hero-scene.module.css";
 
 const KEY_ROWS = [
@@ -43,7 +43,9 @@ export function HeroScene() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Subtle mouse tracking for gentle particle wave interaction
+  // Smooth mouse physics for DeepCharts-style 3D depth and parallax
+  const springX = useSpring(0, { stiffness: 50, damping: 25 });
+  const springY = useSpring(0, { stiffness: 50, damping: 25 });
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -52,12 +54,20 @@ export function HeroScene() {
     function handleMouseMove(e: MouseEvent) {
       const nx = e.clientX / window.innerWidth - 0.5;
       const ny = e.clientY / window.innerHeight - 0.5;
+      springX.set(nx);
+      springY.set(ny);
       setMousePos({ x: nx, y: ny });
     }
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [reduced, isDesktop]);
+  }, [reduced, isDesktop, springX, springY]);
+
+  // Restrained laptop parallax (strictly 2-4px displacement, sub-degree tilt)
+  const laptopParallaxX = useTransform(springX, [-0.5, 0.5], [-4, 4]);
+  const laptopParallaxY = useTransform(springY, [-0.5, 0.5], [-3, 3]);
+  const laptopRotateY = useTransform(springX, [-0.5, 0.5], [-0.8, 0.8]);
+  const laptopRotateX = useTransform(springY, [-0.5, 0.5], [0.6, -0.6]);
 
   // Natural scroll depth transition - calibrated so hero never crashes into header or drops opacity abruptly
   const { scrollYProgress } = useScroll({
@@ -125,11 +135,11 @@ export function HeroScene() {
           {/* Eyebrow */}
           <motion.span
             className={styles.eyebrow}
-            initial={reduced ? undefined : { opacity: 0, y: 8 }}
+            initial={reduced ? undefined : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.06, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.5, delay: 0.05, ease: EASE_HYPER_EXPO }}
           >
-            INSTITUTIONAL QUANTITATIVE WORKSTATION
+            NEXT-GENERATION QUANTITATIVE WORKSTATION
           </motion.span>
 
           {/* Enormous Headline with Sans + Italic Serif accent & Line-Masked Reveals */}
@@ -137,20 +147,20 @@ export function HeroScene() {
             <span className={styles.lineMask}>
               <motion.span
                 className={styles.first}
-                initial={reduced ? undefined : { y: 14, opacity: 0 }}
+                initial={reduced ? undefined : { y: 24, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.55, delay: 0.08, ease: EASE_OUT_EXPO }}
+                transition={{ duration: 0.6, delay: 0.08, ease: EASE_HYPER_EXPO }}
               >
-                Look further.
+                Look deeper.
               </motion.span>
             </span>
             <span className={styles.lineMask}>
               <motion.em
-                initial={reduced ? undefined : { y: 14, opacity: 0 }}
+                initial={reduced ? undefined : { y: 24, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.55, delay: 0.14, ease: EASE_OUT_EXPO }}
+                transition={{ duration: 0.6, delay: 0.15, ease: EASE_HYPER_EXPO }}
               >
-                Guess less.
+                Trade with conviction.
               </motion.em>
             </span>
           </h1>
@@ -158,26 +168,25 @@ export function HeroScene() {
           {/* Marketing-Driven Supporting Copy */}
           <motion.p
             className={styles.description}
-            initial={reduced ? undefined : { opacity: 0, y: 12 }}
+            initial={reduced ? undefined : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.18, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.5, delay: 0.2, ease: EASE_OUT_EXPO }}
           >
-            Gain an institutional edge with real-time market structure, sub-second backtesting,
-            and disciplined risk management. Stop guessing—start trading with mathematical conviction.
+            Stream sub-millisecond Level 2 market structure, backtest vectorized Python models across tick data, and deploy audit-grade risk rules. Built for serious traders who refuse to gamble on retail toys.
           </motion.p>
 
           {/* Actions */}
           <motion.div
             className={styles.actions}
-            initial={reduced ? undefined : { opacity: 0, y: 10 }}
+            initial={reduced ? undefined : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.22, ease: EASE_OUT_EXPO }}
+            transition={{ duration: 0.45, delay: 0.25, ease: EASE_OUT_EXPO }}
           >
             <Link href="/download" className={styles.primary}>
-              Explore for Windows <span className={styles.arrow}>↗</span>
+              Get ZTerminal for Windows <span className={styles.arrow}>↗</span>
             </Link>
             <Link href="/terminal" className={styles.secondary}>
-              Launch web terminal <span className={styles.arrow}>↗</span>
+              Launch live web terminal <span className={styles.arrow}>↗</span>
             </Link>
           </motion.div>
 
@@ -186,9 +195,9 @@ export function HeroScene() {
             className={styles.disclaimer}
             initial={reduced ? undefined : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.28 }}
+            transition={{ duration: 0.4, delay: 0.32, ease: EASE_OUT_EXPO }}
           >
-            Institutional decision intelligence. Zero broker lock-in. Complete capital sovereignty.
+            100% sovereign compute. Zero subscription gouging. Your proprietary alpha never leaves your custody.
           </motion.p>
           </motion.div>
         </section>
@@ -205,20 +214,57 @@ export function HeroScene() {
             initial={reduced ? undefined : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.16, ease: EASE_OUT_EXPO }}
+            style={
+              !reduced && isDesktop
+                ? {
+                    x: laptopParallaxX,
+                    y: laptopParallaxY,
+                    rotateX: laptopRotateX,
+                    rotateY: laptopRotateY,
+                  }
+                : undefined
+            }
           >
             {/* Scroll depth delta + subtle 1.015 -> 1.0 scale scrub */}
             <motion.div style={!reduced && isDesktop ? { y: laptopScrollY, scale: laptopScale } : undefined}>
               {/* Laptop Screen Lid with Projective Homography */}
-              <div className={styles.lidPositioner}>
-                <div className={styles.lidHinge}>
-                  <div className={styles.lid}>
-                    <div className={styles.terminal}>
-                      <AAPLWorkstationScreen />
-                      {/* Static Ambient Glass Glare */}
-                      <div className={styles.screenGlare} aria-hidden="true" />
-                    </div>
-                  </div>
-                </div>
+              <div className={styles.lid}>
+                <motion.div
+                  className={styles.terminal}
+                  initial={reduced ? undefined : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.7, delay: 0.3, ease: EASE_OUT_EXPO }}
+                >
+                  <Image
+                    src="/landing/terminal-screenshot.webp"
+                    alt="Current ZTerminal research workspace with real candlestick chart and indicators"
+                    width={3200}
+                    height={1800}
+                    priority
+                    className={styles.screenImage}
+                    sizes="(max-width: 800px) 100vw, 1000px"
+                  />
+                  {/* Subtle Violet Screen Wake Glow */}
+                  <motion.div
+                    className={styles.screenPowerGlow}
+                    aria-hidden="true"
+                    initial={reduced ? undefined : { opacity: 0 }}
+                    animate={{ opacity: [0, 0.65, 0.2] }}
+                    transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+                  />
+                  {/* Diagonal Specular Sheen Sweep */}
+                  {!reduced && (
+                    <motion.div
+                      className={styles.screenSheen}
+                      aria-hidden="true"
+                      initial={{ x: "-120%", opacity: 0 }}
+                      animate={{ x: "120%", opacity: [0, 1, 0.8, 0] }}
+                      transition={{ duration: 1.25, delay: 0.75, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                  )}
+                  {/* Static Ambient Glass Glare */}
+                  <div className={styles.screenGlare} aria-hidden="true" />
+                </motion.div>
               </div>
 
               {/* Metallic Laptop Chassis Base SVG */}

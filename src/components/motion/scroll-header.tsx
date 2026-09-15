@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import styles from "./motion.module.css";
 import publicStyles from "@/components/public/public-shared.module.css";
 
@@ -11,9 +12,14 @@ interface ScrollHeaderProps {
 }
 
 export function ScrollHeader({ children, activePath }: ScrollHeaderProps) {
+  const pathname = usePathname();
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Subpages like /docs and /download have content beginning immediately below the header
+  const isDocsOrSubpage = pathname?.startsWith("/docs") || pathname?.startsWith("/download");
+  const isHeaderSolid = scrolled || isDocsOrSubpage;
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -51,8 +57,14 @@ export function ScrollHeader({ children, activePath }: ScrollHeaderProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const currentPath = activePath || pathname || "";
+
   return (
-    <div className={`${styles.headerWrapper} ${hidden ? styles.headerHidden : styles.headerVisible}`}>
+    <div
+      className={`${styles.headerWrapper} ${hidden ? styles.headerHidden : styles.headerVisible} ${
+        isHeaderSolid ? styles.headerWrapperSolid : ""
+      }`}
+    >
       {/* 2px hairline scroll progress bar */}
       <div
         className={styles.progressBar}
@@ -63,17 +75,55 @@ export function ScrollHeader({ children, activePath }: ScrollHeaderProps) {
       {children ? (
         children
       ) : (
-        <header className={`${publicStyles.header} ${scrolled ? publicStyles.headerScrolled : ""}`}>
+        <header
+          className={`${publicStyles.header} ${
+            isHeaderSolid ? publicStyles.headerScrolled : ""
+          }`}
+        >
           <Link href="/" className={publicStyles.brand} aria-label="ZTerminal home">
             <i className={publicStyles.brandMark} aria-hidden="true" />
             <span className={publicStyles.brandName}>ZTERMINAL</span>
           </Link>
           <nav aria-label="Main navigation" className={publicStyles.nav}>
-            <Link href="/" className={publicStyles.navLink}>Overview</Link>
-            <Link href="/#workflow" className={publicStyles.navLink}>Workflow</Link>
-            <Link href="/download" className={publicStyles.navLink}>Windows</Link>
-            <Link href="/docs" className={publicStyles.navLink}>Docs</Link>
-            <Link href="/terminal" className={publicStyles.navLink}>Web terminal</Link>
+            <Link
+              href="/"
+              className={`${publicStyles.navLink} ${
+                currentPath === "/" ? publicStyles.navLinkActive : ""
+              }`}
+              aria-current={currentPath === "/" ? "page" : undefined}
+            >
+              Overview
+            </Link>
+            <Link href="/#workflow" className={publicStyles.navLink}>
+              Workflow
+            </Link>
+            <Link
+              href="/download"
+              className={`${publicStyles.navLink} ${
+                currentPath.startsWith("/download") ? publicStyles.navLinkActive : ""
+              }`}
+              aria-current={currentPath.startsWith("/download") ? "page" : undefined}
+            >
+              Windows
+            </Link>
+            <Link
+              href="/docs"
+              className={`${publicStyles.navLink} ${
+                currentPath.startsWith("/docs") ? publicStyles.navLinkActive : ""
+              }`}
+              aria-current={currentPath.startsWith("/docs") ? "page" : undefined}
+            >
+              Docs
+            </Link>
+            <Link
+              href="/terminal"
+              className={`${publicStyles.navLink} ${
+                currentPath.startsWith("/terminal") ? publicStyles.navLinkActive : ""
+              }`}
+              aria-current={currentPath.startsWith("/terminal") ? "page" : undefined}
+            >
+              Web terminal
+            </Link>
           </nav>
         </header>
       )}

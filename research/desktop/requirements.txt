@@ -1,0 +1,5 @@
+# Locked local Helper test/runtime environment. Python 3.12 is required.
+numpy==2.2.1
+pandas==2.2.3
+vectorbt==0.28.1
+rfc8785==0.1.4

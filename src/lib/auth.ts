@@ -1,88 +1,40 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { requireProductionAuthRuntime, resolveAuthRuntime } from "@/lib/auth-runtime";
 import { db } from "@/lib/db";
 
-// Ensure host trust and URL resolution behind reverse proxies like Render
-if (!process.env.AUTH_TRUST_HOST) {
-  process.env.AUTH_TRUST_HOST = "true";
-}
-if (!process.env.NEXTAUTH_URL && process.env.ALLOWED_ORIGIN && process.env.ALLOWED_ORIGIN !== "*") {
-  process.env.NEXTAUTH_URL = process.env.ALLOWED_ORIGIN;
-}
+const runtime = resolveAuthRuntime();
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
-const sessionSecret =
-  process.env.NEXTAUTH_SECRET ??
-  process.env.JWT_SECRET ??
-  (process.env.NODE_ENV === "production" ? undefined : "zterminal-local-development-secret");
+export const googleOAuthSecretsConfigured = runtime.googleOAuthConfigured;
+export const googleSignInConfigured = runtime.authConfigured;
+export const cloudSyncConfigured = runtime.cloudSyncConfigured;
+export const authConfigurationMissing = runtime.missing;
 
-export const googleOAuthSecretsConfigured = Boolean(googleClientId && googleClientSecret);
+const providers: NonNullable<NextAuthOptions["providers"]> = runtime.authConfigured
+  ? [
+      GoogleProvider({
+        clientId: runtime.googleClientId!,
+        clientSecret: runtime.googleClientSecret!,
+        authorization: {
+          params: {
+            scope: "openid email profile",
+            prompt: "select_account",
+            access_type: "offline",
+            response_type: "code",
+          },
+        },
+      }),
+    ]
+  : [];
 
 /**
- * Google sign-in is the exclusive authentication provider for ZTerminal workspaces.
- * When real Google Cloud OAuth credentials (GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET)
- * are provided, NextAuth connects directly to Google OAuth.
- * In local dev without credentials, a verified Google analyst profile is provisioned
- * via a seamless 1-click Google flow.
+ * Auth.js owns only verified Google identities. There is intentionally no
+ * credentials-provider fallback, shared analyst account, or embedded secret.
  */
-export const cloudSyncConfigured = true;
-export const googleSignInConfigured = true;
-
-const providers: NonNullable<NextAuthOptions["providers"]> = [];
-
-if (googleOAuthSecretsConfigured) {
-  providers.push(
-    GoogleProvider({
-      clientId: googleClientId!,
-      clientSecret: googleClientSecret!,
-      allowDangerousEmailAccountLinking: true,
-      authorization: {
-        params: {
-          scope: "openid email profile",
-          prompt: "select_account",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    })
-  );
-} else {
-  // Seamless Google sign-in provider when external OAuth credentials are not set
-  const devGoogleProvider = CredentialsProvider({
-    credentials: {},
-    async authorize() {
-      const email = "analyst@zterminal.org";
-      const name = "ZTerminal Quantitative Analyst";
-      const user = await db.user.upsert({
-        where: { email },
-        update: {},
-        create: {
-          email,
-          name,
-          image: "https://lh3.googleusercontent.com/a/default-user=s96-c",
-          emailVerified: new Date(),
-        },
-      });
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        image: user.image ?? "https://lh3.googleusercontent.com/a/default-user=s96-c",
-      };
-    },
-  });
-  // CredentialsProvider defaults id to "credentials"; override to "google" so client signIn("google") routes here
-  devGoogleProvider.id = "google";
-  devGoogleProvider.name = "Google";
-  providers.push(devGoogleProvider);
-}
-
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
-  secret: sessionSecret,
+  secret: runtime.sessionSecret,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
@@ -113,14 +65,17 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ account, profile, user }) {
-      if (account?.provider === "google") {
-        const email = (profile as { email?: string | null } | undefined)?.email || user?.email;
-        return Boolean(email);
-      }
-      return true;
+      if (account?.provider !== "google") return false;
+      const email = (profile as { email?: string | null } | undefined)?.email || user?.email;
+      return Boolean(email);
     },
   },
   pages: {
     signIn: "/terminal?account=signin",
   },
 };
+
+/** Call this at production request/startup boundaries before invoking Auth.js. */
+export function requireAuthConfiguration() {
+  return requireProductionAuthRuntime(runtime);
+}

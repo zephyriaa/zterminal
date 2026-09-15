@@ -34,7 +34,7 @@ export default function DocumentationPage() {
     <article className={styles.intro}>
       <p className={styles.eyebrow}>GETTING STARTED</p>
       <h1 className={styles.docTitle}>
-        A reference for
+        A reference for{" "}
         <em>your research.</em>
       </h1>
       <p className={styles.docLead}>

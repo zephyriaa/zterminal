@@ -19,7 +19,7 @@ export default function ZScriptMigrationPage() {
       <div className={styles.archiveBadge}>ARCHIVAL RECORD · LANGUAGE RETIRED</div>
 
       <h1 className={styles.docTitle}>
-        ZScript is retired
+        ZScript is retired{" "}
         <em>for new research.</em>
       </h1>
       <p className={styles.docLead}>

@@ -23,7 +23,7 @@ export default function WindowsInstallationGuide() {
 
       <p className={styles.eyebrow}>ZTERMINAL FOR WINDOWS</p>
       <h1 className={styles.docTitle}>
-        Installing ZTerminal
+        Installing ZTerminal{" "}
         <em>on Windows.</em>
       </h1>
       <p className={styles.docLead}>

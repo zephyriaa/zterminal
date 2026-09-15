@@ -137,23 +137,6 @@ All 82 unit tests pass cleanly:
 
 ### Actions Taken
 1. **Tracked WASM Package in Git:**
-   - Removed `.gitignore` inside `packages/zterminal-research-wasm/`.
-   - Staged and committed `package.json`, `research_core.d.ts`, `research_core.js`, `research_core_bg.wasm`, and `research_core_bg.wasm.d.ts`.
-2. **Updated `Dockerfile`:**
-   - Added `COPY packages ./packages` in the `builder` stage prior to `RUN npm ci`.
-   - In the `runner` stage, replaced duplicate `npm ci --include=dev` with `COPY --from=builder /app/packages ./packages` and `COPY --from=builder /app/node_modules ./node_modules`. This preserves the pre-generated Prisma client and guarantees instant, deterministic container builds.
-3. **Immediate Liveness Port Binding:**
-   - Updated `mini-services/market-data/index.ts` to bind port 3003 immediately upon startup and run `bootLiveProvider()` in the background. `/healthz` now responds HTTP 200 immediately on container launch.
-4. **Next.js `/healthz` Route Added:**
-   - Added `src/app/healthz/route.ts` as a reliable fallback.
-5. **Lockfile Synchronization & Dockerfile Fallback:**
-   - Identified that `package-lock.json` still contained the legacy package name `"name": "zterminal-research-core"` under `packages/zterminal-research-wasm`, conflicting with `"name": "zterminal-research-wasm"` in `packages/zterminal-research-wasm/package.json`. This caused `npm ci` to fail immediately in 0.96s with exit code 1.
-   - Synchronized `package-lock.json` to resolve the mismatch.
-   - Enhanced `Dockerfile` builder stage with `RUN npm ci || npm install` to provide a robust fallback across all container environments.
-6. **Validation & Push:**
-   - Passed `npm run typecheck` (0 errors).
-   - Passed `npm run lint` (0 warnings).
-   - Passed `npm run test` (85/85 tests passed).
    - Passed `npm run build` (Next.js production build succeeded with all static/dynamic pages).
    - **Deployed Commit:** `ba3c523` pushed to `origin/main`.
 
