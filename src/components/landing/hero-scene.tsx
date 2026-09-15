@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { useIsReducedMotion, EASE_OUT_EXPO, EASE_HYPER_EXPO } from "./motion-primitives";
-import { ParticleWave } from "./particle-wave";
 import styles from "./hero-scene.module.css";
 
 const KEY_ROWS = [
@@ -46,7 +45,6 @@ export function HeroScene() {
   // Smooth mouse physics for DeepCharts-style 3D depth and parallax
   const springX = useSpring(0, { stiffness: 50, damping: 25 });
   const springY = useSpring(0, { stiffness: 50, damping: 25 });
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (reduced || !isDesktop) return;
@@ -56,7 +54,6 @@ export function HeroScene() {
       const ny = e.clientY / window.innerHeight - 0.5;
       springX.set(nx);
       springY.set(ny);
-      setMousePos({ x: nx, y: ny });
     }
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
@@ -79,7 +76,6 @@ export function HeroScene() {
   const copyScrollOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.65]);
   const laptopScrollY = useTransform(scrollYProgress, [0, 0.85], [0, -12]);
   const laptopScale = useTransform(scrollYProgress, [0, 0.85], [1.015, 1.0]);
-  const particleScrollOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.4]);
 
   return (
     <div ref={containerRef} className={styles.viewport} id="overview">
@@ -87,25 +83,14 @@ export function HeroScene() {
         {/* Violet ambient glow beneath laptop */}
         <div className={styles.glow} aria-hidden="true" />
 
-        {/* Deterministic Canvas Particle Ridge */}
-        <motion.div
-          initial={reduced ? undefined : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.25, ease: EASE_OUT_EXPO }}
-          style={{ opacity: particleScrollOpacity }}
-        >
-          <ParticleWave
-            className={styles.waves}
-            mouseNormalizedX={mousePos.x}
-            mouseNormalizedY={mousePos.y}
-          />
-        </motion.div>
-
         {/* Apple-style floating liquid frosted-glass navigation */}
         <header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ""}`}>
           <Link href="/" className={styles.brand} aria-label="ZTerminal home">
             <i className={styles.mark} aria-hidden="true" />
-            <span>ZTERMINAL</span>
+            <span className={styles.brandText}>
+              ZTERMINAL
+              <span className={styles.betaBadge} aria-label="Beta product">BETA</span>
+            </span>
           </Link>
           <button
             className={styles.menuToggle}
@@ -139,7 +124,7 @@ export function HeroScene() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.05, ease: EASE_HYPER_EXPO }}
           >
-            NEXT-GENERATION QUANTITATIVE WORKSTATION
+            MARKET RESEARCH WORKSPACE · BETA
           </motion.span>
 
           {/* Enormous Headline with Sans + Italic Serif accent & Line-Masked Reveals */}
@@ -151,7 +136,7 @@ export function HeroScene() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.08, ease: EASE_HYPER_EXPO }}
               >
-                Look deeper.
+                Research the market.
               </motion.span>
             </span>
             <span className={styles.lineMask}>
@@ -160,7 +145,7 @@ export function HeroScene() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.15, ease: EASE_HYPER_EXPO }}
               >
-                Trade with conviction.
+                Test the idea.
               </motion.em>
             </span>
           </h1>
@@ -172,7 +157,7 @@ export function HeroScene() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: EASE_OUT_EXPO }}
           >
-            Stream sub-millisecond Level 2 market structure, backtest vectorized Python models across tick data, and deploy audit-grade risk rules. Built for serious traders who refuse to gamble on retail toys.
+            ZTerminal connects market observation, chart workspaces, Python research, and backtest evidence in one focused environment.
           </motion.p>
 
           {/* Actions */}
@@ -183,10 +168,10 @@ export function HeroScene() {
             transition={{ duration: 0.45, delay: 0.25, ease: EASE_OUT_EXPO }}
           >
             <Link href="/download" className={styles.primary}>
-              Get ZTerminal for Windows <span className={styles.arrow}>↗</span>
+              Download for Windows <span className={styles.arrow}>→</span>
             </Link>
             <Link href="/terminal" className={styles.secondary}>
-              Launch live web terminal <span className={styles.arrow}>↗</span>
+              Open ZTerminal <span className={styles.arrow}>→</span>
             </Link>
           </motion.div>
 
@@ -197,7 +182,7 @@ export function HeroScene() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.32, ease: EASE_OUT_EXPO }}
           >
-            100% sovereign compute. Zero subscription gouging. Your proprietary alpha never leaves your custody.
+            Available now: web research workspace. Windows installer status is published on the download page.
           </motion.p>
           </motion.div>
         </section>

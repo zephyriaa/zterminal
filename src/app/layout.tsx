@@ -23,16 +23,17 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "ZTerminal — Institutional Quantitative Trading Workstation",
+  title: "ZTerminal — Market research workspace",
   description:
-    "Institutional-grade quantitative workstation for systematic traders. Sub-second backtesting, real-time market structure, and disciplined risk execution with total strategy privacy.",
+    "A focused workspace for market observation, Python strategy research, backtesting, and evidence-led decisions.",
   keywords: [
     "Z Terminal",
     "quantitative trading",
-    "futures",
+    "Python backtesting",
     "backtesting",
     "market data",
-    "research terminal",
+    "market research terminal",
+    "order flow",
   ],
   authors: [{ name: "Z Terminal" }],
   icons: { icon: "/brand/zterminal-mark-v2.png", shortcut: "/brand/zterminal-mark-v2.png", apple: "/brand/zterminal-mark-v2.png" },

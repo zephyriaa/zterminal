@@ -7,18 +7,21 @@ export function PublicFooter() {
       <div className={styles.footerTop}>
         <div className={styles.brand}>
           <i className={styles.brandMark} aria-hidden="true" />
-          <span className={styles.brandName}>ZTERMINAL</span>
+          <span className={styles.brandName}>
+            ZTERMINAL
+            <span className={styles.betaBadge} aria-label="Beta product">BETA</span>
+          </span>
         </div>
         <div className={styles.footerLinks}>
           <a href="https://github.com/zephyriaa/zterminal" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-          <Link href="/download">Windows Workstation</Link>
+          <Link href="/download">Download for Windows</Link>
           <Link href="/docs">Documentation</Link>
-          <Link href="/terminal">Web Terminal</Link>
+          <Link href="/terminal">Open ZTerminal</Link>
         </div>
       </div>
       <div className={styles.footerBottom}>
-        <p>Institutional-grade quantitative workstation for systematic traders.</p>
-        <p className={styles.disclaimer}>Decision support software. Zero broker lock-in. You retain 100% control of execution.</p>
+        <p>Market observation, research, and backtesting in one focused workspace.</p>
+        <p className={styles.disclaimer}>Decision-support software. Market data can be delayed or incomplete; research results are hypothetical.</p>
       </div>
     </footer>
   );
