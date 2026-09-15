@@ -3,10 +3,14 @@ import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type In
 export class HelperError extends Error {
   constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed") { super(message); }
 }
-const TOKEN_KEY = "zterminal.local-research.token.v1";
+const RETIRED_TOKEN_KEY = "zterminal.local-research.token.v1";
 let memoryToken: string | null = null;
-function token() { try { return memoryToken ?? localStorage.getItem(TOKEN_KEY); } catch { return memoryToken; } }
-export function forgetHelper() { memoryToken = null; try { localStorage.removeItem(TOKEN_KEY); } catch { /* optional browser persistence */ } }
+function token() { return memoryToken; }
+/** Pairing grants only this browser session. Persistent localStorage tokens are retired. */
+export function forgetHelper() { memoryToken = null; }
+if (typeof window !== "undefined") {
+  try { window.localStorage.removeItem(RETIRED_TOKEN_KEY); } catch { /* Storage may be unavailable. */ }
+}
 export async function helperRequest<T>(path: string, method = "GET", body?: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
@@ -36,7 +40,6 @@ export async function pairHelper(code: string) {
   const result = await helperRequest<{ token: string; protocol: number }>("pair", "POST", { code });
   if (result.protocol !== RESEARCH_PROTOCOL) throw new HelperError("Incompatible helper protocol.", "incompatible");
   memoryToken = result.token;
-  try { localStorage.setItem(TOKEN_KEY, result.token); } catch { /* Pairing remains valid for this session. */ }
 }
 export const helper = {
   dataset: (config: ResearchConfig) => helperRequest<Dataset | null>("datasets", "POST", { provider: config.provider, product: "perpetual", symbol: config.symbol, timeframe: config.timeframe, from: config.from, to: config.to }),

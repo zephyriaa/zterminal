@@ -89,7 +89,6 @@ export const useResearch = create<State>()(persist((set, get) => ({
     abort = new AbortController();
     const signal = abort.signal;
     set({ job: { id: "preparing", stage: "validating" }, capturedScript: { id: script.id, source: script.source }, diagnostic: null, error: "" });
-    if (script.kind !== "indicator") usePanels.getState().open("backtester");
     try {
       validateConfig(config);
       const instrument = get().instrument;
@@ -166,6 +165,8 @@ async function watch(id: string) {
           } else {
             const [result, archived] = await Promise.all([helper.result(job.resultId), helper.results()]);
             useResearch.setState({ result, archived, chartResult: result, selectedTrade: null });
+            // A report is a result artifact, never a placeholder opened at run start.
+            usePanels.getState().open("backtester");
           }
         }
         if (job.stage === "failed") { const active = useResearch.getState().drafts[useResearch.getState().activeId]; useResearch.setState({ error: job.diagnostic?.message ?? `${active?.kind === "indicator" ? "Custom indicator" : "Strategy"} failed. No result was substituted.` }); }

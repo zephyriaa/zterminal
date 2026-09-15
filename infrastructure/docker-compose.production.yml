@@ -1,0 +1,86 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./oci/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    networks:
+      - zterminal-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - zterminal-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build:
+      context: ../services/quant-engine
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - R2_S3_ENDPOINT=${R2_S3_ENDPOINT:-}
+      - R2_BUCKET_NAME=${R2_BUCKET_NAME:-}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:-}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - zterminal-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  quant-worker:
+    build:
+      context: ../services/quant-engine
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["python", "-m", "worker.worker"]
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - R2_S3_ENDPOINT=${R2_S3_ENDPOINT:-}
+      - R2_BUCKET_NAME=${R2_BUCKET_NAME:-}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:-}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - zterminal-net
+
+networks:
+  zterminal-net:
+    driver: bridge
+
+volumes:
+  redis_data:
+  caddy_data:
+  caddy_config:

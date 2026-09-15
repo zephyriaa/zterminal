@@ -26,7 +26,7 @@ function tools(): Tool[] {
   return [
     { id: "chart", label: "Chart", detail: "Market canvas", icon: BarChart3, action: open("chart") },
     { id: "indicators", label: "Indicators", detail: "Studies and overlays", icon: Layers3, action: open("indicators") },
-    { id: "strategy", label: "Strategy Developer", detail: "Python research", icon: Code2, action: () => { open("strategy")(); open("backtester")(); usePanels.getState().focus("strategy"); } },
+    { id: "strategy", label: "Strategy Developer", detail: "Python research", icon: Code2, action: () => { open("strategy")(); usePanels.getState().focus("strategy"); } },
     { id: "backtester", label: "Research", detail: "Reports and archive", icon: FlaskConical, action: open("backtester") },
     { id: "context", label: "Market Context", detail: "Feed and contract", icon: Activity, action: open("context") },
     { id: "economic-calendar", label: "Calendar", detail: "Economic events", icon: CalendarDays, action: open("economic-calendar") },

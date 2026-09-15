@@ -114,6 +114,12 @@ export function ReferenceChartWorkspace() {
   const appearanceHydrated = useRef(false);
   const { lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
   useEffect(() => {
+    // A persisted panel layout from older releases must not resurrect an empty
+    // report. Completed/archived artifacts explicitly reopen it through the
+    // research store instead.
+    if (!useResearch.getState().result) usePanels.getState().patch("backtester", { status: "closed" });
+  }, []);
+  useEffect(() => {
     if (selectedProvider && selectedProvider !== provider) {
       publicMarketData.setProvider(selectedProvider);
     }
@@ -218,7 +224,7 @@ export function ReferenceChartWorkspace() {
     window.addEventListener("zterminal:focus-chart", focusChart);
     window.addEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
     const openIndicators = () => setIndicatorsOpen(true);
-    const openStrategy = () => { setStrategyOpen(true); setBacktesterOpen(true); usePanels.getState().focus("strategy"); };
+    const openStrategy = () => { setStrategyOpen(true); usePanels.getState().focus("strategy"); };
     const openBacktester = () => setBacktesterOpen(true);
     const openSettings = () => setSettingsOpen(true);
     const openCalendar = () => setCalendarOpen(true);

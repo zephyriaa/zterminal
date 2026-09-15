@@ -11,7 +11,8 @@
   display: grid;
   grid-template-columns: 240px minmax(0, 860px);
   gap: clamp(48px, 6vw, 100px);
-  margin: 64px var(--public-gutter) 140px;
+  padding-top: calc(82px + 36px);
+  margin: 0 var(--public-gutter) 140px;
 }
 
 /* SIDEBAR */
@@ -21,7 +22,7 @@
 
 .sidebarSticky {
   position: sticky;
-  top: 40px;
+  top: calc(82px + 24px);
   display: flex;
   flex-direction: column;
 }
@@ -47,6 +48,11 @@
   color: var(--public-copy);
   text-decoration: none;
   transition: color 150ms ease, transform 150ms ease;
+}
+
+.sidebarLinkActive {
+  color: var(--public-lilac);
+  font-weight: 600;
 }
 
 .sidebarLink:hover {
@@ -105,8 +111,8 @@
   margin: 0 0 20px;
   font-size: clamp(38px, 4.8vw, 62px);
   font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1.04;
+  letter-spacing: -0.04em;
+  line-height: 1.14;
   color: var(--public-ink);
 }
 
@@ -116,8 +122,8 @@
   font-style: italic;
   font-weight: 400;
   color: var(--public-lilac);
-  letter-spacing: -0.035em;
-  margin-top: 4px;
+  letter-spacing: -0.03em;
+  margin-top: 8px;
 }
 
 .docLead {
@@ -409,8 +415,9 @@
 @media (max-width: 860px) {
   .layout {
     grid-template-columns: 1fr;
-    gap: 40px;
-    margin-top: 40px;
+    gap: 36px;
+    padding-top: calc(112px + 24px);
+    margin: 0 var(--public-gutter) 100px;
   }
 
   .sidebar {

@@ -21,7 +21,7 @@ export default function PythonResearchDocumentationPage() {
 
       <p className={styles.eyebrow}>ZTERMINAL SDK / VERSION 1</p>
       <h1 className={styles.docTitle}>
-        Python Research API
+        Python Research API{" "}
         <em>Write → validate → inspect.</em>
       </h1>
       <p className={styles.docLead}>

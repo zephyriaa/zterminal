@@ -26,11 +26,49 @@
   --zt-glass-border: rgba(177, 193, 230, 0.16);
   --zt-radius-control: 6px;
   --zt-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --zt-apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Apple Liquid Glass Design Tokens */
+  --zt-liquid-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(9, 14, 32, 0.72) 100%);
+  --zt-liquid-glass-bg-subtle: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 50%, rgba(8, 12, 26, 0.65) 100%);
+  --zt-liquid-glass-bg-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(14, 21, 48, 0.86) 100%);
+  --zt-liquid-glass-border: rgba(180, 198, 235, 0.16);
+  --zt-liquid-glass-rim: rgba(255, 255, 255, 0.28);
+  --zt-liquid-glass-rim-hover: rgba(255, 255, 255, 0.48);
+  --zt-liquid-glass-blur: blur(28px) saturate(190%) contrast(105%);
+  --zt-liquid-glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 24px rgba(101, 39, 228, 0.06);
+  --zt-liquid-glass-shadow-hover: 0 30px 70px -10px rgba(0, 0, 0, 0.75), 0 0 32px rgba(101, 39, 228, 0.22), 0 0 1px 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.38), inset 0 0 28px rgba(101, 39, 228, 0.12);
 
   min-height: 100vh;
   background: var(--public-bg);
   color: var(--public-ink);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Sitewide Liquid Glass Utilities */
+.publicScope .liquidGlass {
+  background: var(--zt-liquid-glass-bg);
+  backdrop-filter: var(--zt-liquid-glass-blur);
+  -webkit-backdrop-filter: var(--zt-liquid-glass-blur);
+  border: 1px solid var(--zt-liquid-glass-border);
+  border-top: 1px solid var(--zt-liquid-glass-rim);
+  box-shadow: var(--zt-liquid-glass-shadow);
+  position: relative;
+}
+
+.publicScope .liquidGlassHover {
+  transition: transform 240ms var(--zt-apple-ease),
+              border-color 240ms var(--zt-apple-ease),
+              box-shadow 240ms var(--zt-apple-ease),
+              background 240ms var(--zt-apple-ease);
+}
+
+.publicScope .liquidGlassHover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(192, 147, 245, 0.45);
+  border-top-color: var(--zt-liquid-glass-rim-hover);
+  background: var(--zt-liquid-glass-bg-hover);
+  box-shadow: var(--zt-liquid-glass-shadow-hover);
 }
 
 .publicScope :where(a, button):focus-visible {

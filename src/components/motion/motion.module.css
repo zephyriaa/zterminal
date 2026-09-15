@@ -1,11 +1,16 @@
 /* Restrained Institutional Motion System */
 
 .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.revealPending {
   opacity: 0;
-  transform: translateY(var(--y-offset, 24px));
+  transform: translateY(var(--y-offset, 16px));
   transition:
-    opacity var(--motion-reveal, 600ms) var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1)),
-    transform var(--motion-reveal, 600ms) var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1));
+    opacity var(--motion-reveal, 500ms) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--motion-reveal, 500ms) cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
@@ -21,8 +26,15 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  transition: transform var(--motion-ui, 200ms) var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1));
+  transition: transform var(--motion-ui, 200ms) cubic-bezier(0.16, 1, 0.3, 1), background 200ms ease, border-color 200ms ease;
   will-change: transform;
+}
+
+.headerWrapperSolid {
+  background: rgba(5, 10, 21, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--public-line-soft, rgba(133, 153, 195, 0.12));
 }
 
 .headerHidden {

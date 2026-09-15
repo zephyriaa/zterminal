@@ -1,149 +1,127 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import Image from "next/image";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion } from "framer-motion";
+import { LaserScannerSweep } from "./vector-motion-graphics";
 import styles from "./sticky-canvas-showcase.module.css";
 
-interface CapabilityCard {
-  num: string;
+interface Annotation {
   tag: string;
-  title: string;
+  spec: string;
   desc: string;
 }
 
-const CAPABILITIES: CapabilityCard[] = [
+const ANNOTATIONS: Annotation[] = [
   {
-    num: "01 / PIPELINE",
-    tag: "ZERO-LATENCY",
-    title: "Direct L2/L3 Exchange Feed",
-    desc: "Stream live order books, aggressive trade executions, and millisecond book depth without cloud queue bottlenecks or dropped ticks.",
+    tag: "DIRECT L2 FEED",
+    spec: "0.38MS LATENCY",
+    desc: "Zero Cloud Proxy. Connect directly to exchange matching engines with sub-millisecond execution. Zero dropped ticks, zero packet queuing, and zero third-party lag.",
   },
   {
-    num: "02 / ENGINE",
-    tag: "DETERMINISTIC",
-    title: "Sub-Bar Bar Magnifier",
-    desc: "Inspect intra-bar price action down to the second. Eliminates ambiguous High/Low fill order assumptions with authentic tick matching.",
+    tag: "ORDER BOOK HEATMAP",
+    spec: "REAL-TIME DEPTH",
+    desc: "Live Liquidity Topography. Watch institutional resting limit orders, depth imbalances, and hidden bid/ask walls materialize in real time before price reaches them.",
   },
   {
-    num: "03 / CONTEXT",
-    tag: "CONFLUENCE",
-    title: "Multi-Data Correlation Matrix",
-    desc: "Overlay Pearson cross-market beta, cumulative volume delta (CVD) divergences, and institutional volume profiles on a single synchronized canvas.",
+    tag: "60 FPS ORDER FLOW",
+    spec: "CVD & SWEEP ENGINE",
+    desc: "Institutional Footprint. Identify aggressive market absorption and volume delta divergences rendered with buttery smooth 60fps WebGL hardware acceleration.",
+  },
+  {
+    tag: "MULTI-TIMEFRAME CONFLUENCE",
+    spec: "SYNCHRONIZED CANVAS",
+    desc: "Macro-to-Micro Alignment. Project session VWAPs, composite volume profiles, and liquidity pools seamlessly alongside your fast execution triggers.",
+  },
+  {
+    tag: "SUB-BAR TICK REPLAY",
+    spec: "MICROSTRUCTURE MAGNIFIER",
+    desc: "Audit-Grade Replay. Deconstruct violent liquidity spikes down to the millisecond sequence. Verify exact fill order without hypothetical illusions.",
+  },
+  {
+    tag: "BARE-METAL SOVEREIGNTY",
+    spec: "100% PRIVATE ALPHA",
+    desc: "Absolute Code Custody. Run vectorized Python strategies and custom indicators directly on your local CPU/GPU. Your algorithms never leave your computer.",
   },
 ];
 
 export function StickyCanvasShowcase() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const imageWrapperRef = useRef<HTMLDivElement | null>(null);
-  const [activeIdx, setActiveIdx] = useState(0);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isDesktop = window.matchMedia("(min-width: 900px)").matches;
-
-    if (prefersReduced || !isDesktop) return;
-
-    gsap.registerPlugin(ScrollTrigger);
-
-    const container = containerRef.current;
-    const imageWrapper = imageWrapperRef.current;
-    if (!container || !imageWrapper) return;
-
-    // Scroll scrub: subtle scale canvas 1.015 -> 1.0 and advance active card
-    const trigger = ScrollTrigger.create({
-      trigger: container,
-      start: "top 90px",
-      end: "+=650",
-      pin: true,
-      scrub: 0.35,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        const progress = self.progress; // 0 to 1
-
-        // Subtle grounding scale 1.015 -> 1.0
-        const scale = 1.015 - progress * 0.015;
-        gsap.set(imageWrapper, { scale });
-
-        // Advance active capability card smoothly
-        if (progress < 0.36) {
-          setActiveIdx(0);
-        } else if (progress < 0.72) {
-          setActiveIdx(1);
-        } else {
-          setActiveIdx(2);
-        }
-      },
-    });
-
-    const timer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      trigger.kill();
-    };
-  }, []);
-
-  const current = CAPABILITIES[activeIdx];
-
   return (
-    <div ref={containerRef} className={styles.showcasePinContainer}>
-      <div className={styles.showcaseSticky}>
-        <div className={styles.intro}>
-          <p className={styles.eyebrow}>04 / HIGH-SPEED CANVAS</p>
-          <h2 className={styles.heading}>Read the market in context.</h2>
-        </div>
+    <section className={styles.canvasSection} id="canvas" aria-labelledby="canvas-heading">
+      {/* Section Header */}
+      <div className={styles.intro}>
+        <p className={styles.eyebrow}>05 / HIGH-SPEED CANVAS</p>
+        <h2 id="canvas-heading" className={styles.heading}>
+          Live market structure at the speed of thought.
+        </h2>
+        <p className={styles.leadText}>
+          Zero cloud lag. Zero dropped ticks. Stream sub-millisecond Level 2 order books, institutional volume delta, and dynamic liquidity depth directly onto a hardware-accelerated workstation canvas.
+        </p>
 
-        <div className={styles.canvasStage}>
-          <div className={styles.canvasChrome}>
-            <div className={styles.dots}>
-              <span />
-              <span />
-              <span />
-            </div>
-            <span className={styles.badge}>BTC / USDT · 5M CANVAS · PERPETUAL · DIRECT L2 FEED</span>
-            <span className={styles.chip}>PRO WORKSTATION</span>
-          </div>
-
-          <div ref={imageWrapperRef} className={styles.imageWrapper}>
-            <Image
-              src="/landing/terminal-screenshot.webp"
-              alt="Full ZTerminal market canvas displaying real Bitcoin price action and indicators"
-              width={3200}
-              height={1800}
-              priority
-              sizes="(max-width: 900px) 95vw, 85vw"
-              className={styles.canvasImage}
-            />
-          </div>
-
-          {/* Floating Capability Cards HUD */}
-          <aside className={styles.cardsHud} aria-live="polite">
-            <div className={styles.hudCard}>
-              <div className={styles.hudStep}>
-                <span className={styles.hudStepNum}>{current.num}</span>
-                <span className={styles.hudStepTag}>{current.tag}</span>
-              </div>
-              <h3 className={styles.hudTitle}>{current.title}</h3>
-              <p className={styles.hudDesc}>{current.desc}</p>
-              <div className={styles.hudPills} aria-hidden="true">
-                {CAPABILITIES.map((_, i) => (
-                  <span
-                    key={i}
-                    className={`${styles.hudPill} ${i === activeIdx ? styles.hudPillActive : ""}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </aside>
+        <div className={styles.badgeRail} aria-label="Terminal canvas specifications">
+          <span className={styles.badge}>BTC / USDT PERP</span>
+          <span className={`${styles.badge} ${styles.badgeActive}`}>DIRECT L2 FEED (0.38MS)</span>
+          <span className={styles.badge}>60 FPS HARDWARE WEBGL</span>
+          <span className={styles.badge}>ZERO CLOUD PROXY</span>
+          <span className={styles.badge}>UNFILTERED TICK DEPTH</span>
         </div>
       </div>
-    </div>
+
+      {/* Dominant Terminal Canvas Window */}
+      <div className={styles.canvasStage}>
+        {/* Sleek Window Chrome */}
+        <div className={styles.canvasChrome}>
+          <div className={styles.chromeLeft}>
+            <div className={styles.dots} aria-hidden="true">
+              <span className={styles.dotClose} />
+              <span className={styles.dotMin} />
+              <span className={styles.dotMax} />
+            </div>
+            <span className={styles.chromeTab}>BTC/USDT · 5M PERPETUAL · DESK_WORKSPACE_01</span>
+          </div>
+
+          <div className={styles.chromeRight}>
+            <span className={styles.chromeTelemetry}>ENGINE: 60 FPS WEBGL</span>
+            <span className={styles.chromeTelemetry}>LATENCY: 0.38ms</span>
+            <span className={styles.chromeTelemetry}>LOSS: 0.00%</span>
+            <div className={styles.liveChip}>
+              <span className={styles.liveDot} aria-hidden="true" />
+              <span>DIRECT L2 STREAM</span>
+            </div>
+          </div>
+        </div>
+
+        {/* High-Resolution Workstation Canvas */}
+        <div className={styles.imageWrapper}>
+          <LaserScannerSweep />
+          <Image
+            src="/landing/terminal-screenshot.webp"
+            alt="ZTerminal high-speed market canvas displaying live BTC/USDT price structure, order flow depth, and institutional indicators"
+            width={3200}
+            height={1800}
+            priority
+            sizes="(max-width: 1024px) 100vw, 1440px"
+            className={styles.canvasImage}
+          />
+        </div>
+      </div>
+
+      {/* High-Impact Workstation Annotations Grid */}
+      <div className={styles.annotationGrid} aria-label="Terminal workstation capabilities">
+        {ANNOTATIONS.map((item) => (
+          <motion.article
+            key={item.tag}
+            className={styles.annotationCard}
+            whileHover={{ y: -4, transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } }}
+          >
+            <div className={styles.annotationHeader}>
+              <span className={styles.annotationTag}>{item.tag}</span>
+              <span className={styles.annotationSpec}>{item.spec}</span>
+            </div>
+            <p className={styles.annotationText}>{item.desc}</p>
+          </motion.article>
+        ))}
+      </div>
+    </section>
   );
 }

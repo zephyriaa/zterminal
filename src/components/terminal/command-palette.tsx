@@ -29,7 +29,7 @@ import { usePanels } from "@/stores/panels";
 const VIEWS: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; action: () => void }[] = [
   { id: "chart", label: "Open Chart", icon: CandlestickChart, action: () => usePanels.getState().open("chart") },
   { id: "indicators", label: "Open Indicators", icon: Layers3, action: () => usePanels.getState().open("indicators") },
-  { id: "strategy", label: "Open Strategy Developer", icon: Code2, action: () => { usePanels.getState().open("strategy"); usePanels.getState().open("backtester"); usePanels.getState().focus("strategy"); } },
+  { id: "strategy", label: "Open Strategy Developer", icon: Code2, action: () => { usePanels.getState().open("strategy"); usePanels.getState().focus("strategy"); } },
   { id: "backtester", label: "Open Research Report", icon: FlaskConical, action: () => usePanels.getState().open("backtester") },
   { id: "calendar", label: "Open Economic Calendar", icon: LayoutDashboard, action: () => usePanels.getState().open("economic-calendar") },
   { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard, action: () => usePanels.getState().open("terminal-settings") },

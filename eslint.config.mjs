@@ -19,6 +19,7 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     // React rules
     "react-hooks/exhaustive-deps": "off",
     "react-hooks/purity": "off",
+    "react-hooks/set-state-in-effect": "off",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",
     "react/prop-types": "off",
@@ -44,7 +45,14 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
-  ignores: ["node_modules/**", "public/vendor/monaco-*/**", ".next/**", "out/**", "build/**", "desktop/dist/**", "src-tauri/target/**", "src-tauri/gen/**", "packages/zterminal-research-wasm/**", "next-env.d.ts", "examples/**", "skills"]
+  files: ["scripts/**/*.js"],
+  rules: {
+    // Repository maintenance scripts intentionally use CommonJS under a
+    // CommonJS package boundary; application code remains ESM/TypeScript.
+    "@typescript-eslint/no-require-imports": "off",
+  },
+}, {
+  ignores: ["node_modules/**", "public/vendor/monaco-*/**", ".next/**", ".open-next/**", ".wrangler/**", "out/**", "build/**", "desktop/dist/**", "src-tauri/target/**", "src-tauri/gen/**", "packages/zterminal-research-wasm/**", "next-env.d.ts", "examples/**", "skills"]
 }];
 
 export default eslintConfig;

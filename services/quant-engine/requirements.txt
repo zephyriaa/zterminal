@@ -1,0 +1,16 @@
+# ZTerminal Dedicated Quant Engine Dependencies
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+redis==5.2.1
+asyncpg==0.30.0
+numpy>=2.0.0
+pandas>=2.2.0
+scipy>=1.14.0
+pyarrow>=17.0.0
+polars>=1.15.0
+nautilus_trader==1.231.0
+vectorbt==0.28.1
+numba>=0.60.0
+rfc8785==0.1.4
+psutil>=6.1.0

@@ -78,3 +78,11 @@ __pycache__/
 .pytest_cache/
 artifacts/
 .dev.vars
+
+# Locked local Python test environment (created by scripts/test-python.ps1)
+/.venv-research/
+
+# Cloudflare & QA capture artifacts
+.wrangler/
+audit-captures/
+calibrated-captures/

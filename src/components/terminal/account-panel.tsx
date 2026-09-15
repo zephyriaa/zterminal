@@ -60,6 +60,7 @@ export function AccountPanel({
 }) {
   const { data: session, status, update: updateSession } = useSession();
   const [signingIn, setSigningIn] = useState(false);
+  const [googleSignInAvailable, setGoogleSignInAvailable] = useState<boolean | null>(null);
   const [authError, setAuthError] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     const urlParams = new URLSearchParams(window.location.search);
@@ -111,7 +112,24 @@ export function AccountPanel({
     };
   }, [onClose]);
 
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/auth/config", { cache: "no-store" })
+      .then(async (response) => ({ response, body: await response.json().catch(() => null) }))
+      .then(({ response, body }) => {
+        if (active) setGoogleSignInAvailable(Boolean(response.ok && body?.enabled));
+      })
+      .catch(() => {
+        if (active) setGoogleSignInAvailable(false);
+      });
+    return () => { active = false; };
+  }, []);
+
   const handleGoogleSignIn = async () => {
+    if (!googleSignInAvailable) {
+      setAuthError("Cloud identity is not configured for this deployment. Your local research remains available on this device.");
+      return;
+    }
     setSigningIn(true);
     setAuthError(null);
     try {
@@ -523,10 +541,15 @@ export function AccountPanel({
           </div>
 
           <div className="w-full pt-1">
+            {googleSignInAvailable === false ? (
+              <div className="rounded border border-border bg-surface/60 p-3 text-[10px] leading-relaxed text-muted-foreground">
+                Cloud identity and synchronization are unavailable until this deployment has Google OAuth, a session secret, and PostgreSQL configured. Local research remains on this device.
+              </div>
+            ) : (
             <button
               type="button"
               className="w-full py-2.5 px-4 rounded bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-medium text-xs shadow-sm flex items-center justify-center gap-2.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:shadow"
-              disabled={status === "loading" || signingIn}
+              disabled={status === "loading" || signingIn || googleSignInAvailable === null}
               onClick={() => void handleGoogleSignIn()}
             >
               {signingIn ? (
@@ -558,9 +581,10 @@ export function AccountPanel({
                 </>
               )}
             </button>
-            <p className="text-[9.5px] text-center text-muted-foreground mt-2">
+            )}
+            {googleSignInAvailable !== false && <p className="text-[9.5px] text-center text-muted-foreground mt-2">
               Google is the exclusive authentication provider for ZTerminal.
-            </p>
+            </p>}
           </div>
         </div>
       )}
