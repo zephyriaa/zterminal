@@ -23,9 +23,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "ZTerminal — Market research workspace",
+  title: "ZTerminal — See Further. Guess Less.",
   description:
-    "A focused workspace for market observation, Python strategy research, backtesting, and evidence-led decisions.",
+    "See Further. Guess Less. A market research workspace for charting, Python strategy research, backtesting, and evidence-led decisions.",
   keywords: [
     "Z Terminal",
     "quantitative trading",

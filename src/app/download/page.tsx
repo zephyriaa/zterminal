@@ -5,6 +5,7 @@ import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import "@/components/public/public-theme.css";
 import { publicWindowsRelease } from "@/lib/releases/windows-release";
+import { BackgroundField, CTAButton, TechnicalEyebrow } from "@/components/public/public-primitives";
 
 import styles from "./download.module.css";
 
@@ -37,6 +38,7 @@ export default function DownloadPage() {
 
   return (
     <main className={`${styles.page} publicScope`}>
+      <BackgroundField />
       <PublicHeader />
 
       <div className={styles.content}>
@@ -51,6 +53,8 @@ export default function DownloadPage() {
             ZTerminal’s local Helper is built for research that benefits from your own machine: selected datasets, Python execution, persistent secrets, and archived results remain under your control.
           </p>
         </section>
+
+        <div className={styles.heroActions}><CTAButton href="/terminal">Open ZTerminal</CTAButton><CTAButton href="/docs/windows/install" secondary>Read installation guide</CTAButton></div>
 
         {/* RELEASE SPECIFICATION & STATUS */}
         {release.available ? (
@@ -144,6 +148,8 @@ export default function DownloadPage() {
             </div>
           </section>
         )}
+
+        <section className={styles.architecture} aria-labelledby="architecture-title"><div><TechnicalEyebrow>LOCAL RESEARCH PATH</TechnicalEyebrow><h2 id="architecture-title">A clear boundary<br/><em>for local work.</em></h2><p>The browser is where you investigate. The optional Windows Helper is where approved local Python research runs and archives its evidence.</p></div><div className={styles.archDiagram} aria-label="Browser to local helper to research archive architecture"><article><span>01</span><b>Browser workspace</b><small>Chart, context, strategy editor</small></article><i>→</i><article><span>02</span><b>Windows Helper</b><small>Paired local research process</small></article><i>→</i><article><span>03</span><b>Local evidence</b><small>Runs, assumptions, hashes</small></article></div></section>
 
         {/* TWO SURFACES */}
         <section className={styles.surfacesSection} aria-labelledby="surfaces-title">

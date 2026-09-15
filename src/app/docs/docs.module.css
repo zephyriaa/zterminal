@@ -6,6 +6,7 @@
     var(--public-bg);
   min-height: 100vh;
 }
+.page>:global(.backgroundField){position:absolute;inset:0;z-index:0}.layout,.page :global(.footer),.page :global(.header){position:relative;z-index:1}
 
 .layout {
   display: grid;
