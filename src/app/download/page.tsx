@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "ZTerminal for Windows — Native Quantitative Workstation",
-  description: "Official ZTerminal Windows release channel, verified packages, and cryptographic installation guidance.",
+  description: "Official ZTerminal Windows release status, verified packages, checksums, and installation guidance.",
 };
 
 function Arrow() {
@@ -48,7 +48,7 @@ export default function DownloadPage() {
             <em>On your machine.</em>
           </h1>
           <p className={styles.lead}>
-            ZTerminal is engineered as a native, client-first Windows workstation. By moving analytics to local hardware, your machine processes tick data, runs vectorized simulations, and renders charts directly on your GPU without cloud network latency or server compute caps.
+            ZTerminal’s local Helper is built for research that benefits from your own machine: selected datasets, Python execution, persistent secrets, and archived results remain under your control.
           </p>
         </section>
 
@@ -105,7 +105,7 @@ export default function DownloadPage() {
                   The signed public installer is in preparation.
                 </h2>
                 <p className={styles.releaseDescription}>
-                  ZTerminal does not distribute unverified binaries or development artifacts. Compatibility matrices, code signing certificates, and automated performance benchmarks are being verified before public distribution.
+                  ZTerminal does not distribute unverified binaries or development artifacts. Compatibility, package signing, and release documentation are being verified before public distribution.
                 </p>
               </div>
               <div className={styles.reasonTag}>
@@ -158,9 +158,9 @@ export default function DownloadPage() {
           <div className={styles.surfaceCards}>
             <article className={styles.surfaceCard}>
               <div className={styles.surfaceNum}>01 / NATIVE WORKSTATION</div>
-              <h3 className={styles.surfaceTitle}>Native Windows Desktop (Primary)</h3>
+              <h3 className={styles.surfaceTitle}>Windows research environment</h3>
               <p className={styles.surfaceBody}>
-                The intended environment for quantitative traders. Direct access to your local filesystem, NVMe read bandwidth for massive tick datasets, and native multithreaded simulation.
+                The local Helper provides the current Windows boundary for research compute, persistent secrets, and immutable result archives. The native workstation remains in active development.
               </p>
               <div className={styles.surfaceFooter}>
                 <Link className={styles.textLink} href="/docs/windows/install">
@@ -173,11 +173,11 @@ export default function DownloadPage() {
               <div className={styles.surfaceNum}>02 / WEB TERMINAL</div>
               <h3 className={styles.surfaceTitle}>Browser Research Workstation</h3>
               <p className={styles.surfaceBody}>
-                Zero installation required. Launch the browser terminal to explore the market canvas, inspect research indicators, and evaluate setups immediately.
+                No installation is required to explore the current browser workspace: inspect charts, public market feeds, and available research surfaces.
               </p>
               <div className={styles.surfaceFooter}>
                 <Link className={styles.primaryButtonSmall} href="/terminal">
-                  Launch web terminal <Arrow />
+                  Open ZTerminal <Arrow />
                 </Link>
               </div>
             </article>

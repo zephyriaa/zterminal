@@ -18,7 +18,7 @@ const GUIDES = [
   {
     title: "Python Research API",
     tag: "STRATEGY DEVELOPMENT",
-    description: "Write vectorbt strategies in Python, run zero-copy local simulations, and inspect reproducible backtest evidence.",
+    description: "Write Python strategies, run local research, and inspect reproducible backtest evidence.",
     href: "/docs/python-research",
   },
   {
@@ -38,7 +38,7 @@ export default function DocumentationPage() {
         <em>your research.</em>
       </h1>
       <p className={styles.docLead}>
-        ZTerminal is a native Windows quantitative workstation in active development. These guides describe the available research workflows, execution models, and mathematical assumptions.
+        ZTerminal is a market research workspace in active development. These guides describe available workflows, data boundaries, execution models, and assumptions.
       </p>
 
       <div className={styles.guideList}>

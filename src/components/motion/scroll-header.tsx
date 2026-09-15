@@ -82,7 +82,10 @@ export function ScrollHeader({ children, activePath }: ScrollHeaderProps) {
         >
           <Link href="/" className={publicStyles.brand} aria-label="ZTerminal home">
             <i className={publicStyles.brandMark} aria-hidden="true" />
-            <span className={publicStyles.brandName}>ZTERMINAL</span>
+            <span className={publicStyles.brandName}>
+              ZTERMINAL
+              <span className={publicStyles.betaBadge} aria-label="Beta product">BETA</span>
+            </span>
           </Link>
           <nav aria-label="Main navigation" className={publicStyles.nav}>
             <Link
@@ -94,8 +97,8 @@ export function ScrollHeader({ children, activePath }: ScrollHeaderProps) {
             >
               Overview
             </Link>
-            <Link href="/#workflow" className={publicStyles.navLink}>
-              Workflow
+            <Link href="/#research-loop" className={publicStyles.navLink}>
+              Research loop
             </Link>
             <Link
               href="/download"
@@ -104,7 +107,7 @@ export function ScrollHeader({ children, activePath }: ScrollHeaderProps) {
               }`}
               aria-current={currentPath.startsWith("/download") ? "page" : undefined}
             >
-              Windows
+              Download
             </Link>
             <Link
               href="/docs"
@@ -122,7 +125,7 @@ export function ScrollHeader({ children, activePath }: ScrollHeaderProps) {
               }`}
               aria-current={currentPath.startsWith("/terminal") ? "page" : undefined}
             >
-              Web terminal
+              Open ZTerminal
             </Link>
           </nav>
         </header>
