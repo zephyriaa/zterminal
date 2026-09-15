@@ -20,8 +20,8 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    // 1. Strict boundary: Never enable smooth scroll on /terminal
-    if (pathname.startsWith("/terminal")) {
+    // Smooth scrolling is reserved for the expressive landing page.
+    if (pathname !== "/") {
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;

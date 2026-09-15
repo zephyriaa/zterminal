@@ -20,7 +20,7 @@ export function PublicFooter() {
         </div>
       </div>
       <div className={styles.footerBottom}>
-        <p>Market observation, research, and backtesting in one focused workspace.</p>
+        <p>See further. Test assumptions. Keep the evidence.</p>
         <p className={styles.disclaimer}>Decision-support software. Market data can be delayed or incomplete; research results are hypothetical.</p>
       </div>
     </footer>

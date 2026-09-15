@@ -1,6 +1,7 @@
 import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import { DocsSidebarNav } from "./docs-sidebar-nav";
+import { BackgroundField } from "@/components/public/public-primitives";
 import "@/components/public/public-theme.css";
 
 import styles from "./docs.module.css";
@@ -8,6 +9,7 @@ import styles from "./docs.module.css";
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${styles.page} publicScope`}>
+      <BackgroundField />
       <PublicHeader />
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
