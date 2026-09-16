@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { DockviewReact, DockviewReadyEvent, IDockviewPanelProps } from "dockview-react";
-import "dockview-core/dist/styles/dockview.css";
+import "dockview-react/dist/styles/dockview.css";
 import { ReferenceChartWorkspace } from "../reference-chart-workspace";
 
 // Import existing chart wrapper

@@ -70,8 +70,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build frontend
-        run: npm run build
+      - name: Build frontend for Cloudflare
+        run: npm run cf:build
         env:
           DATABASE_URL: "file:./db/custom.db"
           NODE_ENV: production
