@@ -76,6 +76,7 @@ export class PublicMarketDataProvider {
 
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private watchdogTimer: ReturnType<typeof setInterval> | undefined;
+  private handshakeTimer: ReturnType<typeof setTimeout> | undefined;
   private retries = 0;
   private lastMessageAt = 0;
   private symbolLastActivity = new Map<string, number>();
@@ -185,7 +186,16 @@ export class PublicMarketDataProvider {
     try {
       const socket = (this.socket = new WebSocket(endpoint));
 
+      this.handshakeTimer = setTimeout(() => {
+        if (socket && socket.readyState !== WebSocket.OPEN) {
+          this.announce("degraded", "UNAVAILABLE", `${this.provider} WebSocket handshake timeout (5000ms)`);
+          // Forcibly close the stalled socket, triggering onclose and reconnect logic
+          socket.close();
+        }
+      }, 5_000);
+
       socket.onopen = () => {
+        if (this.handshakeTimer) clearTimeout(this.handshakeTimer);
         this.retries = 0;
         this.lastMessageAt = Date.now();
         this.announce("connected", "LIVE");
@@ -229,6 +239,20 @@ export class PublicMarketDataProvider {
         if (this.listeners.size === 0) return;
 
         this.retries += 1;
+
+        if (this.provider === "gateio" && this.retries >= 3) {
+          this.announce("degraded", "UNAVAILABLE", "Gate.io failed 3 consecutive times; failing over to Binance");
+          this.retries = 0;
+          
+          // Delay the failover slightly so the UI doesn't flicker instantly on the 3rd fail
+          if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+          this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = undefined;
+            this.setProvider("binance");
+          }, 1_000);
+          return;
+        }
+
         // Exponential backoff with jitter: 1s, 2s, 4s, 8s, 16s, max 30s + [0..500ms] jitter
         const baseDelay = Math.min(30_000, 1_000 * Math.pow(2, Math.min(this.retries, 5)));
         const jitter = Math.floor(Math.random() * 500);
@@ -252,6 +276,10 @@ export class PublicMarketDataProvider {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = undefined;
+    }
+    if (this.handshakeTimer) {
+      clearTimeout(this.handshakeTimer);
+      this.handshakeTimer = undefined;
     }
     this.stopWatchdog();
     if (this.socket) {

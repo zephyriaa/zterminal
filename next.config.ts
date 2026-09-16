@@ -6,6 +6,7 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Content-Security-Policy", value: "default-src 'self' 'unsafe-eval' 'unsafe-inline'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' wss://*.gate.io wss://*.binance.com https://*.gate.io https://*.binance.com https://api.binance.com wss://stream.bybit.com wss://advanced-trade-ws.coinbase.com https://api.gateio.ws wss://fx-ws.gateio.ws;" },
 ];
 
 const nextConfig: NextConfig = {
