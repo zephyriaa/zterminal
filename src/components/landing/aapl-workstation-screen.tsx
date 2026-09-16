@@ -30,7 +30,7 @@ export function AAPLWorkstationScreen() {
         <div className={styles.brandGroup}>
           <div className={styles.brand}>
             <span className={styles.brandMark} aria-hidden="true" />
-            <span>ZTERMINAL</span>
+            <span className="tracking-wider text-xs">ZTERMINAL</span>
           </div>
           <nav className={styles.navTabs} aria-label="Workstation views">
             <span className={`${styles.navTab} ${styles.active}`}>Chart</span>
@@ -42,7 +42,7 @@ export function AAPLWorkstationScreen() {
         </div>
 
         <div className={styles.rightControls}>
-          <div className={styles.searchBox}>
+          <div className={`${styles.searchBox} pointer-events-none opacity-50`}>
             <span aria-hidden="true">🔍</span>
             <span>Search symbols, notes...</span>
             <span className={styles.searchKbd}>⌘ K</span>
@@ -54,7 +54,7 @@ export function AAPLWorkstationScreen() {
       {/* 2. Main Workspace */}
       <div className={styles.workspaceBody}>
         {/* Left Drawing Tools Rail */}
-        <aside className={styles.toolsRail} aria-label="Drawing Tools">
+        <aside className={`${styles.toolsRail} pointer-events-none opacity-50`} aria-label="Drawing Tools">
           <div className={styles.toolIcon} title="Crosshair">✛</div>
           <div className={styles.toolIcon} title="Trendline">╱</div>
           <div className={styles.toolIcon} title="Fibonacci">≡</div>
@@ -74,11 +74,11 @@ export function AAPLWorkstationScreen() {
             <div className={styles.symbolInfo}>
               <div className={styles.symbolBadge}>
                 <span className={styles.appleMark}></span>
-                <span>AAPL</span>
+                <span className="tracking-wider text-xs">AAPL</span>
                 <span style={{ color: "#6e7681", margin: "0 2px" }}>···</span>
                 <span className={styles.symbolName}>Apple Inc.</span>
               </div>
-              <div className={styles.timeframes}>
+              <div className={`${styles.timeframes} pointer-events-none opacity-50`}>
                 <span className={styles.tfBtn}>1m</span>
                 <span className={styles.tfBtn}>5m</span>
                 <span className={styles.tfBtn}>15m</span>
@@ -106,7 +106,10 @@ export function AAPLWorkstationScreen() {
           </div>
 
           {/* SVG Candlestick Chart with Volume and Glowing Price Axis */}
-          <div className={styles.chartCanvasWrapper}>
+          <div className={`${styles.chartCanvasWrapper} relative`} style={{ minHeight: '480px' }}>
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-white/80 px-3 py-1.5 text-xs rounded border border-zinc-800/80 z-50 pointer-events-none uppercase tracking-wider font-mono shadow-md">
+              Interactive Preview — Illustrative Data
+            </div>
             <svg className={styles.chartSvg} viewBox="0 0 770 480" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="volGradUp" x1="0" y1="0" x2="0" y2="1">
@@ -391,7 +394,7 @@ export function AAPLWorkstationScreen() {
         </section>
 
         {/* Right Watchlist Panel */}
-        <aside className={styles.watchlistPanel} aria-label="Symbol Watchlist">
+        <aside className={`${styles.watchlistPanel} pointer-events-none opacity-50`} aria-label="Symbol Watchlist">
           <div className={styles.watchlistHeader}>
             <span>Watchlist</span>
             <div style={{ display: "flex", gap: "8px", color: "#8b949e", cursor: "pointer" }}>

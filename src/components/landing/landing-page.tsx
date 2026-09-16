@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { HeroActTransition } from "./hero-act-transition";
-import { ResearchLoop } from "./research-loop";
+import { LiquidGlassStream } from "./liquid-glass-stream";
 import { PublicFooter } from "@/components/public/public-footer";
 import {
   BackgroundField,
@@ -11,35 +11,7 @@ import {
 import "@/components/public/public-theme.css";
 import styles from "./landing-page.module.css";
 
-function ProductTheater() {
-  return (
-    <div className={styles.theater}>
-      <div className={styles.theaterBar}>
-        <span>BTC / USDT · 5 MIN</span>
-        <span>MARKET CONTEXT</span>
-        <i>LIVE PUBLIC FEED</i>
-      </div>
-      <div className={styles.chart}>
-        <svg viewBox="0 0 800 270" preserveAspectRatio="none">
-          <path d="M0 210 C85 185 113 230 176 153 S276 181 336 112 S451 176 534 74 S650 128 800 38" />
-        </svg>
-        <span className={styles.cursor}>+ OBSERVE</span>
-      </div>
-      <aside>
-        <b>LEVEL 2</b>
-        <p>
-          Depth is context.
-          <br />
-          Not certainty.
-        </p>
-        <i />
-        <i />
-        <i />
-        <small>Recent tape · observed</small>
-      </aside>
-    </div>
-  );
-}
+
 
 export function LandingPage() {
   return (
@@ -59,91 +31,14 @@ export function LandingPage() {
           </EditorialHeading>
         }
         body={
-          <p>
+          <p className="max-w-2xl mx-auto">
             Charts, market context, public depth, and recent trades stay in one
             frame—so the next question starts with evidence, not a guess.
           </p>
         }
       />
 
-      <div className={styles.field}>
-        <BackgroundField />
-
-        <section className={styles.context}>
-          <div className={styles.contextCopy}>
-            <TechnicalEyebrow>ACT II · UNDERSTAND</TechnicalEyebrow>
-            <h2>
-              Move through
-              <br />
-              the structure.
-            </h2>
-            <p>
-              Use Level 2, volume, liquidity, tape, and cumulative delta as
-              observation layers. They describe the market in front of you; they
-              do not promise where it goes next.
-            </p>
-            <Link href="/terminal">
-              Explore the market canvas <span>↗</span>
-            </Link>
-          </div>
-          <ProductTheater />
-        </section>
-
-        <ResearchLoop />
-
-        <section className={styles.test}>
-          <div>
-            <TechnicalEyebrow>ACT IV · TEST</TechnicalEyebrow>
-            <EditorialHeading>
-              Make the rule
-              <br />
-              <em>survive evidence.</em>
-            </EditorialHeading>
-            <p>
-              Write a transparent Python strategy, run it against selected
-              history, inspect the trades, and make the limits visible alongside
-              the result.
-            </p>
-          </div>
-          <div className={styles.evidence}>
-            <div className={styles.code}>
-              <span>strategy.py</span>
-              <pre>{`def strategy(data):\n  signal = observe(data)\n  return testable_rule(signal)`}</pre>
-            </div>
-            <div className={styles.result}>
-              <span>HISTORICAL SIMULATION</span>
-              <b>Evidence, not a verdict.</b>
-              <svg viewBox="0 0 300 100" preserveAspectRatio="none">
-                <path d="M0 82 C48 62 71 87 112 48 S177 72 219 35 S268 46 300 19" />
-              </svg>
-              <small>Trades · risk · assumptions · provenance</small>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.decide}>
-          <TechnicalEyebrow>ACT V · DECIDE</TechnicalEyebrow>
-          <h2>
-            See Further.
-            <br />
-            <em>Guess Less.</em>
-          </h2>
-          <p>
-            Reject what does not hold. Refine what might. Keep the evidence
-            attached to the next question.
-          </p>
-          <div>
-            <CTAButton href="/terminal">Open ZTerminal</CTAButton>
-            <CTAButton href="/download" secondary>
-              Windows release status
-            </CTAButton>
-          </div>
-          <small>
-            Market data can be delayed or incomplete. Backtests are
-            hypothetical.
-          </small>
-        </section>
-      </div>
+      <LiquidGlassStream />
 
       <PublicFooter />
     </main>
