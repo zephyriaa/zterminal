@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useSyncExternalStore, useRef, useState, useEffect } from "react";
-import { motion, useReducedMotion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 
 /** Precision kinetic easing curves */
 export const EASE_HYPER_EXPO = [0.19, 1, 0.22, 1] as const;
@@ -36,9 +36,20 @@ export const VIEWPORT_CONFIG = {
   amount: 0.05,
 } as const;
 
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribeReducedMotion(callback: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getReducedMotionSnapshot() {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
 export function useIsReducedMotion(): boolean {
-  const prefersReduced = useReducedMotion();
-  return prefersReduced ?? false;
+  return useSyncExternalStore(subscribeReducedMotion, getReducedMotionSnapshot, () => false);
 }
 
 const emptySubscribe = () => () => {};
