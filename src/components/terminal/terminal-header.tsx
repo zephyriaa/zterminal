@@ -43,9 +43,14 @@ export function TerminalHeader() {
             className="rounded shrink-0"
           />
           <div className="hidden md:flex flex-col">
-            <span className="font-mono text-xs font-bold tracking-wider text-foreground leading-none">
-              ZTERMINAL
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-xs font-bold tracking-wider text-foreground leading-none">
+                ZTERMINAL
+              </span>
+              <span className="px-1 py-[1px] text-[7.5px] font-mono font-bold tracking-wider text-accent border border-accent/40 rounded bg-accent/10 leading-none shadow-[0_0_8px_rgba(168,85,247,0.25)]">
+                BETA
+              </span>
+            </div>
             <span className="text-[8.5px] uppercase tracking-widest text-muted-foreground leading-tight">
               QUANT WORKSTATION
             </span>

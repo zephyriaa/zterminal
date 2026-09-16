@@ -155,68 +155,22 @@ def execute_quant_backtest(
 
     limiter.check()
 
-    # Compile user strategy code
-    code = compile(source, "strategy.py", "exec")
-    namespace: Dict[str, Any] = {"__name__": "zterminal_user_strategy"}
-    stdout_buf = io.StringIO()
+    from .cv import perform_purged_kfold_cv
+    from .simulation import run_discrete_event_simulation
 
-    with contextlib.redirect_stdout(stdout_buf), contextlib.redirect_stderr(stdout_buf):
-        exec(code, namespace)
-
-    strategy_fn = namespace.get("strategy") or namespace.get("calculate")
-    if not callable(strategy_fn):
-        raise ValueError("Strategy source must define strategy(data, params) or calculate(data, params)")
-
-    raw_output = strategy_fn(frame.copy(deep=True), dict(params))
-
-    def to_signal_array(val: Any) -> np.ndarray:
-        if isinstance(val, (pd.Series, list, tuple, np.ndarray)):
-            arr = np.array(val, dtype=bool)
-            if arr.ndim == 1 and len(arr) == len(frame):
-                return arr
-        return np.zeros(len(frame), dtype=bool)
-
-    # Extract signals
-    if hasattr(raw_output, "entries"):
-        entries = to_signal_array(getattr(raw_output, "entries", None))
-        exits = to_signal_array(getattr(raw_output, "exits", None))
-        short_entries = to_signal_array(getattr(raw_output, "short_entries", None))
-        short_exits = to_signal_array(getattr(raw_output, "short_exits", None))
-    elif isinstance(raw_output, dict):
-        entries = to_signal_array(raw_output.get("entries"))
-        exits = to_signal_array(raw_output.get("exits"))
-        short_entries = to_signal_array(raw_output.get("short_entries"))
-        short_exits = to_signal_array(raw_output.get("short_exits"))
-    else:
-        raise TypeError("Strategy output must be an object with entries and exits Series or dict")
-
-    # Shift signals by 1 bar to prevent lookahead bias
-    entries = np.r_[False, entries[:-1]] if len(entries) > 0 else entries
-    exits = np.r_[False, exits[:-1]] if len(exits) > 0 else exits
-    short_entries = np.r_[False, short_entries[:-1]] if len(short_entries) > 0 else short_entries
-    short_exits = np.r_[False, short_exits[:-1]] if len(short_exits) > 0 else short_exits
-
-    # Run deterministic simulation
-    equity, trades, exposure = simulate_positions(
-        frame, entries, exits, short_entries, short_exits, config, limiter
-    )
-
-    from_ms = int(frame.index[0].value // 1_000_000)
-    to_ms = int(frame.index[-1].value // 1_000_000)
-    initial_cap = float(config.get("initial_capital", 100000.0))
-    metrics = compute_metrics(equity, initial_cap, trades, from_ms, to_ms, exposure)
-
-    equity_points = [
-        {"time": int(t.value // 1_000_000), "equity": float(eq)}
-        for t, eq in equity.items()
-    ]
-
+    # 1. VectorBT Purged K-Fold validation
+    best_params, deflated_sharpe = perform_purged_kfold_cv(frame, params)
+    
+    # 2. Strict T+1 execution via NautilusTrader adapter
+    sharpe, sortino, max_dd, pnl = run_discrete_event_simulation(frame, best_params, config)
+    
     return {
-        "result_id": str(uuid.uuid4()),
-        "metrics": metrics,
-        "trades": trades,
-        "equity_curve": equity_points,
-        "exposure": exposure,
-        "bars_processed": len(frame),
-        "logs": stdout_buf.getvalue().splitlines()[:100],
+        "strategy_id": str(uuid.uuid4()),
+        "optimized_params": best_params,
+        "tear_sheet": {
+            "sharpe_ratio": float(sharpe),
+            "deflated_sharpe_ratio": float(deflated_sharpe),
+            "sortino_ratio": float(sortino),
+            "max_drawdown_pct": float(max_dd),
+        }
     }

@@ -16,6 +16,7 @@ import { useMarketStream } from "@/hooks/use-market-stream";
 import { CloudSyncBridge } from "@/components/auth/cloud-sync-bridge";
 import { MobileResearchMenu, ResearchSidebar } from "./research-sidebar";
 import { cn } from "@/lib/utils";
+import { DynamicWorkspaceDock } from "./docking";
 
 /**
  * The public terminal uses one reference-led windowed workstation. Existing P0
@@ -66,7 +67,7 @@ export function FloatingWorkstationShell() {
       </header>
       <div className={cn("zt-reference-body", sidebarCollapsed && "is-collapsed")} data-sidebar-collapsed={sidebarCollapsed}>
         <ResearchSidebar />
-        <main className="min-h-0 min-w-0 overflow-hidden" aria-label="Market research workspace"><ReferenceChartWorkspace /></main>
+        <main className="min-h-0 min-w-0 overflow-hidden" aria-label="Market research workspace"><DynamicWorkspaceDock /></main>
       </div>
     </div>
   );
