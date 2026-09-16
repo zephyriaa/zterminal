@@ -14,7 +14,7 @@ export function PublicFooter() {
         </div>
         <div className={styles.footerLinks}>
           <a href="https://github.com/zephyriaa/zterminal" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-          <Link href="/download">Download for Windows</Link>
+          <Link href="/docs">Windows Installation</Link>
           <Link href="/docs">Documentation</Link>
           <Link href="/terminal">Open ZTerminal</Link>
         </div>
