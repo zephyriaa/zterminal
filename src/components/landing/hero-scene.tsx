@@ -1,10 +1,19 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { useIsReducedMotion, EASE_OUT_EXPO, EASE_HYPER_EXPO } from "./motion-primitives";
+import {
+  motion,
+  useTransform,
+  useSpring,
+  type MotionValue,
+} from "framer-motion";
+import {
+  useIsReducedMotion,
+  EASE_OUT_EXPO,
+  EASE_HYPER_EXPO,
+} from "./motion-primitives";
 import styles from "./hero-scene.module.css";
 
 const KEY_ROWS = [
@@ -15,23 +24,18 @@ const KEY_ROWS = [
   "fn ctrl opt cmd space cmd opt ◀ ▲ ▶",
 ];
 
-export function HeroScene() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [isDesktop, setIsDesktop] = useState(false);
+export type HeroTransitionMode = "desktop" | "tablet" | "mobile";
+
+interface HeroSceneProps {
+  className?: string;
+  progress: MotionValue<number>;
+  mode: HeroTransitionMode;
+}
+
+export function HeroScene({ className = "", progress, mode }: HeroSceneProps) {
   const [navOpen, setNavOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const reduced = useIsReducedMotion();
-
-  // Keep the interface responsive in CSS; JS only gates input-specific effects.
-  useEffect(() => {
-    function onResize() {
-      setIsDesktop(window.matchMedia("(min-width: 801px)").matches);
-    }
-
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   useEffect(() => {
     function onScroll() {
@@ -56,7 +60,12 @@ export function HeroScene() {
   const springY = useSpring(0, { stiffness: 50, damping: 25 });
 
   useEffect(() => {
-    if (reduced || !isDesktop) return;
+    if (
+      reduced ||
+      mode !== "desktop" ||
+      !window.matchMedia("(pointer: fine)").matches
+    )
+      return;
 
     function handleMouseMove(e: MouseEvent) {
       const nx = e.clientX / window.innerWidth - 0.5;
@@ -67,7 +76,7 @@ export function HeroScene() {
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [reduced, isDesktop, springX, springY]);
+  }, [reduced, mode, springX, springY]);
 
   // Restrained laptop parallax (strictly 2-4px displacement, sub-degree tilt)
   const laptopParallaxX = useTransform(springX, [-0.5, 0.5], [-4, 4]);
@@ -75,30 +84,54 @@ export function HeroScene() {
   const laptopRotateY = useTransform(springX, [-0.5, 0.5], [-0.8, 0.8]);
   const laptopRotateX = useTransform(springY, [-0.5, 0.5], [0.6, -0.6]);
 
-  // Natural scroll depth transition - calibrated so hero never crashes into header or drops opacity abruptly
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
-
-  const copyScrollY = useTransform(scrollYProgress, [0, 0.85], [0, -16]);
-  const copyScrollOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.65]);
-  const laptopScrollY = useTransform(scrollYProgress, [0, 0.85], [0, -12]);
-  const laptopScale = useTransform(scrollYProgress, [0, 0.85], [1.015, 1.0]);
+  const copyScrollY = useTransform(
+    progress,
+    [0.1, 0.48],
+    [0, mode === "desktop" ? -32 : -16],
+  );
+  const copyScrollOpacity = useTransform(progress, [0.14, 0.5], [1, 0]);
+  const laptopScrollY = useTransform(
+    progress,
+    [0.16, 0.82],
+    [0, mode === "desktop" ? -72 : -28],
+  );
+  const laptopScale = useTransform(
+    progress,
+    [0.16, 0.84],
+    [1.015, mode === "desktop" ? 0.95 : 0.98],
+  );
+  const laptopOpacity = useTransform(progress, [0.66, 0.91], [1, 0]);
+  const glowY = useTransform(
+    progress,
+    [0.16, 0.76],
+    [0, mode === "desktop" ? 110 : 48],
+  );
+  const glowOpacity = useTransform(progress, [0.16, 0.8], [0.9, 0.24]);
+  const hasScrollMotion = !reduced && mode !== "mobile";
 
   return (
-    <div ref={containerRef} className={styles.viewport} id="overview">
+    <div className={`${styles.viewport} ${className}`} id="overview">
       <div className={styles.scene}>
         {/* Violet ambient glow beneath laptop */}
-        <div className={styles.glow} aria-hidden="true" />
+        <motion.div
+          className={styles.glow}
+          aria-hidden="true"
+          style={
+            hasScrollMotion ? { y: glowY, opacity: glowOpacity } : { y: 0, opacity: 0.9 }
+          }
+        />
 
         {/* Apple-style floating liquid frosted-glass navigation */}
-        <header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ""}`}>
+        <header
+          className={`${styles.header} ${isScrolled ? styles.headerScrolled : ""}`}
+        >
           <Link href="/" className={styles.brand} aria-label="ZTerminal home">
             <i className={styles.mark} aria-hidden="true" />
             <span className={styles.brandText}>
               ZTERMINAL
-              <span className={styles.betaBadge} aria-label="Beta product">BETA</span>
+              <span className={styles.betaBadge} aria-label="Beta product">
+                BETA
+              </span>
             </span>
           </Link>
           <button
@@ -112,88 +145,124 @@ export function HeroScene() {
             <span className={styles.menuIcon} aria-hidden="true" />
             <span className={styles.menuLabel}>Menu</span>
           </button>
-          <nav id="landing-navigation" aria-label="Main navigation" className={`${styles.navGlassPill} ${navOpen ? styles.navOpen : ""}`}>
-            <a href="#overview" className={styles.navGlassLink} onClick={() => setNavOpen(false)}>Overview</a>
-            <a href="#research-loop" className={styles.navGlassLink} onClick={() => setNavOpen(false)}>Research loop</a>
-            <Link href="/download" className={styles.navGlassLink} onClick={() => setNavOpen(false)}>Windows</Link>
-            <Link href="/docs" className={styles.navGlassLink} onClick={() => setNavOpen(false)}>Docs</Link>
-            <Link href="/terminal" className={styles.navGlassLink} onClick={() => setNavOpen(false)}>Web terminal</Link>
+          <nav
+            id="landing-navigation"
+            aria-label="Main navigation"
+            className={`${styles.navGlassPill} ${navOpen ? styles.navOpen : ""}`}
+          >
+            <a
+              href="#overview"
+              className={styles.navGlassLink}
+              onClick={() => setNavOpen(false)}
+            >
+              Overview
+            </a>
+            <a
+              href="#research-loop"
+              className={styles.navGlassLink}
+              onClick={() => setNavOpen(false)}
+            >
+              Research loop
+            </a>
+            <Link
+              href="/download"
+              className={styles.navGlassLink}
+              onClick={() => setNavOpen(false)}
+            >
+              Windows
+            </Link>
+            <Link
+              href="/docs"
+              className={styles.navGlassLink}
+              onClick={() => setNavOpen(false)}
+            >
+              Docs
+            </Link>
+            <Link
+              href="/terminal"
+              className={styles.navGlassLink}
+              onClick={() => setNavOpen(false)}
+            >
+              Web terminal
+            </Link>
           </nav>
         </header>
 
         {/* Hero Editorial Copy */}
-        <section
-          className={styles.heroCopy}
-          aria-labelledby="hero-title"
-        >
-          <motion.div style={{ y: copyScrollY, opacity: copyScrollOpacity }}>
-          {/* Eyebrow */}
-          <motion.span
-            className={styles.eyebrow}
-            initial={reduced ? undefined : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.05, ease: EASE_HYPER_EXPO }}
-          >
-            MARKET RESEARCH WORKSPACE · BETA
-          </motion.span>
-
-          {/* Enormous Headline with Sans + Italic Serif accent & Line-Masked Reveals */}
-          <h1 id="hero-title">
-            <span className={styles.lineMask}>
-              <motion.span
-                className={styles.first}
-                initial={reduced ? undefined : { y: 24, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.08, ease: EASE_HYPER_EXPO }}
-              >
-                See Further.
-              </motion.span>
-            </span>
-            <span className={styles.lineMask}>
-              <motion.em
-                initial={reduced ? undefined : { y: 24, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.15, ease: EASE_HYPER_EXPO }}
-              >
-                Guess Less.
-              </motion.em>
-            </span>
-          </h1>
-
-          {/* Marketing-Driven Supporting Copy */}
-          <motion.p
-            className={styles.description}
-            initial={reduced ? undefined : { opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: EASE_OUT_EXPO }}
-          >
-            ZTerminal connects market observation, chart workspaces, Python research, and backtest evidence in one focused environment.
-          </motion.p>
-
-          {/* Actions */}
+        <section className={styles.heroCopy} aria-labelledby="hero-title">
           <motion.div
-            className={styles.actions}
-            initial={reduced ? undefined : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.25, ease: EASE_OUT_EXPO }}
+            style={
+              hasScrollMotion
+                ? { y: copyScrollY, opacity: copyScrollOpacity }
+                : { y: 0, opacity: 1 }
+            }
           >
-            <Link href="/download" className={styles.primary}>
-              Download for Windows <span className={styles.arrow}>→</span>
-            </Link>
-            <Link href="/terminal" className={styles.secondary}>
-              Open ZTerminal <span className={styles.arrow}>→</span>
-            </Link>
-          </motion.div>
+            {/* Eyebrow */}
+            <motion.span
+              className={styles.eyebrow}
+              initial={reduced ? undefined : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05, ease: EASE_HYPER_EXPO }}
+            >
+              MARKET RESEARCH WORKSPACE · BETA
+            </motion.span>
 
-          {/* Disclaimer */}
-          <motion.p
-            className={styles.disclaimer}
-            initial={reduced ? undefined : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.32, ease: EASE_OUT_EXPO }}
-          >
-            Available now: web research workspace. Windows installer status is published on the download page.
-          </motion.p>
+            {/* Enormous Headline with Sans + Italic Serif accent & Line-Masked Reveals */}
+            <h1 id="hero-title">
+              <span className={styles.lineMask}>
+                <motion.span
+                  className={styles.first}
+                  initial={reduced ? undefined : { y: 24, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{
+                    duration: 0.6,
+                    delay: 0.08,
+                    ease: EASE_HYPER_EXPO,
+                  }}
+                >
+                  See Further.
+                </motion.span>
+              </span>
+              <span className={styles.lineMask}>
+                <motion.em
+                  initial={reduced ? undefined : { y: 24, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{
+                    duration: 0.6,
+                    delay: 0.15,
+                    ease: EASE_HYPER_EXPO,
+                  }}
+                >
+                  Guess Less.
+                </motion.em>
+              </span>
+            </h1>
+
+            {/* Marketing-Driven Supporting Copy */}
+            <motion.p
+              className={styles.description}
+              initial={reduced ? undefined : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: EASE_OUT_EXPO }}
+            >
+              Charts, market context, Python research, and backtests—together,
+              so every idea can be checked against evidence.
+            </motion.p>
+
+            {/* Actions */}
+            <motion.div
+              className={styles.actions}
+              initial={reduced ? undefined : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.25, ease: EASE_OUT_EXPO }}
+            >
+              <Link href="/terminal" className={styles.primary}>
+                Open in browser <span className={styles.arrow}>→</span>
+              </Link>
+              <Link href="/download" className={styles.secondary}>
+                Windows availability <span className={styles.arrow}>→</span>
+              </Link>
+            </motion.div>
           </motion.div>
         </section>
 
@@ -210,7 +279,7 @@ export function HeroScene() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.16, ease: EASE_OUT_EXPO }}
             style={
-              !reduced && isDesktop
+              !reduced && mode === "desktop"
                 ? {
                     x: laptopParallaxX,
                     y: laptopParallaxY,
@@ -221,14 +290,28 @@ export function HeroScene() {
             }
           >
             {/* Scroll depth delta + subtle 1.015 -> 1.0 scale scrub */}
-            <motion.div style={!reduced && isDesktop ? { y: laptopScrollY, scale: laptopScale } : undefined}>
+            <motion.div
+              style={
+                hasScrollMotion
+                  ? {
+                      y: laptopScrollY,
+                      scale: laptopScale,
+                      opacity: laptopOpacity,
+                    }
+                  : { y: 0, scale: 1, opacity: 1 }
+              }
+            >
               {/* Laptop Screen Lid with Projective Homography */}
               <div className={styles.lid}>
                 <motion.div
                   className={styles.terminal}
                   initial={reduced ? undefined : { opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.7, delay: 0.3, ease: EASE_OUT_EXPO }}
+                  transition={{
+                    duration: 0.7,
+                    delay: 0.3,
+                    ease: EASE_OUT_EXPO,
+                  }}
                 >
                   <Image
                     src="/landing/terminal-screenshot.webp"
@@ -254,7 +337,11 @@ export function HeroScene() {
                       aria-hidden="true"
                       initial={{ x: "-120%", opacity: 0 }}
                       animate={{ x: "120%", opacity: [0, 1, 0.8, 0] }}
-                      transition={{ duration: 1.25, delay: 0.75, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{
+                        duration: 1.25,
+                        delay: 0.75,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
                     />
                   )}
                   {/* Static Ambient Glass Glare */}
@@ -263,7 +350,11 @@ export function HeroScene() {
               </div>
 
               {/* Metallic Laptop Chassis Base SVG */}
-              <svg className={styles.base} viewBox="0 0 1672 941" aria-hidden="true">
+              <svg
+                className={styles.base}
+                viewBox="0 0 1672 941"
+                aria-hidden="true"
+              >
                 <defs>
                   <linearGradient id="metal" x1="0" y1="0" x2=".7" y2="1">
                     <stop stopColor="#67607e" />
@@ -329,7 +420,10 @@ export function HeroScene() {
                   fill="url(#lip)"
                   opacity=".65"
                 />
-                <path d="M1609 907l16-5v7l-16 5zM1635 900l10-3v8l-10 4z" fill="#01050a" />
+                <path
+                  d="M1609 907l16-5v7l-16 5zM1635 900l10-3v8l-10 4z"
+                  fill="#01050a"
+                />
               </svg>
 
               {/* Physical Keyboard Keycaps */}

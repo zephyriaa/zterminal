@@ -4,7 +4,7 @@
 
 .viewport {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   width: 100%;
   min-height: clamp(680px, 100svh, 980px);
   background: #050a15;
@@ -12,8 +12,9 @@
 
 .scene {
   position: relative;
+  height: 100%;
   min-height: clamp(680px, 100svh, 980px);
-  overflow: hidden;
+  overflow: visible;
   background:
     radial-gradient(ellipse at 72% 4%, rgba(21, 21, 47, 0.53) 0%, transparent 37%),
     radial-gradient(ellipse at 46% 84%, rgba(16, 21, 52, 0.4) 0%, transparent 43%),
