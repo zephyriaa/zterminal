@@ -55,6 +55,17 @@ class JobResponse(BaseModel):
     diagnostics: List[Dict[str, Any]] = Field(default_factory=list)
 
 
+class TearSheet(BaseModel):
+    sharpe_ratio: float
+    deflated_sharpe_ratio: float
+    sortino_ratio: float
+    max_drawdown_pct: float
+
+class BacktestResult(BaseModel):
+    strategy_id: str
+    optimized_params: dict
+    tear_sheet: TearSheet
+
 class SystemHealthResponse(BaseModel):
     status: str
     version: str

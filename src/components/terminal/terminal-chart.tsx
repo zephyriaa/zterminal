@@ -333,15 +333,19 @@ export function TerminalChart({
       });
     }
 
+    let resizeRaf: number | null = null;
     const handleResize = () => {
-      if (chartContainerRef.current) {
-        const width = chartContainerRef.current.clientWidth;
-        const height = chartContainerRef.current.clientHeight;
-        if (width > 0 && height > 0) {
-          chart.resize(width, height);
-          chart.applyOptions({ timeScale: { rightOffset: width < 640 ? Math.min(5, settingsRef.current.futureBars) : settingsRef.current.futureBars } });
+      if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => {
+        if (chartContainerRef.current) {
+          const width = chartContainerRef.current.clientWidth;
+          const height = chartContainerRef.current.clientHeight;
+          if (width > 0 && height > 0) {
+            chart.resize(width, height);
+            chart.applyOptions({ timeScale: { rightOffset: width < 640 ? Math.min(5, settingsRef.current.futureBars) : settingsRef.current.futureBars } });
+          }
         }
-      }
+      });
     };
 
     const resizeObserver = new ResizeObserver(handleResize);

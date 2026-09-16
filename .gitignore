@@ -86,3 +86,4 @@ artifacts/
 .wrangler/
 audit-captures/
 calibrated-captures/
+tmp/
