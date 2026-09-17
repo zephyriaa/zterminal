@@ -9,7 +9,7 @@ import { useWorkspace } from "@/stores/workspace";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { ResearchReport } from "../research-report";
 
-function TerminalChartPanel(props: IDockviewPanelProps<{}>) {
+function TerminalChartPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
   const { symbol, timeframe } = useWorkspace();
   const { provider } = useMarketStream(symbol, { trades: 1, depth: false });
 
@@ -25,7 +25,7 @@ function TerminalChartPanel(props: IDockviewPanelProps<{}>) {
   );
 }
 
-function OrderbookPanel(props: IDockviewPanelProps<{}>) {
+function OrderbookPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
   const { symbol } = useWorkspace();
   const { provider } = useMarketStream(symbol, { trades: 1, depth: true });
   return (
@@ -38,7 +38,7 @@ function OrderbookPanel(props: IDockviewPanelProps<{}>) {
   );
 }
 
-function StrategyPanel(props: IDockviewPanelProps<{}>) {
+function StrategyPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
   return (
     <div className="flex flex-col h-full bg-panel text-foreground p-4">
       <h3 className="font-bold mb-2">Strategy Editor</h3>
@@ -49,7 +49,7 @@ function StrategyPanel(props: IDockviewPanelProps<{}>) {
   );
 }
 
-function AnalyticsPanel(props: IDockviewPanelProps<{}>) {
+function AnalyticsPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
   return (
     <div className="h-full w-full overflow-y-auto">
       <ResearchReport />

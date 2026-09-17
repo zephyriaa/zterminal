@@ -740,14 +740,39 @@
   }
 }
 
-@media (min-width: 801px) and (max-width: 1536px) {
-  .computer { transform: translateX(-50%) scale(.86); }
+.screenWatermark {
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 5px;
+  background: rgba(5, 10, 21, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: #a8bedc;
 }
 
 @media (min-width: 801px) and (max-width: 1280px) {
-  .computer { transform: translateX(-50%) scale(.76); }
+  .computer {
+    transform: translateX(-50%) scale(clamp(0.5, calc((100vw - 48px) / 1672), 0.72));
+  }
   .heroCopy { width: min(56vw, 660px); }
   .actions { gap: 24px; }
+}
+
+@media (min-width: 1281px) and (max-width: 1536px) {
+  .computer {
+    transform: translateX(-50%) scale(clamp(0.72, calc((100vw - 64px) / 1672), 0.86));
+  }
 }
 
 @media (min-width: 801px) and (max-height: 760px) {

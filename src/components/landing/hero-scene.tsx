@@ -38,8 +38,15 @@ export function HeroScene({ className = "", progress, mode }: HeroSceneProps) {
   const reduced = useIsReducedMotion();
 
   useEffect(() => {
+    let ticking = false;
     function onScroll() {
-      setIsScrolled(window.scrollY > 18);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 18);
+          ticking = false;
+        });
+        ticking = true;
+      }
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -315,13 +322,17 @@ export function HeroScene({ className = "", progress, mode }: HeroSceneProps) {
                 >
                   <Image
                     src="/landing/terminal-screenshot.webp"
-                    alt="Current ZTerminal research workspace with real candlestick chart and indicators"
+                    alt="Captured preview of ZTerminal research workspace with candlestick chart and indicators"
                     width={3200}
                     height={1800}
                     priority
                     className={styles.screenImage}
                     sizes="(max-width: 800px) 100vw, 1000px"
                   />
+                  {/* Provenance Watermark */}
+                  <div className={styles.screenWatermark} aria-hidden="true">
+                    <span>Product UI · captured preview · feed disconnected</span>
+                  </div>
                   {/* Subtle Violet Screen Wake Glow */}
                   <motion.div
                     className={styles.screenPowerGlow}
