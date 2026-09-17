@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { HeroScene, type HeroTransitionMode } from "./hero-scene";
 import { useIsReducedMotion } from "./motion-primitives";
 import styles from "./hero-act-transition.module.css";
@@ -15,6 +15,7 @@ interface HeroActTransitionProps {
 }
 
 function readMode(): HeroTransitionMode {
+  if (typeof window === "undefined") return "desktop";
   if (window.matchMedia("(min-width: 1025px)").matches) return "desktop";
   if (window.matchMedia("(min-width: 801px)").matches) return "tablet";
   return "mobile";
@@ -31,7 +32,9 @@ export function HeroActTransition({
   const [scrollSpan, setScrollSpan] = useState(480);
   const reduced = useIsReducedMotion();
   const { scrollY } = useScroll();
-  const scrollYProgress = useTransform(scrollY, [0, scrollSpan], [0, 1]);
+  const rawProgress = useTransform(scrollY, [0, scrollSpan], [0, 1]);
+  const smoothProgress = useSpring(rawProgress, { stiffness: 120, damping: 28, restDelta: 0.001 });
+  const scrollYProgress = reduced ? rawProgress : smoothProgress;
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 1025px)");

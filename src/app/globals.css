@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/liquid-glass.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -48,7 +49,7 @@
   --color-neg-soft: var(--neg-soft);
 
   /* Surface ramp */
-  --color-base: var(--base);
+  --color-surface-base: var(--base);
   --color-panel: var(--panel);
   --color-surface: var(--surface);
   --color-elevated: var(--elevated);
@@ -285,6 +286,9 @@ html.lenis, html.lenis body {
   .border-mdata { border-color: var(--mdata); }
 
   .bg-base { background-color: var(--base); }
+  .bg-base\/40 { background-color: color-mix(in srgb, var(--base) 40%, transparent); }
+  .bg-base\/50 { background-color: color-mix(in srgb, var(--base) 50%, transparent); }
+  .bg-base\/60 { background-color: color-mix(in srgb, var(--base) 60%, transparent); }
   .bg-panel { background-color: var(--panel); }
   .bg-surface { background-color: var(--surface); }
   .bg-elevated { background-color: var(--elevated); }
