@@ -113,6 +113,7 @@ function TerminalHero() {
             alt="ZTerminal market research workspace showing a candlestick chart, volume, and market context"
             width={3200}
             height={1800}
+            unoptimized
             priority
             sizes="(max-width: 900px) 94vw, 62vw"
           />
