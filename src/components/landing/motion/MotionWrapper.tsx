@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, type HTMLMotionProps } from 'framer-motion';
-import { fadeInUp } from './springConfig';
+import { fadeInUp, springPhysics } from './springConfig';
 
 interface MotionWrapperProps extends HTMLMotionProps<'div'> {
   children: React.ReactNode;
@@ -20,13 +20,12 @@ export function MotionWrapper({
 }: MotionWrapperProps) {
   const customVariant = delay
     ? {
-        ...fadeInUp,
+        hidden: { opacity: 0, y: 28, scale: 0.98 },
         visible: {
-          ...fadeInUp.visible,
-          transition: {
-            ...fadeInUp.visible.transition,
-            delay,
-          },
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { ...springPhysics.smooth, delay },
         },
       }
     : fadeInUp;

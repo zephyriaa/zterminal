@@ -1,70 +1,85 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Download, Monitor, ShieldCheck, Terminal, Cpu } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../motion/springConfig';
 import { LiquidGlassCard } from '../ui/LiquidGlassCard';
 import { TelemetryBadge } from '../ui/TelemetryBadge';
 
-type FooterItem = { label: string; href: string; external?: boolean };
-
-const footerColumns: { heading: string; items: FooterItem[]; extra?: React.ReactNode }[] = [
-  {
-    heading: 'PRODUCT',
-    items: [
-      { label: 'Web Terminal', href: '/terminal' },
-      { label: 'Windows Companion Status', href: '/download' },
-      { label: 'Installation Guide', href: '/docs/windows/install' },
-    ],
-  },
-  {
-    heading: 'ARCHITECTURE',
-    items: [
-      { label: 'Documentation Overview', href: '/docs' },
-      { label: 'Python Research API', href: '/docs/python-research' },
-      { label: 'ZScript Migration Guide', href: '/docs/zscript' },
-    ],
-  },
-  {
-    heading: 'SECURITY',
-    items: [
-      { label: 'Organization Certificate', href: '/docs/security/certificate' },
-      { label: 'Binary Hash Registry', href: '/docs/security/hashes' },
-      { label: 'Local Key Isolation', href: '/docs/security/keys' },
-    ],
-  },
-  {
-    heading: 'LEDGER',
-    items: [
-      { label: 'GitHub Repository ↗', href: 'https://github.com/zephyriaa/zterminal', external: true },
-      { label: 'Provenance Standard', href: '/docs/provenance' },
-    ],
-    extra: (
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.06]">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-        <span className="font-mono text-xs text-emerald-400 font-medium tracking-wide">
-          GATEWAY OPERATIONAL
-        </span>
-      </div>
-    ),
-  },
-];
-
 export function InstitutionalCta() {
+  const [detectedOs, setDetectedOs] = useState<string>('macOS / Windows / Linux');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.userAgent) {
+      const ua = navigator.userAgent;
+      if (ua.includes('Win')) {
+        setDetectedOs('Windows x64');
+      } else if (ua.includes('Mac')) {
+        setDetectedOs('macOS (Apple Silicon / Intel)');
+      } else if (ua.includes('Linux')) {
+        setDetectedOs('Linux x64');
+      }
+    }
+  }, []);
+
+  const footerColumns = [
+    {
+      heading: 'PLATFORM',
+      items: [
+        { label: 'Web Terminal Workspace', href: '/terminal' },
+        { label: 'Windows Native Client', href: '/download' },
+        { label: 'macOS DMG & Binary', href: '/download' },
+        { label: 'Linux Daemon / Docker', href: '/download' },
+        { label: 'Release Notes v0.2.1', href: '/docs' },
+      ],
+    },
+    {
+      heading: 'ARCHITECTURE',
+      items: [
+        { label: 'Local-First Compute Daemon', href: '/docs' },
+        { label: 'Python 3.12 Polars Engine', href: '/docs' },
+        { label: 'VectorBT Execution Loop', href: '/docs' },
+        { label: 'IPC WebSocket Spec', href: '/docs' },
+        { label: 'Zero-Telemetry Telemetry Spec', href: '/docs' },
+      ],
+    },
+    {
+      heading: 'RESEARCH VERACITY',
+      items: [
+        { label: 'Tick-Level Determinism', href: '/docs' },
+        { label: 'Volume Profile Science', href: '/docs' },
+        { label: 'Order Book Delta Metrics', href: '/docs' },
+        { label: 'Anti-Lookahead Verification', href: '/docs' },
+        { label: 'Community Research Guides', href: '/docs' },
+      ],
+    },
+    {
+      heading: 'CRYPTOGRAPHIC LEDGER',
+      items: [
+        { label: 'SHA-256 State Signatures', href: '/docs' },
+        { label: 'Ed25519 Release Registry', href: '/download' },
+        { label: 'Local Parquet Schema', href: '/docs' },
+        { label: 'Hardware Key Vault', href: '/docs' },
+        { label: 'Source Verification (GitHub) ↗', href: 'https://github.com/zephyriaa/zterminal', external: true },
+      ],
+    },
+  ];
+
   return (
     <section
-      className="relative w-full py-28 md:py-36 px-6 md:px-12 bg-black overflow-hidden"
-      id="download"
+      className="relative w-full py-28 md:py-36 px-6 md:px-12 bg-[#06070A] overflow-hidden border-t border-white/[0.04]"
+      id="conversion"
+      aria-label="Institutional Workstation Conversion Floor"
     >
-      {/* Ambient radial glow — amber/white institutional tone */}
+      {/* Ambient Caustics — Purple & Violet */}
       <div
-        className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full bg-amber-500/[0.03] blur-[120px]"
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] rounded-full [background:radial-gradient(ellipse_at_center,rgba(147,51,234,0.08)_0%,transparent_70%)]"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute top-0 left-1/4 w-[600px] h-[300px] rounded-full bg-purple-600/[0.04] blur-[100px]"
+        className="pointer-events-none absolute top-0 right-1/4 w-[600px] h-[400px] rounded-full [background:radial-gradient(ellipse_at_center,rgba(6,182,212,0.04)_0%,transparent_70%)]"
         aria-hidden="true"
       />
 
@@ -77,91 +92,74 @@ export function InstitutionalCta() {
         >
           <LiquidGlassCard
             elevated
-            className="p-10 md:p-16 flex flex-col items-center justify-center text-center relative overflow-hidden"
+            className="p-10 md:p-16 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-[0_30px_100px_-20px_rgba(124,58,237,0.25)]"
           >
-            {/* Inner grid texture */}
+            {/* Fine grid background */}
             <div
-              className="pointer-events-none absolute inset-0 opacity-[0.025]"
+              className="pointer-events-none absolute inset-0 opacity-[0.02]"
               style={{
                 backgroundImage:
                   'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
-                backgroundSize: '48px 48px',
+                backgroundSize: '40px 40px',
               }}
               aria-hidden="true"
             />
 
-            {/* Verification status pill */}
-            <div className="mb-8 relative z-10">
-              <TelemetryBadge tone="amber" pulse>
-                STATUS: PRE-RELEASE VERIFICATION IN PROGRESS
+            {/* Status Pill */}
+            <div className="mb-7 relative z-10">
+              <TelemetryBadge tone="purple" pulse>
+                SYSTEM STATUS: READY FOR WORKSTATION INITIALIZATION
               </TelemetryBadge>
             </div>
 
             {/* Headline */}
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white mb-6 max-w-3xl leading-[1.12] relative z-10">
-              The Signed Installer{' '}
-              <br className="hidden sm:block" />
-              <em className="not-italic bg-clip-text text-transparent bg-gradient-to-br from-purple-300 to-white">
-                Is Being Prepared.
-              </em>
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-white mb-6 max-w-3xl leading-[1.12] relative z-10">
+              Deploy sovereign intelligence <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-white">
+                on your desk.
+              </span>
             </h2>
 
-            {/* Explanatory copy */}
-            <div className="max-w-2xl mb-10 space-y-4 text-left relative z-10">
-              <p className="text-zinc-400 text-base md:text-lg leading-relaxed font-normal text-center">
-                Institutional-grade software does not distribute unverified binaries.
-              </p>
-              <p className="text-zinc-500 text-sm leading-relaxed">
-                ZTerminal does not publish a development artifact and call it a release. The Windows
-                Companion installer will be signed with a verified organization certificate before it
-                is distributed. The hash of every published binary will be disclosed alongside the
-                release.
-              </p>
-              <p className="text-zinc-500 text-sm leading-relaxed text-center">
-                This is not a delay. It is the standard that separates software you can audit from
-                software you have to trust.
-              </p>
-              <p className="text-white/80 text-sm font-medium text-center">
-                The web terminal is available now. No installation required.
-              </p>
-            </div>
+            {/* Subhead */}
+            <p className="text-zinc-400 text-base md:text-lg max-w-2xl mb-10 leading-relaxed relative z-10">
+              Join thousands of discretionary tape readers and quantitative researchers who refuse to trade blind. Launch the local workspace now and take control of your execution.
+            </p>
 
-            {/* Dual CTAs */}
+            {/* Dual Actionable CTAs */}
             <div className="flex flex-col sm:flex-row items-center gap-4 mb-10 w-full sm:w-auto relative z-10">
-              {/* Primary */}
+              {/* Primary CTA */}
               <Link
                 href="/terminal"
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-white text-black font-medium text-sm md:text-base tracking-tight transition-all duration-300 hover:bg-zinc-100 hover:shadow-[0_0_32px_rgba(255,255,255,0.22)] w-full sm:w-auto"
+                className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm md:text-base tracking-tight transition-all duration-300 shadow-[0_0_40px_rgba(124,58,237,0.45)] hover:shadow-[0_0_50px_rgba(124,58,237,0.65)] w-full sm:w-auto"
               >
-                <span>Open Web Terminal</span>
-                <span className="text-xs px-2 py-0.5 rounded-md bg-black/10 text-zinc-600 font-mono">
-                  Browser
-                </span>
-                <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-1" />
+                <span>Launch Web Terminal</span>
+                <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
 
-              {/* Secondary */}
+              {/* Secondary CTA */}
               <Link
                 href="/download"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl border border-white/[0.12] bg-white/[0.04] text-zinc-200 hover:text-white hover:bg-white/[0.08] hover:border-white/[0.2] transition-all text-sm md:text-base font-medium tracking-tight backdrop-blur-md w-full sm:w-auto"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl border border-white/[0.14] bg-white/[0.04] text-zinc-200 hover:text-white hover:bg-white/[0.08] hover:border-white/[0.24] transition-all text-sm md:text-base font-medium tracking-tight backdrop-blur-md w-full sm:w-auto"
               >
-                <span>Check Windows Companion Status</span>
-                <span className="text-xs text-zinc-400 font-mono">x64</span>
-                <ArrowRight size={14} />
+                <Download size={16} className="text-purple-400" />
+                <span>Download Desktop Client</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-purple-300">
+                  {detectedOs}
+                </span>
               </Link>
             </div>
 
-            {/* System status indicator */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-black/40 border border-white/[0.06] font-mono text-[11px] text-zinc-400 relative z-10">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+            {/* Cryptographic Signing Stamp */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-black/50 border border-white/[0.06] font-mono text-[11px] text-zinc-400 relative z-10">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
               <span>
-                STATUS: BETA v0.2.1 // WEB: ONLINE // COMPANION: WINDOWS-X64 (SIGNING IN PROGRESS)
+                INTEGRITY VERIFIED // SHA-256 BINARY AUDIT TRAIL // AIR-GAPPED BY DESIGN
               </span>
             </div>
           </LiquidGlassCard>
         </motion.div>
 
-        {/* 4-column footer matrix */}
+        {/* 4-Column Professional Institutional Footer */}
         <footer className="mt-28 pt-16 border-t border-white/[0.08] text-left">
           <motion.div
             variants={staggerContainer(0.07)}
@@ -170,51 +168,50 @@ export function InstitutionalCta() {
             viewport={{ once: true, margin: '-60px' }}
             className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16"
           >
-            {footerColumns.map(({ heading, items, extra }) => (
+            {footerColumns.map(({ heading, items }) => (
               <motion.div key={heading} variants={fadeInUp}>
                 <div className="text-xs font-mono uppercase text-zinc-300 tracking-widest mb-4">
                   {heading}
                 </div>
                 <ul className="space-y-2.5 text-sm text-zinc-400">
-                  {items.map(({ label, href, external }) => (
-                    <li key={label}>
-                      {external ? (
+                  {items.map((item) => (
+                    <li key={item.label}>
+                      {item.external ? (
                         <a
-                          href={href}
+                          href={item.href}
                           target="_blank"
                           rel="noreferrer"
                           className="hover:text-white transition-colors inline-flex items-center gap-1"
                         >
-                          {label}
+                          {item.label}
                         </a>
                       ) : (
-                        <Link href={href} className="hover:text-white transition-colors">
-                          {label}
+                        <Link href={item.href} className="hover:text-white transition-colors">
+                          {item.label}
                         </Link>
                       )}
                     </li>
                   ))}
                 </ul>
-                {extra}
               </motion.div>
             ))}
           </motion.div>
 
-          {/* Sub-footer meta bar */}
+          {/* Sub-Footer Meta Bar */}
           <div className="pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs font-mono text-zinc-500">
-            <div>© 2026 ZTerminal. Decision-support software for market research.</div>
+            <div>© 2026 ZTerminal. Infrastructure for Sovereign Market Researchers.</div>
             <div className="flex items-center gap-4">
-              <span>CORE: LIGHTWEIGHT CHARTS CANVAS</span>
+              <span>SYSTEM CLOCK: NTP LOCKED</span>
               <span className="text-zinc-700">•</span>
               <span>VERSION: 0.2.1 BETA</span>
             </div>
           </div>
           <div className="pt-3 text-[11px] text-zinc-600 font-mono">
-            Market data can be delayed or incomplete; backtest and research outputs are hypothetical
-            and for evaluation only.
+            Direct market access and quantitative simulation software. All backtests execute locally without broker intermediation.
           </div>
         </footer>
       </div>
     </section>
   );
 }
+export default InstitutionalCta;

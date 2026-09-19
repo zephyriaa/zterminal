@@ -1,3 +1,5 @@
+import type { Variants } from "framer-motion";
+
 export const springPhysics = {
   smooth: {
     type: "spring",
@@ -19,21 +21,44 @@ export const springPhysics = {
   },
 } as const;
 
-export const fadeInUp = {
-  hidden: { opacity: 0, y: 24 },
+export const fadeInUp: Variants = {
+  hidden: { opacity: 0, y: 28, scale: 0.98 },
   visible: {
     opacity: 1,
     y: 0,
+    scale: 1,
     transition: springPhysics.smooth,
   },
 };
 
-export const staggerContainer = (staggerChildren = 0.08) => ({
+export const scaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.94 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: springPhysics.smooth,
+  },
+};
+
+export const conduitDraw: Variants = {
+  hidden: { pathLength: 0, opacity: 0 },
+  visible: {
+    pathLength: 1,
+    opacity: 1,
+    transition: {
+      pathLength: { duration: 1.4, ease: "easeInOut" },
+      opacity: { duration: 0.4 },
+    },
+  },
+};
+
+export const staggerContainer = (staggerChildren = 0.08, delayChildren = 0.1): Variants => ({
   hidden: {},
   visible: {
     transition: {
       staggerChildren,
-      delayChildren: 0.1,
+      delayChildren,
     },
   },
 });
+

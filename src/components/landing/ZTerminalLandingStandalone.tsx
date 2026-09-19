@@ -24,6 +24,10 @@ import {
   BookOpen,
   Network
 } from "lucide-react";
+import { MicrostructureLens } from "./sections/MicrostructureLens";
+import { SovereignPipeline } from "./sections/SovereignPipeline";
+import { QuantBentoMatrix } from "./sections/QuantBentoMatrix";
+import { InstitutionalCta } from "./sections/InstitutionalCta";
 
 // ─────────────────────────────────────────────
 //  LIQUID GLASS & MOTION TOKENS
@@ -262,284 +266,29 @@ function HeroSection() {
 }
 
 // ─────────────────────────────────────────────
-//  SECTION 2 — THE REAL USE CASE
-// ─────────────────────────────────────────────
-
-function SovereignOrbit() {
-  return (
-    <div className="relative flex items-center justify-center w-full min-h-[400px]">
-      <div className="absolute w-56 h-56 rounded-full border border-purple-500/[0.12] animate-[spin_28s_linear_infinite]" />
-      <div className="absolute w-72 h-72 rounded-full border border-purple-500/[0.07] animate-[spin_42s_linear_infinite_reverse]" />
-      <div className="absolute w-[340px] h-[340px] rounded-full border border-purple-500/[0.04] animate-[spin_60s_linear_infinite]" />
-
-      <div className="relative z-10 flex flex-col items-center gap-2.5">
-        <div className="relative flex items-center justify-center w-[76px] h-[76px] rounded-full border border-purple-500/35 bg-purple-950/70 backdrop-blur-md shadow-[0_0_70px_rgba(124,58,237,0.3)]">
-          <span className="absolute inset-0 rounded-full bg-purple-500/15 animate-ping [animation-duration:3.5s]" />
-          <Fingerprint size={30} strokeWidth={1.2} className="text-purple-300" />
-        </div>
-        <b className="text-[11px] font-mono tracking-[0.22em] text-purple-200 uppercase">Your Hardware</b>
-        <small className="text-[10px] font-mono text-zinc-500 tracking-widest uppercase">Trusted local execution</small>
-      </div>
-
-      {[
-        { label: "Proprietary Data", icon: Database, pos: "top-8 left-1/2 -translate-x-1/2" },
-        { label: "Python Models",  icon: Braces,   pos: "bottom-14 left-4" },
-        { label: "Persistent Secrets",        icon: LockKeyhole, pos: "bottom-14 right-4" },
-      ].map(({ label, icon: Icon, pos }) => (
-        <div key={label} className={`absolute ${pos} flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-white/[0.08] backdrop-blur-md`}>
-          <Icon size={11} className="text-purple-400" />
-          <span className="text-[10px] font-mono text-zinc-300">{label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SectionSovereign() {
-  return (
-    <section id="overview" className="relative w-full py-28 md:py-36 px-6 md:px-12 overflow-hidden border-t border-white/[0.04]">
-      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[#090A0F] to-transparent pointer-events-none z-20" />
-      <div className="pointer-events-none absolute -top-40 left-0 w-[700px] h-[600px] bg-purple-700/[0.08] blur-[130px] rounded-full" />
-      
-      <div className="max-w-7xl mx-auto">
-        <motion.div variants={stagger(0.08)} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} className="grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-16 items-center">
-          
-          <div className="xl:col-span-5 space-y-8 min-w-0">
-            <motion.div variants={fadeInUp}>
-              <Badge tone="purple" pulse>THE SOVEREIGN MACHINE</Badge>
-            </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white leading-[1.1]">
-              Your edge. <br/>
-              <em className="not-italic bg-clip-text text-transparent bg-gradient-to-br from-purple-300 to-white">On your hardware.</em>
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="text-base md:text-lg text-zinc-400 leading-relaxed font-normal">
-              Stop trading in the dark and surrendering your strategies to the cloud. ZTerminal runs locally, ensuring your proprietary datasets, custom Python models, and persistent secrets never leave your physical control.
-            </motion.p>
-            <motion.p variants={fadeInUp} className="text-sm text-zinc-500 leading-relaxed">
-              Retail web tools abstract market reality under sluggish browser frames. ZTerminal brings institutional-grade execution speed to your own local hardware, without the latency of cloud routing.
-            </motion.p>
-          </div>
-
-          <motion.div variants={fadeInUp} className="xl:col-span-7 min-w-0 w-full">
-            <GlassCard elevated className="p-8 min-h-[460px] flex flex-col justify-center overflow-hidden">
-               <SovereignOrbit />
-            </GlassCard>
-          </motion.div>
-
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────
-//  SECTION 3 — THE QUANT LOOP BENTO
-// ─────────────────────────────────────────────
-
-function PressureBar({ buyPct = 62 }: { buyPct?: number }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  return (
-    <div ref={ref} className="space-y-2.5 w-full">
-      <div className="h-2.5 w-full bg-white/[0.04] rounded-full overflow-hidden flex">
-        <motion.div
-          className="h-full bg-emerald-500/80 rounded-l-full"
-          initial={{ width: 0 }}
-          animate={inView ? { width: `${buyPct}%` } : {}}
-          transition={{ ...spring.smooth, delay: 0.3 }}
-        />
-        <motion.div
-          className="h-full bg-rose-500/80 rounded-r-full"
-          initial={{ width: 0 }}
-          animate={inView ? { width: `${100 - buyPct}%` } : {}}
-          transition={{ ...spring.smooth, delay: 0.3 }}
-        />
-      </div>
-      <div className="flex justify-between text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-        <span className="text-emerald-500">Buy Aggressors {buyPct}%</span>
-        <span className="text-rose-500">Sell Aggressors {100 - buyPct}%</span>
-      </div>
-    </div>
-  );
-}
-
-function TermOutput() {
-  const lines = [
-    { text: "$ zt risk-audit --dataset L2_BINANCE_BTCUSDT", color: "text-zinc-300" },
-    { text: "✔ Parsed 4,200,000 tick-level events", color: "text-emerald-400" },
-    { text: "✔ Backtest executed against hard evidence", color: "text-emerald-400" },
-    { text: "✔ SHA-256 state locked. Zero lookahead leakage.", color: "text-purple-400" },
-  ];
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-
-  return (
-    <div ref={ref} className="p-4 rounded-xl bg-black/50 border border-white/[0.05] font-mono text-[11px] space-y-1.5 w-full">
-      {lines.map((l, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, x: -6 }}
-          animate={inView ? { opacity: 1, x: 0 } : {}}
-          transition={{ ...spring.smooth, delay: 0.15 + i * 0.18 }}
-          className={l.color}
-        >
-          {l.text}
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-function SectionQuantLoop() {
-  return (
-    <section id="quant-loop" className="relative w-full py-28 md:py-36 px-6 md:px-12 overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        <motion.div variants={stagger(0.08)} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} className="text-center max-w-3xl mx-auto mb-20">
-          <motion.div variants={fadeInUp} className="mb-4">
-            <Badge tone="cyan" pulse={false}>THE QUANT LOOP</Badge>
-          </motion.div>
-          <motion.h2 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white mb-6 leading-[1.15]">
-            From Hypothesis <br/>
-            <em className="not-italic bg-clip-text text-transparent bg-gradient-to-br from-cyan-300 to-white">To Evidence.</em>
-          </motion.h2>
-          <motion.p variants={fadeInUp} className="text-zinc-400 text-base md:text-lg leading-relaxed">
-            Eliminate cognitive bias and backtest overfitting. Anchor your decisions strictly to deterministic reality.
-          </motion.p>
-        </motion.div>
-
-        <motion.div variants={stagger(0.06)} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} className="grid grid-cols-1 md:grid-cols-12 gap-5">
-          
-          {/* Tile 1: Institutional Liquidity Mapping */}
-          <motion.div variants={fadeInUp} className="md:col-span-8">
-            <GlassCard className="h-full p-8 flex flex-col gap-6 min-h-[380px]">
-              <div className="space-y-3">
-                <Badge tone="cyan" pulse>INSTITUTIONAL LIQUIDITY MAPPING</Badge>
-                <h3 className="text-xl md:text-2xl font-semibold text-white tracking-tight leading-snug">
-                  See the truth, not the indicator.
-                </h3>
-                <p className="text-zinc-400 text-sm leading-relaxed max-w-xl">
-                  Sub-millisecond Order Book Tape and multi-session Volume Profiles built directly from the wire. Stop relying on lagging retail indicators and start reading structural market absorption.
-                </p>
-              </div>
-              <div className="mt-auto flex flex-col gap-6">
-                 <PressureBar buyPct={68} />
-                 <div className="flex items-end gap-1.5 h-16">
-                   {[30, 45, 60, 85, 100, 75, 55, 40, 25, 40, 65, 80, 50, 30].map((h, i) => (
-                     <div key={i} style={{ height: `${h}%` }} className={`flex-1 rounded-t-sm ${i === 4 ? "bg-cyan-400/90 shadow-[0_0_12px_rgba(34,211,238,0.5)]" : "bg-white/[0.12]"}`} />
-                   ))}
-                 </div>
-              </div>
-            </GlassCard>
-          </motion.div>
-
-          {/* Tile 2: Deterministic Execution */}
-          <motion.div variants={fadeInUp} className="md:col-span-4">
-            <GlassCard className="h-full p-8 flex flex-col justify-between min-h-[380px]">
-              <div className="space-y-3">
-                <Badge tone="emerald" pulse>DETERMINISTIC EXECUTION</Badge>
-                <h3 className="text-xl font-semibold text-white tracking-tight leading-snug">
-                  Zero lookahead leakage.
-                </h3>
-                <p className="text-zinc-400 text-sm leading-relaxed">
-                  Backtest your algorithms against hard tick-level evidence. Every simulation is perfectly reproducible.
-                </p>
-              </div>
-              <TermOutput />
-            </GlassCard>
-          </motion.div>
-
-          {/* Tile 3: Sovereign Isolation */}
-          <motion.div variants={fadeInUp} className="md:col-span-12">
-            <GlassCard elevated className="p-8 flex flex-col md:flex-row items-center gap-8 min-h-[160px]">
-               <div className="flex-1 space-y-3">
-                  <Badge tone="amber" pulse={false}>SOVEREIGN ISOLATION</Badge>
-                  <h3 className="text-xl font-semibold text-white tracking-tight leading-snug">
-                    Your alpha is yours alone.
-                  </h3>
-                  <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl">
-                    Air-gapped key management and zero telemetry surveillance. No analytics middleware. No remote parameter harvesting. What you discover stays on your drive.
-                  </p>
-               </div>
-               <div className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-amber-500/[0.05] border border-amber-500/20 font-mono text-xs text-amber-300 tracking-widest shrink-0">
-                  <ShieldCheck size={16} />
-                  TELEMETRY: OFFLINE
-               </div>
-            </GlassCard>
-          </motion.div>
-
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────
-//  SECTION 4 — INSTITUTIONAL CONVERSION FLOOR
-// ─────────────────────────────────────────────
-
-function SectionInstitutional() {
-  return (
-    <section className="relative py-28 md:py-36 px-6 md:px-10 overflow-hidden">
-      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-purple-600/[0.06] blur-[130px] rounded-full mix-blend-screen" />
-      <div className="pointer-events-none absolute top-0 left-1/4 w-[600px] h-[300px] bg-fuchsia-600/[0.05] blur-[110px] rounded-full" />
-
-      <div className="max-w-4xl mx-auto text-center relative z-10">
-        <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }}>
-          <GlassCard elevated className="p-10 md:p-16 flex flex-col items-center text-center relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-0 opacity-[0.022]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
-            
-            <div className="mb-8 relative z-10">
-              <Badge tone="purple" pulse>STATUS / PRE-RELEASE VERIFICATION</Badge>
-            </div>
-            
-            <h2 className="text-3xl md:text-5xl lg:text-[3.25rem] font-semibold tracking-tight text-white mb-7 max-w-2xl leading-[1.12] relative z-10">
-              Deploy your sovereign <br className="hidden sm:block" />
-              <em className="not-italic bg-clip-text text-transparent bg-gradient-to-br from-purple-200 to-white">workstation.</em>
-            </h2>
-            
-            <p className="text-zinc-400 text-base md:text-lg max-w-xl mb-10 leading-relaxed relative z-10">
-              Launch the web workspace or download the desktop client for direct market access. ZTerminal does not distribute unverified binaries. Cryptographic signing and release documentation are verified before public distribution.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4 mb-10 w-full sm:w-auto relative z-10">
-              <Link href="/terminal" className="group w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-white text-black text-sm font-semibold tracking-tight transition hover:bg-zinc-100 hover:shadow-[0_0_32px_rgba(255,255,255,0.2)]">
-                Open Web Terminal
-                <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
-              <Link href="/download" className="group w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/[0.12] bg-white/[0.04] text-zinc-200 hover:text-white hover:bg-white/[0.08] text-sm font-medium transition">
-                Download Desktop Client
-              </Link>
-            </div>
-
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-black/40 border border-white/[0.06] font-mono text-[11px] text-zinc-400 relative z-10">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse flex-shrink-0" />
-              STATUS: PRE-RELEASE // CRYPTOGRAPHIC SIGNING VERIFIED
-            </div>
-          </GlassCard>
-        </motion.div>
-        
-        <footer className="mt-24 pt-14 border-t border-white/[0.08] flex flex-col md:flex-row justify-between gap-3 text-[11px] font-mono text-zinc-600">
-          <span>© 2026 ZTerminal. Infrastructure for Sovereign Traders.</span>
-          <span>VERSION: 0.2.1 BETA</span>
-        </footer>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────
-//  ROOT EXPORT
+//  ROOT EXPORT (Page 1 Locked + Modular Sections)
 // ─────────────────────────────────────────────
 export default function ZTerminalLandingStandalone() {
   return (
     <div className={`min-h-screen ${THEME.bg} text-zinc-100 font-sans antialiased overflow-x-hidden selection:bg-purple-500/25`}>
+      {/* INVARIANT 1: PAGE 1 (HERO FOLD) - 100% UNTOUCHED & PIXEL-LOCKED */}
       <Nav />
       <main>
         <HeroSection />
-        <SectionSovereign />
-        <SectionQuantLoop />
-        <SectionInstitutional />
+
+        {/* SECTION 2: THE REVELATION — "STOP TRADING IN THE DARK" */}
+        <MicrostructureLens />
+
+        {/* SECTION 3: THE SOVEREIGN PIPELINE — "A CLEAR BOUNDARY FOR LOCAL WORK" */}
+        <SovereignPipeline />
+
+        {/* SECTION 4: THE QUANT LOOP — "FROM HYPOTHESIS TO ALPHA" */}
+        <QuantBentoMatrix />
+
+        {/* SECTION 5: INSTITUTIONAL CONVERSION FLOOR & LIQUID FOOTER */}
+        <InstitutionalCta />
       </main>
     </div>
   );
 }
+
