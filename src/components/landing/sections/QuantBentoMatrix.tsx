@@ -2,30 +2,186 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '../motion/springConfig';
 import { LiquidGlassCard } from '../ui/LiquidGlassCard';
 import { TelemetryBadge } from '../ui/TelemetryBadge';
 
+/** Static volume profile bars — VPOC at index 5 highlighted emerald */
+function VolumeProfileVisual() {
+  const bars = [28, 48, 65, 82, 100, 74, 52, 38, 22];
+  const vpocIdx = 4; // 100 height = VPOC
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 px-1">
+        <span>VAH: 64,360.00</span>
+        <span className="text-emerald-400 font-semibold">POC: 64,280.50</span>
+        <span>VAL: 64,190.00</span>
+      </div>
+      <div className="flex items-end gap-1.5 h-24 w-full pt-2 border-t border-white/[0.06]">
+        {bars.map((h, i) => (
+          <div
+            key={i}
+            style={{ height: `${h}%` }}
+            className={`flex-1 rounded-t-sm transition-all duration-300 ${
+              i === vpocIdx
+                ? 'bg-emerald-400/90 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+                : h > 60
+                ? 'bg-white/40'
+                : 'bg-white/15'
+            }`}
+          />
+        ))}
+      </div>
+      <div className="text-center">
+        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+          Session Value Area // 70% Distribution
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Static Python research code block */
+function PythonCodeBlock() {
+  return (
+    <div className="space-y-3">
+      <div className="p-4 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-[11px] space-y-1 leading-relaxed">
+        <div className="text-zinc-500">{`# momentum_retest.py`}</div>
+        <div>
+          <span className="text-purple-400">hypothesis</span>
+          {' = market.retest('}
+        </div>
+        <div className="pl-4">
+          <span className="text-zinc-300">level=</span>
+          <span className="text-cyan-400">session.vpoc</span>,
+        </div>
+        <div className="pl-4">
+          <span className="text-zinc-300">confirmation=</span>
+          <span className="text-cyan-400">delta.absorption</span>
+        </div>
+        <div>{')'}</div>
+        <div className="mt-1">
+          <span className="text-purple-400">test</span>
+          {'(hypothesis, regime='}
+          <span className="text-emerald-400">{'"trend"'}</span>
+          {')'}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-mono">
+        <Check size={12} />
+        <span>Rules are explicit. The test is repeatable.</span>
+      </div>
+    </div>
+  );
+}
+
+/** Static 3-node architecture dataflow for the wide tile */
+function ArchitectureDataflow() {
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          { label: 'BROWSER UI', value: 'Lightweight Charts', detail: '2D Canvas + WebSockets', dot: 'bg-emerald-400' },
+          { label: 'MARKET GATEWAY', value: 'Gate.io & Binance', detail: 'L2 Book & Trade Stream', dot: 'bg-cyan-400' },
+          { label: 'LOCAL HELPER', value: 'Windows Companion', detail: 'Isolated Python Runner', dot: 'bg-purple-400' },
+        ].map(({ label, value, detail, dot }) => (
+          <div key={label} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] text-zinc-400 font-medium uppercase tracking-wider">{label}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+            </div>
+            <div className="font-mono text-xs text-zinc-200 font-semibold">{value}</div>
+            <span className="font-mono text-[10px] text-zinc-500">{detail}</span>
+          </div>
+        ))}
+      </div>
+      {/* Console block */}
+      <div className="p-4 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs space-y-1">
+        <div className="text-zinc-500">{`// Loopback Transport & Channel Status`}</div>
+        <div className="text-emerald-400">gateway connection: socket.io connected (OK)</div>
+        <div className="text-zinc-300">
+          transport: <span className="text-white font-medium">direct websocket</span>
+          {' // book state: '}
+          <span className="text-cyan-300 font-medium">sequence-verified</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Static local storage trust badge for tile 4 */
+function SovereignStorageVisual() {
+  return (
+    <div className="space-y-3">
+      <div className="p-4 rounded-xl bg-amber-500/[0.04] border border-amber-500/20 font-mono text-[11px] text-amber-300/90 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-amber-400" />
+          <span>LOCAL KEY STORAGE</span>
+        </div>
+        <span className="text-zinc-400 text-[10px]">ANALYTICS: ZERO</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-zinc-500">
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+          <div className="text-zinc-300 font-medium mb-0.5">Exchange keys</div>
+          Local storage only
+        </div>
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+          <div className="text-zinc-300 font-medium mb-0.5">Strategies</div>
+          On your machine
+        </div>
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+          <div className="text-zinc-300 font-medium mb-0.5">Datasets</div>
+          Selected by you
+        </div>
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+          <div className="text-zinc-300 font-medium mb-0.5">Results</div>
+          Archived locally
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function QuantBentoMatrix() {
   return (
-    <section className="relative w-full py-28 md:py-36 px-6 md:px-12 bg-black" id="quant-matrix">
+    <section
+      className="relative w-full py-28 md:py-36 px-6 md:px-12 bg-black"
+      id="quant-matrix"
+    >
       <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <div className="mb-4">
+        {/* Section header */}
+        <motion.div
+          variants={staggerContainer(0.08)}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          className="text-center max-w-3xl mx-auto mb-20"
+        >
+          <motion.div variants={fadeInUp} className="mb-4">
             <TelemetryBadge tone="zinc" pulse={false}>
               RESEARCH WORKSTATION ARCHITECTURE
             </TelemetryBadge>
-          </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white mb-6 leading-[1.15]">
-            Built for researchers who demand empirical evidence.
-          </h2>
-          <p className="text-zinc-400 text-base md:text-lg leading-relaxed">
-            A modular environment for discretionary tape readers, systematic researchers, and market structure practitioners.
-          </p>
-        </div>
+          </motion.div>
+          <motion.h2
+            variants={fadeInUp}
+            className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white mb-6 leading-[1.15]"
+          >
+            From Gut Feeling{' '}
+            <br className="hidden sm:block" />
+            <em className="not-italic bg-clip-text text-transparent bg-gradient-to-br from-purple-300 to-white">
+              to a Number You Can Defend.
+            </em>
+          </motion.h2>
+          <motion.p variants={fadeInUp} className="text-zinc-400 text-base md:text-lg leading-relaxed">
+            Cognitive bias doesn't announce itself. It lives in the gap between "this looks like it
+            works" and "here is what the data says." The Quant Loop closes that gap. Every
+            observation becomes an explicit hypothesis. Every hypothesis gets a test. Every test
+            produces an archived result with its assumptions attached.
+          </motion.p>
+        </motion.div>
 
-        {/* Asymmetric 12-Column Bento Grid */}
+        {/* 12-column bento grid */}
         <motion.div
           variants={staggerContainer(0.06)}
           initial="hidden"
@@ -33,198 +189,138 @@ export function QuantBentoMatrix() {
           viewport={{ once: true, margin: '-80px' }}
           className="grid grid-cols-1 md:grid-cols-12 gap-6"
         >
-          {/* Tile 1: Span 8 Cols - Architecture */}
-          <LiquidGlassCard className="md:col-span-8 p-8 md:p-10 flex flex-col justify-between min-h-[420px]">
-            <div>
-              <div className="mb-3">
-                <TelemetryBadge tone="cyan" pulse>
-                  HYBRID ARCHITECTURE
-                </TelemetryBadge>
+          {/* Tile 1 — Sub-millisecond Order Book Tape (col-span-8) */}
+          <motion.div variants={fadeInUp} className="md:col-span-8">
+            <LiquidGlassCard className="h-full p-8 flex flex-col justify-between min-h-[420px]">
+              <div className="space-y-3">
+                <TelemetryBadge tone="cyan" pulse>HYBRID ARCHITECTURE</TelemetryBadge>
+                <h3 className="text-xl md:text-2xl font-semibold text-white tracking-tight leading-snug mt-2">
+                  The tape doesn't lie—if you can read it fast enough.
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  ZTerminal streams directly from Gate.io and Binance via WebSocket, applying
+                  incremental L2 deltas with sequence-gap detection in the browser. The order book
+                  you see is derived from every observed message in order—not a sampled snapshot
+                  from a CDN cache. Aggression, absorption, and initiative are readable before a
+                  candle closes.
+                </p>
               </div>
-              <h3 className="text-2xl md:text-3xl font-semibold text-white mt-2 mb-3 tracking-tight">
-                Browser Terminal + Local Companion
-              </h3>
-              <p className="text-zinc-400 text-sm md:text-base leading-relaxed max-w-2xl">
-                Run interactive charts and live order-book analytics immediately in any modern browser. When your research requires custom Python strategies, local datasets, or private secrets, pair the terminal with the local Windows Companion helper.
-              </p>
-            </div>
-
-            {/* Architecture Node Dataflow Visualizer */}
-            <div className="mt-8 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-[11px] text-zinc-400 font-medium">BROWSER UI</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  </div>
-                  <div className="font-mono text-xs text-zinc-200 font-semibold">Lightweight Charts</div>
-                  <span className="font-mono text-[10px] text-zinc-500 mt-1">2D Canvas + WebSockets</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-[11px] text-zinc-400 font-medium">MARKET GATEWAY</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  </div>
-                  <div className="font-mono text-xs text-zinc-200 font-semibold">Gate.io &amp; Binance</div>
-                  <span className="font-mono text-[10px] text-zinc-500 mt-1">L2 Book &amp; Trade Stream</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-[11px] text-zinc-400 font-medium">LOCAL HELPER</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                  </div>
-                  <div className="font-mono text-xs text-zinc-200 font-semibold">Windows Companion</div>
-                  <span className="font-mono text-[10px] text-zinc-500 mt-1">Isolated Python Runner</span>
-                </div>
+              <div className="mt-auto w-full pt-4">
+                <ArchitectureDataflow />
               </div>
+            </LiquidGlassCard>
+          </motion.div>
 
-              {/* Console Telemetry Output */}
-              <div className="p-4 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs text-zinc-400 space-y-1">
-                <div className="text-zinc-500">{`// Loopback Transport & Channel Status`}</div>
-                <div className="text-emerald-400">gateway connection: socket.io connected (OK)</div>
-                <div className="text-zinc-300">
-                  transport: <span className="text-white font-medium">direct websocket</span> {`// book state: `}
-                  <span className="text-cyan-300 font-medium">sequence-verified</span>
-                </div>
-              </div>
-            </div>
-          </LiquidGlassCard>
-
-          {/* Tile 2: Span 4 Cols - Volume Profile */}
-          <LiquidGlassCard className="md:col-span-4 p-8 flex flex-col justify-between min-h-[420px]">
-            <div>
-              <div className="mb-3">
+          {/* Tile 2 — Deterministic Backtest Engine (col-span-4) */}
+          <motion.div variants={fadeInUp} className="md:col-span-4">
+            <LiquidGlassCard className="h-full p-8 flex flex-col justify-between min-h-[420px]">
+              <div className="space-y-3">
                 <TelemetryBadge tone="emerald" pulse>
-                  VOLUME PROFILE &amp; AUCTION DYNAMICS
+                  VOLUME PROFILE & AUCTION DYNAMICS
                 </TelemetryBadge>
+                <h3 className="text-xl md:text-2xl font-semibold text-white tracking-tight leading-snug mt-2">
+                  Construct the profile.{' '}
+                  <em className="not-italic text-emerald-400">Don't accept one.</em>
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  Session, Composite, and Developing Volume Profiles are constructed from observed
+                  trades in your local dataset—not sourced from a third-party indicator with
+                  undisclosed methodology. No black box. No trust required.
+                </p>
               </div>
-              <h3 className="text-2xl font-semibold text-white mt-2 mb-3 tracking-tight">
-                Deterministic Profile Analysis
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                Construct Session, Composite, and Developing Volume Profiles directly from observed trades. Identify Value Area rotations, POC levels, and volume nodes without third-party black-box indicators.
-              </p>
-            </div>
+              <div className="mt-6">
+                <VolumeProfileVisual />
+              </div>
+            </LiquidGlassCard>
+          </motion.div>
 
-            {/* Auction Market Profile Visualizer */}
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 px-1">
-                <span>VAH: 64,360.00</span>
-                <span className="text-emerald-400 font-semibold">POC: 64,280.50</span>
-                <span>VAL: 64,190.00</span>
-              </div>
-              <div className="h-32 w-full flex items-end gap-1.5 pt-4 border-t border-white/[0.06]">
-                {[28, 48, 65, 82, 100, 74, 52, 38, 22].map((h, i) => (
-                  <div
-                    key={i}
-                    style={{ height: `${h}%` }}
-                    className={`flex-1 rounded-t-sm transition-all ${
-                      h === 100
-                        ? 'bg-emerald-400/90 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
-                        : h > 60
-                          ? 'bg-white/40'
-                          : 'bg-white/15'
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="text-center">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
-                  SESSION VALUE AREA // 70% DISTRIBUTION
-                </span>
-              </div>
-            </div>
-          </LiquidGlassCard>
-
-          {/* Tile 3: Span 4 Cols - Python Research */}
-          <LiquidGlassCard className="md:col-span-4 p-8 flex flex-col justify-between min-h-[360px]">
-            <div>
-              <div className="mb-3">
+          {/* Tile 3 — Python Vectorized Research (col-span-4) */}
+          <motion.div variants={fadeInUp} className="md:col-span-4">
+            <LiquidGlassCard className="h-full p-8 flex flex-col justify-between min-h-[360px]">
+              <div className="space-y-3">
                 <TelemetryBadge tone="purple" pulse={false}>
                   STRATEGY PROTOCOL
                 </TelemetryBadge>
+                <h3 className="text-xl md:text-2xl font-semibold text-white tracking-tight leading-snug mt-2">
+                  Make the discretion explicit.
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  Discretionary observations are valuable. Uncodified discretion is not testable.
+                  Write your thesis in standard Python—no vendor scripting language, no proprietary
+                  sandbox. Rules you can inspect are rules you can challenge.
+                </p>
               </div>
-              <h3 className="text-xl md:text-2xl font-semibold text-white mt-2 mb-3 tracking-tight">
-                Python Research API
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                Develop testable hypotheses in standard Python. Run reproducible backtests against saved dataset manifests with next-bar execution policy.
-              </p>
-            </div>
-
-            {/* Python Strategy Snippet */}
-            <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] font-mono text-[11px] text-zinc-300 space-y-1 my-3">
-              <div>
-                <span className="text-purple-400">def</span> evaluate_signal(context, bar):
+              <div className="mt-6">
+                <PythonCodeBlock />
               </div>
-              <div className="text-zinc-400">&nbsp;&nbsp;delta = calculate_cvd(bar)</div>
-              <div className="text-zinc-400">&nbsp;&nbsp;<span className="text-purple-400">return</span> delta &gt; context.threshold</div>
-              <div className="text-emerald-400">{`# Next-bar fill simulation`}</div>
-            </div>
+              <span className="mt-4 text-[10px] font-mono text-zinc-600 uppercase tracking-wider">
+                Runtime: Python 3.11+ Companion
+              </span>
+            </LiquidGlassCard>
+          </motion.div>
 
-            <span className="text-xs font-mono text-zinc-500">RUNTIME: PYTHON 3.11+ COMPANION</span>
-          </LiquidGlassCard>
-
-          {/* Tile 4: Span 4 Cols - Privacy */}
-          <LiquidGlassCard className="md:col-span-4 p-8 flex flex-col justify-between min-h-[360px]">
-            <div>
-              <div className="mb-3">
+          {/* Tile 4 — Sovereign Air-Gapped Storage (col-span-4) */}
+          <motion.div variants={fadeInUp} className="md:col-span-4">
+            <LiquidGlassCard className="h-full p-8 flex flex-col justify-between min-h-[360px]">
+              <div className="space-y-3">
                 <TelemetryBadge tone="amber" pulse={false}>
                   LOCAL-FIRST
                 </TelemetryBadge>
+                <h3 className="text-xl md:text-2xl font-semibold text-white tracking-tight leading-snug mt-2">
+                  What you discover is not shared infrastructure.
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  Exchange API keys, strategy parameters, and research manifests are stored in your
+                  local machine. Non-custodial by architecture. There is no remote parameter endpoint.
+                </p>
               </div>
-              <h3 className="text-xl md:text-2xl font-semibold text-white mt-2 mb-3 tracking-tight">
-                Client-Side Key Isolation
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                Exchange API keys, custom indicators, and research strategies remain stored in your local machine. No tracking analytics. No remote parameter harvesting.
-              </p>
-            </div>
-
-            {/* Local Security Badge */}
-            <div className="p-3.5 rounded-xl bg-amber-500/[0.03] border border-amber-500/20 font-mono text-[11px] text-amber-300/90 flex items-center justify-between my-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>LOCAL KEY STORAGE</span>
+              <div className="mt-6">
+                <SovereignStorageVisual />
               </div>
-              <span className="text-zinc-400 text-[10px]">ANALYTICS: ZERO</span>
-            </div>
+              <span className="mt-4 text-[10px] font-mono text-zinc-600 uppercase tracking-wider">
+                Non-Custodial // No Cloud Dependency
+              </span>
+            </LiquidGlassCard>
+          </motion.div>
 
-            <span className="text-xs font-mono text-zinc-500">NON-CUSTODIAL // NO CLOUD DEPENDENCY</span>
-          </LiquidGlassCard>
-
-          {/* Tile 5: Span 4 Cols - Display Dock */}
-          <LiquidGlassCard className="md:col-span-4 p-8 flex flex-col justify-between min-h-[360px]">
-            <div>
-              <div className="mb-3">
-                <TelemetryBadge tone="cyan" pulse={false}>
-                  WORKSPACE DOCK
+          {/* Tile 5 — Decision Gate (col-span-4) */}
+          <motion.div variants={fadeInUp} className="md:col-span-4">
+            <LiquidGlassCard elevated className="h-full p-8 flex flex-col justify-between min-h-[360px]">
+              <div className="space-y-3">
+                <TelemetryBadge tone="white" pulse={false}>
+                  THE DECISION GATE
                 </TelemetryBadge>
+                <h3 className="text-xl md:text-2xl font-semibold text-white tracking-tight leading-snug mt-2">
+                  Keep. Refine. Reject.
+                </h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  A weak thesis should fail quickly. A durable one earns the next test. The loop
+                  doesn't end at a backtest—it ends when the evidence survives enough windows to
+                  warrant conviction.
+                </p>
               </div>
-              <h3 className="text-xl md:text-2xl font-semibold text-white mt-2 mb-3 tracking-tight">
-                Synchronized Multi-Pane Layout
-              </h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                Arrange candlestick charts, order-book depth, trade tape, and research summaries in a flexible grid with unified crosshairs.
-              </p>
-            </div>
-
-            {/* Layout Wireframe */}
-            <div className="grid grid-cols-2 gap-2 my-3">
-              <div className="p-3 rounded-lg bg-black/40 border border-white/[0.08] flex flex-col items-center justify-center gap-1 h-20">
-                <div className="w-12 h-1 bg-cyan-400/60 rounded" />
-                <span className="font-mono text-[10px] text-zinc-400">PANE 1 // CANDLES</span>
+              <div className="mt-6 space-y-2">
+                {['Hypothesis defined', 'Test window passed', 'Evidence archived'].map((step, i) => (
+                  <div key={step} className="flex items-center gap-3">
+                    <span
+                      className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-mono font-bold ${
+                        i < 2
+                          ? 'bg-white/10 text-white/40'
+                          : 'bg-purple-500/20 border border-purple-500/40 text-purple-300'
+                      }`}
+                    >
+                      {i < 2 ? <Check size={10} className="opacity-40" /> : <Check size={10} />}
+                    </span>
+                    <span
+                      className={`text-xs font-mono ${i < 2 ? 'text-zinc-500' : 'text-purple-300'}`}
+                    >
+                      {step}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div className="p-3 rounded-lg bg-black/40 border border-white/[0.08] flex flex-col items-center justify-center gap-1 h-20">
-                <div className="w-12 h-1 bg-cyan-400/60 rounded" />
-                <span className="font-mono text-[10px] text-zinc-400">PANE 2 // DEPTH &amp; TAPE</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-mono text-zinc-500">ENGINE: DOCKVIEW // UNIFIED CROSSHAIR</span>
-          </LiquidGlassCard>
+            </LiquidGlassCard>
+          </motion.div>
         </motion.div>
       </div>
     </section>

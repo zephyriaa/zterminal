@@ -2,31 +2,93 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { fadeInUp, staggerContainer, springPhysics } from '../motion/springConfig';
+import { Fingerprint, LockKeyhole, Zap, Database, Braces, ShieldCheck } from 'lucide-react';
+import { fadeInUp, staggerContainer } from '../motion/springConfig';
 import { LiquidGlassCard } from '../ui/LiquidGlassCard';
 import { TelemetryBadge } from '../ui/TelemetryBadge';
 
-export function MicrostructureLens() {
-  const volumeProfileData = [
-    { vol: 24, label: '64,150' },
-    { vol: 38, label: '64,180' },
-    { vol: 46, label: '64,210' },
-    { vol: 62, label: '64,240' },
-    { vol: 88, label: '64,270' },
-    { vol: 100, label: '64,280', isVpoc: true },
-    { vol: 78, label: '64,310' },
-    { vol: 44, label: '64,340' },
-    { vol: 92, label: '64,370' },
-    { vol: 68, label: '64,400' },
-    { vol: 32, label: '64,430' },
-    { vol: 18, label: '64,460' },
-  ];
-
+function SovereignOrbit() {
   return (
-    <section className="relative w-full py-28 md:py-36 px-6 md:px-12 bg-black overflow-hidden" id="microstructure">
-      {/* Ambient Caustic Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/3 w-[600px] h-[350px] bg-cyan-500/5 blur-[100px] rounded-full pointer-events-none" />
+    <div
+      className="relative flex items-center justify-center w-full min-h-[360px]"
+      aria-label="Local research sovereignty diagram"
+    >
+      {/* Ambient orbit rings */}
+      <div className="absolute w-64 h-64 rounded-full border border-purple-500/10 animate-[spin_28s_linear_infinite]" />
+      <div className="absolute w-80 h-80 rounded-full border border-purple-500/[0.06] animate-[spin_42s_linear_infinite_reverse]" />
+
+      {/* Core node */}
+      <div className="relative z-10 flex flex-col items-center gap-2">
+        <div className="relative flex items-center justify-center w-20 h-20 rounded-full border border-purple-500/30 bg-purple-950/60 backdrop-blur-sm shadow-[0_0_60px_rgba(124,58,237,0.25)]">
+          <span className="absolute inset-0 rounded-full bg-purple-500/10 animate-ping [animation-duration:3s]" />
+          <Fingerprint size={32} strokeWidth={1.2} className="text-purple-300" />
+        </div>
+        <b className="text-xs font-mono tracking-[0.2em] text-purple-200 uppercase">Your Machine</b>
+        <small className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Trusted boundary</small>
+      </div>
+
+      {/* Orbit nodes */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-white/[0.08] backdrop-blur-md">
+          <Database size={11} className="text-purple-400" />
+          <span className="text-[10px] font-mono text-zinc-300">Market data</span>
+        </div>
+      </div>
+      <div className="absolute bottom-10 left-6 flex flex-col items-center gap-1">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-white/[0.08] backdrop-blur-md">
+          <Braces size={11} className="text-purple-400" />
+          <span className="text-[10px] font-mono text-zinc-300">Strategies</span>
+        </div>
+      </div>
+      <div className="absolute bottom-10 right-6 flex flex-col items-center gap-1">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-white/[0.08] backdrop-blur-md">
+          <LockKeyhole size={11} className="text-purple-400" />
+          <span className="text-[10px] font-mono text-zinc-300">Keys</span>
+        </div>
+      </div>
+
+      {/* Private stamp */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-950/60 border border-purple-500/20 backdrop-blur-sm">
+        <ShieldCheck size={11} className="text-purple-400" />
+        <span className="text-[10px] font-mono text-purple-300 tracking-widest uppercase">Private by Architecture</span>
+      </div>
+    </div>
+  );
+}
+
+const pillars = [
+  {
+    icon: Zap,
+    title: 'Zero Round-Trip Latency',
+    copy: 'Cloud-routed execution adds a measurable delay between observation and analysis. Local compute removes the intermediary entirely. Your research cycle is bounded by your hardware—not a shared tenant\'s queue.',
+  },
+  {
+    icon: LockKeyhole,
+    title: 'No Data Egress. No Telemetry.',
+    copy: 'Strategy parameters, exchange credentials, and dataset selections remain on storage you control. ZTerminal does not log what you test, what you discard, or what you choose to keep.',
+  },
+  {
+    icon: Fingerprint,
+    title: 'Deterministic by Construction',
+    copy: 'A result you cannot reproduce is not a result—it\'s a coincidence. Local execution means the same dataset, the same runtime, and the same assumptions produce the same output. Every time.',
+  },
+];
+
+export function MicrostructureLens() {
+  return (
+    <section
+      className="relative w-full py-28 md:py-36 px-6 md:px-12 bg-black overflow-hidden"
+      id="sovereignty"
+    >
+      {/* Ambient caustic glow — purple */}
+      <div
+        className="pointer-events-none absolute -top-32 left-0 w-[700px] h-[500px] rounded-full bg-purple-600/5 blur-[120px]"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 right-0 w-[500px] h-[400px] rounded-full bg-violet-600/[0.04] blur-[100px]"
+        aria-hidden="true"
+      />
 
       <div className="max-w-7xl mx-auto">
         <motion.div
@@ -36,11 +98,11 @@ export function MicrostructureLens() {
           viewport={{ once: true, margin: '-100px' }}
           className="grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-16 items-center"
         >
-          {/* Narrative Column */}
-          <div className="xl:col-span-5 space-y-6 min-w-0">
+          {/* Narrative column */}
+          <div className="xl:col-span-5 space-y-8 min-w-0">
             <motion.div variants={fadeInUp}>
-              <TelemetryBadge tone="emerald" pulse>
-                TRANSPARENT MARKET STRUCTURE
+              <TelemetryBadge tone="purple" pulse>
+                03 · LOCAL BY DESIGN
               </TelemetryBadge>
             </motion.div>
 
@@ -48,123 +110,54 @@ export function MicrostructureLens() {
               variants={fadeInUp}
               className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white leading-[1.1]"
             >
-              Precision where liquidity concentrates.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600">
-                Clarity when volatility expands.
-              </span>
+              Your Edge,{' '}
+              <em className="not-italic bg-clip-text text-transparent bg-gradient-to-br from-purple-300 to-white">
+                Sovereign.
+              </em>
             </motion.h2>
 
             <motion.p
               variants={fadeInUp}
               className="text-base md:text-lg text-zinc-400 leading-relaxed font-normal"
             >
-              Most web terminals hide market microstructure behind delayed, aggregated bars. ZTerminal streams public Gate.io and Binance feeds directly through a local gateway—deriving sequence-aware order books, Volume Profiles, and Auction Market Theory metrics transparently in your browser.
+              Every cloud terminal is a wiretap with a color scheme. When your research runs inside
+              someone else's infrastructure, your hypotheses, your assumptions, and your dataset
+              selections are logged before they're yours. The milliseconds you wait for a cloud
+              round trip are not a convenience tax—they are a front-running window.
             </motion.p>
 
-            {/* Floating Depth Tags */}
-            <motion.div variants={fadeInUp} className="flex flex-wrap gap-2 pt-2">
-              <span className="px-3 py-1 rounded-lg text-xs font-mono bg-white/[0.04] border border-white/[0.08] text-zinc-300">
-                Auction Market Theory
-              </span>
-              <span className="px-3 py-1 rounded-lg text-xs font-mono bg-white/[0.04] border border-white/[0.08] text-zinc-300">
-                Client-Side VWAP
-              </span>
-              <span className="px-3 py-1 rounded-lg text-xs font-mono bg-white/[0.04] border border-white/[0.08] text-zinc-300">
-                Cumulative Delta
-              </span>
-              <span className="px-3 py-1 rounded-lg text-xs font-mono bg-white/[0.04] border border-white/[0.08] text-zinc-300">
-                Observed Trades
-              </span>
-            </motion.div>
+            <motion.p variants={fadeInUp} className="text-sm text-zinc-500 leading-relaxed">
+              ZTerminal's Windows Companion closes that window. Python research runs locally. Market
+              data ingress is direct. Secrets stay in the storage you control.
+            </motion.p>
 
-            {/* Metrics Strip */}
-            <motion.div
-              variants={fadeInUp}
-              className="grid grid-cols-3 gap-4 pt-6 border-t border-white/[0.08]"
-            >
-              <div>
-                <div className="text-xl md:text-2xl font-mono font-medium text-white">Direct WS</div>
-                <div className="text-xs text-zinc-400 uppercase font-mono mt-1">Exchange Stream</div>
-              </div>
-              <div>
-                <div className="text-xl md:text-2xl font-mono font-medium text-white">Local L2</div>
-                <div className="text-xs text-zinc-400 uppercase font-mono mt-1">Sequence Book</div>
-              </div>
-              <div>
-                <div className="text-xl md:text-2xl font-mono font-medium text-white">Canvas</div>
-                <div className="text-xs text-zinc-400 uppercase font-mono mt-1">Hardware Chart</div>
-              </div>
+            {/* Value pillars */}
+            <motion.div variants={staggerContainer(0.1)} className="space-y-4 pt-2">
+              {pillars.map(({ icon: Icon, title, copy }) => (
+                <motion.article
+                  key={title}
+                  variants={fadeInUp}
+                  className="flex gap-4 p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-purple-500/20 hover:bg-purple-500/[0.03] transition-colors duration-300"
+                >
+                  <span className="mt-0.5 flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <Icon size={15} className="text-purple-400" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-white mb-1 tracking-tight">{title}</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed">{copy}</p>
+                  </div>
+                </motion.article>
+              ))}
             </motion.div>
           </div>
 
-          {/* Interactive Liquid Glass Lens Visualizer */}
+          {/* Visual column */}
           <motion.div variants={fadeInUp} className="xl:col-span-7 min-w-0 w-full">
             <LiquidGlassCard
               elevated
-              className="p-6 md:p-8 min-h-[420px] flex flex-col justify-between overflow-hidden shadow-2xl w-full"
+              className="p-8 min-h-[460px] flex flex-col justify-center overflow-hidden shadow-2xl"
             >
-              {/* Header Telemetry Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/80 animate-pulse" />
-                  <span className="font-mono text-xs text-zinc-300">
-                    FEED: BINANCE_FUTURES // BTCUSDT (PREVIEW)
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-white/[0.06] font-mono text-[11px] text-zinc-300">
-                    DELTA: +4,280 (DERIVED)
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/[0.15] border border-emerald-500/30 font-mono text-[11px] text-emerald-300 font-medium">
-                    VPOC: 64,280.50
-                  </span>
-                </div>
-              </div>
-
-              {/* Simulated Volume Profile / Auction Representation */}
-              <div className="my-auto py-6 grid grid-cols-12 gap-2 items-end h-52 w-full opacity-95">
-                {volumeProfileData.map((item, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end group/bar">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      whileInView={{ height: `${item.vol}%` }}
-                      transition={{ ...springPhysics.smooth, delay: idx * 0.035 }}
-                      className={`w-full rounded-t-sm transition-all duration-300 ${
-                        item.isVpoc
-                          ? 'bg-emerald-400/90 shadow-[0_0_20px_rgba(52,211,153,0.45)]'
-                          : item.vol > 70
-                            ? 'bg-white/45 group-hover/bar:bg-white/60'
-                            : 'bg-white/15 group-hover/bar:bg-white/30'
-                      }`}
-                    />
-                    <span className="font-mono text-[10px] text-zinc-400 select-none group-hover/bar:text-zinc-200 transition-colors">
-                      {item.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Real-time Order Aggregation Readout */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 py-3 px-4 rounded-xl bg-black/40 border border-white/[0.05] font-mono text-[11px]">
-                <div>
-                  <span className="text-zinc-500">INGRESS:</span>{' '}
-                  <span className="text-zinc-200">GATEWAY WEBSOCKET</span>
-                </div>
-                <div>
-                  <span className="text-zinc-500">BOOK STATE:</span>{' '}
-                  <span className="text-emerald-400">SEQUENCE-AWARE L2</span>
-                </div>
-                <div className="hidden md:block">
-                  <span className="text-zinc-500">ANALYTICS:</span>{' '}
-                  <span className="text-cyan-400">LOCAL CVD &amp; VPOC</span>
-                </div>
-              </div>
-
-              {/* Footer Status Line */}
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 font-mono pt-4 border-t border-white/[0.06]">
-                <span>PROVENANCE: ILLUSTRATIVE DEPTH RECONSTRUCTION</span>
-                <span>ENGINE: LIGHTWEIGHT CHARTS CANVAS</span>
-              </div>
+              <SovereignOrbit />
             </LiquidGlassCard>
           </motion.div>
         </motion.div>
