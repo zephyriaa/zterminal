@@ -1,207 +1,177 @@
 <div align="center">
 
-<img src="assets/readme-hero.svg" alt="ZTerminal — chart-first quantitative research" width="100%" />
+<img src="assets/readme-hero.svg" alt="ZTerminal" width="100%" />
 
 # ZTerminal
 
 ### See Further. Guess Less.
 
+**A chart-first quantitative research workspace for traders who require evidence before conviction.**
+
 <p>
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-E6B84A?style=for-the-badge&labelColor=111111" /></a>
-  <img alt="Next.js 16" src="https://img.shields.io/badge/terminal-Next.js_16-FFFFFF?style=for-the-badge&logo=nextdotjs&logoColor=white&labelColor=111111" />
-  <img alt="Rust local engine" src="https://img.shields.io/badge/local_engine-Rust-CE5A2C?style=for-the-badge&logo=rust&logoColor=white&labelColor=111111" />
-  <img alt="Python 3.12" src="https://img.shields.io/badge/research-Python_3.12-3776AB?style=for-the-badge&logo=python&logoColor=white&labelColor=111111" />
-  <img alt="Beta status" src="https://img.shields.io/badge/status-BETA-C692EA?style=for-the-badge&labelColor=111111" />
+  <a href="https://github.com/zephyriaa/zterminal/actions/workflows/quality.yml"><img alt="Quality gates" src="https://img.shields.io/github/actions/workflow/status/zephyriaa/zterminal/quality.yml?branch=main&style=flat-square&label=quality&labelColor=18181b" /></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-d4a72c?style=flat-square&labelColor=18181b" /></a>
+  <img alt="Beta" src="https://img.shields.io/badge/status-beta-a78bfa?style=flat-square&labelColor=18181b" />
+  <img alt="Next.js 16" src="https://img.shields.io/badge/interface-Next.js_16-f4f4f5?style=flat-square&logo=nextdotjs&logoColor=white&labelColor=18181b" />
+  <img alt="Rust" src="https://img.shields.io/badge/local_engine-Rust-ce5a2c?style=flat-square&logo=rust&logoColor=white&labelColor=18181b" />
+  <img alt="Python 3.12" src="https://img.shields.io/badge/research-Python_3.12-3776ab?style=flat-square&logo=python&logoColor=white&labelColor=18181b" />
 </p>
 
-ZTerminal exists so market research can remain sovereign: your strategy source, selected data, credentials, and run evidence stay under your control. It turns a trading idea into inspectable evidence on local compute—without outsourcing the work that contains your edge.
+<p>
+  <a href="#quickstart"><strong>Run locally</strong></a> ·
+  <a href="#system-design"><strong>System design</strong></a> ·
+  <a href="#research-integrity"><strong>Research integrity</strong></a> ·
+  <a href="#beta-boundary"><strong>Beta boundary</strong></a>
+</p>
 
-[Research loop](#the-quant-loop) · [System boundary](#the-sovereign-machine) · [Architecture](#architecture--integrity) · [Build](#quickstart) · [Release status](#pre-release-verification-status)
+ZTerminal keeps the critical research path under your control: strategy source, selected data, credentials, and result evidence stay on local hardware. The product exists to turn a market hypothesis into a reproducible decision record—not another disposable backtest.
 
 <!--
-HERO SCREENSHOT DROP
-Replace verify-chart2.png below with a polished 2x capture at docs/assets/hero-interface.png.
-Recommended frame: 1600 × 900, chart workspace visible, no credentials or personal data.
-Then update src to: docs/assets/hero-interface.png
+POLISHED HERO CAPTURE
+Replace verify-chart2.png with docs/assets/hero-terminal.png.
+Recommended export: 1600 × 900 at 2x density, no browser chrome, credentials, or personal data.
+Then change the src below to docs/assets/hero-terminal.png.
 -->
 
-<img src="verify-chart2.png" alt="ZTerminal chart workspace with studies and market context" width="100%" />
+<img src="verify-chart2.png" alt="ZTerminal chart workspace" width="100%" />
 
-<sub>Chart-first by construction. Feed state, instrument context, and research controls remain visible.</sub>
+<sub>Chart, context, studies, and feed state in one research surface.</sub>
 
 </div>
 
 ---
 
-## The Sovereign Machine
+## Why ZTerminal
 
-Most trading software asks for one of two compromises: a thin chart that hides market structure, or a hosted research environment that receives the strategy, the dataset, and the keys.
+Retail terminals compress market structure into decoration. Hosted research platforms ask you to upload the strategy, the dataset, and often the credentials that define your edge. ZTerminal rejects both compromises.
 
-ZTerminal draws a harder boundary.
+| Market truth | Research discipline | Local sovereignty |
+| --- | --- | --- |
+| Sequence-aware books fail closed on gaps instead of inventing continuity. | Completed-bar signals execute at the next open; costs and parameters remain explicit. | Approved Python runs through a paired loopback Helper, not a hosted research worker. |
+| Order-flow measures are derived from observed trades and depth. | Source, dataset, configuration, engine versions, and results receive stable identities. | Strategy archives and persistent secrets remain inside the local boundary. |
+| Stale, degraded, and unavailable are first-class states. | One declared change separates an experiment from its parent run. | Local execution is cancellable, bounded, and independently supervised. |
 
-**The browser is the instrument panel.** It owns investigation: charts, drawings, studies, order-flow views, strategy source, parameters, and run comparison. Lightweight Charts keeps the market in the foreground rather than burying it beneath application chrome.
-
-**The Windows Helper is the local execution boundary.** After an explicit pairing, the terminal sends approved research requests over `127.0.0.1`. The Helper runs the locked Python environment, stores persistent secrets through the local boundary, and commits strategy source, dataset identity, configuration, and results to a local archive.
-
-```text
-INVESTIGATE                                      EXECUTE
-
-Browser workspace                               Windows Helper
-charts · context · source · parameters          trusted local Python · secrets · archives
-        │                                                │
-        └──── explicit pairing · 127.0.0.1 only ─────────┘
-                         no hosted research worker
-```
-
-<!--
-ARCHITECTURE SCREENSHOT DROP
-Add a polished pairing / local-helper boundary visual at docs/assets/local-boundary.png.
-Insert it immediately below the diagram with:
-![Browser workspace paired to the local Windows Helper](docs/assets/local-boundary.png)
--->
-
-That separation has consequences:
-
-- Strategy code is not executed in the hosted application.
-- Helper traffic binds to loopback, validates the exact site origin, and requires a paired bearer token.
-- Successful runs retain source, configuration, engine versions, assumptions, and SHA-256 identities.
-- A market-data gap becomes a gap. An unavailable input remains unavailable. Neither is repaired with invented data.
-- No broker execution or order-routing authority is present.
-
-No third-party research queue receives the strategy source or dataset. There is no hosted worker with privileged access to unpublished logic.
-
-> **Local is a boundary, not a slogan.** Loopback traffic does not make an internet-connected machine air-gapped. The Helper runs trusted code with the current Windows user's permissions, and that code can access local files or the network. True air-gapped operation requires a disconnected host and locally supplied inputs.
+> **Own the question. Own the compute. Own the evidence.**
 
 ## The Quant Loop
 
-ZTerminal is organized around a single discipline:
+```text
+hypothesis → code → configure → run → understand → change one thing → rerun
+```
 
-> **hypothesis → code → configure → run → understand → change one thing → rerun**
+1. **State a falsifiable hypothesis.** Start with a market claim, not a pile of indicators.
+2. **Express the rule.** Use standard Python and a versioned strategy contract.
+3. **Declare the assumptions.** Symbol, range, costs, slippage, sizing, parameters, and execution model are inputs—not footnotes.
+4. **Run against complete data.** Missing, duplicate, malformed, or open candles invalidate the request.
+5. **Read the evidence.** Trades, equity, drawdown, diagnostics, provenance, and hashes remain attached to the run.
+6. **Change one variable.** Preserve the baseline and make the next result attributable.
 
-- **Hypothesis.** Begin with a falsifiable market claim, not a dashboard of unrelated signals.
-- **Code.** Express the rule in standard Python. The current locked Helper pairs CPython 3.12.10 with vectorbt 0.28.1 and a versioned ZTerminal strategy contract.
-- **Configure.** Make dates, symbols, costs, slippage, sizing, parameters, and execution assumptions explicit inputs.
-- **Run.** Evaluate completed-bar signals at the next bar's open. Inputs are bounded, validated, and hashed before the result is accepted.
-- **Understand.** Read trades, equity, drawdown, diagnostics, plots, provenance, and failure states beside the chart that produced the question.
-- **Change one thing.** Preserve the parent run and record the variable that changed.
-- **Rerun.** Identical inputs resolve to the same research identity. Differences remain attributable.
-
-> **The method is designed to resist the researcher.** Baselines are identifiable, future bars remain unavailable to the decision that precedes them, and each incremental run records one declared change. The point is not to produce more backtests. It is to make self-deception expensive.
+> The workflow is designed to resist the researcher. Future bars remain unavailable to the decision that precedes them, baselines remain identifiable, and incremental runs record the variable that changed.
 
 <!--
-RESEARCH SCREENSHOT DROP
-Replace verify-strategy.png and verify-final-backtest.png below with polished captures at:
-- docs/assets/strategy-workspace.png
-- docs/assets/evidence-report.png
-Keep both images at the same aspect ratio for a balanced GitHub table.
+POLISHED RESEARCH CAPTURES
+Replace the two images below with equal-aspect exports:
+  docs/assets/strategy-workspace.png
+  docs/assets/evidence-report.png
+Recommended export: 1440 × 900 each, identical crop and density.
 -->
 
 <table>
   <tr>
-    <td width="50%"><img src="verify-strategy.png" alt="ZTerminal strategy workspace with explicit research inputs" /></td>
-    <td width="50%"><img src="verify-final-backtest.png" alt="ZTerminal deterministic backtest evidence report" /></td>
+    <td width="50%"><img src="verify-strategy.png" alt="Strategy workspace with explicit parameters and costs" /></td>
+    <td width="50%"><img src="verify-final-backtest.png" alt="Backtest report with equity, drawdown, metrics, and configuration" /></td>
   </tr>
   <tr>
-    <td><strong>Code with constraints.</strong><br /><sub>Parameters, costs, instrument, timeframe, and execution model are visible before the run.</sub></td>
-    <td><strong>Evidence with provenance.</strong><br /><sub>Trades, equity, drawdown, metrics, configuration, and the determinism hash stay together.</sub></td>
+    <td><strong>Code with constraints.</strong><br /><sub>The execution model and every material input are visible before the run.</sub></td>
+    <td><strong>Evidence with provenance.</strong><br /><sub>Performance, configuration, and research identity stay together after it.</sub></td>
   </tr>
 </table>
 
-### Market structure without invented certainty
+## Market Structure, Without Theatre
 
-The live web path maintains sequence-aware local books for supported public feeds. Binance depth is bootstrapped from a snapshot, linked by update sequence, and invalidated when continuity breaks; Gate.io and Binance trades feed deterministic order-flow calculations. CVD, footprint bins, imbalance, microprice, and large-trade overlays are derived from observed inputs and carry provider and health context.
+The active web path supports public Gate.io and Binance market data, deterministic order-flow calculations, feed-health states, and sequence-aware local books. Binance depth is admitted only after a valid snapshot bridge; a continuity break invalidates the book and starts recovery.
 
-Historical event reconstruction is held to a stricter contract: recorded availability time, ingress order, stream identity, batch order, atomic book snapshots, and explicit quality epochs. That event-mode recorder and replay path is under active validation and is **not** represented as a finished public feature.
+- **CVD** measures observed aggressive buy quantity minus observed aggressive sell quantity.
+- **Footprint** bins observed trade volume by time and tick-aligned price.
+- **Imbalance** and **microprice** use verified nearest-level depth.
+- **Large-trade overlays** aggregate prints without rewriting their observed side or price.
+- **Replay-aware studies** stop at the active replay boundary.
 
-### Research engines, stated precisely
+Historical event reconstruction has a stricter contract—availability time, ingress order, stream identity, atomic batches, and quality epochs. That recorder/replay path remains under certification and is not presented as a finished public feature.
 
-| Surface | What is usable now | Integrity boundary |
-| --- | --- | --- |
-| Chart investigation | Lightweight Charts, drawings, studies, persisted chart documents, and order-flow views | Feed health and provider provenance remain visible |
-| Local candle research | Locked Python 3.12.10 Helper, vectorbt 0.28.1, deterministic next-open execution, archived hashes, and bounded Monte Carlo primitives | Arbitrary user Python can still introduce lookahead; ZTerminal does not certify causal logic |
-| Columnar research | Polars is part of the standard-Python and columnar-engine direction | Polars is not bundled in the current Helper lock and is not claimed as a shipped execution dependency |
-| Event research | Versioned contracts for sequence, availability, atomic books, immutable fragments, and replay order | Execution and public recorder delivery remain gated pending end-to-end certification |
+## Research Integrity
 
-This distinction is deliberate. A feature becomes a product claim only after its data path, failure semantics, and reproducibility record exist together.
+| Invariant | Enforcement |
+| --- | --- |
+| No same-bar clairvoyance | A completed-bar signal fills at the next bar's open. |
+| No silent history truncation | Requested candles must be present, unique, structurally valid, closed, and inside the exact range. |
+| No invisible cost model | Commission, slippage, tick size, multiplier, and position size are explicit inputs. |
+| No anonymous result | Successful runs retain source, dataset, parameters, assumptions, engine versions, and SHA-256 identities. |
+| No manufactured market state | Gaps, stale inputs, and unavailable data are surfaced rather than replaced. |
 
-## Architecture & Integrity
+The current private Helper locks CPython 3.12.10 and vectorbt 0.28.1. Polars belongs to the columnar research direction but is not bundled in the current Helper lock; this README does not present it as an active execution dependency. Arbitrary Python can still encode lookahead or access local resources, so strategies must be reviewed as trusted code.
+
+## System Design
 
 ```mermaid
 flowchart TB
-    F[Supported public feeds] --> G{Sequence and freshness guard}
-    G -->|Verified observations| W[Browser workstation<br/>charts · order flow · research editor]
-    G -->|Gap, stale, or corrupt| X[Withhold or degrade]
-    W -->|Explicit pairing over 127.0.0.1| H[Windows Helper<br/>bounded jobs · secrets · cancellation]
-    H --> P[Locked CPython 3.12<br/>strategy contract · vectorbt]
-    H --> A[(SQLite WAL evidence archive<br/>FULL sync · source · inputs · hashes · results)]
+    F[Supported public feeds] --> G{Sequence + freshness guard}
+    G -->|verified| W[Browser workstation<br/>chart · order flow · editor]
+    G -->|gap / stale / corrupt| X[Withhold or degrade]
 
-    subgraph Native_Track[Native track · in validation]
-        E[Rust repository and event engine<br/>bounded · sequence-aware · no GC] --> J[fsynced session journal<br/>durable cursor]
-        J --> S[(Immutable Zstd segments<br/>content-addressed manifest)]
-        E --> D[Versioned scene contract<br/>Direct3D host]
-        T[Tauri compatibility preview<br/>not the production workstation path]
+    W -->|explicit pairing · 127.0.0.1| H[Windows Helper<br/>bounded jobs · cancellation · secrets]
+    H --> P[Locked CPython 3.12<br/>strategy contract · vectorbt]
+    H --> A[(SQLite WAL archive<br/>FULL sync · inputs · hashes · results)]
+
+    subgraph Native_track[Native track · in validation]
+        E[Rust repository + event engine<br/>bounded · sequence-aware · no GC] --> J[fsynced journal<br/>durable cursor]
+        J --> S[(immutable local segments<br/>content-addressed manifest)]
+        E --> D[versioned scene contract<br/>Direct3D host]
+        T[Tauri compatibility preview]
     end
 
     G -. provider-shaped events .-> E
 ```
 
-The system uses different runtimes for different failure budgets:
+| Runtime | Responsibility | Trader impact |
+| --- | --- | --- |
+| Browser workstation | Visual inquiry, chart interaction, source editing, run comparison | The market and the assumptions stay visible together. |
+| Windows Helper | Pairing, bounded child processes, secrets, cancellation, immutable result commits | Research executes locally without granting a hosted worker access to unpublished logic. |
+| Rust engine | Sequence validation, bounded persistence, deterministic aggregation, replay contracts | Critical local paths avoid garbage-collection pauses and fail closed on bad state. |
+| Python worker | Strategy expression, vectorized research, analytics | Standard Python remains available without owning ingestion or rendering. |
 
-- **Rust owns bounded, sequence-sensitive local work.** The engine rejects duplicates, reports discontinuities, aggregates only observed events, and avoids garbage-collection pauses in its critical path.
-- **Python owns research expression.** It runs out of process, under time, CPU, memory, and process-count limits, with exact package versions recorded in the result.
-- **The archive owns the evidence.** Current Helper records use SQLite write-ahead logging with full synchronous commits. The event recorder writes and `fsync`s its session journal before an accepted event enters the bounded queue; that recorder path remains gated from public product claims.
-- **The web terminal owns visual inquiry.** It remains responsive while local work is cancellable and independently supervised.
-- **Tauri remains a compatibility preview.** The production Windows direction is a native host with a Rust engine and Direct3D chart surface; the current native track is still pre-release.
+> **Measured, not marketed:** the committed Rust fixture benchmark processed 100,000 deterministic events in **0.790 ms** on its recorded environment. This is evidence for one local algorithm path—not exchange-to-screen latency, fill quality, or end-to-end execution performance.
 
-> **0.790 ms is a measurement, not a slogan.** The committed Rust fixture benchmark processed 100,000 deterministic events in **0.790 ms** on its recorded environment. That number is evidence about one local algorithm path—not an exchange-to-screen latency promise, an execution guarantee, or a substitute for hardware-tier validation.
+### The local security boundary
+
+The Helper binds to `127.0.0.1:47321`, checks the exact browser origin, requires a paired bearer token, and passes no application credentials into the strategy process. Pairing codes expire after ten minutes or one successful use.
+
+Loopback is not an air gap. The Helper runs trusted Python with the current Windows user's permissions; that code can access local files and the network. A genuinely air-gapped workflow requires a disconnected host and locally supplied inputs.
 
 ## Quickstart
 
-Prerequisites: Node.js with npm, the stable Rust toolchain, and—when running the research suites or packaging the Helper—the Windows `py` launcher with CPython 3.12 installed.
+### Web workstation
 
-### Run the web workstation
-
-From PowerShell, provide the local SQLite URL for the development session, install the locked JavaScript dependencies, and start the terminal:
+Requirements: Node.js with npm. The repository's quality workflow uses Node.js 22.
 
 ```powershell
+git clone https://github.com/zephyriaa/zterminal.git
+cd zterminal
 $env:DATABASE_URL = "file:./dev.db"
-npm install
+npm ci
 npm run dev
 ```
 
 Open [http://localhost:3000/terminal](http://localhost:3000/terminal).
 
-The default development provider is synthetic and explicitly labelled. Live public data depends on provider availability and region; ZTerminal reports degraded or unavailable state rather than silently substituting a fixture.
+Development starts with an explicitly labelled simulated provider. Live public data depends on provider and regional availability; an unavailable source is not replaced with a fixture while presented as live.
 
-### Verify the repository
+### Verification gate
 
 ```powershell
 npm run typecheck
 npm test
 npm run lint
-cargo test --workspace --all-targets
-npm run test:python
-```
-
-The Python suite requires CPython 3.12, then creates an isolated environment from the repository locks. The machine-global interpreter is not the supported research test path.
-
-### Build the private Windows Helper
-
-The Helper is a private preview, not a public download. Prepare the verified CPython 3.12.10 Windows x64 embedded runtime at `out/research-runtime`, install `research/desktop/requirements.lock` into that runtime, then build the private package:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File research/desktop/build-private.ps1
-```
-
-The build verifies the Python and vectorbt versions, retains third-party notices, records file hashes, and produces a local ignored archive. It does not publish or upload the artifact.
-
-### Institutional deployment gate
-
-A candidate deployment is acceptable only when every relevant layer passes:
-
-```powershell
-npm run typecheck
-npm test
 npm run build
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -209,28 +179,36 @@ cargo test --workspace --all-targets
 npm run test:python
 ```
 
-Production operators must also verify live provider synchronization, explicit stale/degraded states, secret isolation, origin restrictions, release hashes, and the absence of tracked credentials. Hosted services are not a research worker and must never receive strategy execution authority.
+The Python suite requires the Windows `py` launcher with CPython 3.12 and creates an isolated environment from the repository locks.
 
-## What ZTerminal Refuses to Pretend
+### Private Windows Helper
 
-- It does not place orders.
-- It does not guarantee outcomes or convert a backtest into evidence of future performance.
-- It does not claim a complete historical event recorder or authoritative tick replay today.
-- It does not ship AI strategy generation, Deribit options GEX, or multi-tenant cloud synchronization.
-- It does not call missing data zero, call a broken book live, or call an unsigned preview a release.
+Prepare the verified CPython 3.12.10 Windows x64 embedded runtime at `out/research-runtime`, install `research/desktop/requirements.lock` into that runtime, then run:
 
-Backtests are hypothetical. Fees, slippage, fill assumptions, provider semantics, and data quality can materially change a result. Research is decision support, not investment advice.
+```powershell
+powershell -ExecutionPolicy Bypass -File research/desktop/build-private.ps1
+```
 
-## Pre-Release Verification Status
+The build verifies the interpreter and vectorbt versions, retains dependency notices, records file hashes, and produces an ignored local archive. It does not upload or publish the package.
 
-> **Beta · source available · public Windows binaries withheld**
+## Beta Boundary
 
-ZTerminal is in active beta. The web workstation, deterministic test suites, Rust foundations, and private local-research path are available for inspection and development; the native Windows workstation remains under measured validation.
+> **Source available. Public Windows binaries withheld.**
 
-No unverified Windows binary is distributed. Public delivery remains disabled until the package has passed compatibility checks, cryptographic publisher signing, timestamp verification, SHA-256 verification, release-manifest validation, and documented installation testing.
+ZTerminal is in active beta. The web workstation, deterministic test suites, Rust foundations, and private local-research path are available for inspection and development. The native Windows workstation remains under measured validation.
 
-For the exact engineering boundary, read [Local Research](docs/LOCAL_RESEARCH.md), [Backtesting](docs/BACKTESTING.md), [Microstructure Architecture](docs/MICROSTRUCTURE_ARCHITECTURE.md), and the [Windows Local-First Product Boundary](docs/windows/LOCAL_FIRST_PRODUCT_BOUNDARY.md).
+No unverified Windows binary is distributed. Public delivery remains disabled until the package passes compatibility testing, cryptographic publisher signing, timestamp verification, SHA-256 verification, release-manifest validation, and documented installation checks.
 
----
+ZTerminal is research and decision-support software. It does not place orders or guarantee outcomes. Backtests are hypothetical; fees, slippage, fill assumptions, provider semantics, and data quality can materially change a result.
 
-Released under the [MIT License](LICENSE).
+## Documentation
+
+- [Local research contract](docs/LOCAL_RESEARCH.md)
+- [Backtesting and anti-lookahead model](docs/BACKTESTING.md)
+- [Microstructure architecture](docs/MICROSTRUCTURE_ARCHITECTURE.md)
+- [Windows local-first product boundary](docs/windows/LOCAL_FIRST_PRODUCT_BOUNDARY.md)
+- [Deployment and release gate](docs/DEPLOYMENT.md)
+
+## License
+
+ZTerminal is released under the [MIT License](LICENSE).
