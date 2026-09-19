@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ZTerminal — a focused market research workspace for charts, context, Python research, and backtests.">
+  <title>ZTerminal — See Further. Guess Less.</title>
+
+  <style>
+    /* 01. TOKENS */
+    :root {
+      --bg: #07090f;
+      --bg-deep: #04060a;
+      --surface: #0b0e16;
+      --surface-raised: #0f1320;
+      --text: #f2f1f6;
+      --text-soft: #d3d5df;
+      --text-muted: #82899b;
+      --accent: #b5a0ff;
+      --accent-bright: #c8b9ff;
+      --accent-deep: #7d64d7;
+      --border: rgba(177, 187, 214, 0.16);
+      --border-strong: rgba(190, 198, 222, 0.25);
+
+      --page-max: 1680px;
+      --page-pad: clamp(24px, 4.1vw, 80px);
+      --header-height: 58px;
+      --hero-title-size: clamp(92px, 7.35vw, 141px);
+      --hero-gap: clamp(40px, 5vw, 96px);
+      --radius-sm: 5px;
+
+      --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* 02. RESET */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      background: var(--bg);
+      color-scheme: dark;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    button, a { color: inherit; }
+    a { text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    ::selection {
+      color: #0b0913;
+      background: var(--accent-bright);
+    }
+
+    /* 03. PAGE */
+    .site-shell {
+      position: relative;
+      overflow: clip;
+      min-height: 100vh;
+      isolation: isolate;
+      background:
+        radial-gradient(58% 72% at 76% 49%, rgba(87, 65, 151, 0.16), transparent 68%),
+        radial-gradient(32% 40% at 10% 7%, rgba(45, 69, 119, 0.11), transparent 75%),
+        linear-gradient(180deg, #080a11 0%, var(--bg) 72%, var(--bg-deep) 100%);
+    }
+
+    .site-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.11'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    .page-container {
+      width: min(calc(100% - (var(--page-pad) * 2)), var(--page-max));
+      margin-inline: auto;
+    }
+
+    .section-index {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .section-index::before {
+      content: "";
+      width: 22px;
+      height: 1px;
+      background: var(--accent);
+      opacity: 0.7;
+    }
+
+    /* 04. HEADER */
+    .site-header {
+      position: relative;
+      z-index: 10;
+      padding-top: 24px;
+    }
+
+    .header-bar {
+      min-height: var(--header-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      padding: 0 10px 0 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: rgba(8, 10, 17, 0.82);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      min-width: max-content;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 25px;
+      height: 25px;
+    }
+
+    .brand-name {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.15em;
+    }
+
+    .brand-beta {
+      margin-left: 1px;
+      padding: 5px 7px 4px;
+      border-left: 1px solid var(--border-strong);
+      color: var(--text-muted);
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.16em;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: clamp(18px, 1.8vw, 34px);
+      height: 100%;
+    }
+
+    .nav-link {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 42px;
+      color: #969dad;
+      font-size: 12px;
+      font-weight: 550;
+      letter-spacing: 0.015em;
+      transition: color 180ms ease;
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible { color: var(--text); }
+
+    .nav-link[aria-current="page"] { color: var(--text-soft); }
+
+    .nav-link[aria-current="page"]::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: -8px;
+      left: 0;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .nav-link--terminal {
+      min-height: 36px;
+      padding: 0 12px;
+      border-left: 1px solid var(--border-strong);
+      color: var(--text);
+    }
+
+    .nav-arrow {
+      margin-left: 8px;
+      color: var(--accent-bright);
+      transition: transform 180ms ease;
+    }
+
+    .nav-link--terminal:hover .nav-arrow { transform: translateX(3px); }
+
+    .nav-toggle {
+      display: none;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .nav-toggle span {
+      display: block;
+      width: 18px;
+      height: 1px;
+      margin: 5px auto;
+      background: var(--text-soft);
+      transition: transform 180ms ease, opacity 180ms ease;
+    }
+
+    /* 05. HERO COPY */
+    .hero {
+      position: relative;
+      min-height: calc(100vh - 82px);
+      height: min(940px, calc(100vh - 82px));
+      padding-top: clamp(90px, 11vh, 132px);
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: var(--hero-gap);
+      height: 100%;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 3;
+      align-self: start;
+      max-width: 800px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 0 0 clamp(28px, 3.1vh, 36px);
+      color: #9ba1b0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.21em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 29px;
+      height: 1px;
+      background: var(--accent);
+      opacity: 0.8;
+    }
+
+    .eyebrow-status {
+      color: var(--accent-bright);
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: var(--hero-title-size);
+      font-weight: 820;
+      line-height: 0.84;
+      letter-spacing: -0.072em;
+    }
+
+    .title-line {
+      display: block;
+      width: max-content;
+      max-width: 100%;
+      white-space: nowrap;
+    }
+
+    .title-line--serif {
+      margin-top: 0.18em;
+      margin-left: 0.22em;
+      color: var(--accent-bright);
+      font-family: Iowan Old Style, Baskerville, "Times New Roman", serif;
+      font-size: 0.96em;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-support {
+      max-width: 545px;
+      margin: clamp(36px, 5vh, 54px) 0 0 0.4em;
+      color: #a0a6b5;
+      font-size: clamp(16px, 1.05vw, 19px);
+      font-weight: 400;
+      line-height: 1.68;
+      letter-spacing: -0.015em;
+    }
+
+    /* 06. ACTIONS */
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 31px;
+      margin: clamp(32px, 4vh, 42px) 0 0 0.4em;
+    }
+
+    .primary-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 20px;
+      border: 1px solid rgba(201, 187, 255, 0.68);
+      border-radius: 3px;
+      background: var(--accent-bright);
+      color: #0b0912;
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: 0.015em;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .primary-action:hover,
+    .primary-action:focus-visible {
+      background: #d5caff;
+      transform: translateY(-2px);
+    }
+
+    .action-arrow { margin-left: 18px; }
+
+    .secondary-action {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 42px;
+      color: #b6bac5;
+      font-size: 13px;
+      font-weight: 560;
+    }
+
+    .secondary-action::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: 3px;
+      left: 0;
+      height: 1px;
+      background: var(--border-strong);
+      transform-origin: left;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .secondary-action:hover::after,
+    .secondary-action:focus-visible::after {
+      background: var(--accent);
+      transform: scaleX(0.72);
+    }
+
+    .hero-footnote {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 0 0 0.4em;
+      color: #656c7d;
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .hero-footnote::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border: 1px solid var(--accent-deep);
+      border-radius: 50%;
+    }
+
+    /* 07. PRODUCT STAGE */
+    .product-stage {
+      position: absolute;
+      z-index: 1;
+      top: clamp(50px, 6vh, 72px);
+      left: 50.4%;
+      width: min(1260px, 68vw);
+      perspective: 1800px;
+      pointer-events: none;
+    }
+
+    .product-stage::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 4%;
+      left: 11%;
+      width: 72%;
+      height: 77%;
+      border-radius: 50%;
+      background: rgba(115, 89, 196, 0.18);
+      filter: blur(90px);
+      opacity: 0.66;
+      transform: rotate(-8deg);
+    }
+
+    .device-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10.2;
+      padding: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(189, 177, 229, 0.31);
+      border-radius: 9px;
+      background: #0b0d14;
+      box-shadow:
+        -1px 0 0 rgba(196, 178, 255, 0.2),
+        -34px 44px 80px rgba(0, 0, 0, 0.42);
+      transform: rotateY(-8deg) rotateX(1.4deg) rotateZ(0.7deg);
+      transform-origin: 18% 52%;
+    }
+
+    .device-frame::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      z-index: 2;
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      background: linear-gradient(118deg, rgba(255, 255, 255, 0.045), transparent 17% 78%, rgba(168, 145, 244, 0.035));
+    }
+
+    .window-chrome {
+      position: relative;
+      z-index: 3;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px 0 12px;
+      border-bottom: 1px solid rgba(171, 179, 205, 0.12);
+      background: #0b0e15;
+    }
+
+    .window-dots { display: flex; gap: 6px; }
+
+    .window-dots i {
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #303644;
+    }
+
+    .window-title {
+      color: #697184;
+      font-size: 8px;
+      font-style: normal;
+      font-weight: 700;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+    }
+
+    .window-readout {
+      color: #666e81;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+    }
+
+    .product-screen {
+      position: relative;
+      height: calc(100% - 32px);
+      overflow: hidden;
+      background: #070a10;
+    }
+
+    .product-screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 51% center;
+      filter: brightness(0.91) saturate(0.86) contrast(1.04);
+    }
+
+    .stage-note {
+      position: absolute;
+      top: calc(100% + 20px);
+      left: 8%;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      color: #656c7e;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .stage-note::before {
+      content: "";
+      width: 28px;
+      height: 1px;
+      background: rgba(181, 160, 255, 0.45);
+    }
+
+    .hero-coordinate {
+      position: absolute;
+      right: 0;
+      bottom: 32px;
+      color: rgba(125, 133, 152, 0.5);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+    }
+
+    /* NEXT SECTION */
+    .research-loop {
+      position: relative;
+      z-index: 4;
+      min-height: 360px;
+      border-top: 1px solid var(--border);
+      background: #06080d;
+    }
+
+    .research-loop::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 5%, rgba(181, 160, 255, 0.35) 52%, transparent 92%);
+    }
+
+    .research-loop__inner {
+      display: grid;
+      grid-template-columns: 0.75fr 1.25fr;
+      gap: 80px;
+      padding-top: 82px;
+      padding-bottom: 110px;
+    }
+
+    .research-loop h2 {
+      max-width: 740px;
+      margin: 0;
+      font-family: Iowan Old Style, Baskerville, "Times New Roman", serif;
+      color: #d9d4e6;
+      font-size: clamp(36px, 3.7vw, 70px);
+      font-style: italic;
+      font-weight: 500;
+      line-height: 1.04;
+      letter-spacing: -0.045em;
+    }
+
+    /* 08. ANIMATION */
+    @media (prefers-reduced-motion: no-preference) {
+      .eyebrow,
+      .hero-support,
+      .hero-actions,
+      .hero-footnote {
+        opacity: 0;
+        transform: translateY(12px);
+        animation: soft-reveal 700ms var(--ease-premium) forwards;
+      }
+
+      .eyebrow { animation-delay: 80ms; }
+      .hero-support { animation-delay: 450ms; }
+      .hero-actions { animation-delay: 560ms; }
+      .hero-footnote { animation-delay: 650ms; }
+
+      .title-mask {
+        display: block;
+        overflow: hidden;
+        padding: 0 0.08em 0.08em 0;
+        margin: 0 -0.08em 0 0;
+      }
+
+      .title-mask .title-line {
+        transform: translateY(112%);
+        animation: title-reveal 900ms var(--ease-premium) forwards;
+      }
+
+      .title-mask:nth-child(1) .title-line { animation-delay: 160ms; }
+      .title-mask:nth-child(2) .title-line { animation-delay: 270ms; }
+
+      .product-stage {
+        opacity: 0;
+        transform: translate3d(84px, 12px, 0);
+        animation: stage-enter 980ms 180ms var(--ease-premium) forwards;
+      }
+    }
+
+    @keyframes soft-reveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes title-reveal {
+      to { transform: translateY(0); }
+    }
+
+    @keyframes stage-enter {
+      to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+
+    /* 09. RESPONSIVE */
+    @media (max-width: 1439px) {
+      :root {
+        --page-pad: clamp(28px, 4vw, 58px);
+        --hero-title-size: clamp(78px, 7.4vw, 106px);
+        --hero-gap: 36px;
+      }
+
+      .hero { padding-top: clamp(76px, 9vh, 104px); }
+      .hero-grid { grid-template-columns: 51% 49%; }
+
+      .product-stage {
+        left: 49.5%;
+        width: 71vw;
+      }
+
+      .device-frame { transform: rotateY(-5deg) rotateX(1deg) rotateZ(0.45deg); }
+      .hero-support { max-width: 475px; }
+    }
+
+    @media (max-width: 1023px) {
+      :root {
+        --hero-title-size: clamp(78px, 12vw, 112px);
+      }
+
+      .site-header { padding-top: 16px; }
+      .site-nav { display: none; }
+      .nav-toggle { display: block; }
+
+      .site-nav.is-open {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: var(--page-pad);
+        left: var(--page-pad);
+        display: grid;
+        height: auto;
+        padding: 12px 20px 18px;
+        border: 1px solid var(--border);
+        background: rgba(8, 10, 17, 0.98);
+      }
+
+      .site-nav.is-open .nav-link { min-height: 42px; }
+      .site-nav.is-open .nav-link--terminal { padding-left: 0; border-left: 0; }
+
+      .nav-toggle[aria-expanded="true"] span:first-child { transform: translateY(3px) rotate(45deg); }
+      .nav-toggle[aria-expanded="true"] span:last-child { transform: translateY(-3px) rotate(-45deg); }
+
+      .hero {
+        height: auto;
+        min-height: 1080px;
+        padding-top: 78px;
+      }
+
+      .hero-grid {
+        display: block;
+        height: auto;
+      }
+
+      .hero-copy { max-width: 760px; }
+      .hero-support { max-width: 560px; }
+
+      .product-stage {
+        top: 575px;
+        left: 15%;
+        width: 108vw;
+      }
+
+      .device-frame { transform: rotateY(-3deg) rotateZ(0.4deg); }
+
+      .hero-coordinate { display: none; }
+
+      .research-loop__inner {
+        grid-template-columns: 1fr;
+        gap: 34px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      :root {
+        --page-pad: 20px;
+        --header-height: 54px;
+        --hero-title-size: clamp(57px, 17.2vw, 88px);
+      }
+
+      .header-bar { padding-left: 12px; }
+      .brand { gap: 9px; }
+      .brand-mark { width: 23px; height: 23px; }
+      .brand-name { font-size: 11px; }
+      .brand-beta { font-size: 8px; padding-inline: 6px; }
+
+      .hero {
+        min-height: 920px;
+        padding-top: 64px;
+      }
+
+      .eyebrow {
+        gap: 10px;
+        margin-bottom: 24px;
+        font-size: 9px;
+        letter-spacing: 0.17em;
+      }
+
+      .eyebrow::before { width: 18px; }
+
+      .hero-title {
+        line-height: 0.88;
+        letter-spacing: -0.065em;
+      }
+
+      .title-line--serif {
+        margin-top: 0.22em;
+        margin-left: 0.06em;
+      }
+
+      .hero-support {
+        margin-top: 32px;
+        margin-left: 0;
+        font-size: 16px;
+        line-height: 1.58;
+      }
+
+      .hero-actions {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+        margin: 28px 0 0;
+      }
+
+      .primary-action { min-height: 47px; }
+      .hero-footnote { display: none; }
+
+      .product-stage {
+        top: 575px;
+        left: 10%;
+        width: 132vw;
+      }
+
+      .device-frame {
+        padding: 5px;
+        border-radius: 6px;
+        transform: rotateZ(0.3deg);
+      }
+
+      .window-chrome { height: 25px; }
+      .product-screen { height: calc(100% - 25px); }
+      .stage-note { display: none; }
+
+      .research-loop { min-height: 300px; }
+      .research-loop__inner { padding-top: 62px; padding-bottom: 82px; }
+      .research-loop h2 { font-size: clamp(38px, 12vw, 56px); }
+    }
+
+    @media (max-width: 430px) {
+      .brand-beta { display: none; }
+      .hero { min-height: 825px; }
+      .product-stage { top: 552px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="site-shell">
+    <!-- HEADER -->
+    <header class="site-header">
+      <div class="page-container header-bar">
+        <a class="brand" href="#top" aria-label="ZTerminal home">
+          <img class="brand-mark" src="public/logo.svg" alt="" width="25" height="25">
+          <span class="brand-name">ZTERMINAL</span>
+          <span class="brand-beta">BETA</span>
+        </a>
+
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open navigation">
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="site-nav" id="site-navigation" aria-label="Primary navigation">
+          <a class="nav-link" href="#top" aria-current="page">Overview</a>
+          <a class="nav-link" href="#research-loop">Research loop</a>
+          <a class="nav-link" href="#windows">Windows</a>
+          <a class="nav-link" href="#docs">Docs</a>
+          <a class="nav-link nav-link--terminal" href="#terminal">Web terminal <span class="nav-arrow">↗</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero page-container" id="top" aria-labelledby="hero-title">
+      <div class="hero-grid">
+        <!-- HERO COPY -->
+        <div class="hero-copy">
+          <p class="eyebrow">Market research workspace <span class="eyebrow-status">· Beta</span></p>
+
+          <h1 class="hero-title" id="hero-title">
+            <span class="title-mask"><span class="title-line">See Further.</span></span>
+            <span class="title-mask"><span class="title-line title-line--serif">Guess Less.</span></span>
+          </h1>
+
+          <p class="hero-support">Charts, market context, Python research, and backtests—together, so every idea can be checked against evidence.</p>
+
+          <div class="hero-actions" aria-label="Get ZTerminal">
+            <a class="primary-action" href="#terminal">Open in browser <span class="action-arrow">↗</span></a>
+            <a class="secondary-action" href="#windows">Windows availability&nbsp; →</a>
+          </div>
+
+          <p class="hero-footnote">Research mode · Read only by default</p>
+        </div>
+
+        <!-- HERO PRODUCT -->
+        <div class="product-stage" aria-label="ZTerminal market research workspace preview">
+          <div class="device-frame">
+            <div class="window-chrome" aria-hidden="true">
+              <span class="window-dots"><i></i><i></i><i></i></span>
+              <em class="window-title">ZTerminal / Research workspace</em>
+              <span class="window-readout">BTC / USDT · 5M</span>
+            </div>
+
+            <div class="product-screen">
+              <!-- Replace this img to test a different product screen. -->
+              <img src="public/landing/terminal-screenshot.webp" alt="ZTerminal interface showing a Bitcoin chart, indicators, research tools, and market context panels">
+            </div>
+          </div>
+          <span class="stage-note">Live market canvas / local research</span>
+        </div>
+      </div>
+
+      <span class="hero-coordinate" aria-hidden="true">40.4093° N / 49.8671° E</span>
+    </section>
+  </main>
+
+  <!-- NEXT SECTION -->
+  <section class="research-loop" id="research-loop" aria-labelledby="research-loop-title">
+    <div class="page-container research-loop__inner">
+      <div>
+        <span class="section-index">02 / Research loop</span>
+      </div>
+      <h2 id="research-loop-title">From market signal to tested thesis, without breaking context.</h2>
+    </div>
+  </section>
+
+  <script>
+    const navToggle = document.querySelector('.nav-toggle');
+    const siteNav = document.querySelector('.site-nav');
+
+    navToggle?.addEventListener('click', () => {
+      const isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+      navToggle.setAttribute('aria-expanded', String(!isOpen));
+      navToggle.setAttribute('aria-label', isOpen ? 'Open navigation' : 'Close navigation');
+      siteNav.classList.toggle('is-open', !isOpen);
+    });
+
+    siteNav?.addEventListener('click', (event) => {
+      if (event.target.closest('a') && window.innerWidth < 1024) {
+        navToggle.setAttribute('aria-expanded', 'false');
+        navToggle.setAttribute('aria-label', 'Open navigation');
+        siteNav.classList.remove('is-open');
+      }
+    });
+  </script>
+</body>
+</html>
