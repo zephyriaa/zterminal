@@ -88,9 +88,12 @@ jobs:
     name: Update Backend Compute (OCI / VPS)
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && secrets.SSH_HOST != ''
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Deploy to Remote Compute via SSH
+        if: ${{ env.SSH_HOST != '' }}
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}

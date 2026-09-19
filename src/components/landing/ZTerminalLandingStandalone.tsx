@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   motion,
   useMotionValue,
@@ -149,15 +150,16 @@ function Nav() {
   return (
     <header className="absolute top-0 inset-x-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 py-5">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <span className="font-bold tracking-[0.16em] text-sm text-white uppercase">ZTerminal</span>
           <span className="text-[9px] font-mono bg-purple-500/20 text-purple-300 border border-purple-500/20 px-1.5 py-0.5 rounded tracking-widest">BETA</span>
-        </div>
+        </Link>
         <nav className="hidden md:flex items-center gap-7">
-          {["Overview", "Research loop", "Windows", "Docs"].map((l) => (
-            <a key={l} href="#" className="text-sm text-zinc-400 hover:text-white transition-colors font-medium tracking-tight">{l}</a>
-          ))}
-          <a href="#" className="px-4 py-2 rounded-full border border-white/[0.12] bg-white/[0.04] text-sm text-white hover:bg-white/[0.08] transition-colors shadow-sm">Web terminal</a>
+          <Link href="#overview" className="text-sm text-zinc-400 hover:text-white transition-colors font-medium tracking-tight">Overview</Link>
+          <Link href="#quant-loop" className="text-sm text-zinc-400 hover:text-white transition-colors font-medium tracking-tight">Research loop</Link>
+          <Link href="/download" className="text-sm text-zinc-400 hover:text-white transition-colors font-medium tracking-tight">Windows</Link>
+          <Link href="/docs" className="text-sm text-zinc-400 hover:text-white transition-colors font-medium tracking-tight">Docs</Link>
+          <Link href="/terminal" className="px-4 py-2 rounded-full border border-white/[0.12] bg-white/[0.04] text-sm text-white hover:bg-white/[0.08] transition-colors shadow-sm">Web terminal</Link>
         </nav>
       </div>
     </header>
@@ -241,14 +243,14 @@ function HeroSection() {
             Charts, market context, Python research, and backtests—together, so every idea can be checked against evidence.
           </motion.p>
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-            <button className="group w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#7C3AED] hover:bg-[#6d28d9] text-white text-sm font-semibold tracking-tight transition-colors shadow-[0_0_32px_rgba(124,58,237,0.35)]">
+            <Link href="/terminal" className="group w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#7C3AED] hover:bg-[#6d28d9] text-white text-sm font-semibold tracking-tight transition-colors shadow-[0_0_32px_rgba(124,58,237,0.35)]">
               Open in browser
               <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-            </button>
-            <button className="group w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 text-zinc-400 hover:text-white text-sm font-medium transition-colors">
+            </Link>
+            <Link href="/download" className="group w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 text-zinc-400 hover:text-white text-sm font-medium transition-colors">
               Windows availability
               <ArrowRight size={14} className="opacity-50 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5" />
-            </button>
+            </Link>
           </motion.div>
         </motion.div>
         <motion.div initial={{ opacity: 0, x: 40, rotateY: -8 }} animate={{ opacity: 1, x: 0, rotateY: 0 }} transition={{ ...spring.gentle, delay: 0.35 }} className="w-full">
@@ -295,7 +297,7 @@ function SovereignOrbit() {
 
 function SectionSovereign() {
   return (
-    <section className="relative w-full py-28 md:py-36 px-6 md:px-12 overflow-hidden border-t border-white/[0.04]">
+    <section id="overview" className="relative w-full py-28 md:py-36 px-6 md:px-12 overflow-hidden border-t border-white/[0.04]">
       <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[#090A0F] to-transparent pointer-events-none z-20" />
       <div className="pointer-events-none absolute -top-40 left-0 w-[700px] h-[600px] bg-purple-700/[0.08] blur-[130px] rounded-full" />
       
@@ -390,7 +392,7 @@ function TermOutput() {
 
 function SectionQuantLoop() {
   return (
-    <section className="relative w-full py-28 md:py-36 px-6 md:px-12 overflow-hidden">
+    <section id="quant-loop" className="relative w-full py-28 md:py-36 px-6 md:px-12 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <motion.div variants={stagger(0.08)} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} className="text-center max-w-3xl mx-auto mb-20">
           <motion.div variants={fadeInUp} className="mb-4">
@@ -500,13 +502,13 @@ function SectionInstitutional() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 mb-10 w-full sm:w-auto relative z-10">
-              <button className="group w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-white text-black text-sm font-semibold tracking-tight transition hover:bg-zinc-100 hover:shadow-[0_0_32px_rgba(255,255,255,0.2)]">
+              <Link href="/terminal" className="group w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-white text-black text-sm font-semibold tracking-tight transition hover:bg-zinc-100 hover:shadow-[0_0_32px_rgba(255,255,255,0.2)]">
                 Open Web Terminal
                 <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-              </button>
-              <button className="group w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/[0.12] bg-white/[0.04] text-zinc-200 hover:text-white hover:bg-white/[0.08] text-sm font-medium transition">
+              </Link>
+              <Link href="/download" className="group w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/[0.12] bg-white/[0.04] text-zinc-200 hover:text-white hover:bg-white/[0.08] text-sm font-medium transition">
                 Download Desktop Client
-              </button>
+              </Link>
             </div>
 
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-black/40 border border-white/[0.06] font-mono text-[11px] text-zinc-400 relative z-10">
