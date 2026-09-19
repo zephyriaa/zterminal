@@ -86,6 +86,8 @@ ZTerminal is organized around a single discipline:
 - **Change one thing.** Preserve the parent run and record the variable that changed.
 - **Rerun.** Identical inputs resolve to the same research identity. Differences remain attributable.
 
+> **The method is designed to resist the researcher.** Baselines are identifiable, future bars remain unavailable to the decision that precedes them, and each incremental run records one declared change. The point is not to produce more backtests. It is to make self-deception expensive.
+
 <!--
 RESEARCH SCREENSHOT DROP
 Replace verify-strategy.png and verify-final-backtest.png below with polished captures at:
@@ -131,10 +133,11 @@ flowchart TB
     G -->|Gap, stale, or corrupt| X[Withhold or degrade]
     W -->|Explicit pairing over 127.0.0.1| H[Windows Helper<br/>bounded jobs · secrets · cancellation]
     H --> P[Locked CPython 3.12<br/>strategy contract · vectorbt]
-    H --> A[(Local evidence archive<br/>source · inputs · hashes · results)]
+    H --> A[(SQLite WAL evidence archive<br/>FULL sync · source · inputs · hashes · results)]
 
     subgraph Native_Track[Native track · in validation]
-        E[Rust repository and event engine<br/>bounded · sequence-aware · no GC] --> S[(Immutable local segments)]
+        E[Rust repository and event engine<br/>bounded · sequence-aware · no GC] --> J[fsynced session journal<br/>durable cursor]
+        J --> S[(Immutable Zstd segments<br/>content-addressed manifest)]
         E --> D[Versioned scene contract<br/>Direct3D host]
         T[Tauri compatibility preview<br/>not the production workstation path]
     end
@@ -146,10 +149,11 @@ The system uses different runtimes for different failure budgets:
 
 - **Rust owns bounded, sequence-sensitive local work.** The engine rejects duplicates, reports discontinuities, aggregates only observed events, and avoids garbage-collection pauses in its critical path.
 - **Python owns research expression.** It runs out of process, under time, CPU, memory, and process-count limits, with exact package versions recorded in the result.
+- **The archive owns the evidence.** Current Helper records use SQLite write-ahead logging with full synchronous commits. The event recorder writes and `fsync`s its session journal before an accepted event enters the bounded queue; that recorder path remains gated from public product claims.
 - **The web terminal owns visual inquiry.** It remains responsive while local work is cancellable and independently supervised.
 - **Tauri remains a compatibility preview.** The production Windows direction is a native host with a Rust engine and Direct3D chart surface; the current native track is still pre-release.
 
-The committed Rust fixture benchmark processed 100,000 deterministic events in **0.790 ms** on its recorded environment. That number is evidence about one local algorithm path—not an exchange-to-screen latency promise, an execution guarantee, or a substitute for hardware-tier validation.
+> **0.790 ms is a measurement, not a slogan.** The committed Rust fixture benchmark processed 100,000 deterministic events in **0.790 ms** on its recorded environment. That number is evidence about one local algorithm path—not an exchange-to-screen latency promise, an execution guarantee, or a substitute for hardware-tier validation.
 
 ## Quickstart
 
