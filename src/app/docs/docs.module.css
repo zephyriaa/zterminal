@@ -6,13 +6,24 @@
     var(--public-bg);
   min-height: 100vh;
 }
-.page>:global(.backgroundField){position:absolute;inset:0;z-index:0}.layout,.page :global(.footer),.page :global(.header){position:relative;z-index:1}
+.page > :global(.backgroundField) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.layout,
+.page :global(.footer),
+.page :global(.header) {
+  position: relative;
+  z-index: 1;
+}
 
 .layout {
   display: grid;
   grid-template-columns: 240px minmax(0, 860px);
   gap: clamp(48px, 6vw, 100px);
-  padding-top: calc(82px + 36px);
+  padding-top: calc(var(--public-header-height, 60px) + 36px);
   margin: 0 var(--public-gutter) 140px;
 }
 
@@ -23,7 +34,7 @@
 
 .sidebarSticky {
   position: sticky;
-  top: calc(82px + 24px);
+  top: calc(var(--public-header-height, 60px) + 24px);
   display: flex;
   flex-direction: column;
 }
@@ -97,15 +108,18 @@
   align-items: center;
   font-family: var(--public-font-mono), monospace;
   font-size: 11px;
-  letter-spacing: 0.08em;
-  color: #03ddd1;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--public-lilac);
   text-decoration: none;
   margin-bottom: 24px;
-  transition: color 150ms ease;
+  transition: color var(--public-fast) var(--public-ease),
+              transform var(--public-fast) var(--public-ease);
 }
 
 .backLink:hover {
-  color: white;
+  color: #ffffff;
+  transform: translateX(-2px);
 }
 
 .docTitle {
@@ -365,23 +379,25 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 42px;
+  height: 40px;
   padding: 0 20px;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
+  font-family: var(--public-font-sans, Arial, sans-serif);
+  font-size: 13.5px;
   font-weight: 500;
-  color: white;
+  color: var(--public-ink, #f5f6fa);
   text-decoration: none;
-  background: linear-gradient(110deg, #6527e4, #6225e4 65%, #6426db);
-  border: 1px solid rgba(134, 81, 241, 0.4);
-  border-radius: 3px;
-  box-shadow: 0 0 20px rgba(110, 40, 243, 0.2);
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  background: rgba(16, 22, 42, 0.85);
+  border: 1px solid var(--public-line, rgba(255, 255, 255, 0.12));
+  border-radius: var(--public-radius-sm, 3px);
+  transition: background var(--public-fast, 150ms) var(--public-ease, ease),
+              border-color var(--public-fast, 150ms) var(--public-ease, ease),
+              color var(--public-fast, 150ms) var(--public-ease, ease);
 }
 
 .primaryButtonSmall:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 28px rgba(110, 40, 243, 0.35);
+  background: rgba(22, 30, 56, 0.95);
+  border-color: var(--public-line-focus, rgba(255, 255, 255, 0.25));
+  color: #ffffff;
 }
 
 .textLink {
@@ -433,7 +449,14 @@
   .sidebarNav {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 12px 20px;
+    gap: 10px 20px;
+  }
+
+  .sidebarLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 2px 0;
   }
 
   .sidebarQuote {

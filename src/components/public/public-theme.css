@@ -1,95 +1,99 @@
-/* Public-site tokens are intentionally scoped. Nothing here targets :root or body. */
+/* Public site design system tokens — Scoped strictly to .publicScope */
 .publicScope {
+  /* Surfaces & Canvas */
   --public-bg: #050a15;
   --public-bg-soft: #070d1c;
   --public-surface: rgba(12, 17, 34, 0.78);
+  --public-surface-card: rgba(9, 13, 27, 0.65);
+  --public-surface-card-hover: rgba(14, 20, 42, 0.85);
+  --public-surface-raised: rgba(14, 20, 42, 0.92);
+  --public-surface-inset: #060912;
+  --public-surface-header: #0a0e1c;
+
+  /* Restrained Liquid Glass System */
+  --public-glass-bg: rgba(10, 15, 30, 0.75);
+  --public-glass-bg-hover: rgba(16, 24, 48, 0.88);
+  --public-glass-border: rgba(133, 153, 195, 0.16);
+  --public-glass-border-focus: rgba(192, 147, 245, 0.42);
+  --public-glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  --public-glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+
+  /* Typography Colors */
   --public-ink: #f5f6fc;
   --public-copy: #a8bedc;
   --public-muted: #778ca9;
+  --public-subtle: #4e5d78;
+
+  /* Accents */
   --public-violet: #6527e4;
-  --public-violet-glow: rgba(101, 39, 228, 0.28);
+  --public-violet-dark: #501cb8;
+  --public-violet-glow: rgba(101, 39, 228, 0.22);
   --public-lilac: #c093f5;
-  --public-line: rgba(133, 153, 195, 0.22);
+  --public-lilac-subtle: rgba(192, 147, 245, 0.12);
+  --public-lilac-badge-bg: rgba(101, 39, 228, 0.16);
+  --public-lilac-badge-border: rgba(192, 147, 245, 0.32);
+  --public-cyan: #03ddd1;
+  --public-amber: #d6b87c;
+  --public-amber-bg: rgba(214, 184, 124, 0.1);
+  --public-amber-border: rgba(214, 184, 124, 0.25);
+  --public-green: #34d399;
+  --public-red: #f87171;
+
+  /* Hairlines & Grid Rules */
+  --public-line: rgba(133, 153, 195, 0.2);
   --public-line-soft: rgba(133, 153, 195, 0.12);
-  --public-gutter: clamp(24px, 5.8vw, 120px);
+  --public-line-subtle: rgba(133, 153, 195, 0.08);
+  --public-line-focus: rgba(192, 147, 245, 0.45);
+
+  /* Layout, Spacing & Container */
+  --public-gutter: clamp(20px, 4.5vw, 80px);
   --public-content: min(1320px, calc(100% - (var(--public-gutter) * 2)));
-  --public-space-1: clamp(1rem, 1.5vw, 1.5rem);
-  --public-space-2: clamp(1.5rem, 3vw, 3rem);
-  --public-space-3: clamp(3.5rem, 8vw, 9rem);
-  --public-radius: 10px;
-  --public-radius-small: 5px;
-  --public-shadow: 0 28px 80px rgba(0,0,0,.42);
-  --public-fast: 220ms;
-  --public-normal: 560ms;
-  --public-slow: 1100ms;
-  --public-ease: cubic-bezier(.16,1,.3,1);
-  --public-font-serif: Georgia, "Times New Roman", serif;
-  --public-font-mono: var(--font-geist-mono), monospace;
+  --public-max-reading: 820px;
+  --public-header-height: 60px;
 
-  /* Landing-only aliases keep the marketing surface coherent with the terminal. */
-  --zt-surface-0: var(--public-bg);
-  --zt-surface-1: var(--public-bg-soft);
-  --zt-border-subtle: var(--public-line-soft);
-  --zt-text-primary: var(--public-ink);
-  --zt-text-secondary: var(--public-copy);
-  --zt-accent: var(--public-lilac);
-  --zt-glass-bg: rgba(8, 13, 28, 0.48);
-  --zt-glass-border: rgba(177, 193, 230, 0.16);
-  --zt-radius-control: 6px;
-  --zt-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --zt-apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Corner Radii */
+  --public-radius: 6px;
+  --public-radius-sm: 4px;
+  --public-radius-xs: 2px;
 
-  /* Apple Liquid Glass Design Tokens */
-  --zt-liquid-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(9, 14, 32, 0.72) 100%);
-  --zt-liquid-glass-bg-subtle: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 50%, rgba(8, 12, 26, 0.65) 100%);
-  --zt-liquid-glass-bg-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(14, 21, 48, 0.86) 100%);
-  --zt-liquid-glass-border: rgba(180, 198, 235, 0.16);
-  --zt-liquid-glass-rim: rgba(255, 255, 255, 0.28);
-  --zt-liquid-glass-rim-hover: rgba(255, 255, 255, 0.48);
-  --zt-liquid-glass-blur: blur(28px) saturate(190%) contrast(105%);
-  --zt-liquid-glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 24px rgba(101, 39, 228, 0.06);
-  --zt-liquid-glass-shadow-hover: 0 30px 70px -10px rgba(0, 0, 0, 0.75), 0 0 32px rgba(101, 39, 228, 0.22), 0 0 1px 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.38), inset 0 0 28px rgba(101, 39, 228, 0.12);
+  /* Depth & Layering */
+  --public-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --public-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
 
+  /* Motion & Timing */
+  --public-fast: 160ms;
+  --public-normal: 320ms;
+  --public-slow: 700ms;
+  --public-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Fonts */
+  --public-font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --public-font-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+  --public-font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Base Document Properties */
   min-height: 100vh;
   background: var(--public-bg);
   color: var(--public-ink);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--public-font-sans);
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
-/* Sitewide Liquid Glass Utilities */
-.publicScope .liquidGlass {
-  background: var(--zt-liquid-glass-bg);
-  backdrop-filter: var(--zt-liquid-glass-blur);
-  -webkit-backdrop-filter: var(--zt-liquid-glass-blur);
-  border: 1px solid var(--zt-liquid-glass-border);
-  border-top: 1px solid var(--zt-liquid-glass-rim);
-  box-shadow: var(--zt-liquid-glass-shadow);
-  position: relative;
-}
-
-.publicScope .liquidGlassHover {
-  transition: transform 240ms var(--zt-apple-ease),
-              border-color 240ms var(--zt-apple-ease),
-              box-shadow 240ms var(--zt-apple-ease),
-              background 240ms var(--zt-apple-ease);
-}
-
-.publicScope .liquidGlassHover:hover {
-  transform: translateY(-4px);
-  border-color: rgba(192, 147, 245, 0.45);
-  border-top-color: var(--zt-liquid-glass-rim-hover);
-  background: var(--zt-liquid-glass-bg-hover);
-  box-shadow: var(--zt-liquid-glass-shadow-hover);
+.publicScope *,
+.publicScope *::before,
+.publicScope *::after {
+  box-sizing: border-box;
 }
 
 .publicScope :where(a, button):focus-visible {
   outline: 2px solid var(--public-lilac);
-  outline-offset: 5px;
+  outline-offset: 4px;
 }
 
 .publicScope ::selection {
   background: #6432a7;
-  color: white;
+  color: #ffffff;
 }
 
 @media (prefers-reduced-motion: reduce) {

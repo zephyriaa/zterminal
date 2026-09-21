@@ -1,1 +1,75 @@
-.page{position:relative;min-height:100vh;overflow:hidden}.page>section{position:relative;z-index:1;width:var(--public-content);min-height:calc(100vh - 200px);padding:clamp(8rem,18vw,16rem) 0;margin:auto}.page h1{margin:0;color:#fff;font-size:clamp(4rem,9vw,10rem);letter-spacing:-.1em;line-height:.76}.page h1 em{font-family:var(--public-font-serif);font-weight:400;color:var(--public-lilac)}.page p{max-width:33rem;margin:2rem 0;color:var(--public-copy);line-height:1.7}.page section>div{display:flex;gap:.75rem;flex-wrap:wrap}.page :global(.footer){position:relative;z-index:1}
+/* 404 Not Found Page — Aligned with Docs design language */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse at 85% -5%, rgba(65, 39, 155, 0.25), transparent 42%),
+    var(--public-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.page > :global(.backgroundField) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100% - (var(--public-gutter) * 2)), 1320px);
+  max-width: var(--public-content);
+  margin: auto;
+  padding: clamp(72px, 12vh, 140px) 0;
+}
+
+.eyebrow {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  color: var(--public-ink);
+  font-size: clamp(40px, 6vw, 76px);
+  font-weight: 620;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+
+.title em {
+  display: block;
+  font-family: var(--public-font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--public-lilac);
+  letter-spacing: -0.035em;
+  margin-top: 6px;
+}
+
+.lead {
+  max-width: 520px;
+  margin: 24px 0 36px;
+  color: var(--public-copy);
+  font-size: 16px;
+  line-height: 1.72;
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 580px) {
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions > * {
+    justify-content: center;
+  }
+}

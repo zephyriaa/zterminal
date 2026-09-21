@@ -25,7 +25,7 @@ export default function PythonResearchDocumentationPage() {
         <em>Write → validate → inspect.</em>
       </h1>
       <p className={styles.docLead}>
-        The ZTerminal Research API runs real Python and vectorbt on your computer. Pair the local helper once, write a strategy in standard pandas, and run vectorized backtests with visible empirical limits. Python code never leaves your machine.
+        The ZTerminal Research API runs real Python and vectorbt on your computer. Pair the local helper once, write a strategy in standard pandas, and run vectorized backtests with visible empirical limits. Python strategy code executes through the paired local helper on your machine rather than on the ZTerminal web server.
       </p>
 
       {/* LOCAL EXECUTION SECTION */}

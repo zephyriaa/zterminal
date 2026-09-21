@@ -30,11 +30,11 @@ export default function ZScriptMigrationPage() {
       <section className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Why standard Python &amp; vectorbt</h2>
         <p className={styles.sectionPara}>
-          Proprietary domain-specific languages limit portability, introduce hidden compilation bugs, and isolate quants from the broader scientific Python ecosystem (NumPy, SciPy, pandas, Polars, scikit-learn). Moving to standard Python gives traders:
+          Proprietary domain-specific languages limit portability, introduce hidden compilation bugs, and isolate quants from the broader scientific Python ecosystem (NumPy, SciPy, pandas, vectorbt). Moving to standard Python gives traders:
         </p>
         <ul className={styles.bulletList}>
           <li>
-            <strong>Ecosystem Access:</strong> Direct integration with vectorbt, Polars, and scientific libraries without translation layers.
+            <strong>Ecosystem Access:</strong> Direct integration with vectorbt, pandas, and scientific libraries without translation layers.
           </li>
           <li>
             <strong>Vectorized Speed:</strong> Native C/Rust underlying execution without DSL interpretation overhead.

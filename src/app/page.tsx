@@ -1,6 +1,6 @@
-import ZTerminalLandingStandalone from "@/components/landing/ZTerminalLandingStandalone";
+import ZTerminalLanding from "@/components/landing/ZTerminalLanding";
 import "@/components/public/public-theme.css";
 
 export default function LandingPage() {
-  return <ZTerminalLandingStandalone />;
+  return <ZTerminalLanding />;
 }
