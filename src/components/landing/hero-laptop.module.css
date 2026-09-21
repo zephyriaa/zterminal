@@ -1,0 +1,302 @@
+/* ==========================================================================
+   HERO LAPTOP — Authentic Physical 3D Projective Homography Device
+   Faithfully restored from canonical repository history (e7c4e79, 5960425)
+   ========================================================================== */
+
+.laptopStage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.computer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1672px;
+  height: 941px;
+  transform: translate(-1180px, -560px) scale(0.65);
+  transform-origin: 1180px 560px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.laptopMotionStage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 3D Homography Screen Lid */
+.lid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1000px;
+  height: 800px;
+  transform-origin: 0 0;
+  transform: matrix3d(
+    0.499381151371859,
+    -0.10778980276335531,
+    0,
+    -0.0001632091996638101,
+    -0.1365020442388205,
+    0.7685567300819266,
+    0,
+    -0.00005877432074715849,
+    0,
+    0,
+    1,
+    0,
+    924,
+    199,
+    0,
+    1
+  );
+  border: 2px solid rgba(75, 66, 101, 0.45);
+  border-radius: 40px 32px 24px 22px;
+  background: linear-gradient(140deg, #050711, #010308 75%);
+  box-shadow:
+    inset 0 1px 2px rgba(196, 182, 233, 0.67),
+    0 0 4px rgba(185, 161, 255, 0.33),
+    0 18px 42px rgba(0, 0, 0, 0.65);
+  padding: 24px 18px 32px 21px;
+}
+
+.terminal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 15px 10px 0 0;
+  background: linear-gradient(140deg, #0b0e1e, #060b15 70%);
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.35);
+}
+
+.screenImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
+}
+
+.screenGlare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, rgba(192, 147, 245, 0.05) 55%, rgba(3, 6, 18, 0.12) 70%, rgba(3, 5, 12, 0.22));
+  z-index: 2;
+}
+
+.screenPowerGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(147, 95, 245, 0.16) 0%, transparent 70%);
+  mix-blend-mode: screen;
+  z-index: 3;
+}
+
+.screenSheen {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(220, 205, 255, 0.03) 42%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(200, 175, 255, 0.04) 58%,
+    transparent 65%
+  );
+  transform: rotate(-18deg);
+  mix-blend-mode: screen;
+  z-index: 4;
+}
+
+/* Metallic Chassis SVG Base */
+.base {
+  position: absolute;
+  inset: 0;
+  width: 1672px;
+  height: 941px;
+  filter: blur(0.6px) brightness(0.85);
+  pointer-events: none;
+}
+
+/* 3D Projected Keyboard */
+.keyboard {
+  position: absolute;
+  width: 1000px;
+  height: 160px;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  transform: matrix3d(
+    0.312096975756061,
+    -0.19893951512121966,
+    0,
+    -0.00025443639090227445,
+    -1.4047081979505123,
+    -0.4014090227443139,
+    0,
+    -0.0005717320669832542,
+    0,
+    0,
+    1,
+    0,
+    848,
+    861,
+    0,
+    1
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 8px 18px;
+  filter: blur(0.7px);
+  opacity: 0.52;
+}
+
+.keyRow {
+  display: flex;
+  gap: 7px;
+  flex: 1;
+}
+
+.key {
+  flex: 1;
+  background: linear-gradient(#080b14, #02050b);
+  border: 1px solid #202338;
+  border-radius: 3px;
+  box-shadow: 0 2px 1px rgba(0, 0, 0, 0.7);
+  color: #586075;
+  font-family: var(--public-font-sans), Arial, sans-serif;
+  font-size: 6px;
+  text-align: center;
+  padding: 3px;
+}
+
+.key.wide {
+  flex: 1.7;
+}
+
+.key.space {
+  flex: 6;
+}
+
+/* 3D Projected Trackpad */
+.trackpad {
+  position: absolute;
+  width: 330px;
+  height: 92px;
+  border: 1px solid rgba(93, 91, 116, 0.22);
+  border-radius: 9px;
+  transform-origin: 0 0;
+  transform: matrix3d(
+    0.8376608652118858,
+    0.15820375769355355,
+    0,
+    0.00013767411726595406,
+    -1.504399585921325,
+    -0.4197722567287784,
+    0,
+    -0.0006285122744750073,
+    0,
+    0,
+    1,
+    0,
+    976,
+    896,
+    0,
+    1
+  );
+  background: linear-gradient(100deg, rgba(34, 38, 55, 0.28), rgba(51, 48, 68, 0.22));
+}
+
+/* Violet Ground Contact Glow */
+.contactGlow {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 900px;
+  height: 480px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, rgba(101, 39, 228, 0.16) 0%, rgba(101, 39, 228, 0.04) 45%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Responsive scaling for different viewports */
+@media (min-width: 1440px) {
+  .computer {
+    transform: translate(-1180px, -560px) scale(0.72);
+  }
+}
+
+@media (max-width: 1366px) {
+  .computer {
+    transform: translate(-1180px, -560px) scale(0.58);
+  }
+}
+
+@media (max-width: 1100px) {
+  .computer {
+    transform: translate(-1180px, -560px) scale(0.48);
+  }
+}
+
+/* Mobile responsive fallback (<= 800px) */
+@media (max-width: 800px) {
+  .laptopStage {
+    min-height: 280px;
+    height: 280px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .computer {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: 100%;
+    transform: none;
+    overflow: hidden;
+  }
+
+  .lid {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform: none;
+    padding: 8px;
+    border-radius: 12px;
+    border-color: rgba(75, 66, 101, 0.55);
+  }
+
+  .terminal {
+    border-radius: 8px;
+  }
+
+  .base,
+  .keyboard,
+  .trackpad {
+    display: none;
+  }
+
+  .contactGlow {
+    width: 100%;
+    height: 100%;
+  }
+}

@@ -69,7 +69,7 @@ async function captureRoute(route) {
       const timeout = setTimeout(() => {
         pending.delete(id);
         reject(new Error(`Timeout on CDP ${method}`));
-      }, 10000);
+      }, 30000);
       pending.set(id, { resolve, reject, timeout });
       ws.send(JSON.stringify({ id, method, params }));
     });

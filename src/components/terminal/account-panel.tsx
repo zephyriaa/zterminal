@@ -1,4 +1,5 @@
 "use client";
+import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
 
 import { useEffect, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -617,7 +618,7 @@ export function AccountPanel({
           <span>Cloud workspace</span>
           <b className={authenticated ? "text-pos font-semibold" : ""}>
             {authenticated ? <Cloud className="text-pos" /> : <CloudOff />}
-            {authenticated ? "Synchronized & Active" : "Local until sign-in"}
+            {authenticated ? useCloudSyncStatus.getState().status : "Local until sign-in"}
           </b>
         </div>
       </div>

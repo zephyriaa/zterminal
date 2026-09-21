@@ -1,144 +1,88 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { DockviewReact, DockviewReadyEvent, IDockviewPanelProps } from "dockview-react";
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { DockviewReact, type DockviewReadyEvent, type IDockviewPanelProps } from "dockview-react";
 import "dockview-react/dist/styles/dockview.css";
 import { ReferenceChartWorkspace } from "../reference-chart-workspace";
-
-// Import existing chart wrapper
-import { TerminalChart } from "../terminal-chart";
-import { useWorkspace } from "@/stores/workspace";
-import { useMarketStream } from "@/hooks/use-market-stream";
-import { ResearchReport } from "../research-report";
-
-function TerminalChartPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
-  const { symbol, timeframe } = useWorkspace();
-  const { provider } = useMarketStream(symbol, { trades: 1, depth: false });
-
-  return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <TerminalChart 
-        symbol={symbol}
-        timeframe={timeframe as any}
-        chartType="candles"
-        indicators={{ vwap: false, ema20: false, ema50: false, volume: true }}
-      />
-    </div>
-  );
-}
-
-function OrderbookPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
-  const { symbol } = useWorkspace();
-  const { provider } = useMarketStream(symbol, { trades: 1, depth: true });
-  return (
-    <div className="flex flex-col h-full bg-panel text-foreground p-4">
-      <h3 className="font-bold mb-2">Orderbook - {symbol}</h3>
-      <div className="text-sm opacity-50 flex-1 flex items-center justify-center border border-dashed border-border/20 rounded">
-        Level 2 Depth Feed Pending...
-      </div>
-    </div>
-  );
-}
-
-function StrategyPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
-  return (
-    <div className="flex flex-col h-full bg-panel text-foreground p-4">
-      <h3 className="font-bold mb-2">Strategy Editor</h3>
-      <div className="text-sm opacity-50 flex-1 flex items-center justify-center border border-dashed border-border/20 rounded">
-        Monaco Editor Pending...
-      </div>
-    </div>
-  );
-}
-
-function AnalyticsPanel(_props: IDockviewPanelProps<Record<string, unknown>>) {
-  return (
-    <div className="h-full w-full overflow-y-auto">
-      <ResearchReport />
-    </div>
-  );
-}
-
-const components = {
-  chart: TerminalChartPanel,
-  orderbook: OrderbookPanel,
-  strategy: StrategyPanel,
-  analytics: AnalyticsPanel,
+import { OrderbookPanel } from "./orderbook-panel";
+import { useWorkspaceDock } from "./workspace-dock-controller";
+import { initializeWorkspace, persistWorkspace, PANEL_DEFINITIONS, isDockPanelId, type DockPanelId } from "@/lib/workspace-dock-layout";
+const loading = () => <p className="p-4 text-xs" role="status">Opening tool…</p>;
+const Research = dynamic(() => import("../research-report").then(m => m.ResearchReport), { loading });
+const Strategy = dynamic(() => import("../research-workbench").then(m => m.ResearchWorkbench), { loading });
+const Indicators = dynamic(() => import("./chart-tools").then(m => m.DockIndicators), { loading });
+const ChartSettings = dynamic(() => import("./chart-tools").then(m => m.DockChartSettings), { loading });
+const Calendar = dynamic(() => import("../economic-calendar/economic-calendar-table").then(m => m.EconomicCalendarTable), { loading });
+const Settings = dynamic(() => import("../terminal-preferences").then(m => m.TerminalPreferences), { loading });
+const content = { chart: ReferenceChartWorkspace, orderbook: OrderbookPanel, research: Research, strategy: Strategy, indicators: Indicators, calendar: Calendar, settings: Settings, "chart-settings": ChartSettings };
+const components = Object.fromEntries(Object.entries(content).map(([id, Panel]) => [id, function DockPanel({ api }: IDockviewPanelProps) {
+  const [opened, setOpened] = useState(api.isVisible);
+  useEffect(() => { if (api.isVisible) setOpened(true); const listener = api.onDidVisibilityChange(({ isVisible }) => { if (isVisible) setOpened(true); }); return () => listener.dispose(); }, [api]);
+  return <div className="zt-dock-panel" data-panel-id={id}>{opened && <Panel />}</div>;
+}]));
+// Access localStorage inside guarded methods; even its getter can throw in private mode.
+const storage = {
+  getItem: (key: string) => window.localStorage.getItem(key),
+  setItem: (key: string, value: string) => window.localStorage.setItem(key, value),
+  removeItem: (key: string) => window.localStorage.removeItem(key),
 };
-
-const DEFAULT_LAYOUT = {
-  activeGroup: "group_left",
-  grid: {
-    root: {
-      type: "splitview",
-      orientation: "horizontal",
-      views: [
-        {
-          type: "group",
-          id: "group_left",
-          size: 70,
-          views: [{ id: "chart_1", component: "chart", title: "Primary Chart" }]
-        },
-        {
-          type: "splitview",
-          orientation: "vertical",
-          size: 30,
-          views: [
-            {
-              type: "group",
-              id: "group_top_right",
-              size: 50,
-              views: [{ id: "orderbook_1", component: "orderbook", title: "Orderbook" }]
-            },
-            {
-              type: "group",
-              id: "group_bottom_right",
-              size: 50,
-              views: [
-                { id: "analytics_1", component: "analytics", title: "Analytics" },
-                { id: "strategy_1", component: "strategy", title: "Strategy" }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  }
-};
-
-const STORAGE_KEY = "zt_workspace_layout_v1";
-
 export function WorkspaceDock() {
-  const [api, setApi] = useState<DockviewReadyEvent | null>(null);
-
-  const onReady = (event: DockviewReadyEvent) => {
-    setApi(event);
-    
+  const { attach, setActivePanelId } = useWorkspaceDock();
+  const dispose = useRef<(() => void) | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(({ api }: DockviewReadyEvent) => {
+    dispose.current?.();
+    let persistence: ReturnType<typeof persistWorkspace> | undefined;
+    let activeListener: { dispose(): void } | undefined;
+    const narrow = window.matchMedia("(max-width: 900px)");
+    const fit = () => {
+      api.exitMaximizedGroup();
+      if (narrow.matches && api.activePanel) api.maximizeGroup(api.activePanel);
+    };
+    const onPageHide = () => persistence?.flush();
+    const cleanup = () => {
+      persistence?.dispose(); activeListener?.dispose();
+      narrow.removeEventListener("change", fit);
+      window.removeEventListener("pagehide", onPageHide);
+      attach(null);
+    };
+    dispose.current = cleanup;
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        event.api.fromJSON(JSON.parse(stored));
-      } else {
-        event.api.fromJSON(DEFAULT_LAYOUT as any);
-      }
-    } catch (e) {
-      console.error("Failed to load layout:", e);
-      event.api.fromJSON(DEFAULT_LAYOUT as any);
+      initializeWorkspace(api, storage);
+      if (narrow.matches) api.getPanel("chart")?.api.setActive();
+      fit();
+      activeListener = api.onDidActivePanelChange(event => {
+        const panelRef = (event as any)?.panel ?? event;
+        const panelId = panelRef?.id;
+        setActivePanelId(panelId && isDockPanelId(panelId) ? panelId : null);
+        if (narrow.matches) fit();
+      });
+      setActivePanelId(api.activePanel && isDockPanelId(api.activePanel.id) ? api.activePanel.id : null);
+      persistence = persistWorkspace(api, storage);
+      const openPanel = (id: DockPanelId) => {
+        try {
+          let panel = api.getPanel(id);
+          if (!panel) {
+            const reference = api.getPanel("research") ?? api.getPanel("orderbook") ?? api.getPanel("chart");
+            panel = api.addPanel({ id, ...PANEL_DEFINITIONS[id], position: reference ? { referencePanel: reference.id, direction: "within" } : undefined });
+          }
+          panel.api.setActive(); fit();
+        } catch (cause) { setError(cause instanceof Error ? cause : new Error("Unable to open panel")); }
+      };
+      attach({ openPanel, focusPanel: openPanel, resetLayout: () => {
+        try { persistence?.reset(); fit(); } catch (cause) { setError(cause instanceof Error ? cause : new Error("Unable to reset workspace")); }
+      } });
+      narrow.addEventListener("change", fit);
+      window.addEventListener("pagehide", onPageHide);
+      setReady(true);
+    } catch (cause) {
+      cleanup(); dispose.current = null;
+      setError(cause instanceof Error ? cause : new Error("Unable to initialize workspace"));
     }
-
-    event.api.onDidLayoutChange(() => {
-      const layout = event.api.toJSON();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
-    });
-  };
-
-  return (
-    <div className="h-full w-full bg-background relative" style={{ '--dv-background': 'var(--panel)', '--dv-pane-divider': 'var(--border)' } as React.CSSProperties}>
-      <DockviewReact
-        components={components}
-        onReady={onReady}
-        className="dockview-theme-dark"
-      />
-    </div>
-  );
+  }, [attach, setActivePanelId]);
+  useEffect(() => () => { dispose.current?.(); dispose.current = null; }, []);
+  if (error) throw error;
+  return <div className="zt-workspace-dock" data-testid="workspace-dock" data-ready={ready}><DockviewReact components={components} onReady={onReady} className="dockview-theme-dark" /></div>;
 }
-
 export default WorkspaceDock;

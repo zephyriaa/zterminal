@@ -1,5 +1,6 @@
 "use client";
 
+import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useWorkspace, type SavedWorkspace } from "@/stores/workspace";
@@ -41,17 +42,19 @@ export function CloudSyncBridge() {
   const mergeCloudWorkspaces = useWorkspace((state) => state.mergeCloudWorkspaces);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated") { useCloudSyncStatus.setState({ status: "Local workspace" }); return; }
+    useCloudSyncStatus.setState({ status: "Syncing workspaces…" });
     let cancelled = false;
 
     void fetch("/api/cloud/workspaces", { credentials: "same-origin", cache: "no-store" })
       .then(async (response) => {
-        if (!response.ok || cancelled) return;
+        if (cancelled) return;
+        if (!response.ok) throw new Error("Cloud sync unavailable");
         const result = (await response.json()) as CloudWorkspaceResponse;
         const workspaces = (result.workspaces ?? []).map(parseWorkspace).filter((workspace): workspace is SavedWorkspace => workspace !== null);
-        if (!cancelled) mergeCloudWorkspaces(workspaces);
+        if (!cancelled) { mergeCloudWorkspaces(workspaces); useCloudSyncStatus.setState({ status: "Workspaces synced" }); }
       })
-      .catch(() => undefined);
+      .catch(() => { if (!cancelled) useCloudSyncStatus.setState({ status: "Sync unavailable · saved locally" }); });
 
     return () => {
       cancelled = true;

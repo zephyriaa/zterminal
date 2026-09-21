@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Eye, EyeOff, Search, Settings2, Star, Trash2 } from "lucide-react";
 import { useStudies } from "@/stores/studies";
-import { usePanels } from "@/stores/panels";
+import { useWorkspaceDock } from "./docking/workspace-dock-controller";
 import { INDICATOR_LIBRARY, searchIndicators, validateStudy, type IndicatorInstance } from "@/lib/indicator-library";
 import { BIG_TRADES_OVERLAY_ID, createBigTradesOverlay, sanitizeBigTradesSettings, type ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import type { ChartStudy } from "./terminal-chart";
@@ -13,6 +13,7 @@ type LegacyProps = { layers?: Record<IndicatorToggleId, boolean>; customStudies?
 type BrowserProps = LegacyProps & { overlays?: ChartOverlayInstance[]; onSetOverlay?: (overlay: ChartOverlayInstance) => void; onRemoveOverlay?: (overlayId: string) => void };
 
 export function IndicatorsBrowser(props: BrowserProps) {
+  const dock = useWorkspaceDock();
   const { instances, favorites, recent, add, update, remove, toggleFavorite } = useStudies();
   const [filter, setFilter] = useState("All");
   const [query, setQuery] = useState("");
@@ -29,7 +30,7 @@ export function IndicatorsBrowser(props: BrowserProps) {
     setNotice(`${INDICATOR_LIBRARY.find(item => item.id === id)?.name ?? "Indicator"} added to chart.`);
   };
   return <div className="zt-study-browser">
-    <div className="zt-study-search"><Search size={14} /><input autoFocus aria-label="Search indicators" placeholder="Name, alias or calculation" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key !== "Escape") return; if (query) setQuery(""); else usePanels.getState().patch("indicators", { status: "closed" }); }} /></div>
+    <div className="zt-study-search"><Search size={14} /><input autoFocus aria-label="Search indicators" placeholder="Name, alias or calculation" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key !== "Escape") return; if (query) setQuery(""); else dock.focusPanel("chart"); }} /></div>
     <div className="zt-study-filters" aria-label="Indicator categories">{["All", "Favorites", "Recent", "Trend", "Volatility", "Volume", "Order Flow", "On chart"].map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value}{value === "On chart" ? ` (${instances.length})` : ""}</button>)}</div>
     <p className="zt-study-help">Indicators persist with the chart. Live overlay payloads stay out of React and chart storage.</p>
     <p className="sr-only" aria-live="polite">{notice}</p>

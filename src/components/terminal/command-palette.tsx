@@ -24,18 +24,19 @@ import {
 } from "@/components/ui/command";
 import { useWorkspace } from "@/stores/workspace";
 import { useContractCatalogue } from "@/hooks/use-contract-catalog";
-import { usePanels } from "@/stores/panels";
+import { useWorkspaceDock, type DockPanelId } from "./docking/workspace-dock-controller";
 
-const VIEWS: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; action: () => void }[] = [
-  { id: "chart", label: "Open Chart", icon: CandlestickChart, action: () => usePanels.getState().open("chart") },
-  { id: "indicators", label: "Open Indicators", icon: Layers3, action: () => usePanels.getState().open("indicators") },
-  { id: "strategy", label: "Open Strategy Developer", icon: Code2, action: () => { usePanels.getState().open("strategy"); usePanels.getState().focus("strategy"); } },
-  { id: "backtester", label: "Open Research Report", icon: FlaskConical, action: () => usePanels.getState().open("backtester") },
-  { id: "calendar", label: "Open Economic Calendar", icon: LayoutDashboard, action: () => usePanels.getState().open("economic-calendar") },
-  { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard, action: () => usePanels.getState().open("terminal-settings") },
+const VIEWS: { id: DockPanelId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "chart", label: "Open Chart", icon: CandlestickChart },
+  { id: "indicators", label: "Open Indicators", icon: Layers3 },
+  { id: "strategy", label: "Open Strategy Developer", icon: Code2 },
+  { id: "research", label: "Open Research Report", icon: FlaskConical },
+  { id: "calendar", label: "Open Economic Calendar", icon: LayoutDashboard },
+  { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard },
 ];
 
 export function CommandPalette() {
+  const dock = useWorkspaceDock();
   const {
     commandOpen,
     setCommandOpen,
@@ -66,7 +67,7 @@ export function CommandPalette() {
 
   const openSymbol = (s: string) => {
     setSymbol(s);
-    setView("chart");
+    dock.focusPanel("chart");
     setCommandOpen(false);
   };
 
@@ -101,7 +102,7 @@ export function CommandPalette() {
                 key={v.id}
                 value={`go ${v.label}`}
                 onSelect={() => {
-                  v.action();
+                  dock.openPanel(v.id);
                   setCommandOpen(false);
                 }}
                 className="flex items-center gap-2"
@@ -129,7 +130,7 @@ export function CommandPalette() {
           <CommandItem
             value="reset layout restore default panels"
             onSelect={() => {
-              window.dispatchEvent(new Event("zterminal:reset-layout"));
+              dock.resetLayout();
               setCommandOpen(false);
             }}
             className="flex items-center gap-2"

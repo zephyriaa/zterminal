@@ -85,5 +85,6 @@ artifacts/
 # Cloudflare & QA capture artifacts
 .wrangler/
 audit-captures/
+audit_screenshots/
 calibrated-captures/
 tmp/

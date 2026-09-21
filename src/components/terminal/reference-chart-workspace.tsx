@@ -1,72 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Palette,
-  CalendarDays,
-  CandlestickChart,
-  ChartNoAxesCombined,
-  Layers3,
-  FlaskConical,
-  Play,
-  RefreshCw,
-  SlidersHorizontal,
-  Settings2,
-} from "lucide-react";
-import { PanelTaskStrip } from "./panel-task-strip";
-import { usePanels } from "@/stores/panels";
+import { useWorkspaceDock } from "./docking/workspace-dock-controller";
+import { useTerminalAppearance } from "./terminal-preferences";
 import { useStudies } from "@/stores/studies";
 import { migrateStudy, type IndicatorInstance } from "@/lib/indicator-library";
-import { DesktopWindow } from "./desktop-window";
 import {
-  TerminalChart,
   type ChartIndicators,
 } from "./terminal-chart";
-import { IndicatorsBrowser, type IndicatorToggleId } from "./indicators-browser";
-import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
-import { ResearchWorkbench } from "./research-workbench";
-import { ResearchReport } from "./research-report";
+import { useWorkspace } from "@/stores/workspace";
 import { useResearch } from "@/stores/research";
 import { intervalMs } from "@/lib/local-research/dataset";
 import type { TradeMarker } from "./terminal-chart";
-import { AlertsView, JournalView } from "@/components/views/secondary-views";
-import { EconomicCalendarTable } from "./economic-calendar/economic-calendar-table";
 import { getContract, formatSymbol } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
 import { publicMarketData, type StreamProvider } from "@/lib/market/public-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
-import { cn } from "@/lib/utils";
 import { ChartToolbar } from "./chart-toolbar";
-import { ChartSettingsPanel } from "./chart-settings-panel";
 import { chartDocumentKey, createChartDocument, PRIMARY_CHART_ID, type InstrumentKey } from "@/lib/chart/contracts";
 import { useChartDocuments } from "@/stores/chart-documents";
-import { DrawingToolbar } from "./drawing-toolbar";
-import { DrawingInspector } from "./drawing-inspector";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import { MultiChartGrid } from "./multi-chart-grid";
 import { FeedInspector } from "./feed-inspector";
 import { useMultiChart } from "@/stores/multi-chart";
-
-type TerminalAppearance = {
-  preset: string;
-  appBackground: string;
-  panelBackground: string;
-  chartBackground: string;
-  accent: string;
-  upColor: string;
-  downColor: string;
-  gridOpacity: number;
-  density: "compact" | "comfortable";
-};
-
-const APPEARANCE_PRESETS: Record<string, Omit<TerminalAppearance, "preset">> = {
-  Graphite: { appBackground: "#07090d", panelBackground: "#10141b", chartBackground: "#080b10", accent: "#7dd3fc", upColor: "#34d399", downColor: "#fb7185", gridOpacity: 7, density: "compact" },
-  Midnight: { appBackground: "#050816", panelBackground: "#0b1224", chartBackground: "#060a18", accent: "#a78bfa", upColor: "#4ade80", downColor: "#f87171", gridOpacity: 6, density: "compact" },
-  Sandstone: { appBackground: "#171512", panelBackground: "#24201a", chartBackground: "#15130f", accent: "#f0b35b", upColor: "#70d6a3", downColor: "#ee8f83", gridOpacity: 8, density: "comfortable" },
-};
-
-const DEFAULT_APPEARANCE: TerminalAppearance = { preset: "Graphite", ...APPEARANCE_PRESETS.Graphite };
-const APPEARANCE_STORAGE_KEY = "zterminal:appearance";
 
 function formatPrice(value: number | undefined | null, tick: number) {
   if (value == null || !Number.isFinite(value)) return "—";
@@ -75,7 +31,7 @@ function formatPrice(value: number | undefined | null, tick: number) {
 }
 
 export function ReferenceChartWorkspace() {
-  const { activeWorkspaceId, symbol, timeframe, setTimeframe, timezone, setTimezone } = useWorkspace();
+  const { activeWorkspaceId, symbol, timeframe, setTimeframe, timezone } = useWorkspace();
   const contract = getContract(symbol);
   const archivedChart = useResearch(s => s.chartResult);
   const selectedTrade = useResearch(s => s.selectedTrade);
@@ -92,17 +48,14 @@ export function ReferenceChartWorkspace() {
     to: Math.min(archivedChart.dataset.to, (selected.exitTime ?? archivedChart.dataset.to) + 10 * intervalMs(chartTimeframe)),
   } : null, [selected, archivedChart, chartTimeframe]);
   const [replay, setReplay] = useState(false);
-  const indicatorsOpen = usePanels(s => s.panels.indicators?.status === "open");
-  const setIndicatorsOpen = (open: boolean) => { if (open) usePanels.getState().open("indicators"); else usePanels.getState().patch("indicators", { status: "closed" }); };
-  const setStrategyOpen = (open: boolean) => { if (open) usePanels.getState().open("strategy"); else usePanels.getState().patch("strategy", { status: "closed" }); };
-  const setBacktesterOpen = (open: boolean) => { if (open) usePanels.getState().open("backtester"); else usePanels.getState().patch("backtester", { status: "closed" }); };
-  const setSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("settings"); else usePanels.getState().patch("settings", { status: "closed" }); };
-  const setCalendarOpen = (open: boolean) => { if (open) usePanels.getState().open("economic-calendar"); else usePanels.getState().patch("economic-calendar", { status: "closed" }); };
-  const setTerminalSettingsOpen = (open: boolean) => { if (open) usePanels.getState().open("terminal-settings"); else usePanels.getState().patch("terminal-settings", { status: "closed" }); };
+  const dock = useWorkspaceDock();
+  const indicatorsOpen = dock.activePanelId === "indicators";
+  const setIndicatorsOpen = (_open: boolean) => dock.openPanel("indicators");
+  const setSettingsOpen = (_open: boolean) => dock.openPanel("chart-settings");
   const { layout: multiChartLayout, setLayout: setMultiChartLayout } = useMultiChart();
   const [selectedProvider, setSelectedProvider] = useState<StreamProvider | undefined>();
   const instances = useStudies(s => s.instances);
-  const [appearance, setAppearance] = useState<TerminalAppearance>(DEFAULT_APPEARANCE);
+  const appearance = useTerminalAppearance(state => state.appearance);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
   const [latestBar, setLatestBar] = useState<Bar | null>(null);
   const [drawingTool, setDrawingTool] = useState<DrawingTool>("crosshair");
@@ -111,14 +64,7 @@ export function ReferenceChartWorkspace() {
   const [studiesHydrated, setStudiesHydrated] = useState(false);
   const indicatorDocumentRef = useRef<string | null>(null);
   const indicatorLoadingRef = useRef(false);
-  const appearanceHydrated = useRef(false);
   const { lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
-  useEffect(() => {
-    // A persisted panel layout from older releases must not resurrect an empty
-    // report. Completed/archived artifacts explicitly reopen it through the
-    // research store instead.
-    if (!useResearch.getState().result) usePanels.getState().patch("backtester", { status: "closed" });
-  }, []);
   useEffect(() => {
     if (selectedProvider && selectedProvider !== provider) {
       publicMarketData.setProvider(selectedProvider);
@@ -141,23 +87,16 @@ export function ReferenceChartWorkspace() {
     profile: instances.some(item => item.kind === "profile" && item.enabled),
     customStudies: [],
   }), [instances, volumePane.visible]);
+  useEffect(() => {
+    useChartDocuments.getState().updateSettings(chartDocumentId, { backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 });
+  }, [appearance]);
   const livePrice = lastTrade?.price ?? derivatives?.markPrice ?? null;
 
 
   useEffect(() => {
     void Promise.resolve(useStudies.persist.rehydrate()).then(() => setStudiesHydrated(true));
     void Promise.resolve(useChartDocuments.persist.rehydrate()).then(() => { useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings }); });
-    const timer = window.setTimeout(() => {
-      try {
-        const saved = window.localStorage.getItem(APPEARANCE_STORAGE_KEY);
-        if (saved) setAppearance({ ...DEFAULT_APPEARANCE, ...JSON.parse(saved) });
-      } catch {
-        // Keep the default appearance when browser storage is unavailable.
-      } finally {
-        appearanceHydrated.current = true;
-      }
-    }, 0);
-    return () => window.clearTimeout(timer);
+    void useTerminalAppearance.persist.rehydrate();
   }, []);
 
   useEffect(() => {
@@ -196,10 +135,6 @@ export function ReferenceChartWorkspace() {
   }, [chartDocumentId, selectedDrawingId]);
 
   useEffect(() => {
-    if (appearanceHydrated.current) window.localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(appearance));
-  }, [appearance]);
-
-  useEffect(() => {
     document.documentElement.dataset.terminalDensity = appearance.density;
     document.documentElement.style.setProperty("--zt-app-bg", appearance.appBackground);
     document.documentElement.style.setProperty("--zt-panel-bg", appearance.panelBackground);
@@ -207,68 +142,14 @@ export function ReferenceChartWorkspace() {
     document.documentElement.style.setProperty("--zt-accent", appearance.accent);
   }, [appearance]);
 
-  const updateAppearance = (next: Partial<TerminalAppearance>) => {
-    setAppearance((current) => ({ ...current, ...next, preset: next.preset ?? "Custom" }));
-    const chartPatch = {
-      ...(next.chartBackground ? { backgroundColor: next.chartBackground } : {}),
-      ...(next.upColor ? { candleUpColor: next.upColor } : {}),
-      ...(next.downColor ? { candleDownColor: next.downColor } : {}),
-      ...(typeof next.gridOpacity === "number" ? { gridOpacity: next.gridOpacity / 100 } : {}),
-    };
-    if (Object.keys(chartPatch).length > 0) useChartDocuments.getState().updateSettings(chartDocumentId, chartPatch);
-  };
-
   useEffect(() => {
-    const focusChart = () => usePanels.getState().open("chart");
-    const rerunPythonIndicator = (event: Event) => { const detail = (event as CustomEvent<{ artifactId: string; params: Record<string, number | string | boolean> }>).detail; if (detail?.artifactId) void useResearch.getState().rerunIndicator(detail.artifactId, detail.params); };
-    window.addEventListener("zterminal:focus-chart", focusChart);
-    window.addEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
-    const openIndicators = () => setIndicatorsOpen(true);
-    const openStrategy = () => { setStrategyOpen(true); usePanels.getState().focus("strategy"); };
-    const openBacktester = () => setBacktesterOpen(true);
-    const openSettings = () => setSettingsOpen(true);
-    const openCalendar = () => setCalendarOpen(true);
-    const openTerminalSettings = () => setTerminalSettingsOpen(true);
-    window.addEventListener("zterminal:open-indicators", openIndicators);
-    window.addEventListener("zterminal:open-strategy", openStrategy);
-    window.addEventListener("zterminal:open-backtester", openBacktester);
-    window.addEventListener("zterminal:open-settings", openSettings);
-    window.addEventListener("zterminal:open-calendar", openCalendar);
-    window.addEventListener("zterminal:open-terminal-settings", openTerminalSettings);
-    return () => {
-      window.removeEventListener("zterminal:focus-chart", focusChart);
-      window.removeEventListener("zterminal:rerun-python-indicator", rerunPythonIndicator);
-      window.removeEventListener("zterminal:open-indicators", openIndicators);
-      window.removeEventListener("zterminal:open-strategy", openStrategy);
-      window.removeEventListener("zterminal:open-backtester", openBacktester);
-      window.removeEventListener("zterminal:open-settings", openSettings);
-      window.removeEventListener("zterminal:open-calendar", openCalendar);
-      window.removeEventListener("zterminal:open-terminal-settings", openTerminalSettings);
-    };
+    const rerun = (event: Event) => { const detail = (event as CustomEvent<{ artifactId: string; params: Record<string, number | string | boolean> }>).detail; if (detail?.artifactId) void useResearch.getState().rerunIndicator(detail.artifactId, detail.params); };
+    window.addEventListener("zterminal:rerun-python-indicator", rerun);
+    return () => window.removeEventListener("zterminal:rerun-python-indicator", rerun);
   }, []);
-
   return (
-    <div className="zt-reference-canvas" role="region" aria-label="Floating research workstation" style={{ "--zt-app-bg": appearance.appBackground, "--zt-panel-bg": appearance.panelBackground, "--zt-chart-bg": appearance.chartBackground, "--zt-accent": appearance.accent, "--zt-grid-opacity": appearance.gridOpacity / 100 } as React.CSSProperties}>
-      <PanelTaskStrip />
-      <DesktopWindow id="alerts" title="Alerts" initialBounds={{ x: 80, y: 60, width: 600, height: 420 }} onClose={() => usePanels.getState().patch("alerts", { status: "closed" })}><div className="h-full overflow-auto"><AlertsView /></div></DesktopWindow>
-      <DesktopWindow id="journal" title="Journal" initialBounds={{ x: 100, y: 80, width: 700, height: 480 }} onClose={() => usePanels.getState().patch("journal", { status: "closed" })}><div className="h-full overflow-auto"><JournalView /></div></DesktopWindow>
-      <DesktopWindow
-        id="chart"
-        title={`${formatSymbol(chartSymbol)} · ${chartTimeframe.toUpperCase()}${multiChartLayout !== "1" ? ` · [${multiChartLayout.toUpperCase()} GRID]` : ""}`}
-        subtitle={archivedChart ? "ARCHIVED RESEARCH DATASET" : "VERIFIED MULTI-FEED MARKET CANVAS"}
-        initialBounds={{ x: 12, y: 10, width: 960, height: 620 }}
-        minWidth={560}
-        minHeight={360}
-        icon={<CandlestickChart className="h-3.5 w-3.5" />}
-        className="zt-reference-chart-window"
-        headerActions={
-          <>
-            <button type="button" className={cn("zt-window-action", replay && "is-active")} onClick={() => setReplay((value) => !value)} aria-label={replay ? "Exit replay" : "Enter replay"} title={replay ? "Exit replay" : "Bar replay"}><Play /></button>
-            <button type="button" className="zt-window-action" onClick={() => window.dispatchEvent(new Event("zterminal:refresh-chart"))} aria-label="Refresh chart viewport" title="Refresh chart"><RefreshCw /></button>
-          </>
-        }
-      >
-        <div className="zt-chart-content">
+        <div className="zt-chart-content" data-testid="primary-chart">
+          <div className="zt-chart-actions"><button type="button" onClick={() => setReplay(value => !value)}>{replay ? "Exit replay" : "Bar replay"}</button><button type="button" onClick={() => window.dispatchEvent(new Event("zterminal:refresh-chart"))}>Refresh chart</button></div>
           <ChartToolbar
             symbol={formatSymbol(chartSymbol)}
             productLabel={archivedChart ? "ARCHIVED" : "PERPETUAL"}
@@ -332,46 +213,5 @@ export function ReferenceChartWorkspace() {
           />
           {!archivedChart && <FeedInspector provider={provider} dataStatus={dataStatus} health={health} reason={reason} />}
         </div>
-      </DesktopWindow>
-
-      <DesktopWindow id="indicators" title="Indicators" subtitle="CHART TOOLS" initialBounds={{ x: 950, y: 30, width: 410, height: 590 }} minWidth={350} minHeight={420} icon={<Layers3 className="h-3.5 w-3.5" />} onClose={() => setIndicatorsOpen(false)}><IndicatorsBrowser overlays={chartDocument.overlays} onSetOverlay={overlay => useChartDocuments.getState().setOverlay(chartDocumentId, overlay)} onRemoveOverlay={overlayId => useChartDocuments.getState().removeOverlay(chartDocumentId, overlayId)} /></DesktopWindow>
-
-      <DesktopWindow id="strategy" title="Strategy research" subtitle="PYTHON / LOCAL PREVIEW" initialBounds={{ x: 260, y: 105, width: 720, height: 540 }} minWidth={360} minHeight={360} icon={<ChartNoAxesCombined className="h-3.5 w-3.5" />} onClose={() => setStrategyOpen(false)}><ResearchWorkbench /></DesktopWindow>
-      <DesktopWindow id="backtester" title="Research report" subtitle="LOCAL ARCHIVE" initialBounds={{ x: 180, y: 80, width: 900, height: 600 }} minWidth={360} minHeight={250} icon={<FlaskConical className="h-3.5 w-3.5" />} onClose={() => setBacktesterOpen(false)}><ResearchReport /></DesktopWindow>
-
-      <DesktopWindow id="settings" title="Chart settings" subtitle="PER-MARKET" initialBounds={{ x: 780, y: 110, width: 440, height: 500 }} minWidth={360} minHeight={380} icon={<SlidersHorizontal className="h-3.5 w-3.5" />} onClose={() => setSettingsOpen(false)}><ChartSettingsPanel settings={chartSettings} instrument={formatSymbol(chartSymbol)} provider={chartProvider.toUpperCase()} volumeVisible={volumePane.visible} volumeHeight={volumePane.height} onChange={patch => useChartDocuments.getState().updateSettings(chartDocumentId, patch)} onVolume={patch => useChartDocuments.getState().setVolumePane(chartDocumentId, patch)} onReset={() => useChartDocuments.getState().resetSettings(chartDocumentId)} /></DesktopWindow>
-
-      <DesktopWindow id="economic-calendar" title="Economic calendar" subtitle="TERMINAL TOOL" initialBounds={{ x: 72, y: 70, width: 680, height: 440 }} minWidth={330} minHeight={260} icon={<CalendarDays className="h-3.5 w-3.5" />} onClose={() => setCalendarOpen(false)}><EconomicCalendarWindow /></DesktopWindow>
-      <DesktopWindow id="terminal-settings" title="Terminal preferences" subtitle="WORKSTATION" initialBounds={{ x: 850, y: 120, width: 360, height: 520 }} minWidth={320} minHeight={420} icon={<Settings2 className="h-3.5 w-3.5" />} onClose={() => setTerminalSettingsOpen(false)}><TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} appearance={appearance} onAppearanceChange={updateAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)} /></DesktopWindow>
-
-    </div>
-  );
-}
-
-function PreferenceRange({ label, value, min, max, suffix, onChange }: { label: string; value: number; min: number; max: number; suffix: string; onChange: (value: number) => void }) {
-  return <label className="mt-4 block text-muted-foreground"><span className="flex justify-between"><span>{label}</span><b className="font-mono-num text-foreground">{value}{suffix}</b></span><input className="mt-2 w-full accent-[var(--zt-accent)]" type="range" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
-}
-
-const TIMEZONE_OPTIONS: { value: ChartTimezone; label: string }[] = [
-  { value: "America/New_York", label: "New York (ET)" },
-  { value: "UTC", label: "UTC" },
-  { value: "Europe/London", label: "London" },
-  { value: "Asia/Dubai", label: "Dubai" },
-];
-
-function TerminalPreferencesWindow({ timezone, onTimezoneChange, appearance, onAppearanceChange, onReset }: { timezone: ChartTimezone; onTimezoneChange: (timezone: ChartTimezone) => void; appearance: TerminalAppearance; onAppearanceChange: (next: Partial<TerminalAppearance>) => void; onReset: () => void }) {
-  const applyPreset = (preset: string) => onAppearanceChange({ preset, ...APPEARANCE_PRESETS[preset] });
-  return <div className="zt-terminal-preferences zt-terminal-preferences-custom"><p>Personalize the workstation without changing market data. Settings are stored in this browser.</p><div className="zt-preference-section"><span className="zt-preference-section-title"><Palette />Appearance presets</span><div className="zt-preference-presets">{Object.keys(APPEARANCE_PRESETS).map((preset) => <button type="button" key={preset} className={cn("zt-preference-preset", appearance.preset === preset && "is-active")} onClick={() => applyPreset(preset)}><i style={{ background: APPEARANCE_PRESETS[preset].accent }} /><span>{preset}</span></button>)}</div></div><div className="zt-preference-grid"><ColorControl label="Workspace" value={appearance.appBackground} onChange={(value) => onAppearanceChange({ appBackground: value })} /><ColorControl label="Panels" value={appearance.panelBackground} onChange={(value) => onAppearanceChange({ panelBackground: value })} /><ColorControl label="Chart canvas" value={appearance.chartBackground} onChange={(value) => onAppearanceChange({ chartBackground: value })} /><ColorControl label="Accent" value={appearance.accent} onChange={(value) => onAppearanceChange({ accent: value })} /><ColorControl label="Up candles" value={appearance.upColor} onChange={(value) => onAppearanceChange({ upColor: value })} /><ColorControl label="Down candles" value={appearance.downColor} onChange={(value) => onAppearanceChange({ downColor: value })} /></div><PreferenceRange label="Grid intensity" value={appearance.gridOpacity} min={0} max={18} suffix="%" onChange={(gridOpacity) => onAppearanceChange({ gridOpacity })} /><label className="zt-preference-select"><span>Information density</span><select value={appearance.density} onChange={(event) => onAppearanceChange({ density: event.target.value as TerminalAppearance["density"] })}><option value="compact">Compact</option><option value="comfortable">Comfortable</option></select></label><label className="zt-preference-select"><span>Chart timezone</span><select value={timezone} onChange={(event) => onTimezoneChange(event.target.value as ChartTimezone)}>{TIMEZONE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><div className="zt-terminal-preference-actions"><button type="button" onClick={onReset}>Reset appearance</button><span>Changes apply instantly</span></div></div>;
-}
-
-function ColorControl({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="zt-color-control"><span>{label}</span><input type="color" value={value} onChange={(event) => onChange(event.target.value)} /><code>{value.toUpperCase()}</code></label>;
-}
-
-function EconomicCalendarWindow() {
-  return (
-    <div className="h-full overflow-hidden bg-background">
-      <EconomicCalendarTable />
-    </div>
   );
 }

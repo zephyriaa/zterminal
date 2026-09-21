@@ -6,7 +6,7 @@ import { EXAMPLES } from "@/lib/local-research/examples";
 import { defaultResearchConfig, type Dataset, type Diagnostic, type IndicatorEvaluationResult, type ResearchConfig, type ResearchJob, type ResearchResult, type ScriptRecord } from "@/lib/local-research/contracts";
 import { capabilities, helper, HelperError, pairHelper } from "@/lib/local-research/client";
 import { validateConfig, validateDataset } from "@/lib/local-research/dataset";
-import { usePanels } from "./panels";
+
 import { useStudies } from "./studies";
 import { createPythonStudy } from "@/lib/indicator-library";
 
@@ -131,7 +131,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
     try { await helper.cancel(job.id); } catch (error) { set({ error: `Cancellation could not be confirmed: ${(error as Error).message}` }); }
   },
   openResult: async id => {
-    try { const result = await helper.result(id); set({ result, chartResult: result, selectedTrade: null, error: "" }); usePanels.getState().open("backtester"); }
+    try { const result = await helper.result(id); set({ result, chartResult: result, selectedTrade: null, error: "" }); window.dispatchEvent(new Event("zterminal:open-backtester")); }
     catch (error) { set({ error: (error as Error).message }); }
   },
   analyze: async (seed, simulations) => {
@@ -166,7 +166,7 @@ async function watch(id: string) {
             const [result, archived] = await Promise.all([helper.result(job.resultId), helper.results()]);
             useResearch.setState({ result, archived, chartResult: result, selectedTrade: null });
             // A report is a result artifact, never a placeholder opened at run start.
-            usePanels.getState().open("backtester");
+            window.dispatchEvent(new Event("zterminal:open-backtester"));
           }
         }
         if (job.stage === "failed") { const active = useResearch.getState().drafts[useResearch.getState().activeId]; useResearch.setState({ error: job.diagnostic?.message ?? `${active?.kind === "indicator" ? "Custom indicator" : "Strategy"} failed. No result was substituted.` }); }

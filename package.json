@@ -22,7 +22,8 @@
     "predev": "prisma generate && node scripts/prepare-monaco.mjs",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test:terminal": "node scripts/test-terminal-browser.cjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,9 +1,12 @@
+import { getServerSession } from "next-auth";
+import { authOptions, googleSignInConfigured } from "@/lib/auth";
 import { FloatingWorkstationShell } from "@/components/terminal/floating-workstation-shell";
 import { ZTerminalSessionProvider } from "@/components/auth/session-provider";
 
-export default function TerminalPage() {
+export default async function TerminalPage() {
+  const session = googleSignInConfigured ? await getServerSession(authOptions) : null;
   return (
-    <ZTerminalSessionProvider>
+    <ZTerminalSessionProvider session={session}>
       <FloatingWorkstationShell />
     </ZTerminalSessionProvider>
   );
