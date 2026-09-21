@@ -57,14 +57,10 @@ export function PublicHeader({ overlay = false }: { overlay?: boolean }) {
         className={`${styles.header} ${isScrolled ? styles.headerScrolled : ""}`}
         aria-label="Sitewide Liquid Glass Navigation"
       >
-        {/* Brand with Framed Specular Z Mark */}
+        {/* Brand with Framed Specular Z Mark matching reference */}
         <Link href="/" className={styles.brand} aria-label="ZTerminal home">
           <span className={styles.brandMarkFrame}>
-            <i className={styles.brandMark} aria-hidden="true" />
-          </span>
-          <span className={styles.brandName}>
-            ZTERMINAL
-            <span className={styles.betaBadge}>BETA</span>
+            <span className={styles.brandLetter}>Z</span>
           </span>
         </Link>
 
@@ -107,18 +103,48 @@ export function PublicHeader({ overlay = false }: { overlay?: boolean }) {
             })}
           </div>
 
-          {/* Liquid Glass Account / Workspace CTA Capsule */}
+          {/* Liquid Glass Account & Workspace Synced Capsule matching reference */}
           <Link
             href="/terminal"
-            className={styles.navCta}
-            title="Launch ZTerminal Web Workspace"
+            className={styles.accountCapsule}
+            title="Launch ZTerminal Workspace"
             onClick={() => setOpen(false)}
           >
-            <span className={styles.navStatusDot} aria-hidden="true" />
-            <span className={styles.navCtaText}>Open ZTerminal</span>
-            <span className={styles.navArrow} aria-hidden="true">
-              ↗
-            </span>
+            <div className={styles.accountAvatar}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span className={styles.syncDot} aria-hidden="true" />
+            </div>
+            <div className={styles.accountMeta}>
+              <span className={styles.accountName}>ZTerminal Account</span>
+              <span className={styles.accountStatus}>Workspace synced</span>
+            </div>
+            <svg
+              className={styles.accountChevron}
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </Link>
         </nav>
       </header>

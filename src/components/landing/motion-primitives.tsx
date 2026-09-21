@@ -76,7 +76,8 @@ interface MaskedHeadingProps {
   className?: string;
   id?: string;
   lines: Array<{
-    text: string;
+    text?: string;
+    content?: React.ReactNode;
     italic?: boolean;
     className?: string;
   }>;
@@ -103,7 +104,9 @@ export function MaskedHeading({
       <Tag id={id} className={className}>
         {lines.map((line, idx) => (
           <span key={idx} style={{ display: "block" }}>
-            {line.italic ? (
+            {line.content ? (
+              line.content
+            ) : line.italic ? (
               <em className={line.className}>{line.text}</em>
             ) : (
               <span className={line.className}>{line.text}</span>
@@ -151,7 +154,9 @@ export function MaskedHeading({
               },
             }}
           >
-            {line.italic ? (
+            {line.content ? (
+              line.content
+            ) : line.italic ? (
               <em className={line.className}>{line.text}</em>
             ) : (
               <span className={line.className}>{line.text}</span>

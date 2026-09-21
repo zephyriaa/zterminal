@@ -27,19 +27,19 @@
   pointer-events: auto;
   margin: 0 auto;
   width: 100%;
-  max-width: 1240px;
-  height: 52px;
+  max-width: 1540px;
+  height: 54px;
   border-radius: 14px;
-  border: 1px solid rgba(180, 198, 235, 0.14);
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 35%, rgba(8, 13, 28, 0.68) 100%);
+  border: 1px solid rgba(180, 198, 235, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.32);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 35%, rgba(8, 13, 28, 0.72) 100%);
   backdrop-filter: blur(24px) saturate(180%) contrast(105%);
   -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(105%);
   box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.65), 0 0 24px -2px rgba(101, 39, 228, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px 0 14px;
+  padding: 0 12px 0 16px;
   transition: background 260ms cubic-bezier(0.16, 1, 0.3, 1),
               border-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -51,7 +51,7 @@
   border-color: rgba(188, 202, 235, 0.24);
   border-top-color: rgba(255, 255, 255, 0.38);
   box-shadow: 0 22px 54px -10px rgba(0, 0, 0, 0.8), 0 0 32px rgba(101, 39, 228, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.28);
-  height: 48px;
+  height: 50px;
 }
 
 .brand {
@@ -75,117 +75,176 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 6px rgba(0, 0, 0, 0.3);
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.48);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: transform var(--public-fast) var(--public-ease),
+              box-shadow var(--public-fast) var(--public-ease);
 }
 
-.brandMark {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  display: inline-block;
-  flex: none;
+.brand:hover .brandMarkFrame {
+  transform: scale(1.02);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 12px rgba(101, 39, 228, 0.25);
 }
 
-.brandMark:before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #f5f6fc;
-  clip-path: polygon(70% 0, 100% 0, 29% 100%, 0 100%);
-}
-
-.brandMark:after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #f5f6fc;
-  clip-path: polygon(0 0, 30% 0, 0 32%, 0 0, 100% 100%, 70% 100%, 100% 67%, 100% 100%, 0 0);
-}
-
-.brandName {
-  display: inline-flex;
-  align-items: center;
-}
-
-.betaBadge {
-  margin-left: 8px;
-  padding: 2px 6px;
-  border: 1px solid var(--public-lilac-badge-border);
-  border-radius: var(--public-radius-xs);
-  background: var(--public-lilac-badge-bg);
-  color: var(--public-lilac);
-  font-family: var(--public-font-mono), monospace;
-  font-size: 8.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+.brandLetter {
+  font-family: var(--public-font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Primary Desktop Navigation */
 .nav {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 1.8vw, 24px);
+  gap: clamp(16px, 2.8vw, 44px);
 }
 
 .navLinksGroup {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: clamp(8px, 1.8vw, 28px);
 }
 
 .navLink {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
-  color: var(--public-copy);
+  color: #949eb8;
   font-family: var(--public-font-sans);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
   letter-spacing: 0.01em;
   text-decoration: none;
   transition: color var(--public-fast) var(--public-ease),
-              background var(--public-fast) var(--public-ease),
-              border-color var(--public-fast) var(--public-ease);
+              background var(--public-fast) var(--public-ease);
 }
 
 .navLink:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .navLinkActive {
   color: #ffffff;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 2px 8px rgba(0, 0, 0, 0.25);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
-/* Liquid Glass CTA Capsule */
-.navCta {
+/* Liquid Glass Account & Workspace Synced Capsule */
+.accountCapsule {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 34px;
+  height: 38px;
+  padding: 0 14px 0 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 24, 46, 0.72) 100%);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 4px 14px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--public-fast) var(--public-ease),
+              border-color var(--public-fast) var(--public-ease),
+              box-shadow var(--public-fast) var(--public-ease),
+              transform var(--public-fast) var(--public-ease);
+}
+
+.accountCapsule:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(30, 38, 65, 0.75) 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(101, 39, 228, 0.18);
+  transform: translateY(-1px);
+}
+
+.accountAvatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.syncDot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.85);
+}
+
+.accountMeta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  margin-left: 9px;
+  margin-right: 10px;
+  text-align: left;
+}
+
+.accountName {
+  font-family: var(--public-font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.accountStatus {
+  font-family: var(--public-font-sans);
+  font-size: 9.5px;
+  font-weight: 400;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.accountChevron {
+  color: #94a3b8;
+  transition: transform var(--public-fast) var(--public-ease),
+              color var(--public-fast) var(--public-ease);
+}
+
+.accountCapsule:hover .accountChevron {
+  color: #e2e8f0;
+  transform: translateY(1px);
+}
+
+.navCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
   padding: 0 14px;
   border-radius: 9999px;
-  border: 1px solid rgba(192, 147, 245, 0.32);
-  border-top: 1px solid rgba(255, 255, 255, 0.32);
-  background: linear-gradient(135deg, rgba(101, 39, 228, 0.32) 0%, rgba(80, 28, 184, 0.22) 100%);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 0 4px 14px rgba(101, 39, 228, 0.18);
-  color: #f5f6fc;
+  border: 1px solid rgba(175, 130, 255, 0.35);
+  background: linear-gradient(135deg, rgba(101, 39, 228, 0.35) 0%, rgba(70, 20, 175, 0.22) 100%);
+  color: #f1f5f9;
   font-family: var(--public-font-sans);
   font-size: 12.5px;
   font-weight: 600;

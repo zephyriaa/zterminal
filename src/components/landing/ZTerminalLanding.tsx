@@ -106,53 +106,71 @@ export default function ZTerminalLanding() {
 
       <main className={styles.content}>
         {/* ================================================================= */}
-        {/* BEAT 01: HERO WITH RESTORED 3D LAPTOP WORKSTATION                 */}
+        {/* BEAT 01: HERO WITH RESTORED WORKSTATION MATCHING REFERENCE        */}
         {/* ================================================================= */}
-        <section className={`${styles.hero} ${styles.container}`} aria-labelledby="hero-heading">
-          <div className={styles.heroGrid}>
-            <div className={styles.heroContent}>
-              <FadeInView delay={0.05} yOffset={8} triggerOnMount>
-                <TechnicalEyebrow className={styles.heroEyebrow}>
-                  RESEARCH, WITHOUT THE GUESSWORK
-                </TechnicalEyebrow>
-              </FadeInView>
+        <section className={styles.hero} aria-labelledby="hero-heading">
+          <div className={`${styles.heroContainer} ${styles.container}`}>
+            <div className={styles.heroGrid}>
+              <div className={styles.heroContent}>
+                <FadeInView delay={0.08} yOffset={8} triggerOnMount>
+                  <p className={styles.heroEyebrow}>
+                    RESEARCH, WITHOUT THE GUESSWORK
+                  </p>
+                </FadeInView>
 
-              <MaskedHeading
-                as="h1"
-                id="hero-heading"
-                className={styles.heroTitle}
-                triggerOnMount
-                delay={0.12}
-                stagger={0.14}
-                lines={[
-                  { text: "See Further." },
-                  { text: "Guess Less.", italic: true, className: styles.heroTitleAccent },
-                ]}
-              />
+                <MaskedHeading
+                  as="h1"
+                  id="hero-heading"
+                  className={styles.heroTitle}
+                  triggerOnMount
+                  delay={0.16}
+                  stagger={0.14}
+                  lines={[
+                    {
+                      content: <span style={{ whiteSpace: "nowrap" }}>Turn market ideas</span>,
+                    },
+                    {
+                      content: (
+                        <span>
+                          into{" "}
+                          <em className={styles.heroEvidence}>evidence.</em>
+                        </span>
+                      ),
+                    },
+                  ]}
+                />
 
-              <FadeInView delay={0.28} yOffset={10} triggerOnMount>
-                <p className={styles.heroLead}>
-                  Turn market ideas into evidence. Explore live markets, build Python strategies,
-                  and test every assumption in one local-first workspace.
-                </p>
-              </FadeInView>
+                <FadeInView delay={0.32} yOffset={10} triggerOnMount>
+                  <p className={styles.heroLead}>
+                    Explore live markets, build Python strategies,{" "}
+                    <br className={styles.hideMobile} />
+                    and test every assumption in one local-first{" "}
+                    <br className={styles.hideMobile} />
+                    workspace.
+                  </p>
+                </FadeInView>
 
-              <FadeInView delay={0.38} yOffset={12} triggerOnMount className={styles.heroActions}>
-                <CTAButton href="/terminal">Open ZTerminal</CTAButton>
-                <a href="#research-loop" className={styles.heroSecondaryLink}>
-                  Explore the workflow <span aria-hidden="true">→</span>
-                </a>
-              </FadeInView>
+                <FadeInView delay={0.44} yOffset={12} triggerOnMount className={styles.heroActions}>
+                  <Link href="/terminal" className={styles.heroPrimaryCta}>
+                    <span>Start researching</span>
+                    <span className={styles.heroArrow} aria-hidden="true">→</span>
+                  </Link>
+                  <a href="#research-loop" className={styles.heroSecondaryCta}>
+                    <span>Explore the workflow</span>
+                    <span className={styles.heroArrow} aria-hidden="true">→</span>
+                  </a>
+                </FadeInView>
 
-              <FadeInView delay={0.48} yOffset={8} triggerOnMount className={styles.heroFootnote}>
-                <span className={styles.heroFootnoteDot} aria-hidden="true" />
-                <span>Windows x64 signed release in preparation · Web terminal available now</span>
-              </FadeInView>
-            </div>
+                <FadeInView delay={0.54} yOffset={8} triggerOnMount className={styles.heroFootnote}>
+                  <span className={styles.heroFootnoteDot} aria-hidden="true" />
+                  <span>Windows x64 signed release in preparation · Web terminal available now</span>
+                </FadeInView>
+              </div>
 
-            {/* RESTORED 3D PHYSICAL LAPTOP WITH AUTHENTIC TERMINAL SCREEN */}
-            <div className={styles.heroStage} aria-label="ZTerminal workstation showing authentic terminal interface">
-              <HeroLaptop />
+              {/* RESTORED PHOTOREALISTIC WORKSTATION MATCHING REFERENCE */}
+              <div className={styles.heroStage} aria-label="ZTerminal workstation showing authentic terminal interface">
+                <HeroLaptop />
+              </div>
             </div>
           </div>
         </section>
@@ -551,12 +569,12 @@ export default function ZTerminalLanding() {
           <FadeInView className={styles.finalContent}>
             <TechnicalEyebrow>GETTING STARTED</TechnicalEyebrow>
             <h2 id="final-heading" className={styles.finalTitle}>
-              Start with evidence.<br />
-              <em>Guess less.</em>
+              See Further.<br />
+              <em>Guess Less.</em>
             </h2>
             <p className={styles.finalLead}>
               Launch the web terminal right now to inspect public feeds, or consult our documentation
-              to understand the Python research API.
+              to understand the Python research API. Start with evidence. Guess less.
             </p>
             <div className={styles.finalActions}>
               <CTAButton href="/terminal">Open ZTerminal</CTAButton>

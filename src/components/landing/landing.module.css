@@ -21,112 +21,153 @@
 }
 
 /* ==========================================================================
-   BEAT 01: HERO
+   BEAT 01: HERO (Aligned with Reference Source of Truth)
    ========================================================================== */
 
 .hero {
-  padding-top: clamp(48px, 7vh, 84px);
-  padding-bottom: clamp(64px, 9vh, 110px);
-  border-bottom: 1px solid var(--public-line-soft);
+  position: relative;
+  min-height: calc(100vh - 66px);
+  display: flex;
+  align-items: center;
+  padding-top: clamp(28px, 4.5vh, 52px);
+  padding-bottom: clamp(36px, 5.5vh, 68px);
+  border-bottom: 1px solid rgba(133, 153, 195, 0.12);
+  background-color: #040914;
+  background-image:
+    /* Bottom studio horizon grounded table gradient */
+    radial-gradient(ellipse 95% 42% at 70% 94%, rgba(26, 32, 70, 0.48) 0%, rgba(6, 10, 24, 0.65) 45%, transparent 75%),
+    /* Right side atmospheric indigo/violet wash */
+    radial-gradient(ellipse 72% 64% at 76% 40%, rgba(95, 52, 215, 0.18) 0%, rgba(55, 28, 140, 0.09) 45%, transparent 75%),
+    /* Orthogonal technical grid (72px) */
+    linear-gradient(to right, rgba(90, 110, 175, 0.075) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(90, 110, 175, 0.075) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 72px 72px, 72px 72px;
+  overflow: hidden;
+}
+
+.heroContainer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
 }
 
 .heroGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
-  gap: clamp(36px, 5vw, 68px);
+  grid-template-columns: 46% 54%;
+  gap: clamp(16px, 2.5vw, 36px);
   align-items: center;
 }
 
 .heroContent {
-  max-width: 560px;
+  max-width: 620px;
 }
 
 .heroEyebrow {
-  margin-bottom: 22px;
+  margin: 0 0 22px;
+  font-family: var(--public-font-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: #b0a4f6;
+  text-transform: uppercase;
 }
 
 .heroTitle {
   margin: 0 0 22px;
-  font-size: clamp(38px, 5vw, 74px);
+  font-family: var(--public-font-sans);
+  font-size: clamp(38px, 3.8vw, 58px);
   font-weight: 620;
-  letter-spacing: -0.04em;
-  line-height: 1.04;
-  color: var(--public-ink);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  color: #ffffff;
 }
 
-.heroTitle em,
-.heroTitleAccent {
-  display: block;
+.heroEvidence {
   font-family: var(--public-font-serif);
   font-style: italic;
   font-weight: 400;
-  background: linear-gradient(135deg, #e9d5ff 10%, #c093f5 60%, #a855f7 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  letter-spacing: -0.03em;
-  margin-top: 4px;
+  color: #a195e7;
+  letter-spacing: -0.02em;
 }
 
 .heroLead {
-  margin: 0 0 32px;
-  font-size: clamp(16px, 1.15vw, 18px);
-  line-height: 1.72;
-  color: var(--public-copy);
-  max-width: 500px;
+  margin: 0 0 34px;
+  font-family: var(--public-font-sans);
+  font-size: clamp(15px, 1.08vw, 17px);
+  line-height: 1.65;
+  color: #949ab8;
+  max-width: 480px;
 }
 
 .heroActions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 22px;
   flex-wrap: wrap;
 }
 
-.heroSecondaryLink {
+.heroPrimaryCta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  height: 42px;
-  padding: 0 20px;
-  font-family: var(--public-font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--public-copy);
-  text-decoration: none;
-  background: var(--public-glass-bg);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid var(--public-glass-border);
-  border-radius: var(--public-radius-sm);
-  box-shadow: var(--public-glass-highlight);
-  transition: background var(--public-fast) var(--public-ease),
-              border-color var(--public-fast) var(--public-ease),
-              color var(--public-fast) var(--public-ease),
-              transform var(--public-fast) var(--public-ease);
-}
-
-.heroSecondaryLink:hover {
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 8px;
+  background: #513cc5;
   color: #ffffff;
-  border-color: var(--public-glass-border-focus);
-  background: var(--public-glass-bg-hover);
+  font-family: var(--public-font-sans);
+  font-size: 14px;
+  font-weight: 550;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(81, 60, 197, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.heroPrimaryCta:hover {
+  background: #5d46e0;
   transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(81, 60, 197, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.heroSecondaryLink span {
-  transition: transform var(--public-fast) var(--public-ease);
+.heroPrimaryCta:active {
+  transform: scale(0.985);
 }
 
-.heroSecondaryLink:hover span {
-  transform: translateY(2px);
+.heroArrow {
+  display: inline-block;
+  transition: transform 180ms ease;
+}
+
+.heroPrimaryCta:hover .heroArrow {
+  transform: translateX(4px);
+}
+
+.heroSecondaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--public-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: #a3add0;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.heroSecondaryCta:hover {
+  color: #ffffff;
+}
+
+.heroSecondaryCta:hover .heroArrow {
+  transform: translateX(4px);
 }
 
 .heroFootnote {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-top: 26px;
+  margin-top: 28px;
   padding-top: 18px;
   border-top: 1px solid var(--public-line-subtle);
   font-family: var(--public-font-mono), monospace;
@@ -142,17 +183,42 @@
   margin-top: 6px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--public-lilac);
-  opacity: 0.75;
+  background: #a195e7;
+  opacity: 0.85;
 }
 
 .heroStage {
   position: relative;
   width: 100%;
-  min-height: clamp(380px, 48vh, 560px);
+  min-height: clamp(480px, 60vh, 720px);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
+}
+
+.hideMobile {
+  display: inline;
+}
+
+@media (max-width: 1024px) {
+  .hero {
+    min-height: auto;
+    padding-top: 40px;
+    padding-bottom: 50px;
+  }
+
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .heroContent {
+    max-width: 100%;
+  }
+
+  .hideMobile {
+    display: none;
+  }
 }
 
 .surfaceScreenshotFrame {

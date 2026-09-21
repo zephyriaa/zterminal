@@ -45,7 +45,7 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
-  files: ["scripts/**/*.js"],
+  files: ["scripts/**/*.js", "scripts/**/*.cjs"],
   rules: {
     // Repository maintenance scripts intentionally use CommonJS under a
     // CommonJS package boundary; application code remains ESM/TypeScript.
