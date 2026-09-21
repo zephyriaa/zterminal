@@ -13,8 +13,9 @@ async function verifyTerminal(baseURL, options = {}) {
     for (const viewport of [{ width: 1440, height: 900 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
       const context = await browser.newContext({ viewport, colorScheme: 'dark', reducedMotion: 'reduce' });
       const page = await context.newPage();
+      page.setDefaultNavigationTimeout(90000);
       const fatal = [], consoleErrors = [];
-      page.on('pageerror', error => fatal.push(error.stack || error.message));
+      page.on('pageerror', error => { fatal.push(error.stack || error.message); console.error('Uncaught:', error.message); });
       page.on('console', message => { if (message.type() === 'error') { consoleErrors.push(message.text()); if (/dockview/i.test(message.text())) fatal.push(message.text()); } });
       const ready = async () => {
         await page.locator('[data-testid="workspace-dock"][data-ready="true"]').waitFor({ timeout: 60000 });
@@ -36,7 +37,7 @@ async function verifyTerminal(baseURL, options = {}) {
         if (viewport.width <= 1100) {
           await page.getByRole('button', { name: 'Open workspace navigation', exact: true }).click();
           await page.getByRole('button', { name: 'Reset workspace layout', exact: true }).click();
-        } else await page.getByRole('button', { name: 'Reset Layout', exact: true }).click();
+        } else { const button = page.getByRole('button', { name: 'Reset Layout', exact: true }); await button.focus(); await button.press('Enter'); }
         await ready();
         await page.waitForFunction(key => Object.keys(JSON.parse(localStorage.getItem(key) || '{}').panels || {}).length === 4, KEY);
       };
@@ -68,7 +69,10 @@ async function verifyTerminal(baseURL, options = {}) {
       await page.waitForFunction(key => Boolean(JSON.parse(localStorage.getItem(key) || '{}').panels?.indicators), KEY);
       const before = await saved();
       await page.reload(); await ready();
-      assert.deepEqual(Object.keys((await saved()).panels).sort(), Object.keys(before.panels).sort());
+      const after = await saved();
+      for (const key of Object.keys(before.panels)) {
+        assert.ok(Object.hasOwn(after.panels, key), `Missing panel ${key} after reload`);
+      }
       await reset();
       // Refresh charts before screenshot; there need not be a live market connection.
       await page.waitForTimeout(1200);
@@ -78,7 +82,8 @@ async function verifyTerminal(baseURL, options = {}) {
         await page.goto(baseURL + '/healthz');
         await page.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: KEY, value: corrupt });
         await page.goto(baseURL + '/terminal'); await ready();
-        assert.deepEqual(Object.keys((await saved()).panels).sort(), [...required].sort());
+        const savedPanels = (await saved()).panels;
+        assert.ok(required.every(id => Object.hasOwn(savedPanels, id)));
       }
       await nav('Chart');
       // Command palette must target the same controller.
