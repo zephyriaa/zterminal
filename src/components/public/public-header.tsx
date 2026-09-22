@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -60,7 +61,14 @@ export function PublicHeader({ overlay = false }: { overlay?: boolean }) {
         {/* Brand with Framed Specular Z Mark matching reference */}
         <Link href="/" className={styles.brand} aria-label="ZTerminal home">
           <span className={styles.brandMarkFrame}>
-            <span className={styles.brandLetter}>Z</span>
+            <Image
+              src="/brand/zterminal-mark-v2.png"
+              alt="ZTerminal"
+              width={22}
+              height={22}
+              priority
+              className={styles.brandMarkImage}
+            />
           </span>
         </Link>
 

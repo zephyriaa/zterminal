@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./public-shared.module.css";
 
 export function PublicFooter() {
@@ -7,7 +8,15 @@ export function PublicFooter() {
       <div className={styles.footerInner}>
         <div className={styles.footerBrandRow}>
           <div className={styles.brand}>
-            <i className={styles.brandMark} aria-hidden="true" />
+            <span className={styles.brandMarkFrame}>
+              <Image
+                src="/brand/zterminal-mark-v2.png"
+                alt="ZTerminal brand mark"
+                width={20}
+                height={20}
+                className={styles.brandMarkImage}
+              />
+            </span>
             <span className={styles.brandName}>
               ZTERMINAL
               <span className={styles.betaBadge} aria-label="Beta product">

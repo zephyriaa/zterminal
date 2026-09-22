@@ -85,9 +85,8 @@ export function HeroLaptop({ className = "" }: HeroLaptopProps) {
           motionReady
             ? {
                 opacity: 0,
-                y: 36,
-                scale: 0.975,
-                filter: "blur(8px)",
+                y: 30,
+                scale: 0.985,
               }
             : false
         }
@@ -95,11 +94,10 @@ export function HeroLaptop({ className = "" }: HeroLaptopProps) {
           opacity: 1,
           y: 0,
           scale: 1,
-          filter: "blur(0px)",
         }}
         transition={{
-          duration: 1.0,
-          delay: 0.25,
+          duration: 0.9,
+          delay: 0.2,
           ease: [0.16, 1, 0.3, 1],
         }}
         style={
@@ -113,22 +111,22 @@ export function HeroLaptop({ className = "" }: HeroLaptopProps) {
             : undefined
         }
       >
-        {/* Continuous Slow Floating Loop (imperceptible life: +-4px, +-0.3 deg over 7.5s) */}
+        {/* Continuous Slow Floating Loop (imperceptible life: +-3px, +-0.2 deg over 8s) */}
         <motion.div
           className={styles.floatingWrapper}
           animate={
             reduced
               ? undefined
               : {
-                  y: [-4, 4, -4],
-                  rotateZ: [-0.3, 0.3, -0.3],
+                  y: [-3, 3, -3],
+                  rotateZ: [-0.2, 0.2, -0.2],
                 }
           }
           transition={
             reduced
               ? undefined
               : {
-                  duration: 7.5,
+                  duration: 8.0,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }
@@ -139,8 +137,8 @@ export function HeroLaptop({ className = "" }: HeroLaptopProps) {
             <Image
               src="/landing/hero-laptop-photorealistic.png"
               alt="Authentic ZTerminal quantitative research workstation with live order book, candlestick chart, and Python strategy tabs"
-              width={1488}
-              height={992}
+              width={1160}
+              height={892}
               priority
               className={styles.laptopImage}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 1020px"

@@ -1,6 +1,6 @@
 /* Public design system primitives */
 
-/* Background Field: Restrained technical coordinate grid + architectural arcs */
+/* Background Field: Restrained technical coordinate grid + architectural lighting */
 .backgroundField {
   position: absolute;
   inset: 0;
@@ -11,16 +11,13 @@
   max-width: 100%;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(140, 165, 215, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(140, 165, 215, 0.035) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.85) 65%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.85) 65%, transparent 100%);
+    linear-gradient(rgba(140, 165, 215, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140, 165, 215, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
 }
 
 .backgroundField i {
   position: absolute;
-  border: 1px solid rgba(192, 147, 245, 0.12);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -30,7 +27,7 @@
   height: 64vw;
   right: -24vw;
   top: -24vw;
-  border-color: rgba(192, 147, 245, 0.14);
+  border: 1px solid rgba(192, 147, 245, 0.12);
 }
 
 .backgroundField i:nth-child(2) {
@@ -38,17 +35,11 @@
   height: 42vw;
   left: -20vw;
   top: 35vh;
-  border-color: rgba(133, 153, 195, 0.08);
+  border: 1px solid rgba(133, 153, 195, 0.06);
 }
 
 .backgroundField i:nth-child(3) {
-  width: 80vw;
-  height: 22vw;
-  left: 10vw;
-  top: 50vh;
-  border-radius: 100%;
-  transform: rotate(-12deg);
-  border-color: rgba(192, 147, 245, 0.06);
+  display: none;
 }
 
 @media (max-width: 600px) {
