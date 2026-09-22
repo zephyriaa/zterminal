@@ -1,7 +1,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 
-const ARTIFACT_DIR = 'C:\\Users\\aykhank\\.gemini\\antigravity-ide\\brain\\72f2de54-6cb6-4b11-9633-f45d2e674db0';
+const ARTIFACT_DIR = 'C:\\Users\\aykhank\\.gemini\\antigravity-ide\\brain\\7b1cbe30-4ee0-41ef-8168-94213e1fe418';
 
 async function capture() {
   const browser = await chromium.launch({ headless: true });

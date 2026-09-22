@@ -160,11 +160,6 @@ export default function ZTerminalLanding() {
                     <span className={styles.heroArrow} aria-hidden="true">→</span>
                   </a>
                 </FadeInView>
-
-                <FadeInView delay={0.54} yOffset={8} triggerOnMount className={styles.heroFootnote}>
-                  <span className={styles.heroFootnoteDot} aria-hidden="true" />
-                  <span>Windows x64 signed release in preparation · Web terminal available now</span>
-                </FadeInView>
               </div>
 
               {/* RESTORED PHOTOREALISTIC WORKSTATION MATCHING REFERENCE */}

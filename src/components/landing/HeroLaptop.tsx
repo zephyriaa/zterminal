@@ -139,12 +139,11 @@ export function HeroLaptop({ className = "" }: HeroLaptopProps) {
             <Image
               src="/landing/hero-laptop-photorealistic.png"
               alt="Authentic ZTerminal quantitative research workstation with live order book, candlestick chart, and Python strategy tabs"
-              width={1408}
-              height={1032}
+              width={1488}
+              height={992}
               priority
-              quality={95}
               className={styles.laptopImage}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 880px"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 1020px"
             />
 
             {/* Specular Screen Sheen Sweep on Entry */}

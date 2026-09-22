@@ -9,8 +9,8 @@
   height: 100%;
   min-height: 520px;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-end;
   perspective: 1200px;
   pointer-events: none;
 }
@@ -18,20 +18,20 @@
 /* Atmospheric Breathing Violet Glow behind the workstation */
 .atmosphericGlow {
   position: absolute;
-  top: 38%;
-  left: 56%;
+  top: 36%;
+  left: 64%;
   transform: translate(-50%, -50%);
-  width: clamp(620px, 68vw, 1000px);
-  height: clamp(440px, 50vw, 720px);
+  width: clamp(560px, 58vw, 920px);
+  height: clamp(400px, 44vw, 660px);
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
-    rgba(110, 60, 240, 0.3) 0%,
-    rgba(70, 30, 185, 0.17) 42%,
-    rgba(25, 20, 80, 0.05) 65%,
+    rgba(95, 45, 215, 0.24) 0%,
+    rgba(60, 25, 160, 0.12) 42%,
+    rgba(20, 15, 65, 0.04) 65%,
     transparent 80%
   );
-  filter: blur(56px);
+  filter: blur(52px);
   pointer-events: none;
   z-index: 1;
 }
@@ -40,17 +40,17 @@
 .groundReflection {
   position: absolute;
   bottom: 0%;
-  left: 52%;
+  left: 58%;
   transform: translateX(-50%);
-  width: 96%;
-  height: 120px;
+  width: 92%;
+  height: 100px;
   background: radial-gradient(
     ellipse at center,
-    rgba(70, 35, 185, 0.24) 0%,
-    rgba(24, 28, 70, 0.16) 45%,
+    rgba(55, 28, 150, 0.22) 0%,
+    rgba(20, 24, 60, 0.12) 45%,
     transparent 75%
   );
-  filter: blur(36px);
+  filter: blur(32px);
   pointer-events: none;
   z-index: 1;
 }
@@ -58,14 +58,15 @@
 /* Main Laptop Workstation Assembly */
 .laptopContainer {
   position: relative;
-  width: 124%;
-  max-width: 1140px;
+  width: 100%;
+  max-width: clamp(740px, 58vw, 1120px);
   transform-style: preserve-3d;
   will-change: transform;
   pointer-events: auto;
   z-index: 2;
-  margin-right: -18%;
-  margin-bottom: -15px;
+  margin-left: auto;
+  margin-right: 0;
+  margin-bottom: -16px;
 }
 
 .floatingWrapper {
@@ -87,8 +88,8 @@
   width: 100%;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 32px 72px rgba(0, 0, 0, 0.88))
-         drop-shadow(0 10px 30px rgba(70, 30, 180, 0.26));
+  filter: drop-shadow(0 28px 64px rgba(0, 0, 0, 0.84))
+         drop-shadow(0 8px 24px rgba(70, 30, 180, 0.22));
   transform: translateZ(0);
 }
 
@@ -117,19 +118,22 @@
 /* Responsive Scaling */
 @media (max-width: 1280px) {
   .laptopContainer {
-    width: 115%;
-    max-width: 920px;
-    margin-right: -8%;
-    margin-bottom: 0;
+    max-width: 840px;
+    margin-left: auto;
   }
 }
 
 @media (max-width: 1024px) {
+  .laptopStage {
+    min-height: auto;
+    margin-top: 16px;
+    justify-content: center;
+  }
+
   .laptopContainer {
-    width: 100%;
     max-width: 720px;
-    margin-right: 0;
-    margin-bottom: 0;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -139,11 +143,13 @@
     margin-top: 24px;
     perspective: none;
     align-items: center;
+    justify-content: center;
   }
 
   .laptopContainer {
     width: 100%;
     max-width: 100%;
+    margin-left: 0;
     margin-right: 0;
     margin-bottom: 0;
     transform: none !important;
