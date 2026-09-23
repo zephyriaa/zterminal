@@ -4,6 +4,8 @@ import { CentralBankCalendarProvider } from "../src/lib/economic-calendar/provid
 import { FredCalendarProvider } from "../src/lib/economic-calendar/providers/fred";
 import { FinnhubCalendarProvider } from "../src/lib/economic-calendar/providers/finnhub";
 import { TreasuryAuctionsProvider } from "../src/lib/economic-calendar/providers/treasury";
+import { parseBlsCalendar } from "../src/lib/economic-calendar/providers/bls";
+import { parseBeaCalendar } from "../src/lib/economic-calendar/providers/bea";
 import { EconomicCalendarAggregator } from "../src/lib/economic-calendar/aggregator";
 import {
   formatEventTime,
@@ -19,6 +21,43 @@ import type {
   EconomicCalendarProviderResult,
 } from "../src/lib/economic-calendar/types";
 import { calendarCache } from "../src/lib/economic-calendar/cache";
+
+test("official BLS iCalendar preserves Eastern release times across daylight saving", () => {
+  const request = { from: new Date("2026-03-01T00:00:00Z"), to: new Date("2026-12-31T23:59:59Z") };
+  const ics = `BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:summer\nDTSTART;TZID=US-Eastern:20260923T083000\nSUMMARY:Consumer Price Index\nEND:VEVENT\nBEGIN:VEVENT\nUID:winter\nDTSTART;TZID=US-Eastern:20261215T083000\nSUMMARY:Employment Situation\nEND:VEVENT\nEND:VCALENDAR`;
+  const events = parseBlsCalendar(ics, request);
+  assert.equal(events.length, 2);
+  assert.equal(events[0].scheduledAt, "2026-09-23T12:30:00.000Z");
+  assert.equal(events[1].scheduledAt, "2026-12-15T13:30:00.000Z");
+  assert.equal(events[0].forecast, null);
+  assert.equal(events[0].source, "U.S. Bureau of Labor Statistics");
+  assert.equal(parseBlsCalendar(ics, { ...request, currencies: ["EUR"] }).length, 0);
+});
+
+test("official BEA JSON uses supplied UTC times and deduplicates repeated dates", () => {
+  const request = { from: new Date("2026-09-01T00:00:00Z"), to: new Date("2026-09-30T23:59:59Z") };
+  const events = parseBeaCalendar({ "Gross Domestic Product": { release_dates: ["2026-09-30T12:30:00+00:00", "2026-09-30T12:30:00+00:00"] }, file_last_updated: "2026-09-01" }, request);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].scheduledAt, "2026-09-30T12:30:00.000Z");
+  assert.equal(events[0].impact, "high");
+  assert.equal(events[0].actual, null);
+  assert.equal(parseBeaCalendar({ "Gross Domestic Product": { release_dates: ["2026-09-30T12:30:00+00:00"] } }, { ...request, currencies: ["GBP"] }).length, 0);
+});
+
+test("an unavailable official feed is retried instead of caching an empty failure", async () => {
+  let calls = 0;
+  const failing: EconomicCalendarProvider = {
+    id: "unavailable",
+    label: "Unavailable feed",
+    isConfigured: () => true,
+    fetchEvents: async () => { calls++; return { providerId: "unavailable", status: "failed", events: [] }; },
+  };
+  const aggregator = new EconomicCalendarAggregator([failing]);
+  const request = { from: new Date("2026-10-01T00:00:00Z"), to: new Date("2026-10-02T00:00:00Z") };
+  await aggregator.getCalendar(request);
+  await aggregator.getCalendar(request);
+  assert.equal(calls, 2);
+});
 
 test("1. CentralBankCalendarProvider normalizes authoritative rate decisions without fabricating forecasts", async () => {
   const provider = new CentralBankCalendarProvider();

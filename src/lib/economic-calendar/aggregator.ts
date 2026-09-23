@@ -5,10 +5,10 @@ import type {
   EconomicCalendarResponse,
   ProviderMetadata,
 } from "./types";
-import { CentralBankCalendarProvider } from "./providers/central-bank";
+import { BlsCalendarProvider } from "./providers/bls";
+import { BeaCalendarProvider } from "./providers/bea";
 import { FredCalendarProvider } from "./providers/fred";
 import { FinnhubCalendarProvider } from "./providers/finnhub";
-import { TreasuryAuctionsProvider } from "./providers/treasury";
 import { calendarCache } from "./cache";
 
 function normalizeEventSlug(title: string): string {
@@ -39,12 +39,18 @@ export class EconomicCalendarAggregator {
   private providers: EconomicCalendarProvider[];
 
   constructor(providers?: EconomicCalendarProvider[]) {
-    this.providers = providers ?? [
-      new CentralBankCalendarProvider(),
-      new FredCalendarProvider(),
-      new FinnhubCalendarProvider(),
-      new TreasuryAuctionsProvider(),
-    ];
+    if (providers) {
+      this.providers = providers;
+    } else {
+      const fred = new FredCalendarProvider();
+      const finnhub = new FinnhubCalendarProvider();
+      this.providers = [
+        new BlsCalendarProvider(),
+        new BeaCalendarProvider(),
+        ...(fred.isConfigured() ? [fred] : []),
+        ...(finnhub.isConfigured() ? [finnhub] : []),
+      ];
+    }
   }
 
   /**
@@ -121,7 +127,9 @@ export class EconomicCalendarAggregator {
       isStale: false,
     };
 
-    calendarCache.set(cacheKey, response);
+    if (providerMetadataList.some((provider) => provider.status === "healthy")) {
+      calendarCache.set(cacheKey, response);
+    }
     return response;
   }
 

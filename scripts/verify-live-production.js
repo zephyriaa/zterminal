@@ -1,6 +1,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const assert = require('node:assert/strict');
 
 const PROD_URL = process.env.TERMINAL_URL || 'https://zterminal-web.zephyria-inc.workers.dev';
 const { verifyTerminal } = require('./test-terminal-browser.cjs');
@@ -46,6 +47,21 @@ async function verifyLive() {
   const healthRes = await page.goto(`${PROD_URL}/healthz`, { waitUntil: 'domcontentloaded' });
   const healthText = await page.content();
   console.log('Healthz status:', healthRes.status(), 'content:', healthText.slice(0, 120));
+
+  const calendarRes = await page.request.get(`${PROD_URL}/api/economic-calendar?refresh=true`);
+  assert.equal(calendarRes.status(), 200, 'economic calendar API must respond');
+  const calendar = await calendarRes.json();
+  assert.ok(calendar.events.length > 0, 'official calendar feeds must return real events');
+  assert.ok(calendar.providers.some(provider => provider.status === 'healthy'), 'at least one official calendar source must be healthy');
+  console.log('Economic calendar:', calendar.events.length, 'events from', calendar.providers.map(provider => `${provider.id}:${provider.status}`).join(', '));
+
+  await page.goto(`${PROD_URL}/terminal`, { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-testid="workspace-dock"][data-ready="true"]').waitFor({ timeout: 60000 });
+  await page.getByRole('navigation', { name: 'Workspace tools', exact: true }).getByRole('button', { name: 'Calendar', exact: true }).click();
+  await page.locator('[data-panel-id="calendar"]').getByRole('button', { name: 'all', exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll('[data-panel-id="calendar"] tbody tr').length > 1, null, { timeout: 30000 });
+  fs.mkdirSync(path.join(OUT_DIR, 'terminal'), { recursive: true });
+  await page.screenshot({ path: path.join(OUT_DIR, 'terminal', 'economic-calendar.png') });
 
   fs.writeFileSync(path.join(OUT_DIR, 'live_summary.json'), JSON.stringify({
     status: response.status(),

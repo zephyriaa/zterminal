@@ -75,6 +75,7 @@ export function EconomicCalendarTable() {
           setProviders(data.providers ?? []);
           setIsStale(Boolean(data.isStale));
           setLastUpdated(data.cachedAt ? new Date(data.cachedAt).toLocaleTimeString() : new Date().toLocaleTimeString());
+          setError(null);
           setLoading(false);
         }
       } catch (err: unknown) {
@@ -116,6 +117,7 @@ export function EconomicCalendarTable() {
       setProviders(data.providers ?? []);
       setIsStale(Boolean(data.isStale));
       setLastUpdated(data.cachedAt ? new Date(data.cachedAt).toLocaleTimeString() : new Date().toLocaleTimeString());
+      setError(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to refresh economic events";
       setError(msg);
@@ -338,6 +340,11 @@ export function EconomicCalendarTable() {
             >
               Retry
             </button>
+          </div>
+        ) : dateGroups.length === 0 && providers.length > 0 && providers.every((provider) => provider.status !== "healthy") ? (
+          <div className="p-8 text-center text-muted-foreground text-[11px]">
+            <p className="text-warn font-semibold">Calendar sources unavailable</p>
+            <p className="mt-1 text-[10px]">The official release feeds did not respond. Try refreshing in a moment.</p>
           </div>
         ) : dateGroups.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-[11px]">
