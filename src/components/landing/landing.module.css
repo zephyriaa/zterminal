@@ -31,9 +31,9 @@
 .heroContent {
   position: absolute;
   z-index: 2;
-  left: 5.2%;
+  left: clamp(76px, 4.8vw, 96px);
   top: 28.6%;
-  width: 43%;
+  width: clamp(560px, 41cqw, 710px);
 }
 .heroEyebrow {
   margin: 0 0 clamp(18px, 1.25cqw, 24px);
@@ -214,15 +214,12 @@
 }
 .heroStage {
   position: absolute;
-  left: 29.9043%;
+  right: clamp(20px, 2.2vw, 44px);
   top: 20.1913%;
-  width: 66.9856%;
+  width: clamp(860px, 62.6cqw, 1120px);
 }
 .hideMobile { display: inline; }
 
-@media (min-width: 1001px) and (min-aspect-ratio: 19/10) {
-  .heroContainer { max-width: min(1920px, 177.68svh); }
-}
 @media (max-width: 1000px) {
   .heroContainer { aspect-ratio: auto; padding: 150px 5.2% 20px; }
   .heroGrid { position: relative; }

@@ -603,7 +603,7 @@
 /* Landing header shares the site's links and controls, with reference geometry. */
 .heroHeader {
   position: fixed;
-  top: clamp(14px, 1.8vw, 30px);
+  top: clamp(10px, 0.72vw, 14px);
   padding-inline: 3.83%;
   margin: 0;
 }
@@ -657,7 +657,7 @@
   .heroHeader .accountMeta { margin-left: 10px; margin-right: 12px; }
 }
 @media (max-width: 860px) {
-  .heroHeader { top: 14px; padding-inline: 5.2%; }
+  .heroHeader { top: 10px; padding-inline: 5.2%; }
   .heroHeader .header { height: 52px; padding-inline: 16px; border-radius: 12px; }
   .heroHeader .navLinksGroup { position: static; transform: none; gap: 2px; }
   .heroHeader .navLink { font-size: 14px; }
