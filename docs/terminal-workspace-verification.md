@@ -2,7 +2,7 @@
 
 Deployed terminal: https://zterminal-web.zephyria-inc.workers.dev/terminal
 
-Cloudflare version: `c3208ca0-b1d0-4ebc-8b49-237ed3e41772`.
+Cloudflare version: `e2889c52-fd14-4c3d-8dc3-0308be04af8a`.
 
 ## Behavior
 
@@ -11,6 +11,7 @@ Cloudflare version: `c3208ca0-b1d0-4ebc-8b49-237ed3e41772`.
 - Persistence starts after initialization, debounces writes, flushes pending changes, and disposes subscriptions. Reset reconstructs immediately. A terminal error boundary provides a separate recovery action.
 - Desktop/mobile navigation and the command palette share the Dockview controller. Secondary tools load on demand; screens up to 900px maximize the selected group while preserving the underlying layout.
 - The existing chart, studies, drawings, research reports, Python editor, and real depth subscription remain in use. Glass is scoped to terminal chrome and overlays; chart, editor, report, and table content stays opaque. Reduced motion/transparency and keyboard focus are preserved.
+- Terminal chrome now has visibly translucent blue-gray fill, a stationary blur, refractive edges, and an inner highlight. The production CSS keeps the standard `backdrop-filter` declaration after its WebKit prefix so Chromium applies it.
 - Account chrome consumes the existing verified session at request time and actual workspace synchronization status. No authentication provider, database schema, public API, or market protocol was changed.
 - Legacy appearance preferences remain readable. Loading preferences no longer overwrites separately saved chart colors.
 
@@ -26,7 +27,7 @@ Cloudflare version: `c3208ca0-b1d0-4ebc-8b49-237ed3e41772`.
 | Local production browser tests | Passed at 1440×900, 768×1024, 390×844 |
 | `node scripts/verify-live-production.js` | Passed against Workers at all three sizes; home and health returned 200 |
 
-Browser assertions cover default panels, active navigation, lazy tools and Monaco, mobile full-canvas presentation, repeated focus without duplicate tabs, resized geometry across reloads, malformed/incompatible layouts, missing chart, unknown components, reset, and command-palette routing. Every viewport completed with zero uncaught exceptions and zero Dockview console errors.
+Browser assertions cover default panels, active navigation, lazy tools and Monaco, mobile full-canvas presentation, repeated focus without duplicate tabs, resized geometry across reloads, malformed/incompatible layouts, missing chart, unknown components, reset, command-palette routing, computed glass blur on chrome, and opaque data panels. Every viewport completed with zero uncaught exceptions and zero Dockview console errors.
 
 Run `npm run test:terminal` against a local server, or set `TERMINAL_URL` to a production server. Browser screenshots and JSON diagnostics are written under `artifacts/terminal` locally and `calibrated-captures/live-production/terminal` for live verification.
 

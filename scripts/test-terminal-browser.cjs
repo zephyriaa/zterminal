@@ -45,6 +45,23 @@ async function verifyTerminal(baseURL, options = {}) {
       const response = await page.goto(baseURL + '/terminal', { waitUntil: 'domcontentloaded' });
       assert.equal(response.status(), 200);
       await ready();
+      const materials = await page.evaluate(() => {
+        const style = selector => getComputedStyle(document.querySelector(selector));
+        return {
+          supportsBlur: CSS.supports('backdrop-filter', 'blur(1px)') || CSS.supports('-webkit-backdrop-filter', 'blur(1px)'),
+          reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches,
+          header: style('.zt-reference-header').backdropFilter,
+          tabs: style('.dv-tabs-and-actions-container').backdropFilter,
+          panel: style('.zt-dock-panel').backdropFilter,
+          sidebar: document.querySelector('.zt-research-sidebar') ? style('.zt-research-sidebar').backdropFilter : null,
+        };
+      });
+      if (materials.supportsBlur && !materials.reducedTransparency) {
+        assert.match(materials.header, /blur\(/, 'header uses glass blur');
+        assert.match(materials.tabs, /blur\(/, 'Dockview tabs use glass blur');
+        if (materials.sidebar !== null) assert.match(materials.sidebar, /blur\(/, 'sidebar uses glass blur');
+      }
+      assert.equal(materials.panel, 'none', 'chart and dense panels remain opaque');
       const initial = await saved();
       assert.deepEqual(Object.keys(initial.panels).sort(), [...required].sort());
       if (viewport.width > 900) {
