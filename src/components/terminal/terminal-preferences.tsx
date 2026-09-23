@@ -4,6 +4,8 @@ import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
 import { cn } from "@/lib/utils";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { usePrimaryDocument } from "./docking/use-primary-chart-document";
+import { useChartDocuments } from "@/stores/chart-documents";
 type TerminalAppearance = {
   preset: string;
   appBackground: string;
@@ -27,10 +29,38 @@ const APPEARANCE_STORAGE_KEY = "zterminal:appearance";
 
 
 export const useTerminalAppearance = create<{ appearance: TerminalAppearance; update: (next: Partial<TerminalAppearance>) => void }>()(persist((set) => ({ appearance: DEFAULT_APPEARANCE, update: next => set(state => ({ appearance: { ...state.appearance, ...next, preset: next.preset ?? "Custom" } })) }), { name: APPEARANCE_STORAGE_KEY + ":v2", skipHydration: true }));
+export async function hydrateTerminalAppearance() {
+  await useTerminalAppearance.persist.rehydrate();
+  try {
+    if (localStorage.getItem(APPEARANCE_STORAGE_KEY + ":v2")) return;
+    const legacy = JSON.parse(localStorage.getItem(APPEARANCE_STORAGE_KEY) || "null");
+    if (legacy && typeof legacy === "object") {
+      const appearance = { ...DEFAULT_APPEARANCE };
+      for (const key of ["appBackground", "panelBackground", "chartBackground", "accent", "upColor", "downColor"] as const) {
+        if (typeof legacy[key] === "string" && /^#[0-9a-f]{6}$/i.test(legacy[key])) appearance[key] = legacy[key];
+      }
+      if (typeof legacy.gridOpacity === "number") appearance.gridOpacity = Math.max(0, Math.min(18, legacy.gridOpacity));
+      if (legacy.density === "comfortable") appearance.density = "comfortable";
+      appearance.preset = typeof legacy.preset === "string" ? legacy.preset : "Custom";
+      useTerminalAppearance.setState({ appearance });
+    }
+  } catch { /* Keep local defaults if preference storage is unavailable. */ }
+}
 export function TerminalPreferences() {
+ const { id } = usePrimaryDocument();
  const { timezone, setTimezone } = useWorkspace();
  const { appearance, update } = useTerminalAppearance();
- return <TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} appearance={appearance} onAppearanceChange={update} onReset={() => update(DEFAULT_APPEARANCE)} />;
+ const changeAppearance = (next: Partial<TerminalAppearance>) => {
+   update(next);
+   const patch = {
+     ...(next.chartBackground ? { backgroundColor: next.chartBackground } : {}),
+     ...(next.upColor ? { candleUpColor: next.upColor } : {}),
+     ...(next.downColor ? { candleDownColor: next.downColor } : {}),
+     ...(typeof next.gridOpacity === "number" ? { gridOpacity: next.gridOpacity / 100 } : {}),
+   };
+   if (Object.keys(patch).length) useChartDocuments.getState().updateSettings(id, patch);
+ };
+ return <TerminalPreferencesWindow timezone={timezone} onTimezoneChange={setTimezone} appearance={appearance} onAppearanceChange={changeAppearance} onReset={() => changeAppearance(DEFAULT_APPEARANCE)} />;
 }
 function PreferenceRange({ label, value, min, max, suffix, onChange }: { label: string; value: number; min: number; max: number; suffix: string; onChange: (value: number) => void }) {
   return <label className="mt-4 block text-muted-foreground"><span className="flex justify-between"><span>{label}</span><b className="font-mono-num text-foreground">{value}{suffix}</b></span><input className="mt-2 w-full accent-[var(--zt-accent)]" type="range" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;

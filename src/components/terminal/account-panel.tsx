@@ -60,6 +60,7 @@ export function AccountPanel({
   onClose: () => void;
 }) {
   const { data: session, status, update: updateSession } = useSession();
+  const syncStatus = useCloudSyncStatus(state => state.status);
   const [signingIn, setSigningIn] = useState(false);
   const [googleSignInAvailable, setGoogleSignInAvailable] = useState<boolean | null>(null);
   const [authError, setAuthError] = useState<string | null>(() => {
@@ -618,7 +619,7 @@ export function AccountPanel({
           <span>Cloud workspace</span>
           <b className={authenticated ? "text-pos font-semibold" : ""}>
             {authenticated ? <Cloud className="text-pos" /> : <CloudOff />}
-            {authenticated ? useCloudSyncStatus.getState().status : "Local until sign-in"}
+            {authenticated ? syncStatus : "Local until sign-in"}
           </b>
         </div>
       </div>

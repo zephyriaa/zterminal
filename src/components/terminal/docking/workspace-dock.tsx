@@ -52,9 +52,8 @@ export function WorkspaceDock() {
       initializeWorkspace(api, storage);
       if (narrow.matches) api.getPanel("chart")?.api.setActive();
       fit();
-      activeListener = api.onDidActivePanelChange(event => {
-        const panelRef = (event as any)?.panel ?? event;
-        const panelId = panelRef?.id;
+      activeListener = api.onDidActivePanelChange(({ panel }) => {
+        const panelId = panel?.id;
         setActivePanelId(panelId && isDockPanelId(panelId) ? panelId : null);
         if (narrow.matches) fit();
       });

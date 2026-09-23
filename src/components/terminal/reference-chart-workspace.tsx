@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspaceDock } from "./docking/workspace-dock-controller";
-import { useTerminalAppearance } from "./terminal-preferences";
+import { useTerminalAppearance, hydrateTerminalAppearance } from "./terminal-preferences";
 import { useStudies } from "@/stores/studies";
 import { migrateStudy, type IndicatorInstance } from "@/lib/indicator-library";
 import {
@@ -87,16 +87,13 @@ export function ReferenceChartWorkspace() {
     profile: instances.some(item => item.kind === "profile" && item.enabled),
     customStudies: [],
   }), [instances, volumePane.visible]);
-  useEffect(() => {
-    useChartDocuments.getState().updateSettings(chartDocumentId, { backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 });
-  }, [appearance]);
   const livePrice = lastTrade?.price ?? derivatives?.markPrice ?? null;
 
 
   useEffect(() => {
     void Promise.resolve(useStudies.persist.rehydrate()).then(() => setStudiesHydrated(true));
     void Promise.resolve(useChartDocuments.persist.rehydrate()).then(() => { useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings }); });
-    void useTerminalAppearance.persist.rehydrate();
+    void hydrateTerminalAppearance();
   }, []);
 
   useEffect(() => {

@@ -15,6 +15,7 @@ async function verifyTerminal(baseURL, options = {}) {
       const page = await context.newPage();
       page.setDefaultNavigationTimeout(90000);
       const fatal = [], consoleErrors = [];
+      results.push({ viewport, consoleErrors, uncaught: fatal });
       page.on('pageerror', error => { fatal.push(error.stack || error.message); console.error('Uncaught:', error.message); });
       page.on('console', message => { if (message.type() === 'error') { consoleErrors.push(message.text()); if (/dockview/i.test(message.text())) fatal.push(message.text()); } });
       const ready = async () => {
@@ -56,6 +57,7 @@ async function verifyTerminal(baseURL, options = {}) {
       for (const [name, id] of [['Indicators', 'indicators'], ['Strategy Developer', 'strategy'], ['Research', 'research'], ['Market Context', 'orderbook'], ['Calendar', 'calendar'], ['Settings', 'settings'], ['Chart', 'chart']]) {
         await nav(name);
         await page.locator('[data-panel-id="' + id + '"]').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.zt-sidebar-tool[aria-label="' + name + '"]').getAttribute('aria-current'), 'page', 'navigation tracks active Dockview panel');
         await page.waitForFunction(id => document.querySelector('[data-tab-panel-id="' + id + '"]')?.getAttribute('aria-selected') === 'true', id);
         if (id === 'strategy') await page.locator('[data-panel-id="strategy"] .monaco-editor').waitFor({ timeout: 45000 });
         if (viewport.width <= 900) {
@@ -67,6 +69,16 @@ async function verifyTerminal(baseURL, options = {}) {
       await nav('Indicators'); await nav('Indicators');
       assert.equal(await page.locator('[data-tab-panel-id="indicators"]').count(), 1);
       await page.waitForFunction(key => Boolean(JSON.parse(localStorage.getItem(key) || '{}').panels?.indicators), KEY);
+      if (viewport.width > 900) {
+        const chart = await page.locator('[data-panel-id="chart"]').boundingBox();
+        await page.mouse.move(chart.x + chart.width, chart.y + chart.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(chart.x + chart.width - 90, chart.y + chart.height / 2, { steps: 8 });
+        await page.mouse.up();
+        await page.waitForTimeout(350);
+        const resized = await page.locator('[data-panel-id="chart"]').boundingBox();
+        assert.ok(resized.width < chart.width - 50, 'divider resizes chart');
+      }
       const before = await saved();
       await page.reload(); await ready();
       const after = await saved();
@@ -74,10 +86,10 @@ async function verifyTerminal(baseURL, options = {}) {
         assert.ok(Object.hasOwn(after.panels, key), `Missing panel ${key} after reload`);
       }
       await reset();
-      // Refresh charts before screenshot; there need not be a live market connection.
-      await page.waitForTimeout(1200);
+      // Wait for history to settle; an honest unavailable state is also valid.
+      await page.locator('[data-testid="primary-chart"]').getByText('loading…', { exact: true }).waitFor({ state: 'hidden', timeout: 60000 });
       await page.screenshot({ path: path.join(output, 'terminal-' + viewport.width + '.png') });
-      for (const corrupt of ['{', JSON.stringify({ grid: { root: { type: 'splitview', views: [] } } }), JSON.stringify({ ...initial, panels: { ...initial.panels, chart: undefined } }), JSON.stringify({ ...initial, panels: { ...initial.panels, chart: { id: 'chart', contentComponent: 'unknown' } } })]) {
+      for (const corrupt of ['{', JSON.stringify({ grid: { root: { type: 'splitview', views: [] } } }), JSON.stringify({ ...initial, grid: { ...initial.grid, root: { type: 'branch', data: 'invalid' } } }), JSON.stringify({ ...initial, panels: { ...initial.panels, chart: undefined } }), JSON.stringify({ ...initial, panels: { ...initial.panels, chart: { id: 'chart', contentComponent: 'unknown' } } })]) {
         // Seed in a fresh document before app code so pagehide cannot overwrite it.
         await page.goto(baseURL + '/healthz');
         await page.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: KEY, value: corrupt });
@@ -92,8 +104,7 @@ async function verifyTerminal(baseURL, options = {}) {
       await page.getByRole('option', { name: /Open Indicators/ }).click();
       await page.locator('[data-panel-id="indicators"]').waitFor({ state: 'visible' });
       await reset();
-      const entry = { viewport, consoleErrors, uncaught: fatal };
-      results.push(entry);
+
       assert.deepEqual(fatal, [], 'uncaught exceptions or Dockview errors at ' + viewport.width);
       console.log('PASS terminal ' + viewport.width + ': panels, navigation, persistence, corruption, reset, command palette');
       await context.close();
