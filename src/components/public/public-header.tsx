@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import styles from "./public-shared.module.css";
+import { PublicMotion } from "./public-motion";
 
 const NAV_LINKS = [
   { href: "/", label: "Product" },
@@ -13,10 +14,39 @@ const NAV_LINKS = [
   { href: "/download", label: "Download" },
 ];
 
-export function PublicHeader({ overlay = false }: { overlay?: boolean }) {
+export function PublicHeader({ overlay = false, hero = false }: { overlay?: boolean; hero?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const pressedControl = useRef<HTMLElement | null>(null);
+  const releasePress = useCallback(() => {
+    pressedControl.current?.removeAttribute("data-pressed");
+    pressedControl.current = null;
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("pointerup", releasePress);
+    window.addEventListener("pointercancel", releasePress);
+    window.addEventListener("blur", releasePress);
+    return () => {
+      releasePress();
+      window.removeEventListener("pointerup", releasePress);
+      window.removeEventListener("pointercancel", releasePress);
+      window.removeEventListener("blur", releasePress);
+    };
+  }, [releasePress]);
+
+  const placePressHighlight = (event: PointerEvent<HTMLElement>) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    releasePress();
+    const control = (event.target as Element).closest<HTMLElement>("a, button");
+    if (!control || !event.currentTarget.contains(control)) return;
+    const bounds = control.getBoundingClientRect();
+    control.style.setProperty("--press-x", `${event.clientX - bounds.left}px`);
+    control.style.setProperty("--press-y", `${event.clientY - bounds.top}px`);
+    control.dataset.pressed = "true";
+    pressedControl.current = control;
+  };
 
   useEffect(() => {
     let ticking = false;
@@ -53,20 +83,23 @@ export function PublicHeader({ overlay = false }: { overlay?: boolean }) {
   };
 
   return (
-    <div className={`${styles.headerWrapper} ${overlay ? styles.overlay : ""}`}>
+    <div className={`${styles.headerWrapper} ${overlay ? styles.overlay : ""} ${hero ? styles.heroHeader : ""}`}>
+      <PublicMotion />
       <header
         className={`${styles.header} ${isScrolled ? styles.headerScrolled : ""}`}
-        aria-label="Sitewide Liquid Glass Navigation"
+        aria-label="Site navigation"
+        onPointerDown={placePressHighlight}
+        onPointerLeave={releasePress}
       >
-        {/* Brand with Framed Specular Z Mark matching reference */}
+        {/* Canonical mark; its transparent source padding is handled in CSS. */}
         <Link href="/" className={styles.brand} aria-label="ZTerminal home">
           <span className={styles.brandMarkFrame}>
             <Image
               src="/brand/zterminal-mark-v2.png"
               alt="ZTerminal"
-              width={22}
-              height={22}
-              priority
+              width={80}
+              height={80}
+              preload
               className={styles.brandMarkImage}
             />
           </span>

@@ -51,7 +51,7 @@ export default function DownloadPage() {
 
       <div className={styles.content}>
         {/* HERO */}
-        <section className={styles.hero} aria-labelledby="download-title">
+        <section data-public-intro="" className={styles.hero} aria-labelledby="download-title">
           <TechnicalEyebrow>ZTERMINAL FOR WINDOWS</TechnicalEyebrow>
           <h1 id="download-title" className={styles.title}>
             Your research.
@@ -73,7 +73,7 @@ export default function DownloadPage() {
 
         {/* RELEASE SPECIFICATION & STATUS */}
         {release.available ? (
-          <section className={styles.releasePanel} aria-labelledby="release-title">
+          <section data-public-reveal="content" className={styles.releasePanel} aria-labelledby="release-title">
             <div className={styles.releaseHeader}>
               <div>
                 <StatusBadge variant="emerald">OFFICIAL SIGNED RELEASE</StatusBadge>
@@ -119,7 +119,7 @@ export default function DownloadPage() {
             </div>
           </section>
         ) : (
-          <section className={styles.releasePanel} aria-labelledby="release-title">
+          <section data-public-reveal="content" className={styles.releasePanel} aria-labelledby="release-title">
             <div className={styles.releaseHeader}>
               <div>
                 <div className={styles.releaseStatusWrap}>
@@ -172,7 +172,7 @@ export default function DownloadPage() {
         )}
 
         {/* ARCHITECTURE SECTION */}
-        <section className={styles.architecture} aria-labelledby="architecture-title">
+        <section data-public-reveal="content" className={styles.architecture} aria-labelledby="architecture-title">
           <div>
             <TechnicalEyebrow>LOCAL RESEARCH PATH</TechnicalEyebrow>
             <h2 id="architecture-title" className={styles.archHeading}>
@@ -214,7 +214,7 @@ export default function DownloadPage() {
         </section>
 
         {/* TWO SURFACES */}
-        <section className={styles.surfacesSection} aria-labelledby="surfaces-title">
+        <section data-public-reveal="content" className={styles.surfacesSection} aria-labelledby="surfaces-title">
           <div className={styles.surfacesIntro}>
             <TechnicalEyebrow>TWO SURFACES</TechnicalEyebrow>
             <h2 id="surfaces-title" className={styles.sectionHeading}>
@@ -256,7 +256,7 @@ export default function DownloadPage() {
         </section>
 
         {/* RELEASE SECURITY & VERIFICATION */}
-        <section className={styles.securitySection} aria-labelledby="security-title">
+        <section data-public-reveal="content" className={styles.securitySection} aria-labelledby="security-title">
           <div className={styles.securityInner}>
             <TechnicalEyebrow>RELEASE SECURITY</TechnicalEyebrow>
             <h2 id="security-title" className={styles.sectionHeading}>

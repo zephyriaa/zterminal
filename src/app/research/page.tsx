@@ -121,7 +121,7 @@ export default function ResearchPage() {
 
       <main className={styles.content}>
         {/* HERO */}
-        <section className={styles.hero} aria-labelledby="research-title">
+        <section data-public-intro="" className={styles.hero} aria-labelledby="research-title">
           <TechnicalEyebrow>QUANTITATIVE METHODOLOGY</TechnicalEyebrow>
           <h1 id="research-title" className={styles.title}>
             The Research Loop.
@@ -135,7 +135,7 @@ export default function ResearchPage() {
         </section>
 
         {/* ARCHITECTURAL DATA PIPELINE */}
-        <section id="loop" className={styles.pipelineSection} aria-labelledby="pipeline-heading">
+        <section data-public-reveal="content" id="loop" className={styles.pipelineSection} aria-labelledby="pipeline-heading">
           <TechnicalEyebrow>DATA ARCHITECTURE</TechnicalEyebrow>
           <div className={styles.pipelineGrid} aria-label="Data flow pipeline stages">
             {PIPELINE_NODES.map((node) => (
@@ -149,7 +149,7 @@ export default function ResearchPage() {
         </section>
 
         {/* 6 RESEARCH STAGES */}
-        <section className={styles.stageList} aria-label="Research workflow steps">
+        <section data-public-reveal="content" className={styles.stageList} aria-label="Research workflow steps">
           {STAGES.map((stage) => (
             <article key={stage.num} className={styles.stageCard}>
               <div className={styles.stageSidebar}>
@@ -171,7 +171,7 @@ export default function ResearchPage() {
         </section>
 
         {/* CODE SURFACE DEMO */}
-        <section className={styles.codeSection} aria-labelledby="code-heading">
+        <section data-public-reveal="content" className={styles.codeSection} aria-labelledby="code-heading">
           <TechnicalEyebrow>STRATEGY SPECIFICATION</TechnicalEyebrow>
           <h2 id="code-heading" className={styles.codeHeading}>
             Standard Python. Direct execution.
@@ -188,7 +188,7 @@ export default function ResearchPage() {
         </section>
 
         {/* LOCAL ARCHITECTURE BOUNDARY */}
-        <section
+        <section data-public-reveal="content"
           id="boundary-heading"
           className={styles.boundarySection}
           aria-labelledby="boundary-title"
@@ -221,7 +221,7 @@ export default function ResearchPage() {
         </section>
 
         {/* ACTION CTA BANNER */}
-        <section className={styles.actionBanner}>
+        <section data-public-reveal="content" className={styles.actionBanner}>
           <div>
             <h2 className={styles.actionBannerTitle}>Ready to begin research?</h2>
             <p className={styles.actionBannerLead}>

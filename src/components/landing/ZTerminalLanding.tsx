@@ -7,14 +7,12 @@ import { PublicHeader } from "@/components/public/public-header";
 import { PublicFooter } from "@/components/public/public-footer";
 import { HeroLaptop } from "./HeroLaptop";
 import {
-  MaskedHeading,
   FadeInView,
   ScaleReveal,
   StaggerContainer,
   StaggerItem,
 } from "./motion-primitives";
 import {
-  BackgroundField,
   TechnicalEyebrow,
   CTAButton,
   ProductWindow,
@@ -101,46 +99,34 @@ export default function ZTerminalLanding() {
 
   return (
     <div className={`${styles.page} publicScope`}>
-      <BackgroundField />
-      <PublicHeader />
+      <PublicHeader hero />
 
       <main className={styles.content}>
         {/* ================================================================= */}
         {/* BEAT 01: HERO WITH RESTORED WORKSTATION MATCHING REFERENCE        */}
         {/* ================================================================= */}
         <section className={styles.hero} aria-labelledby="hero-heading">
-          <div className={`${styles.heroContainer} ${styles.container}`}>
+          <div className={styles.heroContainer}>
             <div className={styles.heroGrid}>
               <div className={styles.heroContent}>
-                <FadeInView delay={0.08} yOffset={8} triggerOnMount>
+                <div className={styles.heroIntro}>
                   <p className={styles.heroEyebrow}>
                     RESEARCH, WITHOUT THE GUESSWORK
                   </p>
-                </FadeInView>
+                </div>
 
-                <MaskedHeading
-                  as="h1"
-                  id="hero-heading"
-                  className={styles.heroTitle}
-                  triggerOnMount
-                  delay={0.16}
-                  stagger={0.14}
-                  lines={[
-                    {
-                      content: <span style={{ whiteSpace: "nowrap" }}>Turn market ideas</span>,
-                    },
-                    {
-                      content: (
-                        <span>
-                          into{" "}
-                          <em className={styles.heroEvidence}>evidence.</em>
-                        </span>
-                      ),
-                    },
-                  ]}
-                />
+                <h1 id="hero-heading" className={styles.heroTitle}>
+                  <span className={styles.heroTitleLine}>
+                    <span className={styles.heroTitleInner}>Turn market ideas</span>
+                  </span>
+                  <span className={styles.heroTitleLine}>
+                    <span className={styles.heroTitleInner}>
+                      into <em className={styles.heroEvidence}>evidence.</em>
+                    </span>
+                  </span>
+                </h1>
 
-                <FadeInView delay={0.32} yOffset={10} triggerOnMount>
+                <div className={styles.heroDescription}>
                   <p className={styles.heroLead}>
                     Explore live markets, build Python strategies,{" "}
                     <br className={styles.hideMobile} />
@@ -148,9 +134,9 @@ export default function ZTerminalLanding() {
                     <br className={styles.hideMobile} />
                     workspace.
                   </p>
-                </FadeInView>
+                </div>
 
-                <FadeInView delay={0.44} yOffset={12} triggerOnMount className={styles.heroActions}>
+                <div className={styles.heroActions}>
                   <Link href="/terminal" className={styles.heroPrimaryCta}>
                     <span>Start researching</span>
                     <span className={styles.heroArrow} aria-hidden="true">→</span>
@@ -159,7 +145,7 @@ export default function ZTerminalLanding() {
                     <span>Explore the workflow</span>
                     <span className={styles.heroArrow} aria-hidden="true">→</span>
                   </a>
-                </FadeInView>
+                </div>
               </div>
 
               {/* RESTORED PHOTOREALISTIC WORKSTATION MATCHING REFERENCE */}
@@ -303,26 +289,26 @@ export default function ZTerminalLanding() {
               </ul>
             </FadeInView>
 
-            <ScaleReveal className={styles.surfaceMomentVisual}>
+            <ScaleReveal className={styles.surfaceMomentVisual} delay={0.08}>
               <ProductWindow
                 title="ZTerminal / Market Canvas"
-                readout="LIVE CANDLESTICK ENGINE · REAL TICK FEEDS"
+                readout="CHART · INDICATORS · MARKET CONTEXT"
               >
                 <div className={styles.surfaceScreenshotFrame}>
                   <Image
-                    src="/landing/product-market-chart.png"
-                    alt="Authentic ZTerminal Market Canvas showing real candlestick chart, moving averages, and depth telemetry"
-                    width={1920}
-                    height={1080}
+                    src="/landing/product-market-live.png"
+                    alt="Current deployed ZTerminal workspace with BTC/USDT candlesticks, EMA, volume, and market context"
+                    width={3200}
+                    height={2000}
                     className={styles.surfaceScreenshotImage}
-                    priority={false}
+                    sizes="(max-width: 1180px) 90vw, 55vw"
                   />
                   <div className={styles.surfaceTelemetryStrip}>
                     <span className={styles.surfaceTelemetryActive}>
                       <span className={styles.surfaceTelemetryDot} aria-hidden="true" />
-                      DIRECT EXCHANGE FEED CONNECTED
+                      CURRENT ZTERMINAL WORKSPACE
                     </span>
-                    <span>NQ · 5M · 8,641 BARS LOADED</span>
+                    <span>BTC / USDT · 5M</span>
                   </div>
                 </div>
               </ProductWindow>
@@ -357,7 +343,7 @@ export default function ZTerminalLanding() {
               </ul>
             </FadeInView>
 
-            <ScaleReveal className={styles.surfaceMomentVisual}>
+            <ScaleReveal className={styles.surfaceMomentVisual} delay={0.08}>
               <div className={styles.surfaceToggleTabs}>
                 <button
                   type="button"
@@ -377,24 +363,24 @@ export default function ZTerminalLanding() {
 
               {surface2Tab === "ui" ? (
                 <ProductWindow
-                  title="ZTerminal / Strategy Builder"
-                  readout="PYTHON 3.11+ · PARAMETER MATRIX · DIAGNOSTICS"
+                  title="ZTerminal / Python Strategy"
+                  readout="PYTHON EDITOR · LOCAL HELPER"
                 >
                   <div className={styles.surfaceScreenshotFrame}>
                     <Image
-                      src="/landing/product-strategy-builder.png"
-                      alt="Authentic ZTerminal Strategy Builder interface showing code editor, configuration inputs, and compilation status"
-                      width={1920}
-                      height={1080}
+                      src="/landing/product-strategy-live.png"
+                      alt="Current deployed ZTerminal Python strategy editor with the moving-average crossover example and local Helper controls"
+                      width={3200}
+                      height={2000}
                       className={styles.surfaceScreenshotImage}
-                      priority={false}
+                      sizes="(max-width: 1180px) 90vw, 55vw"
                     />
                     <div className={styles.surfaceTelemetryStrip}>
                       <span className={styles.surfaceTelemetryActive}>
                         <span className={styles.surfaceTelemetryDot} aria-hidden="true" />
-                        LOCAL RUNTIME VERIFIED · 0 ERRORS
+                        PYTHON STRATEGY WORKSPACE
                       </span>
-                      <span>EMA CROSS + VWAP FILTER · SIMULATED</span>
+                      <span>LOCAL HELPER REQUIRED TO RUN</span>
                     </div>
                   </div>
                 </ProductWindow>
@@ -436,26 +422,26 @@ export default function ZTerminalLanding() {
               </ul>
             </FadeInView>
 
-            <ScaleReveal className={styles.surfaceMomentVisual}>
+            <ScaleReveal className={styles.surfaceMomentVisual} delay={0.08}>
               <ProductWindow
-                title="ZTerminal / Vectorized Backtester"
-                readout="EQUITY CURVE · PERFORMANCE TELEMETRY · 103 TRADES"
+                title="ZTerminal / Research Report"
+                readout="OVERVIEW · PERFORMANCE · TRADES · RISK"
               >
                 <div className={styles.surfaceScreenshotFrame}>
                   <Image
-                    src="/landing/product-backtester.png"
-                    alt="Authentic ZTerminal Backtester showing equity curve, Sharpe 3.03, profit factor 14.35, and trade distribution"
-                    width={1920}
-                    height={1080}
+                    src="/landing/product-research-live.png"
+                    alt="Current deployed ZTerminal research report workspace with archive controls and performance, trades, risk, and Monte Carlo tabs"
+                    width={3200}
+                    height={2000}
                     className={styles.surfaceScreenshotImage}
-                    priority={false}
+                    sizes="(max-width: 1180px) 90vw, 55vw"
                   />
                   <div className={styles.surfaceTelemetryStrip}>
                     <span className={styles.surfaceTelemetryActive}>
                       <span className={styles.surfaceTelemetryDot} aria-hidden="true" />
-                      PROFIT FACTOR: 14.35 · SHARPE: 3.03
+                      WRITE → BACKTEST → INSPECT
                     </span>
-                    <span>NET PROFIT: +$43,515 (+43.27%)</span>
+                    <span>RESULTS APPEAR AFTER A LOCAL RUN</span>
                   </div>
                 </div>
               </ProductWindow>

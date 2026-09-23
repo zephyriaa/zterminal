@@ -1,162 +1,75 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useId, useRef } from "react";
+import { preload } from "react-dom";
 import { motion, useSpring, useTransform } from "framer-motion";
-import { useIsReducedMotion, useMotionReady } from "./motion-primitives";
 import styles from "./hero-laptop.module.css";
 
-interface HeroLaptopProps {
-  className?: string;
-}
-
-export function HeroLaptop({ className = "" }: HeroLaptopProps) {
-  const reduced = useIsReducedMotion();
-  const motionReady = useMotionReady();
-  const [isFinePointer, setIsFinePointer] = useState(false);
-
-  useEffect(() => {
-    setIsFinePointer(window.matchMedia("(pointer: fine)").matches);
-  }, []);
-
-  // Smooth mouse physics for restrained 2-4px depth and sub-degree tilt
-  const springX = useSpring(0, { stiffness: 40, damping: 24 });
-  const springY = useSpring(0, { stiffness: 40, damping: 24 });
+/**
+ * Device-only crop of the supplied, undamaged 1672 × 941 reference.
+ * Source pixels retain their original perspective, with no screen overlay.
+ * Page typography, navigation and lighting are separate HTML/CSS components.
+ */
+export function HeroLaptop() {
+  const clipId = useId();
+  const stage = useRef<HTMLDivElement>(null);
+  const x = useSpring(0, { stiffness: 70, damping: 28 });
+  const y = useSpring(0, { stiffness: 70, damping: 28 });
+  const rotateX = useTransform(y, [-2, 2], [0.25, -0.25]);
+  const rotateY = useTransform(x, [-2, 2], [-0.3, 0.3]);
+  preload("/landing/hero-laptop-source.png", { as: "image" });
 
   useEffect(() => {
-    if (reduced || !isFinePointer) return;
-
-    function handleMouseMove(e: MouseEvent) {
-      const nx = e.clientX / window.innerWidth - 0.5;
-      const ny = e.clientY / window.innerHeight - 0.5;
-      springX.set(nx);
-      springY.set(ny);
-    }
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [reduced, isFinePointer, springX, springY]);
-
-  // Restrained cursor parallax bounds: rotateY +-1.4 deg, rotateX +-1.0 deg, slight shift +-4px
-  const laptopParallaxX = useTransform(springX, [-0.5, 0.5], [-5, 5]);
-  const laptopParallaxY = useTransform(springY, [-0.5, 0.5], [-4, 4]);
-  const laptopRotateY = useTransform(springX, [-0.5, 0.5], [-1.3, 1.3]);
-  const laptopRotateX = useTransform(springY, [-0.5, 0.5], [1.0, -1.0]);
-
-  // Atmospheric glow moves in counter-direction for 3D depth
-  const glowParallaxX = useTransform(springX, [-0.5, 0.5], [14, -14]);
-  const glowParallaxY = useTransform(springY, [-0.5, 0.5], [10, -10]);
+    const hero = stage.current?.closest("section");
+    if (!hero) return;
+    const allowed = window.matchMedia("(pointer: fine) and (min-width: 1001px) and (prefers-reduced-motion: no-preference)");
+    const readyAt = performance.now() + 1400;
+    const reset = () => { x.jump(0); y.jump(0); };
+    const settle = () => { x.set(0); y.set(0); };
+    const move = (event: PointerEvent) => {
+      if (!allowed.matches || performance.now() < readyAt) return;
+      const rect = hero.getBoundingClientRect();
+      x.set(((event.clientX - rect.left) / rect.width - 0.5) * 4);
+      y.set(((event.clientY - rect.top) / rect.height - 0.5) * 4);
+    };
+    hero.addEventListener("pointermove", move, { passive: true });
+    hero.addEventListener("pointerleave", settle);
+    allowed.addEventListener("change", reset);
+    return () => {
+      hero.removeEventListener("pointermove", move);
+      hero.removeEventListener("pointerleave", settle);
+      allowed.removeEventListener("change", reset);
+    };
+  }, [x, y]);
 
   return (
-    <div className={`${styles.laptopStage} ${className}`}>
-      {/* Ambient Breathing Violet Glow behind the workstation */}
-      <motion.div
-        className={styles.atmosphericGlow}
-        aria-hidden="true"
-        animate={
-          reduced
-            ? undefined
-            : {
-                opacity: [0.22, 0.36, 0.22],
-                scale: [0.98, 1.03, 0.98],
-              }
-        }
-        transition={
-          reduced
-            ? undefined
-            : {
-                duration: 9.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }
-        }
-        style={!reduced && isFinePointer ? { x: glowParallaxX, y: glowParallaxY } : undefined}
-      />
-
-      {/* Ground horizon reflection & contact shadow */}
+    <div ref={stage} className={styles.laptopStage}>
+      <div className={styles.atmosphericGlow} aria-hidden="true" />
       <div className={styles.groundReflection} aria-hidden="true" />
-
-      {/* Main Laptop Workstation Assembly */}
-      <motion.div
-        className={styles.laptopContainer}
-        role="img"
-        aria-label="ZTerminal quantitative research workstation showing authentic terminal interface"
-        initial={
-          motionReady
-            ? {
-                opacity: 0,
-                y: 30,
-                scale: 0.985,
-              }
-            : false
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-          scale: 1,
-        }}
-        transition={{
-          duration: 0.9,
-          delay: 0.2,
-          ease: [0.16, 1, 0.3, 1],
-        }}
-        style={
-          !reduced && isFinePointer
-            ? {
-                x: laptopParallaxX,
-                y: laptopParallaxY,
-                rotateX: laptopRotateX,
-                rotateY: laptopRotateY,
-              }
-            : undefined
-        }
-      >
-        {/* Continuous Slow Floating Loop (imperceptible life: +-3px, +-0.2 deg over 8s) */}
-        <motion.div
-          className={styles.floatingWrapper}
-          animate={
-            reduced
-              ? undefined
-              : {
-                  y: [-3, 3, -3],
-                  rotateZ: [-0.2, 0.2, -0.2],
-                }
-          }
-          transition={
-            reduced
-              ? undefined
-              : {
-                  duration: 8.0,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }
-          }
-        >
-          {/* Photorealistic Workstation Image with Real ZTerminal Chart & UI */}
-          <div className={styles.imageFrame}>
-            <Image
-              src="/landing/hero-laptop-photorealistic.png"
-              alt="Authentic ZTerminal quantitative research workstation with live order book, candlestick chart, and Python strategy tabs"
-              width={1160}
-              height={892}
-              priority
-              className={styles.laptopImage}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 1020px"
-            />
-
-            {/* Specular Screen Sheen Sweep on Entry */}
-            {!reduced && (
-              <motion.div
-                className={styles.screenSheen}
-                aria-hidden="true"
-                initial={{ x: "-120%", opacity: 0 }}
-                animate={motionReady ? { x: "130%", opacity: [0, 0.85, 0.6, 0] } : { opacity: 0 }}
-                transition={{ duration: 1.3, delay: 0.85, ease: [0.16, 1, 0.3, 1] }}
+      <div className={styles.laptopEntrance}>
+        <motion.div className={styles.laptopContainer} style={{ x, y, rotateX, rotateY }}>
+          <svg
+            className={styles.laptopImage}
+            viewBox="500 190 1120 720"
+            role="img"
+            aria-label="ZTerminal research workspace on a laptop, showing a candlestick chart and volume history"
+          >
+            <defs>
+              <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
+                <path d="M 521 791 Q 524 788 534 785 L 838 726 L 881 276 Q 883 257 904 253 L 1574 204 Q 1605 201 1603 229 L 1570 759 Q 1569 782 1558 796 L 1343 887 Q 1325 895 1294 891 L 535 816 Q 520 814 520 807 Z" />
+              </clipPath>
+            </defs>
+            <g className={styles.screenGroup}>
+              <image
+                href="/landing/hero-laptop-source.png"
+                width="1672"
+                height="941"
+                clipPath={`url(#${clipId})`}
               />
-            )}
-          </div>
+            </g>
+          </svg>
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 }

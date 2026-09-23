@@ -115,7 +115,14 @@
 
 .cta:hover {
   background: #e2e6f2;
-  transform: translateY(-1px);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.cta:active,
+.cta[data-pressed="true"] {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .ctaArrow {
@@ -129,27 +136,38 @@
 
 .secondary {
   background: var(--public-glass-bg);
-  backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid var(--public-glass-border);
   box-shadow: var(--public-glass-highlight);
   color: var(--public-copy);
+  transition: color var(--public-fast) var(--public-ease),
+              border-color var(--public-fast) var(--public-ease),
+              background var(--public-fast) var(--public-ease),
+              box-shadow var(--public-fast) var(--public-ease),
+              transform var(--public-fast) var(--public-ease);
 }
 
 .secondary:hover {
   color: #ffffff;
   border-color: var(--public-glass-border-focus);
   background: var(--public-glass-bg-hover);
-  box-shadow: var(--public-glass-highlight), 0 4px 20px rgba(101, 39, 228, 0.16);
-  transform: translateY(-1px);
+  box-shadow: var(--public-glass-highlight), 0 4px 20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1.5px);
+}
+
+.secondary:active,
+.secondary[data-pressed="true"] {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: var(--public-glass-highlight), 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Restrained Liquid Glass Panel */
 .glassPanel {
   position: relative;
   background: var(--public-glass-bg);
-  backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
   border: 1px solid var(--public-glass-border);
   border-radius: var(--public-radius);
   transition: border-color var(--public-fast) var(--public-ease),
@@ -341,4 +359,9 @@
   letter-spacing: 0.14em;
   color: var(--public-muted);
   text-transform: uppercase;
+}
+
+.cta:active { transform: translateY(1px) scale(.985); transition-duration: var(--public-instant); }
+@media (max-width: 600px) {
+  .windowReadout { display: none; }
 }

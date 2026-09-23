@@ -31,7 +31,7 @@ const GUIDES = [
 
 export default function DocumentationPage() {
   return (
-    <article className={styles.intro}>
+    <article className={styles.intro} data-public-intro="">
       <p className={styles.eyebrow}>GETTING STARTED</p>
       <h1 className={styles.docTitle}>
         A reference for{" "}

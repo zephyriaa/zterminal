@@ -60,11 +60,29 @@
   --public-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.35);
   --public-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
 
-  /* Motion & Timing */
-  --public-fast: 160ms;
-  --public-normal: 320ms;
-  --public-slow: 700ms;
-  --public-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Motion & Timing System Tokens */
+  --public-instant: 140ms;
+  --public-fast: 200ms;
+  --public-normal: 520ms;
+  --public-slow: 720ms;
+  --public-hero-duration: 900ms;
+  --public-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --public-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --public-exit: cubic-bezier(0.4, 0, 1, 1);
+  --public-reveal-distance: 16px;
+
+  /* Shared Motion Canonical Aliases */
+  --motion-instant: var(--public-instant);
+  --motion-control: var(--public-fast);
+  --motion-component: var(--public-normal);
+  --motion-hero: var(--public-hero-duration);
+  --motion-section: var(--public-slow);
+  --ease-entrance: var(--public-ease);
+  --ease-standard: var(--public-standard);
+  --ease-exit: var(--public-exit);
+  --distance-control: 2px;
+  --distance-card: 16px;
+  --distance-hero: 28px;
 
   /* Fonts */
   --public-font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -96,13 +114,59 @@
   color: #ffffff;
 }
 
+.publicScope :is(a, button) { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.publicScope main :is(a, button)[data-pressed="true"],
+.publicScope footer a[data-pressed="true"] { transform: translateY(1px) scale(.985); opacity: .88; }
+.publicScope [data-public-intro] {
+  animation: public-content-reveal var(--public-normal) var(--public-ease) both;
+}
+
+/* Each section has one reveal idea; the observer never replays it. */
+@keyframes public-content-reveal {
+  from { opacity: 0; transform: translateY(var(--public-reveal-distance)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes public-image-reveal {
+  from { opacity: 0; transform: translateY(var(--public-reveal-distance)) scale(.992); clip-path: inset(0 0 4% 0 round 6px); }
+  to { opacity: 1; transform: none; clip-path: inset(0 round 6px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .publicScope [data-reveal-state="pending"] { opacity: 0; }
+  .publicScope [data-reveal-state="shown"]:not([data-public-reveal="group"]) {
+    animation: public-content-reveal var(--public-normal) var(--public-ease) var(--reveal-delay, 0s) both;
+  }
+  .publicScope [data-public-reveal="image"][data-reveal-state="shown"] {
+    animation-name: public-image-reveal;
+    animation-duration: var(--public-slow);
+  }
+  .publicScope [data-public-reveal="group"][data-reveal-state="shown"] > [data-reveal-item] {
+    animation: public-content-reveal var(--public-normal) var(--public-ease) both;
+    animation-delay: calc(var(--reveal-delay, 0s) + var(--reveal-index, 0) * var(--reveal-step, .08s));
+  }
+}
+@media (max-width: 860px), (pointer: coarse) {
+  .publicScope {
+    --public-normal: 400ms;
+    --public-slow: 500ms;
+    --public-hero-duration: 580ms;
+    --public-reveal-distance: 8px;
+  }
+  .publicScope [data-public-reveal] { --reveal-delay: 0s !important; --reveal-step: .04s !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .publicScope *,
   .publicScope *::before,
   .publicScope *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+  .publicScope [data-public-reveal],
+  .publicScope [data-reveal-item] { opacity: 1 !important; transform: none !important; clip-path: none !important; }
+  .publicScope :is(a, button):is(:hover, :active),
+  .publicScope :is(a, button)[data-pressed="true"],
+  .publicScope :is(a, button):hover > span { transform: none !important; }
 }

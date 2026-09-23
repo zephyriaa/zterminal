@@ -12,8 +12,8 @@ export function PublicFooter() {
               <Image
                 src="/brand/zterminal-mark-v2.png"
                 alt="ZTerminal brand mark"
-                width={20}
-                height={20}
+                width={80}
+                height={80}
                 className={styles.brandMarkImage}
               />
             </span>

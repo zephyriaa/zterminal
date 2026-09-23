@@ -24,7 +24,7 @@
   padding: 0 var(--public-gutter);
   pointer-events: none;
   margin-bottom: -14px;
-  animation: headerEntrance 650ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: headerEntrance 600ms var(--public-ease) 60ms both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -45,31 +45,40 @@
   pointer-events: auto;
   margin: 0 auto;
   width: 100%;
-  max-width: 1540px;
+  max-width: 1720px;
   height: 54px;
   border-radius: 14px;
-  border: 1px solid rgba(180, 198, 235, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.32);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 35%, rgba(8, 13, 28, 0.72) 100%);
-  backdrop-filter: blur(24px) saturate(180%) contrast(105%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(105%);
-  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.65), 0 0 24px -2px rgba(101, 39, 228, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  isolation: isolate;
+  border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 12px 0 16px;
-  transition: background 260ms cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
-              height 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Material condenses independently; link centers never move on scroll. */
 }
-
-.headerScrolled {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 35%, rgba(6, 10, 22, 0.88) 100%);
-  border-color: rgba(188, 202, 235, 0.24);
-  border-top-color: rgba(255, 255, 255, 0.38);
-  box-shadow: 0 22px 54px -10px rgba(0, 0, 0, 0.8), 0 0 32px rgba(101, 39, 228, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.28);
-  height: 50px;
+.header::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  border: 1px solid rgba(180, 198, 235, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.32);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 35%, rgba(8, 13, 28, 0.72) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(105%);
+  backdrop-filter: blur(24px) saturate(180%) contrast(105%);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.65), 0 0 24px -2px rgba(101, 39, 228, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform var(--public-fast) var(--public-ease),
+    background-color var(--public-fast) var(--public-standard),
+    border-color var(--public-fast) var(--public-standard),
+    box-shadow var(--public-fast) var(--public-standard);
+}
+.headerScrolled::before {
+  transform: scaleY(.94);
+  background-color: #090f23eb;
+  border-color: #bccaea55;
+  box-shadow: 0 14px 36px -10px #000b, inset 0 1px 0 #ffffff38;
 }
 
 .brand {
@@ -95,13 +104,6 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-top: 1px solid rgba(255, 255, 255, 0.5);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 2px 8px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   transition: transform var(--public-fast) var(--public-ease),
               box-shadow var(--public-fast) var(--public-ease),
               border-color var(--public-fast) var(--public-ease);
@@ -109,14 +111,13 @@
 
 .brand:hover .brandMarkFrame {
   transform: scale(1.04);
-  border-color: rgba(192, 147, 245, 0.5);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 16px rgba(101, 39, 228, 0.35);
 }
 
 .brandMarkImage {
   display: block;
-  width: 22px;
-  height: 22px;
+  width: 70px;
+  height: 70px;
+  max-width: none;
   object-fit: contain;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
@@ -171,8 +172,8 @@
 .navLinkActive {
   color: #ffffff;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
+  border-color: transparent;
 }
 
 /* Liquid Glass Account & Workspace Synced Capsule */
@@ -186,8 +187,8 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-top: 1px solid rgba(255, 255, 255, 0.3);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 24, 46, 0.72) 100%);
-  backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 4px 14px rgba(0, 0, 0, 0.35);
   text-decoration: none;
   cursor: pointer;
@@ -198,10 +199,11 @@
 }
 
 .accountCapsule:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(30, 38, 65, 0.75) 100%);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(101, 39, 228, 0.18);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.11) 0%, rgba(24, 32, 58, 0.78) 100%);
+  border-color: rgba(255, 255, 255, 0.24);
+  border-top-color: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 18px rgba(0, 0, 0, 0.45);
+  transform: translateY(-1.5px);
 }
 
 .accountAvatar {
@@ -519,11 +521,12 @@
     margin-bottom: 0;
   }
 
-  .menuButtonOpen span:last-child {
+  .menuButtonOpen span:nth-child(2) {
     transform: translateY(2px) rotate(-45deg);
   }
 
   .nav {
+    visibility: hidden;
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
@@ -537,8 +540,8 @@
     border-top: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 14px;
     background: rgba(7, 11, 24, 0.96);
-    backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(101, 39, 228, 0.15);
     opacity: 0;
     pointer-events: none;
@@ -554,6 +557,7 @@
   }
 
   .navOpen {
+    visibility: visible;
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0);
@@ -594,4 +598,114 @@
     grid-template-columns: 1fr;
     gap: 28px;
   }
+}
+
+/* Landing header shares the site's links and controls, with reference geometry. */
+.heroHeader {
+  position: fixed;
+  top: min(3.23vw, 62px);
+  padding-inline: 3.83%;
+  margin: 0;
+}
+.heroHeader .header {
+  max-width: 1774px;
+  height: clamp(60px, 4.31vw, 83px);
+  padding-inline: clamp(24px, 2vw, 38px);
+  border-radius: 18px;
+}
+.heroHeader .header::before {
+  border-color: #b9b9ef66;
+  border-top-color: #e0dffaaf;
+  background: linear-gradient(110deg, #0a0e183d, #28305838 80%, #8271da29);
+  box-shadow: inset 0 1px 5px #d6caff52, 0 12px 35px #0005;
+}
+.heroHeader .headerScrolled::before { background-color: #090f23ed; }
+.heroHeader .brandMarkFrame { width: 36px; height: 42px; }
+.header .brandMarkImage { width: 52px; height: 52px; }
+.heroHeader .nav { flex: 1; justify-content: flex-end; }
+.heroHeader .navLinksGroup {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: clamp(18px, 2vw, 39px);
+}
+.heroHeader .navLink { color: #e1e5f9; font-size: clamp(14px, .96vw, 18px); font-weight: 400; }
+.heroHeader .navLinkActive { background: transparent; }
+.heroHeader .accountCapsule {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.heroHeader .accountAvatar { width: 42px; height: 42px; background: #b5b7e32b; border-color: transparent; }
+.heroHeader .accountAvatar svg { width: 24px; height: 24px; fill: #b7bfdc; stroke-width: 1; }
+.heroHeader .accountMeta { margin-left: 20px; margin-right: 24px; gap: 4px; }
+.heroHeader .accountName { font-size: 14px; font-weight: 400; }
+.heroHeader .accountStatus { font-size: 12px; }
+.heroHeader .syncDot { width: 9px; height: 9px; right: 0; top: 1px; }
+.heroHeader .accountChevron { width: 16px; height: 16px; color: #d3d8ef; }
+
+@media (max-width: 1000px) and (min-width: 861px) {
+  .heroHeader .navLinksGroup { left: 43%; gap: 8px; }
+  .heroHeader .accountMeta { margin-left: 10px; margin-right: 12px; }
+}
+@media (max-width: 860px) {
+  .heroHeader { top: 24px; padding-inline: 5.2%; }
+  .heroHeader .header { height: 64px; padding-inline: 20px; border-radius: 14px; }
+  .heroHeader .navLinksGroup { position: static; transform: none; gap: 2px; }
+  .heroHeader .navLink { font-size: 15px; }
+  .heroHeader .accountCapsule { padding: 10px 14px; height: auto; justify-content: flex-start; }
+  .heroHeader .accountMeta { flex: 1; }
+  .heroHeader .nav { visibility: hidden; }
+  .heroHeader .navOpen { visibility: visible; }
+}
+
+/* A small compression and a local light response make mouse/touch presses tactile.
+   The overlay never intercepts events or delays navigation. */
+.header :is(.brand, .navLink, .accountCapsule, .menuButton) {
+  position: relative;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform var(--public-fast) var(--public-ease),
+    background-color var(--public-fast) var(--public-standard), box-shadow var(--public-fast) var(--public-standard), color var(--public-fast) var(--public-standard);
+}
+.header .brand { border-radius: 8px; }
+.header :is(.brand, .navLink, .accountCapsule, .menuButton)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse at var(--press-x, 50%) var(--press-y, 50%), #e1d8ff45, #b49aff12 48%, transparent 78%);
+  box-shadow: inset 0 1px 0 #f1eaff33;
+  opacity: 0;
+  transition: opacity var(--public-fast) var(--public-exit);
+}
+.header :is(.brand, .navLink, .accountCapsule, .menuButton):is(:active, [data-pressed="true"]) {
+  transform: translateY(1px) scale(.98);
+  box-shadow: inset 0 1px 12px #b9a6ee26;
+  transition-duration: var(--public-instant);
+}
+.header :is(.brand, .navLink, .accountCapsule, .menuButton):is(:active, [data-pressed="true"])::after {
+  opacity: 1;
+  transition-duration: var(--public-instant);
+}
+.header :is(.navLink, .accountCapsule, .menuButton):focus-visible {
+  background-color: #b59af514;
+  box-shadow: inset 0 1px 0 #ede5ff29;
+}
+@media (hover: hover) and (pointer: fine) {
+  .header :is(.navLink, .accountCapsule, .menuButton):hover:not(:active):not([data-pressed="true"])::after { opacity: .45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header :is(.brand, .navLink, .accountCapsule, .menuButton):is(:active, [data-pressed="true"]) { transform: none; }
+}
+
+.footerColList a { display: inline-block; }
+.footerColList a:active { transform: translateY(1px); opacity: .75; }
+@media (prefers-reduced-motion: reduce) {
+  .headerScrolled::before { transform: none; }
+  .brand:hover .brandMarkFrame { transform: none; }
 }
