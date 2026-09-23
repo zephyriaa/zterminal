@@ -18,12 +18,12 @@
 
 .headerWrapper {
   position: sticky;
-  top: 14px;
+  top: 10px;
   z-index: 60;
   width: 100%;
   padding: 0 var(--public-gutter);
   pointer-events: none;
-  margin-bottom: -14px;
+  margin-bottom: -10px;
   animation: headerEntrance 600ms var(--public-ease) 60ms both;
 }
 
@@ -35,7 +35,7 @@
 
 .overlay {
   position: absolute;
-  top: 14px;
+  top: 10px;
   right: 0;
   left: 0;
 }
@@ -45,15 +45,15 @@
   pointer-events: auto;
   margin: 0 auto;
   width: 100%;
-  max-width: 1720px;
-  height: 54px;
-  border-radius: 14px;
+  max-width: 1680px;
+  height: 50px;
+  border-radius: 12px;
   isolation: isolate;
   border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px 0 16px;
+  padding: 0 12px 0 14px;
   /* Material condenses independently; link centers never move on scroll. */
 }
 .header::before {
@@ -63,12 +63,12 @@
   z-index: -1;
   pointer-events: none;
   border-radius: inherit;
-  border: 1px solid rgba(180, 198, 235, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.32);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 35%, rgba(8, 13, 28, 0.72) 100%);
+  border: 1px solid rgba(180, 198, 235, 0.14);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 35%, rgba(8, 13, 28, 0.52) 100%);
   -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(105%);
   backdrop-filter: blur(24px) saturate(180%) contrast(105%);
-  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.65), 0 0 24px -2px rgba(101, 39, 228, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.55), 0 0 20px -2px rgba(101, 39, 228, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.20);
   transition: transform var(--public-fast) var(--public-ease),
     background-color var(--public-fast) var(--public-standard),
     border-color var(--public-fast) var(--public-standard),
@@ -76,9 +76,9 @@
 }
 .headerScrolled::before {
   transform: scaleY(.94);
-  background-color: #090f23eb;
-  border-color: #bccaea55;
-  box-shadow: 0 14px 36px -10px #000b, inset 0 1px 0 #ffffff38;
+  background-color: rgba(9, 15, 35, 0.76);
+  border-color: rgba(188, 202, 234, 0.32);
+  box-shadow: 0 14px 36px -10px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .brand {
@@ -603,24 +603,30 @@
 /* Landing header shares the site's links and controls, with reference geometry. */
 .heroHeader {
   position: fixed;
-  top: min(3.23vw, 62px);
+  top: clamp(14px, 1.8vw, 30px);
   padding-inline: 3.83%;
   margin: 0;
 }
 .heroHeader .header {
-  max-width: 1774px;
-  height: clamp(60px, 4.31vw, 83px);
-  padding-inline: clamp(24px, 2vw, 38px);
-  border-radius: 18px;
+  max-width: 1680px;
+  height: clamp(52px, 3.4vw, 64px);
+  padding-inline: clamp(18px, 1.8vw, 30px);
+  border-radius: 14px;
 }
 .heroHeader .header::before {
-  border-color: #b9b9ef66;
-  border-top-color: #e0dffaaf;
-  background: linear-gradient(110deg, #0a0e183d, #28305838 80%, #8271da29);
-  box-shadow: inset 0 1px 5px #d6caff52, 0 12px 35px #0005;
+  border-color: rgba(185, 185, 239, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.42);
+  background: linear-gradient(110deg, rgba(10, 14, 26, 0.16) 0%, rgba(35, 42, 78, 0.14) 80%, rgba(130, 113, 218, 0.10) 100%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+  backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 16px 40px -12px rgba(0, 0, 0, 0.55);
 }
-.heroHeader .headerScrolled::before { background-color: #090f23ed; }
-.heroHeader .brandMarkFrame { width: 36px; height: 42px; }
+.heroHeader .headerScrolled::before {
+  background-color: rgba(9, 15, 35, 0.72);
+  border-color: rgba(188, 202, 234, 0.32);
+  box-shadow: 0 14px 36px -10px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.heroHeader .brandMarkFrame { width: 34px; height: 38px; }
 .header .brandMarkImage { width: 52px; height: 52px; }
 .heroHeader .nav { flex: 1; justify-content: flex-end; }
 .heroHeader .navLinksGroup {
@@ -629,7 +635,7 @@
   transform: translateX(-50%);
   gap: clamp(18px, 2vw, 39px);
 }
-.heroHeader .navLink { color: #e1e5f9; font-size: clamp(14px, .96vw, 18px); font-weight: 400; }
+.heroHeader .navLink { color: #e1e5f9; font-size: clamp(13px, .86vw, 15.5px); font-weight: 400; }
 .heroHeader .navLinkActive { background: transparent; }
 .heroHeader .accountCapsule {
   padding: 0;
@@ -638,24 +644,24 @@
   box-shadow: none;
   backdrop-filter: none;
 }
-.heroHeader .accountAvatar { width: 42px; height: 42px; background: #b5b7e32b; border-color: transparent; }
-.heroHeader .accountAvatar svg { width: 24px; height: 24px; fill: #b7bfdc; stroke-width: 1; }
-.heroHeader .accountMeta { margin-left: 20px; margin-right: 24px; gap: 4px; }
-.heroHeader .accountName { font-size: 14px; font-weight: 400; }
-.heroHeader .accountStatus { font-size: 12px; }
-.heroHeader .syncDot { width: 9px; height: 9px; right: 0; top: 1px; }
-.heroHeader .accountChevron { width: 16px; height: 16px; color: #d3d8ef; }
+.heroHeader .accountAvatar { width: 36px; height: 36px; background: rgba(181, 183, 227, 0.15); border-color: transparent; }
+.heroHeader .accountAvatar svg { width: 20px; height: 20px; fill: #b7bfdc; stroke-width: 1; }
+.heroHeader .accountMeta { margin-left: 14px; margin-right: 18px; gap: 3px; }
+.heroHeader .accountName { font-size: 13px; font-weight: 450; }
+.heroHeader .accountStatus { font-size: 11px; }
+.heroHeader .syncDot { width: 8px; height: 8px; right: 0; top: 1px; }
+.heroHeader .accountChevron { width: 14px; height: 14px; color: #d3d8ef; }
 
 @media (max-width: 1000px) and (min-width: 861px) {
   .heroHeader .navLinksGroup { left: 43%; gap: 8px; }
   .heroHeader .accountMeta { margin-left: 10px; margin-right: 12px; }
 }
 @media (max-width: 860px) {
-  .heroHeader { top: 24px; padding-inline: 5.2%; }
-  .heroHeader .header { height: 64px; padding-inline: 20px; border-radius: 14px; }
+  .heroHeader { top: 14px; padding-inline: 5.2%; }
+  .heroHeader .header { height: 52px; padding-inline: 16px; border-radius: 12px; }
   .heroHeader .navLinksGroup { position: static; transform: none; gap: 2px; }
-  .heroHeader .navLink { font-size: 15px; }
-  .heroHeader .accountCapsule { padding: 10px 14px; height: auto; justify-content: flex-start; }
+  .heroHeader .navLink { font-size: 14px; }
+  .heroHeader .accountCapsule { padding: 8px 12px; height: auto; justify-content: flex-start; }
   .heroHeader .accountMeta { flex: 1; }
   .heroHeader .nav { visibility: hidden; }
   .heroHeader .navOpen { visibility: visible; }
