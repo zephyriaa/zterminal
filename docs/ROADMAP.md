@@ -36,10 +36,15 @@ Implemented in the active Phase 0 slice:
 - The canonical docs name the real active shell, Helper, and native boundaries.
 - TypeScript typecheck and unit tests pass; lint ignores generated build output
   and handles the repository's CommonJS maintenance scripts explicitly.
+- Active-shell browser smoke passes at 1440, 768, and 390 pixels, covering
+  panels, navigation, layout persistence/recovery/reset, and the command palette.
+- Incremental research groundwork exposes captured evidence on every report tab
+  and protects browser draft writes from stale-tab overwrite. See
+  [scope, validation, and remaining gates](research-integrity-recovery-notes.md).
+  This does not complete Phase 1 persistence/sync or the Phase 2–3 V2 contracts.
 
 Still required before Phase 0 closes:
 
-- An active-shell browser smoke test.
 - Inventory/consumer proof before retiring duplicate execution paths.
 - A production-startup integration check with valid and invalid environment sets.
 

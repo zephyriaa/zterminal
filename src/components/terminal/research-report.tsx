@@ -4,6 +4,7 @@ import { useResearch } from "@/stores/research";
 import { useWorkspaceDock } from "./docking/workspace-dock-controller";
 import { helper } from "@/lib/local-research/client";
 import type { ResearchResult, ResearchTrade } from "@/lib/local-research/contracts";
+import { researchEvidence } from "@/lib/local-research/evidence";
 const number = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 const percent = (value: number) => `${number(value * 100)}%`;
 const date = (value: number) => new Date(value).toISOString().slice(0, 16).replace("T", " ");
@@ -29,7 +30,8 @@ export function ResearchReport() {
     {importMessage && <p className="px-4 py-2 text-xs" role="status">{importMessage}</p>}
     <div className="zt-report-content">{error && <p role="alert" className="zt-report-error">{error}</p>}
       {!result ? <div className="zt-report-empty"><span>WRITE → BACKTEST → INSPECT</span><h3>A report starts with a testable idea.</h3><p>Write Python in the connected editor, pair the local Windows helper, and run a test against a complete historical dataset. Successful runs retain their source, data and assumptions.</p>{error && <p role="alert">{error}</p>}<button onClick={() => dock.openPanel("strategy")}>Open strategy editor →</button></div> : <>
-        <div className="zt-report-identity"><strong>{result.name}</strong><span>{result.config.provider} / {result.dataset.symbol} / {result.dataset.timeframe}</span><span>{date(result.dataset.from)} — {date(result.dataset.to)} UTC</span><span>Illustrates historical simulation / not live execution</span></div>
+        <div className="zt-report-identity"><strong>{result.name}</strong><span>{result.dataset.provider} / {result.dataset.symbol} / {result.dataset.timeframe}</span><span>{date(result.dataset.from)} — {date(result.dataset.to)} UTC (end exclusive)</span><span>Illustrates historical simulation / not live execution</span></div>
+        <RunEvidence result={result} />
         {tab === "Overview" && <><Metrics result={result} keys={["totalReturn", "netProfit", "maxDrawdown", "totalTrades", "winRate", "profitFactor", "exposure", "openTrades"]} /><SeriesPlot label="Account equity and passive price benchmark" series={[{ values: result.equity.map(p => p.equity), color: "#b79be8", name: "Equity" }, { values: result.equity.map(p => p.benchmark), color: "#70798d", name: "Benchmark before costs" }]} /><ul className="zt-report-observations">{result.observations.map(p => <li key={p}>{p}</li>)}</ul><details><summary>Execution assumptions & reproducibility</summary><ul>{result.assumptions.map(p => <li key={p}>{p}</li>)}</ul><Provenance result={result} /></details></>}
         {tab === "Performance" && <><Metrics result={result} keys={["totalReturn", "cagr", "sharpe", "sortino", "profitFactor", "expectancy", "averageWinner", "averageLoser", "consecutiveWins", "consecutiveLosses"]} /><SeriesPlot label="Equity" series={[{ values: result.equity.map(p => p.equity), color: "#b79be8", name: "Quote-currency equity" }]} /><Histogram label="Closed-trade P&L distribution" values={result.trades.filter(p => p.status === "closed").map(p => p.pnl)} />{result.dataset.to - result.dataset.from >= 28 * 86400000 && <div className="zt-monthly">{result.monthly.map(p => <span key={p.period}>{p.period}<b>{p.return == null ? "Unavailable" : percent(p.return)}</b></span>)}</div>}</>}
         {tab === "Trades" && <TradeList trades={result.trades} result={result} />}
@@ -41,6 +43,18 @@ export function ResearchReport() {
   </div>;
 }
 
+function RunEvidence({ result }: { result: ResearchResult }) {
+  const evidence = researchEvidence(result);
+  return <section aria-label="Captured run evidence" className="zt-method-note">
+    <strong>Captured run evidence · {result.dataset.provider} perpetual OHLCV</strong>
+    <p>{evidence.coverage}</p><p>{evidence.freshness}</p>
+    <p>Requested {date(result.config.from)} → {date(result.config.to)} UTC (end exclusive).</p>
+    <p>Engine {result.engine.engine ?? "version not recorded"} · Python {result.engine.python} · vectorbt {result.engine.vectorbt} · SDK {result.engine.sdk} · analytics {result.engine.analytics}</p>
+    <p>Fees {result.config.feeBps} bps per fill · slippage {result.config.slippageBps} bps per fill · capital {number(result.config.initialCapital)} quote · allocation {percent(result.config.allocation)} · {result.config.direction} · multiplier {result.config.multiplier} · quantity step {result.config.quantityStep}.</p>
+    <p>{evidence.limitations}</p>
+    <ul aria-label="Saved execution assumptions">{result.assumptions.map((value, index) => <li key={index}>{value}</li>)}</ul>
+  </section>;
+}
 function Metrics({ result, keys }: { result: ResearchResult; keys: string[] }) {
   const fractions = new Set(["totalReturn", "cagr", "maxDrawdown", "winRate", "exposure", "volatility", "downsideVolatility"]);
   return <dl className="zt-report-metrics">{keys.map(key => { const metric = result.metrics[key]; return <div key={key} title={metric?.reason}><dt>{key.replace(/([A-Z])/g, " $1")}</dt><dd>{metric?.value == null ? "—" : fractions.has(key) ? percent(metric.value) : number(metric.value)}</dd>{metric?.value == null && <small>{metric?.reason ?? "Unavailable"}</small>}</div>; })}</dl>;

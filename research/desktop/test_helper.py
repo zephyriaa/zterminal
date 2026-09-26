@@ -53,7 +53,9 @@ class ArchiveTests(unittest.TestCase):
         self.assertEqual(reopened.get_job("job")["resultKind"], "indicator")
 
     def test_result_reopens_offline_export_roundtrip_and_exact_source(self):
-        result = execute(fixture())
+        request = fixture()
+        request["dataset"]["retrievedAt"] = int(time.time() * 1000)
+        result = execute(request)
         self.archive.save_result(result)
         reopened = Archive(self.path).result(result["id"])
         self.assertEqual(result, reopened)
@@ -63,10 +65,22 @@ class ArchiveTests(unittest.TestCase):
         other = Archive(Path(self.temp.name) / "import.sqlite3")
         other.save_result(json.loads(encode(reopened)))
         self.assertEqual(other.result(result["id"]), result)
+        altered = copy.deepcopy(result)
+        altered["dataset"]["retrievedAt"] -= 1
+        with self.assertRaisesRegex(ValueError, "input hash mismatch"):
+            other.validate_result(altered)
         corrupted = copy.deepcopy(result)
         corrupted["source"] += "\n# changed"
         with self.assertRaisesRegex(ValueError, "Source hash"):
             other.save_result(corrupted)
+
+    def test_retrieval_metadata_is_optional_but_validated(self):
+        self.archive.validate_result(execute(fixture()))
+        for timestamp in (True, "unknown", -1, int(time.time() * 1000) + 120_000):
+            request = fixture()
+            request["dataset"]["retrievedAt"] = timestamp
+            with self.assertRaisesRegex(ValueError, "retrieval timestamp"):
+                execute(request)
 
     def test_interrupted_transaction_rolls_back(self):
         with self.assertRaises(RuntimeError):

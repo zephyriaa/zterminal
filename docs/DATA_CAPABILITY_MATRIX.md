@@ -34,6 +34,16 @@ claimed before verified recording/import coverage exists.
 
 ## Required display provenance
 
+The active Helper candle report displays Gate.io/Binance perpetual OHLCV source,
+requested range (exclusive end), candle completeness, captured engine/costs,
+and saved execution assumptions on every report tab. New research-data downloads
+record `retrievedAt` in the retained, input/result-hashed dataset manifest;
+cached reuse preserves that timestamp. Older archives explicitly show unknown
+retrieval time. This is a retrieval observation, not certified venue accuracy,
+live freshness, or historical trades/depth coverage. Existing route limits remain
+10,000 candles for Gate.io and 20,000 for Binance, subject to provider availability.
+See [validation evidence](research-integrity-recovery-notes.md).
+
 Every derived order-flow or options layer displays its source, freshness,
 granularity, integrity/gap state, and calculation version. Aggregate trades may
 not be drawn as individual fills. A manifest gap makes a dependent calculation

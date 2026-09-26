@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const raw = await (provider === "gateio" ? fetchGateioHistoricalBars(symbol, timeframe, from, to - interval, fetcher) : fetchBinanceHistoricalBars(symbol, timeframe, from, to - interval, fetcher));
     const bars = validateDataset(raw, { from, to, timeframe });
     const dataset: Dataset = { version: 1, provider, product: "perpetual", symbol, timeframe, from, to, bars, hash: await sha256(JSON.stringify(bars.map(b => [b.t, b.o, b.h, b.l, b.c, b.v]))) };
+    dataset.retrievedAt = Date.now();
     return NextResponse.json(dataset, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Historical data unavailable. Adjust the range explicitly." }, { status: 422 });

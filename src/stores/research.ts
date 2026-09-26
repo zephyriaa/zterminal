@@ -151,6 +151,12 @@ export const useResearch = create<State>()(persist((set, get) => ({
   },
 }));
 
+let draftHydration: Promise<void> | null = null;
+/** React remounts must not rehydrate over edits made in this tab. */
+export function recoverResearchDrafts(): Promise<void> {
+  return draftHydration ??= Promise.resolve(useResearch.persist.rehydrate());
+}
+
 async function watch(id: string) {
   for (;;) {
     try {

@@ -2,9 +2,10 @@
 import dynamic from "next/dynamic";
 import { type FormEvent, useEffect, useState } from "react";
 import { CheckCircle2, CircleAlert, Copy, Download, FilePlus2, LoaderCircle, Play, Save, Square, Trash2 } from "lucide-react";
-import { useResearch } from "@/stores/research";
+import { recoverResearchDrafts, useResearch } from "@/stores/research";
 import { EXAMPLES } from "@/lib/local-research/examples";
 import { intervalMs } from "@/lib/local-research/dataset";
+import { getDraftStorageStatus } from "@/lib/local-research/drafts";
 const ResearchEditor = dynamic(() => import("./research-editor"), { ssr: false, loading: () => <p className="p-4 text-xs text-muted-foreground">Loading Python editor…</p> });
 type HelperRelease = { available: boolean; version?: string; reason?: string };
 
@@ -62,24 +63,38 @@ export function ResearchWorkbench() {
   const [pairCode, setPairCode] = useState("");
   const [scriptAction, setScriptAction] = useState<"rename" | "copy" | "delete" | null>(null);
   const [name, setName] = useState("");
-  const [storageFailed, setStorageFailed] = useState(false);
+  const [storageStatus, setStorageStatus] = useState(getDraftStorageStatus);
+  const [draftsReady, setDraftsReady] = useState(false);
   const [paramsText, setParamsText] = useState(() => JSON.stringify(state.params));
   const [paramsError, setParamsError] = useState("");
   const busy = state.job && !["complete", "failed", "cancelled"].includes(state.job.stage);
   useEffect(() => {
-    const warn = () => setStorageFailed(true);
+    const warn = () => setStorageStatus(getDraftStorageStatus());
     window.addEventListener("zterminal:draft-storage-failed", warn);
     const stopHydration = useResearch.persist.onFinishHydration(current => setParamsText(JSON.stringify(current.params)));
-    void useResearch.persist.rehydrate();
-    void useResearch.getState().connect();
-    return () => { window.removeEventListener("zterminal:draft-storage-failed", warn); stopHydration(); };
+    let active = true;
+    void (async () => {
+      await recoverResearchDrafts();
+      if (!active) return;
+      setDraftsReady(true);
+      setParamsText(JSON.stringify(useResearch.getState().params));
+      // Connecting mutates persisted state; recovery must finish first.
+      if (getDraftStorageStatus() === "ready") await useResearch.getState().connect();
+    })();
+    return () => { active = false; window.removeEventListener("zterminal:draft-storage-failed", warn); stopHydration(); };
   }, []);
   const period = (days: number) => { const interval = intervalMs(state.config.timeframe), to = Math.floor(Date.now() / interval) * interval; state.configure({ from: to - days * 86400000, to }); };
-  useEffect(() => { const timer = setTimeout(() => void useResearch.getState().verifyInstrument(), 500); return () => clearTimeout(timer); }, [state.config.provider, state.config.symbol]);
+  useEffect(() => { if (!draftsReady) return; const timer = setTimeout(() => void useResearch.getState().verifyInstrument(), 500); return () => clearTimeout(timer); }, [draftsReady, state.config.provider, state.config.symbol]);
   const exportSource = () => {
     const url = URL.createObjectURL(new Blob([script.source], { type: "text/x-python" }));
     const link = document.createElement("a"); link.href = url; link.download = `${script.name.replace(/[^a-z0-9_-]/gi, "_")}.py`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
+  const exportDrafts = () => {
+    const { drafts, activeId, config, params, minimap } = useResearch.getState();
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ version: 1, state: { drafts, activeId, config, params, minimap } }, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a"); link.href = url; link.download = "zterminal-draft-recovery.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  if (!draftsReady) return <p role="status">Recovering local research drafts…</p>;
   return <div className="zt-research-workbench">
     <div className="zt-research-files"><select aria-label="Current research artifact" value={state.activeId} onChange={e => state.selectScript(e.target.value)}>{Object.values(state.drafts).sort((a, b) => b.updatedAt - a.updatedAt).map(p => <option key={p.id} value={p.id}>{p.kind === "indicator" ? "ƒ " : "↗ "}{p.name}{p.source !== p.savedSource ? " •" : ""}</option>)}</select><button aria-label="New strategy" title="New strategy" onClick={() => state.createScript()}><FilePlus2 size={14} />S</button><button aria-label="New Python indicator" title="New Python indicator" onClick={() => state.createScript("Untitled indicator", undefined, "indicator")}><FilePlus2 size={14} />ƒ</button><button aria-label="Save artifact" title="Save (Ctrl/Cmd+S)" onClick={() => state.save()} disabled={state.connection !== "connected"}><Save size={14} /></button><button aria-label="Save As or duplicate artifact" title="Save As / duplicate" onClick={() => { setName(`${script.name} copy`); setScriptAction("copy"); }}><Copy size={14} /></button><button aria-label="Download Python source" title="Export source" onClick={exportSource}><Download size={14} /></button></div>
     <div className="zt-research-script-meta"><button onClick={() => { setName(script.name); setScriptAction("rename"); }}>Rename</button><span>{script.kind === "indicator" ? "Indicator" : "Strategy"} · {script.revision ? `Revision ${script.revision}` : "Unsaved"} {script.source !== script.savedSource ? "· Draft changes" : "· Saved"}</span><button aria-label="Delete artifact" onClick={() => setScriptAction("delete")}><Trash2 size={12} /></button></div>
@@ -92,6 +107,6 @@ export function ResearchWorkbench() {
     <details className="zt-research-config"><summary>{script.kind === "indicator" ? "Parameters & reproducibility" : "Advanced / execution assumptions"}</summary>{script.kind !== "indicator" && <div className="zt-research-form-grid">{([["feeBps", "Fees (bps)"], ["slippageBps", "Slippage (bps)"], ["allocation", "Cash allocation (fraction)"]] as const).map(([key, label]) => <label key={key}>{label}<input type="number" step="any" value={state.config[key]} onChange={e => state.configure({ [key]: Number(e.target.value) })} /></label>)}<label>Direction<select value={state.config.direction} onChange={e => state.configure({ direction: e.target.value as "long" | "both" })}><option value="long">Long only</option><option value="both">Long + short</option></select></label></div>}<label className="zt-params-json">{script.kind === "indicator" ? "Calculation parameters" : "Strategy parameters"} (JSON object)<textarea value={paramsText} spellCheck={false} rows={3} onChange={e => setParamsText(e.target.value)} onBlur={() => { try { const parsed = JSON.parse(paramsText); if (!parsed || Array.isArray(parsed) || typeof parsed !== "object" || Object.entries(parsed).some(([key, value]) => key.length > 80 || !["string", "number", "boolean"].includes(typeof value) || typeof value === "number" && !Number.isFinite(value))) throw new Error("Use a JSON object with finite number, string, or boolean values."); useResearch.setState({ params: parsed }); setParamsError(""); } catch (error) { setParamsError((error as Error).message); } }} /></label>{paramsError && <p role="alert">{paramsError} The last valid parameters remain active.</p>}<p>{state.instrument ? `Verified quantity units: multiplier ${state.instrument.multiplier}, quantity step ${state.instrument.quantityStep}.` : "Instrument units have not been verified."} <button onClick={() => state.verifyInstrument()}>Verify units</button></p><p>{script.kind === "indicator" ? "Evaluations retain source, parameter, dataset, input, result, helper, and engine hashes." : "One unlevered position. Signals at completed-bar close fill at the next open. No funding, liquidation or margin model. Open positions remain marked to market."}</p></details>
     <div className="zt-research-editor-tools"><select aria-label="Open educational example" value="" onChange={e => { const example = EXAMPLES.find(p => p.id === e.target.value); if (example) state.createScript(example.name, example.source); }}><option value="">Educational examples…</option>{EXAMPLES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><label><input type="checkbox" checked={state.minimap} onChange={e => useResearch.setState({ minimap: e.target.checked })} />Minimap</label><span>Ctrl/⌘ ↵</span></div>
     <div className="zt-research-editor"><ResearchEditor /></div>
-    <div className="zt-research-status" aria-live="polite">{busy ? state.job!.stage.replaceAll("_", " ") : state.job?.stage === "complete" ? "Result archived locally" : "Python / ZTerminal SDK v1"}{storageFailed && <p role="alert">Browser draft recovery is unavailable. Export your source to preserve unsaved work.</p>}{state.error && <p role="alert">{state.error}</p>}{state.diagnostic?.line && <button onClick={() => document.querySelector<HTMLElement>(".monaco-editor textarea")?.focus()}>Inspect line {state.diagnostic.line}</button>}</div>
+    <div className="zt-research-status" aria-live="polite">{busy ? state.job!.stage.replaceAll("_", " ") : state.job?.stage === "complete" ? "Result archived locally" : "Python / ZTerminal SDK v1"}{storageStatus !== "ready" && <p role="alert">{storageStatus === "conflict" ? "Another tab changed the saved drafts. This tab's autosave is paused to preserve both versions." : "Browser draft recovery failed. Autosave is paused; existing storage has not been replaced."} Export this tab's drafts before closing or reloading. <button onClick={exportDrafts}>Export all drafts + configuration</button></p>}<p>Drafts stay in this browser. Helper saves and run archives stay on this computer. Offline runs require the Helper, an exact cached dataset, and instrument units already verified in this session; downloads and fresh unit verification need a connection.</p>{state.error && <p role="alert">{state.error}</p>}{state.diagnostic?.line && <button onClick={() => document.querySelector<HTMLElement>(".monaco-editor textarea")?.focus()}>Inspect line {state.diagnostic.line}</button>}</div>
   </div>;
 }

@@ -52,7 +52,7 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "@typescript-eslint/no-require-imports": "off",
   },
 }, {
-  ignores: ["node_modules/**", "public/vendor/monaco-*/**", ".next/**", ".open-next/**", ".wrangler/**", "out/**", "build/**", "desktop/dist/**", "src-tauri/target/**", "src-tauri/gen/**", "packages/zterminal-research-wasm/**", "next-env.d.ts", "examples/**", "skills"]
+  ignores: ["node_modules/**", "public/vendor/monaco-*/**", ".next/**", ".open-next/**", ".wrangler/**", "artifacts/**", "out/**", "build/**", "desktop/dist/**", "src-tauri/target/**", "src-tauri/gen/**", "packages/zterminal-research-wasm/**", "next-env.d.ts", "examples/**", "skills"]
 }];
 
 export default eslintConfig;

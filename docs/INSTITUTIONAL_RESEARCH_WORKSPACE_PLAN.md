@@ -4,6 +4,12 @@
 in older roadmaps and handover notes; it does not claim that planned phases are
 already implemented.
 
+The current v1 Helper slice displays captured run evidence and protects browser
+research draft snapshots with atomic compare-before-write. See
+[implementation and validation notes](research-integrity-recovery-notes.md).
+These are foundations, not implementations of `WorkspaceDocumentV2`, a cloud
+outbox/revision cursor, or `ExperimentRunV2` comparison.
+
 ## Product objective
 
 ZTerminal is one coherent, chart-first research environment:

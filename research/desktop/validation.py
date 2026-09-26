@@ -34,6 +34,10 @@ def validate(request):
     if dataset.get("version") != 1 or dataset.get("product") != "perpetual" or any(dataset[k] != config[k] for k in ["provider", "symbol", "timeframe", "from", "to"]):
         raise ValueError("Dataset manifest does not match the run configuration")
     bars = dataset["bars"]
+    if "retrievedAt" in dataset:
+        retrieved = dataset["retrievedAt"]
+        if isinstance(retrieved, bool) or not isinstance(retrieved, int) or not end <= retrieved <= int(time.time() * 1000) + 60_000:
+            raise ValueError("Invalid dataset retrieval timestamp")
     if not 2 <= len(bars) <= 100_000 or len(bars) != (end - start) // interval:
         raise ValueError("Incomplete history; select a complete range explicitly")
     for i, b in enumerate(bars):

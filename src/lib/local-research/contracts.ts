@@ -15,6 +15,8 @@ export interface Dataset {
   version: 1; provider: ResearchProvider; product: "perpetual";
   symbol: string; timeframe: string; from: number; to: number;
   bars: Bar[]; hash: string;
+  /** Retrieval observation, not a guarantee of provider accuracy or live freshness. */
+  retrievedAt?: number;
 }
 
 /** Phase-0 event contracts. Version-1 candle requests above remain unchanged. */
