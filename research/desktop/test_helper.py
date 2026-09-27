@@ -109,7 +109,7 @@ class APITests(unittest.TestCase):
         self.server = Server(("127.0.0.1", 0), self.service)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
-        self.origin = "https://zterminal.onrender.com"
+        self.origin = "https://zterminal-web.zephyria-inc.workers.dev"
 
     def tearDown(self):
         self.server.shutdown()

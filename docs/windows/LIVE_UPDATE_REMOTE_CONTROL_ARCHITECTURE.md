@@ -98,7 +98,7 @@ The release envelope extends the existing record rather than replacing it. CI em
     "url": "https://downloads.example/stable.appinstaller",
     "fallback_urls": ["https://fallback.example/stable.appinstaller"]
   },
-  "release_notes_url": "https://zterminal.onrender.com/docs/windows/releases/1.0.0",
+  "release_notes_url": "https://zterminal-web.zephyria-inc.workers.dev/docs/windows/releases/1.0.0",
   "rollback_policy": { "allow_local_known_good": false, "blocked_versions": [] },
   "signature": { "algorithm": "ed25519", "key_id": "zt-release-2026-01", "value": "base64-signature" }
 }

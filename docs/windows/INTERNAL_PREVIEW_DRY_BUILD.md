@@ -4,7 +4,7 @@
 
 The `Internal ZTerminal Workstation Preview (Dry Build)` workflow produces a **private, unsigned Tauri/NSIS installer artifact that opens the deployed ZTerminal `/terminal` workstation**. It replaces the prior shell-only internal artifact, which did not represent the actual ZTerminal experience.
 
-> **Scope boundary:** This is a connected hosted-workstation wrapper for controlled internal testing. It is not offline-capable, it depends on `https://zterminal.onrender.com/terminal`, and it is not the future local-first native Win32/Direct3D + Rust Track B client.
+> **Scope boundary:** This is a connected hosted-workstation wrapper for controlled internal testing. It is not offline-capable, it depends on `https://zterminal-web.zephyria-inc.workers.dev/terminal`, and it is not the future local-first native Win32/Direct3D + Rust Track B client.
 
 The workflow refuses to package an installer unless the hosted terminal responds successfully and includes the workstation marker. It does not create a public ZTerminal Windows release or enable public distribution.
 

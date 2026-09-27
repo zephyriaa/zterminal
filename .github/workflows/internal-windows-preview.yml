@@ -55,7 +55,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $response = Invoke-WebRequest -Uri "https://zterminal.onrender.com/terminal" -MaximumRedirection 0 -TimeoutSec 45
+          $response = Invoke-WebRequest -Uri "https://zterminal-web.zephyria-inc.workers.dev/terminal" -MaximumRedirection 0 -TimeoutSec 45
           if ($response.StatusCode -ne 200) {
             throw "Hosted ZTerminal terminal returned HTTP $($response.StatusCode); no installer will be created."
           }
@@ -93,7 +93,7 @@ jobs:
             public_release_eligible = $false
             product_scope = "Remote-hosted wrapper for the verified ZTerminal /terminal workstation; not the future native Track B client."
             hosted_terminal = [ordered]@{
-              url = "https://zterminal.onrender.com/terminal"
+              url = "https://zterminal-web.zephyria-inc.workers.dev/terminal"
               online_connection_required = $true
             }
             signing = [ordered]@{

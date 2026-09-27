@@ -6,8 +6,8 @@
   "build": {
     "beforeBuildCommand": null,
     "beforeDevCommand": null,
-    "devUrl": "https://zterminal.onrender.com/terminal",
-    "frontendDist": "https://zterminal.onrender.com/terminal"
+    "devUrl": "https://zterminal-web.zephyria-inc.workers.dev/terminal",
+    "frontendDist": "https://zterminal-web.zephyria-inc.workers.dev/terminal"
   },
   "app": {
     "windows": [

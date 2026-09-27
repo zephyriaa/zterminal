@@ -30,7 +30,7 @@ test("generateReleaseManifest constructs conforming WindowsRelease record", () =
     channel: "stable",
     publisher: "ZTerminal Systems",
     baseUrl: "https://github.com/aykhank/zterminal/releases/download/v0.2.2",
-    releaseNotesUrl: "https://zterminal.onrender.com/download",
+    releaseNotesUrl: "https://zterminal-web.zephyria-inc.workers.dev/download",
   });
 
   assert.equal(bundle.manifest.version, "0.2.2");

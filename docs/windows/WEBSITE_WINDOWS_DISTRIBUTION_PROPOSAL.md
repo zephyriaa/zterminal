@@ -75,7 +75,7 @@ The public API is a projection, not the source of authority. It returns only a p
   "sha256": "hex-encoded-sha256",
   "size_bytes": 123456789,
   "published_at": "2026-08-23T00:00:00Z",
-  "release_notes_url": "https://zterminal.onrender.com/docs/windows/releases/1.0.0",
+  "release_notes_url": "https://zterminal-web.zephyria-inc.workers.dev/docs/windows/releases/1.0.0",
   "minimum_supported_version": "1.0.0"
 }
 ```

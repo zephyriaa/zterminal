@@ -147,7 +147,7 @@ All 82 unit tests pass cleanly:
 ### 1. Native Windows Executable & NSIS Installer Built
 - **Tauri v2 Native Desktop Shell (`src-tauri/`):**
   - Configured with `tauri = "2"`, `tauri-build = "2"`, and `tauri-plugin-global-shortcut = "2"`.
-  - Configured `src-tauri/tauri.conf.json` to wrap the full workstation at `/terminal` (`http://localhost:3000/terminal` in development, `https://zterminal.onrender.com/terminal` in production).
+  - Configured the desktop launch page at `/desktop/launch` for the production Worker; the separate internal hosted preview opens `/terminal` at the same Worker origin.
   - App window initialized with native decorations, title `"ZTerminal — Quantitative Workstation"`, 1440×900 default resolution (min 1024×680), and custom application icons.
 - **Compiled Binaries:**
   - **Standalone Executable:** [`src-tauri/target/release/zterminal-desktop.exe`](file:///c:/Users/aykhank/Documents/ZT/zterminal/src-tauri/target/release/zterminal-desktop.exe) (8.7 MB)

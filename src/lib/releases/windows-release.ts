@@ -68,7 +68,7 @@ function recordHasApprovedTargets(release: WindowsRelease): boolean {
   return (
     isAllowedHttpsUrl(release.package_url, hosts, [".msix", ".exe"]) &&
     isAllowedHttpsUrl(release.appinstaller_url, hosts, [".appinstaller", ".json"]) &&
-    isAllowedHttpsUrl(release.release_notes_url, new Set(["zterminal.onrender.com"]))
+    isAllowedHttpsUrl(release.release_notes_url, new Set(["zterminal-web.zephyria-inc.workers.dev"]))
   );
 }
 
