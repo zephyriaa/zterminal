@@ -144,11 +144,11 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
             })}
           </div>
 
-          {/* Public entry point; account state is resolved in the workspace. */}
           <Link
-            href="/terminal"
+            href="/terminal?account=signin"
             className={styles.accountCapsule}
-            title="Launch ZTerminal Workspace"
+            title="Open ZTerminal account"
+            aria-label="Open ZTerminal account and Google sign-in"
             onClick={() => setOpen(false)}
           >
             <div className={styles.accountAvatar}>
@@ -169,8 +169,8 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
               <span className={styles.syncDot} aria-hidden="true" />
             </div>
             <div className={styles.accountMeta}>
-              <span className={styles.accountName}>ZTerminal Workspace</span>
-              <span className={styles.accountStatus}>Open workspace</span>
+              <span className={styles.accountName}>Account</span>
+              <span className={styles.accountStatus}>Sign in or manage profile</span>
             </div>
             <svg
               className={styles.accountChevron}
