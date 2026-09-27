@@ -124,3 +124,29 @@ export function defaultResearchConfig(now = Date.now()): ResearchConfig {
   return { provider: "gateio", symbol: "BTC_USDT", timeframe: "1h", from: to - 90 * 86_400_000, to,
     initialCapital: 10_000, feeBps: 10, slippageBps: 5, allocation: 0.1, direction: "long", multiplier: 1, quantityStep: 0.000001 };
 }
+
+export type {
+  ValidationResult,
+  ValidationConfig,
+  ValidationBaseline,
+  ValidationRating,
+  ValidationProfile,
+  ValidationDiagnostic,
+  OutOfSampleResult,
+  WalkForwardResult,
+  WalkForwardCycle,
+  MonteCarloValidationResult,
+  ParameterSensitivityResult,
+  ParameterSensitivityPoint,
+  CostStressResult,
+  CostTier,
+  RegimeValidationResult,
+  RegimeMetric,
+  ConcentrationResult,
+} from "@/domain/validation/contracts";
+export {
+  defaultValidationConfig,
+  VALIDATION_ENGINE_VERSION,
+  VALIDATION_SCHEMA_VERSION,
+} from "@/domain/validation/contracts";
+

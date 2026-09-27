@@ -10,6 +10,9 @@ import { validateConfig, validateDataset } from "@/lib/local-research/dataset";
 import { useStudies } from "./studies";
 import { createPythonStudy } from "@/lib/indicator-library";
 
+import type { ValidationResult, ValidationConfig } from "@/domain/validation/contracts";
+import { runValidationBattery } from "@/domain/validation/engine";
+
 const initial: ScriptRecord = { id: "welcome-example", name: "Moving-average crossover", kind: "strategy", source: EXAMPLES[0].source, savedSource: "", updatedAt: 0, revision: 0 };
 type Connection = "unchecked" | "checking" | "connected" | "unpaired" | "invalid_code" | "unavailable" | "permission_denied" | "incompatible";
 type State = {
@@ -18,9 +21,16 @@ type State = {
   capturedScript: { id: string; source: string } | null;
   instrument: { provider: string; symbol: string; multiplier: number; quantityStep: number; verifiedAt: number } | null;
   verifyInstrument: () => Promise<void>;
-  reportTab: "Overview" | "Performance" | "Trades" | "Risk" | "Monte Carlo" | "Logs";
+  reportTab: "Overview" | "Performance" | "Trades" | "Risk" | "Monte Carlo" | "Validation" | "Logs";
+  validationResult: ValidationResult | null;
+  validationHistory: Record<string, ValidationResult[]>;
+  isValidating: boolean;
+  validationTab: "Summary" | "OOS" | "Walk Forward" | "Monte Carlo" | "Sensitivity" | "Costs" | "Regimes" | "Diagnostics";
+  setValidationTab: (tab: "Summary" | "OOS" | "Walk Forward" | "Monte Carlo" | "Sensitivity" | "Costs" | "Regimes" | "Diagnostics") => void;
   setSource: (source: string) => void; configure: (patch: Partial<ResearchConfig>) => void; selectScript: (id: string) => void; createScript: (name?: string, source?: string, kind?: "strategy" | "indicator") => void;
   connect: (code?: string) => Promise<void>; save: (name?: string, copy?: boolean) => Promise<void>; deleteScript: () => Promise<void>; run: () => Promise<void>; rerunIndicator: (artifactId: string, params: Record<string, number | string | boolean>) => Promise<void>; cancel: () => Promise<void>; openResult: (id: string) => Promise<void>; analyze: (seed: number, simulations: number) => Promise<void>; reproduceRun: (targetId?: string) => Promise<void>;
+  runValidation: (customConfig?: Partial<ValidationConfig>) => Promise<void>;
+  openValidation: (id: string) => Promise<void>;
 };
 let abort: AbortController | null = null;
 const finished = (job: ResearchJob | null) => !job || ["complete", "failed", "cancelled"].includes(job.stage);
@@ -28,6 +38,8 @@ const finished = (job: ResearchJob | null) => !job || ["complete", "failed", "ca
 export const useResearch = create<State>()(persist((set, get) => ({
   drafts: { [initial.id]: initial }, activeId: initial.id, config: defaultResearchConfig(), params: {}, minimap: false,
   connection: "unchecked", helperVersion: null, error: "", diagnostic: null, job: null, result: null, indicatorResults: {}, archived: [], chartResult: null, selectedTrade: null, reportTab: "Overview",
+  validationResult: null, validationHistory: {}, isValidating: false, validationTab: "Summary",
+  setValidationTab: validationTab => set({ validationTab }),
   capturedScript: null, instrument: null,
   verifyInstrument: async () => {
     const { provider, symbol } = get().config;
@@ -131,8 +143,56 @@ export const useResearch = create<State>()(persist((set, get) => ({
     try { await helper.cancel(job.id); } catch (error) { set({ error: `Cancellation could not be confirmed: ${(error as Error).message}` }); }
   },
   openResult: async id => {
-    try { const result = await helper.result(id); set({ result, chartResult: result, selectedTrade: null, error: "" }); window.dispatchEvent(new Event("zterminal:open-backtester")); }
+    try {
+      const result = await helper.result(id);
+      let validationResult: ValidationResult | null = null;
+      try {
+        const validations = await helper.validationsForRun(id);
+        if (validations && validations.length > 0) {
+          validationResult = validations[0];
+        }
+      } catch {
+        validationResult = get().validationHistory[id]?.[0] ?? null;
+      }
+      set({ result, chartResult: result, selectedTrade: null, validationResult, error: "" });
+      window.dispatchEvent(new Event("zterminal:open-backtester"));
+    }
     catch (error) { set({ error: (error as Error).message }); }
+  },
+  runValidation: async (customConfig) => {
+    const res = get().result;
+    if (!res) {
+      set({ error: "Run a strategy backtest before executing validation." });
+      return;
+    }
+    set({ isValidating: true, error: "" });
+    try {
+      const validation = await runValidationBattery(res, customConfig);
+      try {
+        await helper.saveValidation(validation);
+      } catch {
+        /* Local helper may be offline or in web mode; state is still preserved in store. */
+      }
+      set((s) => ({
+        validationResult: validation,
+        validationHistory: {
+          ...s.validationHistory,
+          [res.id]: [validation, ...(s.validationHistory[res.id] ?? [])],
+        },
+        isValidating: false,
+        reportTab: "Validation",
+      }));
+    } catch (err) {
+      set({ isValidating: false, error: (err as Error).message });
+    }
+  },
+  openValidation: async (id) => {
+    try {
+      const validation = await helper.validation(id);
+      set({ validationResult: validation, reportTab: "Validation", error: "" });
+    } catch (err) {
+      set({ error: (err as Error).message });
+    }
   },
   analyze: async (seed, simulations) => {
     if (!finished(get().job) || !get().result) return;

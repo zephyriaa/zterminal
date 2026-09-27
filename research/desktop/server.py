@@ -200,6 +200,13 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(201, {"id": body["id"]})
                 if method == "POST" and identifier and len(parts) == 4 and parts[3] == "monte-carlo":
                     return self.respond(202, service.controller.create({"operation": "monte_carlo", "result": archive.result(identifier), "simulations": body.get("simulations", 1000), "seed": body.get("seed", 42)}))
+                if method == "GET" and identifier and len(parts) == 4 and parts[3] == "validations":
+                    return self.respond(200, archive.validations_for_run(identifier))
+            if route == "validations":
+                if method == "GET" and identifier:
+                    return self.respond(200, archive.validation(identifier))
+                if method == "POST" and not identifier:
+                    return self.respond(201, archive.save_validation(body))
             if route == "evaluations" and method == "GET" and identifier:
                 return self.respond(200, archive.indicator_evaluation(identifier))
             if route == "legacy":

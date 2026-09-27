@@ -35,9 +35,10 @@ class Archive:
                 CREATE TABLE IF NOT EXISTS artifacts(id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('strategy','indicator')), name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', source TEXT NOT NULL, revision INTEGER NOT NULL, updated INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS artifact_revisions(artifact_id TEXT NOT NULL, revision INTEGER NOT NULL, kind TEXT NOT NULL, source TEXT NOT NULL, hash TEXT NOT NULL, metadata TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(artifact_id, revision));
                 CREATE TABLE IF NOT EXISTS indicator_evaluations(id TEXT PRIMARY KEY, artifact_id TEXT NOT NULL, revision INTEGER NOT NULL, dataset_hash TEXT NOT NULL, input_hash TEXT NOT NULL UNIQUE, result_hash TEXT NOT NULL, created INTEGER NOT NULL, envelope TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS validations(id TEXT PRIMARY KEY, source_run_id TEXT NOT NULL REFERENCES results(id), created INTEGER NOT NULL, config_hash TEXT NOT NULL, envelope TEXT NOT NULL);
                 INSERT OR IGNORE INTO artifacts(id,kind,name,source,revision,updated) SELECT id,'strategy',name,source,revision,updated FROM scripts;
                 INSERT OR IGNORE INTO artifact_revisions(artifact_id,revision,kind,source,hash,metadata,created) SELECT script_id,revision,'strategy',source,hash,'{}',created FROM revisions;
-                PRAGMA user_version=2;
+                PRAGMA user_version=3;
             ''')
 
     @contextmanager
@@ -316,3 +317,37 @@ class Archive:
     def legacy(self):
         with self.connect() as db:
             return [{"id": row["id"], "payload": json.loads(row["payload"]), "imported": row["imported"], "status": "incomplete"} for row in db.execute("SELECT * FROM legacy ORDER BY imported DESC")]
+
+    def save_validation(self, validation):
+        if not isinstance(validation, dict) or validation.get("version") != 1:
+            raise ValueError("Invalid validation envelope")
+        val_id = validation.get("id")
+        source_run_id = validation.get("sourceRunId")
+        created = validation.get("createdAt")
+        provenance = validation.get("provenance", {})
+        config_hash = provenance.get("validationConfigHash", "")
+        if not isinstance(val_id, str) or not isinstance(source_run_id, str) or not isinstance(created, int):
+            raise ValueError("Missing validation identity or timestamps")
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute(
+                "INSERT OR REPLACE INTO validations VALUES(?,?,?,?,?)",
+                (val_id, source_run_id, created, config_hash, encode(validation))
+            )
+            return {"id": val_id}
+
+    def validation(self, val_id):
+        with self.connect() as db:
+            row = db.execute("SELECT envelope FROM validations WHERE id=?", (val_id,)).fetchone()
+            if not row:
+                raise KeyError("Validation not found")
+            return json.loads(row[0])
+
+    def validations_for_run(self, source_run_id):
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT envelope FROM validations WHERE source_run_id=? ORDER BY created DESC",
+                (source_run_id,)
+            ).fetchall()
+            return [json.loads(row["envelope"]) for row in rows]
+

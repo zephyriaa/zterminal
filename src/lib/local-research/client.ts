@@ -1,4 +1,4 @@
-import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest } from "./contracts";
+import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest, type ValidationResult } from "./contracts";
 
 export class HelperError extends Error {
   constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed") { super(message); }
@@ -92,4 +92,7 @@ export const helper = {
   monteCarlo: (id: string, seed: number, simulations: number) => helperRequest<ResearchJob>(`results/${encodeURIComponent(id)}/monte-carlo`, "POST", { seed, simulations }),
   importResult: (result: unknown) => helperRequest<{ id: string }>("results", "POST", result),
   importLegacy: (record: unknown) => helperRequest<{ id: string; status: string; reason: string }>("legacy", "POST", record),
+  validation: (id: string) => helperRequest<ValidationResult>(`validations/${encodeURIComponent(id)}`),
+  validationsForRun: (runId: string) => helperRequest<ValidationResult[]>(`results/${encodeURIComponent(runId)}/validations`),
+  saveValidation: (result: ValidationResult) => helperRequest<{ id: string }>("validations", "POST", result),
 };
