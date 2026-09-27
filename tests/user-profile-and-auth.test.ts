@@ -73,7 +73,7 @@ test("unconfigured auth endpoints return a controlled session and provider respo
   assert.deepEqual(await providers.json(), {});
   const session = await getAuthRoute(new NextRequest("http://localhost:3000/api/auth/session"), context("session"));
   assert.equal(session.status, 200);
-  assert.equal(await session.json(), null);
+  assert.deepEqual(await session.json(), {});
 });
 
 test("Google callback accepts only a verified email and immutable provider identity", async () => {

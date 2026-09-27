@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import styles from "./public-shared.module.css";
 import { PublicMotion } from "./public-motion";
+import { PublicHeaderAccount } from "./public-header-account";
 
 const NAV_LINKS = [
   { href: "/", label: "Product" },
@@ -144,49 +145,7 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
             })}
           </div>
 
-          <Link
-            href="/terminal?account=signin"
-            className={styles.accountCapsule}
-            title="Open ZTerminal account"
-            aria-label="Open ZTerminal account and Google sign-in"
-            onClick={() => setOpen(false)}
-          >
-            <div className={styles.accountAvatar}>
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <span className={styles.syncDot} aria-hidden="true" />
-            </div>
-            <div className={styles.accountMeta}>
-              <span className={styles.accountName}>Account</span>
-              <span className={styles.accountStatus}>Sign in or manage profile</span>
-            </div>
-            <svg
-              className={styles.accountChevron}
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </Link>
+          <PublicHeaderAccount onNavigate={() => setOpen(false)} />
         </nav>
       </header>
     </div>

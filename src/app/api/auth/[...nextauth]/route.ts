@@ -17,9 +17,9 @@ function unavailable() {
 
 function disabledClientResponse(method: "GET" | "POST", nextauth?: string[]) {
   const action = nextauth?.[0];
-  // Keep the local-only terminal quiet: useSession treats a null session and
+  // Keep the local-only terminal quiet: useSession treats an empty session and
   // empty provider list as an unauthenticated state, not an application error.
-  if (method === "GET" && action === "session") return NextResponse.json(null, { headers: { "Cache-Control": "no-store" } });
+  if (method === "GET" && action === "session") return NextResponse.json({}, { headers: { "Cache-Control": "no-store" } });
   if (method === "GET" && action === "providers") return NextResponse.json({}, { headers: { "Cache-Control": "no-store" } });
   if (method === "POST" && action === "_log") return new Response(null, { status: 204 });
   return unavailable();

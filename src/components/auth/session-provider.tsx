@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
 import type { Session } from "next-auth";
 /** Session cookies are HttpOnly; use the server-verified session instead of document.cookie. */
-export function ZTerminalSessionProvider({ children, session }: { children: React.ReactNode; session: Session | null }) {
+export function ZTerminalSessionProvider({ children, session }: { children: React.ReactNode; session?: Session | null }) {
   useEffect(() => {
     const restore = (event: PageTransitionEvent) => {
       if (event.persisted) window.location.reload();

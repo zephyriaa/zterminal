@@ -26,7 +26,8 @@
     "desktop:build": "tauri build",
     "tauri": "tauri",
     "test:terminal": "node scripts/test-terminal-browser.cjs",
-    "test:drafts": "node scripts/test-draft-recovery.cjs"
+    "test:drafts": "node scripts/test-draft-recovery.cjs",
+    "test:account": "node scripts/test-public-account-browser.cjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

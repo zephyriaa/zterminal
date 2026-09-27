@@ -246,6 +246,9 @@
   color: #f1f5f9;
   letter-spacing: -0.01em;
   white-space: nowrap;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .accountStatus {
@@ -255,6 +258,9 @@
   color: #94a3b8;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .accountChevron {
@@ -266,6 +272,120 @@
 .accountCapsule:hover .accountChevron {
   color: #e2e8f0;
   transform: translateY(1px);
+}
+
+.accountChevronOpen {
+  transform: rotate(180deg) !important;
+  color: #e2e8f0;
+}
+
+button.accountCapsule,
+.accountCapsuleBtn {
+  font-family: inherit;
+  outline: none;
+  text-align: left;
+}
+
+.accountCapsuleLoading {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.accountAvatarImg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.accountAvatarInitial {
+  font-family: var(--public-font-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.syncDotOff {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #64748b;
+  box-shadow: 0 0 4px rgba(100, 116, 139, 0.4);
+}
+
+/* Account Dropdown Panel */
+.accountDropdown {
+  min-width: 270px;
+  max-width: 320px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(9, 13, 26, 0.96) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(101, 39, 228, 0.15) !important;
+  color: #e2e8f0 !important;
+  font-family: var(--public-font-sans), sans-serif !important;
+  z-index: 9999;
+}
+
+.accountDropdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.accountDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #cbd5e1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+.accountDropdownItem:hover,
+.accountDropdownItem:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  outline: none;
+}
+
+.accountDropdownItemDanger {
+  color: #f87171;
+}
+
+.accountDropdownItemDanger:hover,
+.accountDropdownItemDanger:focus-visible {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  outline: none;
+}
+
+.accountDropdownSeparator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
 }
 
 .navCta {
@@ -650,6 +770,8 @@
 .heroHeader .accountName { font-size: 13px; font-weight: 450; }
 .heroHeader .accountStatus { font-size: 11px; }
 .heroHeader .syncDot { width: 8px; height: 8px; right: 0; top: 1px; }
+.heroHeader .syncDotOff { width: 8px; height: 8px; right: 0; top: 1px; }
+.heroHeader .accountAvatarInitial { font-size: 14px; }
 .heroHeader .accountChevron { width: 14px; height: 14px; color: #d3d8ef; }
 
 @media (max-width: 1000px) and (min-width: 861px) {

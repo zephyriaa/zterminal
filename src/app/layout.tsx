@@ -4,6 +4,7 @@ import "./globals.css";
 import "@/components/terminal/terminal-glass.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ZTerminalSessionProvider } from "@/components/auth/session-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,7 +62,9 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <ZTerminalSessionProvider>
+            {children}
+          </ZTerminalSessionProvider>
           <Toaster />
         </ThemeProvider>
       </body>
