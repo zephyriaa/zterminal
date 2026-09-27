@@ -20,13 +20,13 @@ const updateProfileSchema = z.object({
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const email = session?.user?.email;
-  if (!email) {
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) {
     return NextResponse.json({ code: "AUTH_REQUIRED", message: "Sign in with a verified Google account to view profile." }, { status: 401 });
   }
 
   const user = await db.user.findUnique({
-    where: { email },
+    where: { id: userId },
     select: { id: true, email: true, name: true, image: true, createdAt: true, updatedAt: true },
   });
 
@@ -39,8 +39,8 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   const session = await getServerSession(authOptions);
-  const email = session?.user?.email;
-  if (!email) {
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) {
     return NextResponse.json({ code: "AUTH_REQUIRED", message: "Sign in with a verified Google account to update profile." }, { status: 401 });
   }
 
@@ -59,15 +59,9 @@ export async function PATCH(request: NextRequest) {
     dataToUpdate.image = parsed.data.image || null;
   }
 
-  const updatedUser = await db.user.upsert({
-    where: { email },
-    update: dataToUpdate,
-    create: {
-      email,
-      name: parsed.data.name ?? "ZTerminal Quantitative Analyst",
-      image: parsed.data.image ?? "https://lh3.googleusercontent.com/a/default-user=s96-c",
-      emailVerified: new Date(),
-    },
+  const updatedUser = await db.user.update({
+    where: { id: userId },
+    data: dataToUpdate,
     select: { id: true, email: true, name: true, image: true, updatedAt: true },
   });
 

@@ -27,13 +27,9 @@ export class WorkspaceAccessError extends Error {
 
 export async function authenticatedWorkspaceOwner() {
   const session = await getServerSession(authOptions);
-  const email = session?.user?.email;
-  if (!email) return null;
-  return db.user.upsert({
-    where: { email },
-    update: { name: session.user?.name ?? undefined, image: session.user?.image ?? undefined },
-    create: { email, name: session.user?.name ?? "Research Analyst", image: session.user?.image ?? null, emailVerified: new Date() },
-  });
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return null;
+  return db.user.findUnique({ where: { id: userId } });
 }
 
 function serializeSnapshot(payload: WorkspacePayload) {
@@ -49,25 +45,23 @@ export async function listWorkspaces(ownerId: string) {
 }
 
 export async function saveWorkspace(ownerId: string, payload: WorkspacePayload) {
-  const existing = await db.workspace.findUnique({ where: { id: payload.id }, select: { id: true, ownerId: true } });
-  if (existing && existing.ownerId !== ownerId) throw new WorkspaceAccessError("WORKSPACE_FORBIDDEN", "A cloud workspace belongs to another account.");
-  const workspace = existing
-    ? await db.workspace.update({ where: { id: existing.id }, data: { name: payload.name } })
-    : await db.workspace.create({ data: { id: payload.id, ownerId, name: payload.name } });
-  const cloudState = await db.cloudWorkspaceState.upsert({
-    where: { workspaceId: workspace.id },
-    create: { workspaceId: workspace.id, schemaVersion: 1, payload: serializeSnapshot(payload) },
-    update: { schemaVersion: 1, payload: serializeSnapshot(payload) },
-    select: { schemaVersion: true, updatedAt: true },
+  return db.$transaction(async (tx) => {
+    const existing = await tx.workspace.findUnique({ where: { id: payload.id }, select: { ownerId: true } });
+    if (existing && existing.ownerId !== ownerId) throw new WorkspaceAccessError("WORKSPACE_FORBIDDEN", "A cloud workspace belongs to another account.");
+    const workspace = existing
+      ? await tx.workspace.update({ where: { id: payload.id, ownerId }, data: { name: payload.name } })
+      : await tx.workspace.create({ data: { id: payload.id, ownerId, name: payload.name } });
+    const cloudState = await tx.cloudWorkspaceState.upsert({
+      where: { workspaceId: workspace.id },
+      create: { workspaceId: workspace.id, schemaVersion: 1, payload: serializeSnapshot(payload) },
+      update: { schemaVersion: 1, payload: serializeSnapshot(payload) },
+      select: { schemaVersion: true, updatedAt: true },
+    });
+    return { workspace: { id: workspace.id, name: workspace.name, updatedAt: workspace.updatedAt, cloudState }, created: !existing };
   });
-  return { workspace: { id: workspace.id, name: workspace.name, updatedAt: workspace.updatedAt, cloudState }, created: !existing };
 }
 
 export async function deleteWorkspace(ownerId: string, id: string) {
-  const existing = await db.workspace.findUnique({ where: { id }, select: { id: true, ownerId: true } });
-  if (!existing || existing.ownerId !== ownerId) throw new WorkspaceAccessError("NOT_FOUND", "Workspace not found or unauthorized");
-  await db.$transaction([
-    db.cloudWorkspaceState.deleteMany({ where: { workspaceId: id } }),
-    db.workspace.delete({ where: { id } }),
-  ]);
+  const result = await db.workspace.deleteMany({ where: { id, ownerId } });
+  if (!result.count) throw new WorkspaceAccessError("NOT_FOUND", "Workspace not found or unauthorized");
 }

@@ -73,7 +73,8 @@ jobs:
       - name: Build frontend for Cloudflare
         run: npm run cf:build
         env:
-          DATABASE_URL: "file:./db/custom.db"
+          # The build generates a PostgreSQL client; no live connection is made.
+          DATABASE_URL: "prisma://accelerate.prisma-data.net/?api_key=build-placeholder"
           NODE_ENV: production
 
       - name: Deploy to Cloudflare
@@ -82,7 +83,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
-        continue-on-error: true
 
   deploy-backend-vps:
     name: Update Backend Compute (OCI / VPS)

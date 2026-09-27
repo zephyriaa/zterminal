@@ -6,6 +6,7 @@ export type AuthRuntime = {
   googleClientId?: string;
   googleClientSecret?: string;
   databaseUrl?: string;
+  siteUrl?: string;
   durableDatabaseConfigured: boolean;
   googleOAuthConfigured: boolean;
   authConfigured: boolean;
@@ -26,13 +27,25 @@ export function resolveAuthRuntime(environment: AuthEnvironment = process.env): 
   const googleClientSecret = value(environment, "GOOGLE_CLIENT_SECRET");
   const databaseUrl = value(environment, "DATABASE_URL");
   const isProduction = environment.NODE_ENV === "production";
-  const durableDatabaseConfigured = Boolean(databaseUrl && /^postgres(?:ql)?:\/\//i.test(databaseUrl));
+  const siteUrl = value(environment, "NEXTAUTH_URL") ?? (isProduction ? undefined : "http://localhost:3000");
+  let validSiteUrl = false;
+  try {
+    if (siteUrl) {
+      const parsed = new URL(siteUrl);
+      validSiteUrl = parsed.origin === siteUrl.replace(/\/$/, "") &&
+        (parsed.protocol === "https:" || (!isProduction && parsed.hostname === "localhost"));
+    }
+  } catch { /* Invalid public origin is reported in missing. */ }
+  const durableDatabaseConfigured = Boolean(databaseUrl && /^(?:postgres(?:ql)?|prisma):\/\//i.test(databaseUrl));
+  const edgeDatabaseCompatible = typeof globalThis.caches === "undefined" || Boolean(databaseUrl?.startsWith("prisma://"));
   const googleOAuthConfigured = Boolean(googleClientId && googleClientSecret);
   const missing = [
     !sessionSecret && "NEXTAUTH_SECRET (or JWT_SECRET)",
     !googleClientId && "GOOGLE_CLIENT_ID",
     !googleClientSecret && "GOOGLE_CLIENT_SECRET",
-    !durableDatabaseConfigured && "a PostgreSQL DATABASE_URL",
+    isProduction && !validSiteUrl && "NEXTAUTH_URL (public HTTPS origin)",
+    isProduction && !durableDatabaseConfigured && "a PostgreSQL DATABASE_URL",
+    isProduction && !edgeDatabaseCompatible && "a Prisma Accelerate DATABASE_URL for Cloudflare Workers",
   ].filter((entry): entry is string => Boolean(entry));
   const authConfigured = missing.length === 0;
 
@@ -42,6 +55,7 @@ export function resolveAuthRuntime(environment: AuthEnvironment = process.env): 
     googleClientId,
     googleClientSecret,
     databaseUrl,
+    siteUrl,
     durableDatabaseConfigured,
     googleOAuthConfigured,
     authConfigured,

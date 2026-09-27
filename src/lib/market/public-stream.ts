@@ -2,16 +2,18 @@
 
 import { BinanceDepthSynchronizer, type BinanceDepth, type BinanceSnapshot } from "./public-stream/binance-depth";
 import { LocalOrderBook } from "./public-stream/local-book";
-import type { DepthEvent, DepthLevel, DerivativesEvent, FeedHealth, LiquidationEvent, QuoteEvent, TradeEvent } from "./types";
+import { OKXDepthSynchronizer, type OKXBookPayload } from "./adapters/okx-l2-adapter";
+import { normalizeOkxInstrument } from "./okx";
+import type { DataStatus, DepthEvent, DepthLevel, DerivativesEvent, FeedHealth, LiquidationEvent, QuoteEvent, TradeEvent } from "./types";
 
 export type StreamEvent = TradeEvent | QuoteEvent | DepthEvent | DerivativesEvent | LiquidationEvent;
-export type StreamProvider = "binance" | "gateio" | "bybit" | "coinbase";
+export type StreamProvider = "binance" | "gateio" | "bybit" | "coinbase" | "okx";
 
 export interface StreamState {
   state: string;
   provider: StreamProvider;
   environment: "live";
-  dataStatus: "LIVE" | "STALE" | "UNAVAILABLE" | "DISCONNECTED";
+  dataStatus: "LIVE" | "STALE" | "UNAVAILABLE" | "DISCONNECTED" | "DEGRADED";
   reason?: string;
   at: number;
 }
@@ -26,6 +28,7 @@ const ENDPOINTS: Record<StreamProvider, string> = {
   gateio: "wss://fx-ws.gateio.ws/v4/ws/usdt",
   bybit: "wss://stream.bybit.com/v5/public/linear",
   coinbase: "wss://advanced-trade-ws.coinbase.com",
+  okx: "wss://ws.okx.com:8443/ws/v5/public",
 };
 
 const BINANCE_REST_DEPTH_URL =
@@ -40,6 +43,8 @@ function safeNumber(value: unknown): number {
 export function normalizeSymbolForProvider(symbol: string, provider: StreamProvider): string {
   const clean = symbol.replace(/[^a-zA-Z0-9_]/g, "").toUpperCase();
   switch (provider) {
+    case "okx":
+      return normalizeOkxInstrument(clean);
     case "gateio":
       return clean.includes("_") ? clean : `${clean.replace(/USDT$/, "")}_USDT`;
     case "bybit":
@@ -63,6 +68,7 @@ export class PublicMarketDataProvider {
   private listeners = new Map<string, Set<StreamListener>>();
   private stateListeners = new Set<(state: StreamState) => void>();
   private binanceSyncs = new Map<string, BinanceDepthSynchronizer>();
+  private okxSyncs = new Map<string, OKXDepthSynchronizer>();
   private fetchingSnapshots = new Set<string>();
   private snapshotRetryTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private snapshotNextAllowedAt = new Map<string, number>();
@@ -90,6 +96,7 @@ export class PublicMarketDataProvider {
     this.provider = provider;
     this.cleanupSocket();
     this.binanceSyncs.clear();
+    this.okxSyncs.clear();
     this.gateBooks.clear();
     this.bybitBooks.clear();
     this.coinbaseBooks.clear();
@@ -134,6 +141,7 @@ export class PublicMarketDataProvider {
       if (set.size === 0) {
         this.listeners.delete(normalized);
         this.binanceSyncs.delete(normalized);
+        this.okxSyncs.delete(normalized);
         this.gateBooks.delete(normalized);
         this.bybitBooks.delete(normalized);
         this.coinbaseBooks.delete(normalized);
@@ -213,8 +221,12 @@ export class PublicMarketDataProvider {
 
       socket.onmessage = ({ data }) => {
         this.lastMessageAt = Date.now();
+        const text = String(data).trim();
+        if (text === "pong" || text === "PONG") {
+          return;
+        }
         try {
-          const parsed = JSON.parse(String(data));
+          const parsed = JSON.parse(text);
           this.handleMessage(parsed);
         } catch (error) {
           this.announce(
@@ -233,6 +245,7 @@ export class PublicMarketDataProvider {
         this.socket = null;
         this.stopWatchdog();
         this.snapshotCache.clear();
+        this.okxSyncs.clear();
         this.bybitBooks.clear();
         this.coinbaseBooks.clear();
 
@@ -303,8 +316,13 @@ export class PublicMarketDataProvider {
     this.stopWatchdog();
     this.watchdogTimer = setInterval(() => {
       const now = Date.now();
-      if (this.socket && this.socket.readyState === WebSocket.OPEN && this.listeners.size > 0) {
-        if (now - this.lastMessageAt > 20_000) {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        if (this.provider === "okx") {
+          try {
+            this.socket.send("ping");
+          } catch {}
+        }
+        if (this.listeners.size > 0 && now - this.lastMessageAt > 20_000) {
           this.announce("stale", "STALE", "No market frames received for 20s; triggering resync");
           this.socket.close();
         }
@@ -367,6 +385,18 @@ export class PublicMarketDataProvider {
       for (const channel of ["ticker", "level2"]) {
         this.socket.send(JSON.stringify({ type, product_ids: [symbol], channel }));
       }
+    } else if (this.provider === "okx") {
+      const op = action === "SUBSCRIBE" ? "subscribe" : "unsubscribe";
+      this.socket.send(
+        JSON.stringify({
+          op,
+          args: [
+            { channel: "trades", instId: symbol },
+            { channel: "tickers", instId: symbol },
+            { channel: "books", instId: symbol },
+          ],
+        })
+      );
     }
   }
 
@@ -538,6 +568,8 @@ export class PublicMarketDataProvider {
         this.handleBybitMessage(message);
       } else if (this.provider === "coinbase") {
         this.handleCoinbaseMessage(message);
+      } else if (this.provider === "okx") {
+        this.handleOkxMessage(message);
       }
     } catch (error) {
       // Exchanges occasionally send control/error frames with missing numeric fields.
@@ -859,7 +891,89 @@ export class PublicMarketDataProvider {
     }
   }
 
-  private emitDepth(symbol: string, provider: "bybit" | "coinbase", exchange: "BYBIT" | "COINBASE", book: LocalOrderBook, sequence: number) {
+  private handleOkxMessage(message: Record<string, unknown>) {
+    if (message.event === "error") {
+      this.announce("degraded", "UNAVAILABLE", `OKX error: ${String(message.msg ?? "unknown error")}`);
+      return;
+    }
+
+    const arg = message.arg as Record<string, unknown> | undefined;
+    const channel = String(arg?.channel ?? "");
+    const symbol = String(arg?.instId ?? "");
+    const data = Array.isArray(message.data) ? (message.data as Record<string, unknown>[]) : [];
+
+    if (channel === "trades" && data.length > 0) {
+      for (const t of data) {
+        const px = safeNumber(t.px);
+        const sz = safeNumber(t.sz);
+        this.emit(symbol, {
+          type: "trade",
+          provider: "okx",
+          environment: "live",
+          symbol,
+          exchange: "OKX",
+          timestamp: safeNumber(t.ts),
+          sequence: safeNumber(t.tradeId ?? Date.now()),
+          price: px,
+          quantity: Math.abs(sz),
+          side: String(t.side).toLowerCase() === "buy" ? "buy" : "sell",
+        });
+      }
+      return;
+    }
+
+    if (channel === "tickers" && data.length > 0) {
+      const ticker = data[0];
+      this.emit(symbol, {
+        type: "quote",
+        provider: "okx",
+        environment: "live",
+        symbol,
+        exchange: "OKX",
+        timestamp: safeNumber(ticker.ts ?? Date.now()),
+        sequence: safeNumber(ticker.ts ?? Date.now()),
+        bid: safeNumber(ticker.bidPx),
+        ask: safeNumber(ticker.askPx),
+        bidSize: safeNumber(ticker.bidSz ?? 1),
+        askSize: safeNumber(ticker.askSz ?? 1),
+      });
+      return;
+    }
+
+    if (channel === "books" || channel === "books5") {
+      let sync = this.okxSyncs.get(symbol);
+      if (!sync) {
+        sync = new OKXDepthSynchronizer(symbol);
+        this.okxSyncs.set(symbol, sync);
+      }
+
+      const ok = sync.handleMessage(message as unknown as OKXBookPayload);
+      if (ok && sync.status === "LIVE") {
+        this.emit(symbol, {
+          type: "depth",
+          provider: "okx",
+          environment: "live",
+          symbol,
+          exchange: "OKX",
+          timestamp: Date.now(),
+          sequence: Number(data[0]?.seqId ?? Date.now()),
+          levels: [...sync.book.top("buy", 100), ...sync.book.top("sell", 100)],
+        });
+      } else if (sync.status === "ERROR") {
+        this.announce("syncing", "DEGRADED", `OKX ${symbol} checksum or sequence gap detected; resyncing`);
+        this.okxSyncs.delete(symbol);
+        this.sendSubscription(symbol, "UNSUBSCRIBE");
+        setTimeout(() => {
+          if (this.listeners.has(symbol)) {
+            this.sendSubscription(symbol, "SUBSCRIBE");
+          }
+        }, 1000);
+      }
+      return;
+    }
+  }
+
+  private emitDepth(symbol: string, provider: "bybit" | "coinbase" | "okx", exchange: "BYBIT" | "COINBASE" | "OKX", book: LocalOrderBook, sequence: number) {
     this.emit(symbol, {
       type: "depth", provider, environment: "live", symbol, exchange,
       timestamp: Date.now(), sequence,

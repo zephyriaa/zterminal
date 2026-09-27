@@ -1,5 +1,11 @@
 # Deployment Guide
 
+> The proxy/Railway plan below is historical and does not describe the current
+> OpenNext Worker in `wrangler.jsonc`. For authentication deployment use
+> [AUTH_AUDIT.md](AUTH_AUDIT.md), including its exact origin, PostgreSQL client,
+> and Google callback requirements. Do not deploy the SQLite instructions below
+> as a cloud-auth database.
+
 ## Production hosting: Cloudflare edge + persistent Node backend
 
 ZTerminal cannot currently be exported as a static Cloudflare Pages site. It is

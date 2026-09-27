@@ -6,8 +6,8 @@
   "build": {
     "beforeDevCommand": null,
     "beforeBuildCommand": null,
-    "devUrl": "http://localhost:3000/terminal",
-    "frontendDist": "https://zterminal.onrender.com/terminal"
+    "devUrl": "http://localhost:3000/desktop/launch",
+    "frontendDist": "https://zterminal.onrender.com/desktop/launch"
   },
   "app": {
     "windows": [

@@ -144,7 +144,7 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
             })}
           </div>
 
-          {/* Liquid Glass Account & Workspace Synced Capsule matching reference */}
+          {/* Public entry point; account state is resolved in the workspace. */}
           <Link
             href="/terminal"
             className={styles.accountCapsule}
@@ -169,8 +169,8 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
               <span className={styles.syncDot} aria-hidden="true" />
             </div>
             <div className={styles.accountMeta}>
-              <span className={styles.accountName}>ZTerminal Account</span>
-              <span className={styles.accountStatus}>Workspace synced</span>
+              <span className={styles.accountName}>ZTerminal Workspace</span>
+              <span className={styles.accountStatus}>Open workspace</span>
             </div>
             <svg
               className={styles.accountChevron}

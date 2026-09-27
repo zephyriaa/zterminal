@@ -68,13 +68,10 @@ export function AccountPanel({
     const urlParams = new URLSearchParams(window.location.search);
     const err = urlParams.get("error");
     if (!err) return null;
-    if (err === "OAuthCallback" || err === "OAuthSignin") {
-      return "Google OAuth configuration or redirect mismatch. Ensure authorized callback URL is registered in Google Cloud Console.";
-    }
-    if (err === "AccessDenied") {
-      return "Sign-in cancelled or Google account permission was denied.";
-    }
-    return `Authentication error: ${err}`;
+    if (process.env.NODE_ENV !== "production") console.error("Google sign-in failed", { code: err });
+    if (err === "OAuthAccountNotLinked") return "This email is already linked to another sign-in method. Sign in using that method first.";
+    if (err === "AccessDenied") return "Google sign-in was cancelled or permission was denied.";
+    return "We couldn't complete Google sign-in. Please try again.";
   });
 
   // Profile Edit State
@@ -135,9 +132,11 @@ export function AccountPanel({
     setSigningIn(true);
     setAuthError(null);
     try {
-      await signIn("google", { callbackUrl: "/terminal" });
+      const result = await signIn("google", { callbackUrl: "/terminal" });
+      if (result?.error) throw new Error(result.error);
     } catch (e) {
-      setAuthError(e instanceof Error ? e.message : "Failed to initiate Google sign-in.");
+      if (process.env.NODE_ENV !== "production") console.error("Google sign-in could not start", { code: e instanceof Error ? e.message : "unknown" });
+      setAuthError("We couldn't start Google sign-in. Please try again.");
       setSigningIn(false);
     }
   };
@@ -189,11 +188,8 @@ export function AccountPanel({
         throw new Error(data.message || data.errors?.[0]?.message || "Failed to update profile");
       }
 
-      // Update NextAuth client-side session immediately
-      await updateSession({
-        name: trimmedName,
-        image: trimmedImage,
-      });
+      // The server session callback re-reads the adapter user record.
+      await updateSession();
 
       setProfileSuccessMsg("Profile updated successfully");
       setTimeout(() => {
@@ -537,7 +533,7 @@ export function AccountPanel({
             <div>
               <b className="text-xs font-semibold text-foreground">Sign in with Google</b>
               <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                Connect your verified Google account to persist named workspaces, custom indicators, and quantitative profiles securely across devices.
+                Connect your verified Google account to sync named workspaces across devices.
               </p>
             </div>
           </div>
@@ -628,7 +624,7 @@ export function AccountPanel({
         <b>{authenticated ? "Google Account Verified" : "No trading account connected"}</b>
         <p>
           {authenticated
-            ? "Your identity is authenticated via Google. Named workspaces, custom indicators, and profiles synchronize safely across devices; no broker, order, or execution authority is attached."
+            ? "Your identity is authenticated via Google. Named workspaces can sync across devices; no broker, order, or execution authority is attached."
             : "Google sign-in is used only for workspace identity and synchronization. It never grants brokerage, balance, position, or order permissions."}
         </p>
       </div>

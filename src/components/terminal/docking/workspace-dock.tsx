@@ -5,6 +5,7 @@ import { DockviewReact, type DockviewReadyEvent, type IDockviewPanelProps } from
 import "dockview-react/dist/styles/dockview.css";
 import { ReferenceChartWorkspace } from "../reference-chart-workspace";
 import { OrderbookPanel } from "./orderbook-panel";
+import { GexSurfacePanel } from "./gex-surface-panel";
 import { useWorkspaceDock } from "./workspace-dock-controller";
 import { initializeWorkspace, persistWorkspace, PANEL_DEFINITIONS, isDockPanelId, type DockPanelId } from "@/lib/workspace-dock-layout";
 const loading = () => <p className="p-4 text-xs" role="status">Opening tool…</p>;
@@ -14,7 +15,7 @@ const Indicators = dynamic(() => import("./chart-tools").then(m => m.DockIndicat
 const ChartSettings = dynamic(() => import("./chart-tools").then(m => m.DockChartSettings), { loading });
 const Calendar = dynamic(() => import("../economic-calendar/economic-calendar-table").then(m => m.EconomicCalendarTable), { loading });
 const Settings = dynamic(() => import("../terminal-preferences").then(m => m.TerminalPreferences), { loading });
-const content = { chart: ReferenceChartWorkspace, orderbook: OrderbookPanel, research: Research, strategy: Strategy, indicators: Indicators, calendar: Calendar, settings: Settings, "chart-settings": ChartSettings };
+const content = { chart: ReferenceChartWorkspace, orderbook: OrderbookPanel, gex: GexSurfacePanel, research: Research, strategy: Strategy, indicators: Indicators, calendar: Calendar, settings: Settings, "chart-settings": ChartSettings };
 const components = Object.fromEntries(Object.entries(content).map(([id, Panel]) => [id, function DockPanel({ api }: IDockviewPanelProps) {
   const [opened, setOpened] = useState(api.isVisible);
   useEffect(() => { if (api.isVisible) setOpened(true); const listener = api.onDidVisibilityChange(({ isVisible }) => { if (isVisible) setOpened(true); }); return () => listener.dispose(); }, [api]);

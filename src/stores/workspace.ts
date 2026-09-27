@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
 import type { DataStatus, Environment, ProviderId } from "@/lib/market/types";
 
 export type ChartTimezone = "America/New_York" | "UTC" | "Europe/London" | "Asia/Tokyo" | "Asia/Dubai" | "local";
@@ -61,6 +62,9 @@ interface WorkspaceState {
   setConnection: (c: Partial<WorkspaceState["connection"]>) => void;
 
   workspaces: SavedWorkspace[];
+  cloudWorkspaces: SavedWorkspace[];
+  cloudAuthenticated: boolean;
+  setCloudAuthenticated: (authenticated: boolean) => void;
   saveWorkspace: (name: string) => void;
   loadWorkspace: (id: string) => void;
   mergeCloudWorkspaces: (workspaces: SavedWorkspace[]) => void;
@@ -130,6 +134,14 @@ export const useWorkspace = create<WorkspaceState>()(
         set((s) => ({ connection: { ...s.connection, ...c } })),
 
       workspaces: [],
+      cloudWorkspaces: [],
+      cloudAuthenticated: false,
+      setCloudAuthenticated: (authenticated) => set((state) => ({
+        cloudAuthenticated: authenticated,
+        cloudWorkspaces: authenticated ? state.cloudWorkspaces : [],
+        activeWorkspaceId: !authenticated && state.cloudWorkspaces.some((workspace) => workspace.id === state.activeWorkspaceId)
+          ? "local-default" : state.activeWorkspaceId,
+      })),
       saveWorkspace: (name) => {
         const s = get();
         const ws: SavedWorkspace = {
@@ -142,16 +154,26 @@ export const useWorkspace = create<WorkspaceState>()(
           createdAt: Date.now(),
         };
         set({ workspaces: [...s.workspaces, ws] });
-        // The server still returns 503 until verified Google OAuth and durable storage are enabled.
-        // Fail silently here so local/offline workspace saving never pretends a cloud write succeeded.
+        if (!s.cloudAuthenticated) return;
+        // Attempt cloud sync; update status store so the UI reflects success/failure.
         void fetch("/api/cloud/workspaces", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(ws),
-        }).catch(() => undefined);
+        })
+          .then((res) => {
+            if (res.ok) {
+              useCloudSyncStatus.setState({ status: "Workspace saved to cloud" });
+            } else {
+              useCloudSyncStatus.setState({ status: "Cloud save failed · saved locally" });
+            }
+          })
+          .catch(() => {
+            useCloudSyncStatus.setState({ status: "Cloud unreachable · saved locally" });
+          });
       },
       loadWorkspace: (id) => {
-        const ws = get().workspaces.find((w) => w.id === id);
+        const ws = [...get().workspaces, ...get().cloudWorkspaces].find((w) => w.id === id);
         if (!ws) return;
         set({
           activeWorkspaceId: ws.id,
@@ -162,10 +184,7 @@ export const useWorkspace = create<WorkspaceState>()(
         });
       },
       mergeCloudWorkspaces: (cloudWorkspaces) => {
-        const local = get().workspaces;
-        const merged = new Map(local.map((workspace) => [workspace.id, workspace]));
-        for (const workspace of cloudWorkspaces) merged.set(workspace.id, workspace);
-        set({ workspaces: [...merged.values()].sort((a, b) => b.createdAt - a.createdAt) });
+        if (get().cloudAuthenticated) set({ cloudWorkspaces });
       },
 
       lastBacktestId: null,

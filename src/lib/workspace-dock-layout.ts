@@ -4,6 +4,7 @@ export const WORKSPACE_LAYOUT_KEY = "zt_workspace_layout_v2";
 export const PANEL_DEFINITIONS = {
   chart: { component: "chart", title: "Primary Chart" },
   orderbook: { component: "orderbook", title: "Order Book / Context" },
+  gex: { component: "gex", title: "Deribit GEX Surface" },
   research: { component: "research", title: "Research Report" },
   strategy: { component: "strategy", title: "Python Strategy" },
   indicators: { component: "indicators", title: "Indicators" },

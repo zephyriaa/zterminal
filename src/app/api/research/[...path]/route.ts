@@ -5,6 +5,15 @@ export const dynamic = "force-dynamic";
 type RouteContext = { params: Promise<{ path: string[] }> };
 
 async function proxy(request: NextRequest, context: RouteContext) {
+  const { path } = await context.params;
+  // Only stateless source inspection may cross the public proxy. The upstream
+  // queue accepts client-chosen workspace IDs and exposes jobs by guessed ID.
+  if (request.method !== "POST" || !["artifacts/validate", "pine/convert"].includes(path.join("/"))) {
+    return NextResponse.json({
+      code: "RESEARCH_JOBS_UNAVAILABLE",
+      error: "Cloud research jobs are unavailable until account ownership is enforced by the research service.",
+    }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
   const base = process.env.RESEARCH_API_URL;
   if (!base) {
     return NextResponse.json({
@@ -14,7 +23,6 @@ async function proxy(request: NextRequest, context: RouteContext) {
     }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 
-  const { path } = await context.params;
   const upstream = new URL(`/v1/${path.join("/")}`, base);
   upstream.search = new URL(request.url).search;
   try {
@@ -24,7 +32,7 @@ async function proxy(request: NextRequest, context: RouteContext) {
         "content-type": request.headers.get("content-type") ?? "application/json",
         "x-zterminal-origin": "terminal-web",
       },
-      body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.text(),
+      body: await request.text(),
       cache: "no-store",
     });
     return new NextResponse(await response.arrayBuffer(), {

@@ -6,10 +6,11 @@ import os
 import platform
 import time
 from typing import Any, Dict, List
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
 try:
+    from .auth import is_service_authorized
     from .models import (
         CreateBacktestJobRequest,
         JobResponse,
@@ -18,6 +19,7 @@ try:
     )
     from .queue import JobQueueManager
 except ImportError:
+    from api.auth import is_service_authorized
     from api.models import (
         CreateBacktestJobRequest,
         JobResponse,
@@ -34,13 +36,22 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in os.getenv("ALLOWED_ORIGIN", "http://localhost:3000").split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 queue_mgr = JobQueueManager()
+
+
+def require_research_service(authorization: str | None = Header(default=None)) -> None:
+    """Deny direct browser access to the legacy queue until owner-scoped jobs exist."""
+    expected = os.getenv("RESEARCH_SERVICE_SECRET")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Research jobs are not configured")
+    if not is_service_authorized(authorization, expected):
+        raise HTTPException(status_code=401, detail="Research service authorization required")
 
 
 @app.get("/health", response_model=SystemHealthResponse)
@@ -97,7 +108,7 @@ def validate_artifact(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-@app.post("/v1/jobs", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
+@app.post("/v1/jobs", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(require_research_service)])
 def create_job(request: CreateBacktestJobRequest) -> JobResponse:
     job_id = queue_mgr.enqueue(request.model_dump())
     job = queue_mgr.get_job(job_id)
@@ -114,7 +125,7 @@ def create_job(request: CreateBacktestJobRequest) -> JobResponse:
     )
 
 
-@app.get("/v1/jobs/{job_id}", response_model=Dict[str, Any])
+@app.get("/v1/jobs/{job_id}", response_model=Dict[str, Any], dependencies=[Depends(require_research_service)])
 def get_job(job_id: str) -> Dict[str, Any]:
     job = queue_mgr.get_job(job_id)
     if not job:
@@ -122,7 +133,7 @@ def get_job(job_id: str) -> Dict[str, Any]:
     return job
 
 
-@app.post("/v1/jobs/{job_id}/cancel", response_model=Dict[str, Any])
+@app.post("/v1/jobs/{job_id}/cancel", response_model=Dict[str, Any], dependencies=[Depends(require_research_service)])
 def cancel_job(job_id: str) -> Dict[str, Any]:
     success = queue_mgr.cancel_job(job_id)
     if not success:

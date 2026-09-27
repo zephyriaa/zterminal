@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import NextAuth from "next-auth";
-import { authOptions, googleSignInConfigured, requireAuthConfiguration } from "@/lib/auth";
+import { authOptions, googleSignInConfigured } from "@/lib/auth";
 
 const handler = NextAuth(authOptions);
 type AuthRouteContext = { params: Promise<{ nextauth?: string[] }> };
@@ -26,14 +26,12 @@ function disabledClientResponse(method: "GET" | "POST", nextauth?: string[]) {
 }
 
 export async function GET(request: NextRequest, context: AuthRouteContext) {
-  requireAuthConfiguration();
   const params = await context.params;
   if (!googleSignInConfigured) return disabledClientResponse("GET", params.nextauth);
   return handler(request, { params });
 }
 
 export async function POST(request: NextRequest, context: AuthRouteContext) {
-  requireAuthConfiguration();
   const params = await context.params;
   if (!googleSignInConfigured) return disabledClientResponse("POST", params.nextauth);
   return handler(request, { params });

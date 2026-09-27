@@ -40,8 +40,10 @@ function parseWorkspace(entry: NonNullable<CloudWorkspaceResponse["workspaces"]>
 export function CloudSyncBridge() {
   const { status } = useSession();
   const mergeCloudWorkspaces = useWorkspace((state) => state.mergeCloudWorkspaces);
+  const setCloudAuthenticated = useWorkspace((state) => state.setCloudAuthenticated);
 
   useEffect(() => {
+    setCloudAuthenticated(status === "authenticated");
     if (status !== "authenticated") { useCloudSyncStatus.setState({ status: "Local workspace" }); return; }
     useCloudSyncStatus.setState({ status: "Syncing workspaces…" });
     let cancelled = false;
@@ -59,7 +61,7 @@ export function CloudSyncBridge() {
     return () => {
       cancelled = true;
     };
-  }, [mergeCloudWorkspaces, status]);
+  }, [mergeCloudWorkspaces, setCloudAuthenticated, status]);
 
   return null;
 }
