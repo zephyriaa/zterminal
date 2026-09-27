@@ -36,8 +36,7 @@ export function resolveAuthRuntime(environment: AuthEnvironment = process.env): 
         (parsed.protocol === "https:" || (!isProduction && parsed.hostname === "localhost"));
     }
   } catch { /* Invalid public origin is reported in missing. */ }
-  const durableDatabaseConfigured = Boolean(databaseUrl && /^(?:postgres(?:ql)?|prisma):\/\//i.test(databaseUrl));
-  const edgeDatabaseCompatible = typeof globalThis.caches === "undefined" || Boolean(databaseUrl?.startsWith("prisma://"));
+  const durableDatabaseConfigured = Boolean(databaseUrl && /^postgres(?:ql)?:\/\//i.test(databaseUrl));
   const googleOAuthConfigured = Boolean(googleClientId && googleClientSecret);
   const missing = [
     !sessionSecret && "NEXTAUTH_SECRET (or JWT_SECRET)",
@@ -45,7 +44,6 @@ export function resolveAuthRuntime(environment: AuthEnvironment = process.env): 
     !googleClientSecret && "GOOGLE_CLIENT_SECRET",
     isProduction && !validSiteUrl && "NEXTAUTH_URL (public HTTPS origin)",
     isProduction && !durableDatabaseConfigured && "a PostgreSQL DATABASE_URL",
-    isProduction && !edgeDatabaseCompatible && "a Prisma Accelerate DATABASE_URL for Cloudflare Workers",
   ].filter((entry): entry is string => Boolean(entry));
   const authConfigured = missing.length === 0;
 

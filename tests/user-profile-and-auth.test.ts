@@ -31,7 +31,7 @@ test("Google identity is exposed only when the full production boundary is confi
   assert.equal(complete.cloudSyncConfigured, true);
   assert.doesNotThrow(() => requireProductionAuthRuntime(complete));
 
-  // Prisma Accelerate proxy URLs are also valid durable storage for edge deployments
+  // A proxy URL is not usable by the PostgreSQL driver adapter.
   const accelerate = resolveAuthRuntime({
     NODE_ENV: "production",
     NEXTAUTH_SECRET: "test-secret",
@@ -40,9 +40,9 @@ test("Google identity is exposed only when the full production boundary is confi
     NEXTAUTH_URL: "https://zterminal.example",
     DATABASE_URL: "prisma://accelerate.prisma-data.net/?api_key=test_key",
   });
-  assert.equal(accelerate.authConfigured, true);
-  assert.equal(accelerate.durableDatabaseConfigured, true);
-  assert.equal(accelerate.cloudSyncConfigured, true);
+  assert.equal(accelerate.authConfigured, false);
+  assert.equal(accelerate.durableDatabaseConfigured, false);
+  assert.equal(accelerate.cloudSyncConfigured, false);
 
   const invalidOrigin = resolveAuthRuntime({
     NODE_ENV: "production", NEXTAUTH_SECRET: "test-secret", GOOGLE_CLIENT_ID: "id",

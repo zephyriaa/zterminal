@@ -1,11 +1,11 @@
 import { PrismaClient } from "@prisma/client";
-import { withAccelerate } from "@prisma/extension-accelerate";
+import { PrismaPg } from "@prisma/adapter-pg";
 import path from "node:path";
 
 /**
  * Database client with dual-mode support:
  * - Local development: SQLite file at db/custom.db (auto-configured when DATABASE_URL is absent)
- * - Production / edge: PostgreSQL via direct connection or Prisma Accelerate proxy
+ * - Production / Workers: PostgreSQL through the pg driver adapter
  */
 
 const isEdge = typeof globalThis.caches !== "undefined";
@@ -22,11 +22,15 @@ const globalForPrisma = globalThis as unknown as {
 
 function createClient() {
   const url = process.env.DATABASE_URL ?? "";
-  const usesAccelerate = url.startsWith("prisma://");
+  const usesPostgres = /^postgres(?:ql)?:\/\//i.test(url);
 
-  if (usesAccelerate || isEdge) {
-    // Prisma Accelerate or edge runtime: use the extension for HTTP-based queries
-    return new PrismaClient().$extends(withAccelerate()) as unknown as PrismaClient;
+  if (usesPostgres || isEdge) {
+    // A missing edge URL remains fail-closed in auth-runtime. Prisma still needs
+    // an adapter to initialize, but this placeholder is never queried.
+    const connectionString = usesPostgres
+      ? url
+      : "postgresql://unconfigured:unconfigured@127.0.0.1:5432/unconfigured";
+    return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
   }
 
   // Standard Node.js runtime (local dev or self-hosted VPS)

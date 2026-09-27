@@ -11,6 +11,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Node tracing selects pg-cloudflare's Node fallback during the build.
+  // Include its Worker implementation for the Cloudflare bundle resolver.
+  outputFileTracingIncludes: {
+    "/*": ["./node_modules/pg-cloudflare/dist/index.js"],
+  },
   // `npm run build` is a release gate: type errors must fail the build.
   reactStrictMode: true,
   async headers() {

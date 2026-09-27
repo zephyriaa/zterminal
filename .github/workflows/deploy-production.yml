@@ -74,7 +74,7 @@ jobs:
         run: npm run cf:build
         env:
           # The build generates a PostgreSQL client; no live connection is made.
-          DATABASE_URL: "prisma://accelerate.prisma-data.net/?api_key=build-placeholder"
+          DATABASE_URL: "postgresql://build:placeholder@127.0.0.1:5432/build"
           NODE_ENV: production
 
       - name: Deploy to Cloudflare
