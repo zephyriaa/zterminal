@@ -111,6 +111,7 @@ export interface ResearchResult {
   monthly: { period: string; return: number | null }[];
   drawdowns: { start: number; trough: number; recovery: number | null; depth: number; durationMs: number }[];
   observations: string[]; logs: string[]; monteCarlo?: MonteCarloResult;
+  reproducedFrom?: string;
 }
 export interface ResearchJob {
   id: string; stage: ResearchStage; diagnostic?: Diagnostic; resultId?: string; resultKind?: "strategy" | "indicator";

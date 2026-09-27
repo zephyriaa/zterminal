@@ -38,7 +38,7 @@ class JobLimits:
             raise ctypes.WinError(ctypes.get_last_error())
         info = Extended()
         info.BasicLimitInformation.LimitFlags = 0x2000 | 0x100 | 0x8 | 0x2  # kill on close, memory, process count, CPU time
-        info.BasicLimitInformation.ActiveProcessLimit = 1
+        info.BasicLimitInformation.ActiveProcessLimit = 8
         info.BasicLimitInformation.PerProcessUserTimeLimit = cpu_seconds * 10_000_000
         info.ProcessMemoryLimit = memory_mb * 1024 * 1024
         process = None

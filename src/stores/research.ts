@@ -20,7 +20,7 @@ type State = {
   verifyInstrument: () => Promise<void>;
   reportTab: "Overview" | "Performance" | "Trades" | "Risk" | "Monte Carlo" | "Logs";
   setSource: (source: string) => void; configure: (patch: Partial<ResearchConfig>) => void; selectScript: (id: string) => void; createScript: (name?: string, source?: string, kind?: "strategy" | "indicator") => void;
-  connect: (code?: string) => Promise<void>; save: (name?: string, copy?: boolean) => Promise<void>; deleteScript: () => Promise<void>; run: () => Promise<void>; rerunIndicator: (artifactId: string, params: Record<string, number | string | boolean>) => Promise<void>; cancel: () => Promise<void>; openResult: (id: string) => Promise<void>; analyze: (seed: number, simulations: number) => Promise<void>;
+  connect: (code?: string) => Promise<void>; save: (name?: string, copy?: boolean) => Promise<void>; deleteScript: () => Promise<void>; run: () => Promise<void>; rerunIndicator: (artifactId: string, params: Record<string, number | string | boolean>) => Promise<void>; cancel: () => Promise<void>; openResult: (id: string) => Promise<void>; analyze: (seed: number, simulations: number) => Promise<void>; reproduceRun: (targetId?: string) => Promise<void>;
 };
 let abort: AbortController | null = null;
 const finished = (job: ResearchJob | null) => !job || ["complete", "failed", "cancelled"].includes(job.stage);
@@ -138,6 +138,53 @@ export const useResearch = create<State>()(persist((set, get) => ({
     if (!finished(get().job) || !get().result) return;
     try { const job = await helper.monteCarlo(get().result!.id, seed, simulations); set({ job, error: "" }); await watch(job.id); }
     catch (error) { set({ error: (error as Error).message }); }
+  },
+  reproduceRun: async (targetId?: string) => {
+    if (!finished(get().job)) return;
+    const target = targetId ? await helper.result(targetId).catch(() => null) : get().result;
+    if (!target) {
+      set({ error: "No research run available to reproduce." });
+      return;
+    }
+    abort = new AbortController();
+    const signal = abort.signal;
+    set({
+      job: { id: "preparing", stage: "validating" },
+      capturedScript: { id: `reproduce-${target.id}`, source: target.source },
+      diagnostic: null,
+      error: "",
+    });
+    try {
+      await capabilities();
+      set({ job: { id: "preparing", stage: "loading_data" } });
+      const dataset = structuredClone(target.dataset);
+      const config = structuredClone(target.config);
+      const params = structuredClone(target.params);
+      const name = `${target.name} (Reproduction)`;
+      if (signal.aborted) return;
+      const job = await helper.run({
+        name,
+        source: target.source,
+        config,
+        dataset,
+        params,
+      });
+      set({ job });
+      if (signal.aborted) await helper.cancel(job.id);
+      await watch(job.id);
+      const activeResult = get().result;
+      if (activeResult && activeResult.id !== target.id) {
+        activeResult.reproducedFrom = target.id;
+        set({ result: activeResult, chartResult: activeResult });
+      }
+    } catch (error) {
+      set({
+        job: { id: get().job?.id ?? "preparing", stage: signal.aborted ? "cancelled" : "failed" },
+        error: signal.aborted ? "" : (error as Error).message,
+      });
+    } finally {
+      abort = null;
+    }
   },
 }), { name: "research-drafts-v1", version: 1, storage: createJSONStorage(() => draftStorage), skipHydration: true,
   partialize: ({ drafts, activeId, config, params, minimap }) => ({ drafts, activeId, config, params, minimap }),

@@ -11,6 +11,7 @@ import {
   type StrategyIntent,
 } from "./python-runtime";
 import { transpileToPython } from "./transpiler";
+import { sha256 } from "../local-research/dataset";
 
 export interface BacktestConfig {
   symbol: string;
@@ -647,8 +648,9 @@ export async function executeLocalBacktest(
   // 7. Monte Carlo Simulation (1,000 reshuffled trade permutations)
   const monteCarlo = runMonteCarloSimulation(trades, config.initialCapital, 1000);
 
-  const runId = `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-  const hash = `sha256:${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  const sourceHash = await sha256(rawCode);
+  const runId = `run-${sourceHash.slice(0, 12)}`;
+  const hash = `sha256:${sourceHash}`;
 
   return {
     runId,

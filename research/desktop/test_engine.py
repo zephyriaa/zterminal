@@ -1,4 +1,5 @@
 import copy
+from importlib.metadata import version as package_version
 import unittest
 import numpy as np
 import pandas as pd
@@ -150,7 +151,7 @@ def strategy(data, params):
     return zt.Strategy(zt.crossover(fast, slow), zt.crossunder(fast, slow))
 '''
         result = execute(fixture(source, prices=[10, 9, 8, 9, 10, 8, 7, 9]))
-        self.assertEqual(result["engine"]["vectorbt"], "0.28.1")
+        self.assertEqual(result["engine"]["vectorbt"], package_version("vectorbt"))
         self.assertGreaterEqual(len(result["trades"]), 1)
 
 
@@ -191,5 +192,93 @@ class AnalyticsTests(unittest.TestCase):
         self.assertAlmostEqual(hourly["sharpe"]["value"], daily["sharpe"]["value"])
 
 
+class AdversarialIntegrityTests(unittest.TestCase):
+    def test_strategy_a_notrade_returns_zero_trades_no_fallback(self):
+        source = '''import zterminal as zt
+import pandas as pd
+
+def strategy(data, params):
+    false_signals = pd.Series(False, index=data.index)
+    return zt.Strategy(entries=false_signals, exits=false_signals)
+'''
+        result = execute(fixture(source))
+        self.assertEqual(len(result["trades"]), 0)
+        self.assertEqual(result["metrics"]["totalTrades"]["value"], 0)
+        self.assertEqual(result["equity"][-1]["equity"], result["config"]["initialCapital"])
+
+    def test_strategy_b_deterministic_entry_exit_asserted(self):
+        source = '''import zterminal as zt
+import pandas as pd
+
+def strategy(data, params):
+    i = pd.Series(range(len(data)), index=data.index)
+    return zt.Strategy(entries=(i == 1), exits=(i == 3))
+'''
+        result = execute(fixture(source, prices=[100, 102, 104, 106, 108, 110]))
+        self.assertEqual(len(result["trades"]), 1)
+        trade = result["trades"][0]
+        self.assertEqual(trade["status"], "closed")
+        self.assertEqual(trade["side"], "long")
+        self.assertEqual(trade["entryPrice"], 104)
+        self.assertEqual(trade["exitPrice"], 108)
+        self.assertGreater(trade["pnl"], 0)
+
+    def test_strategy_c_intentional_failure_raises_proof_exception(self):
+        source = '''import zterminal as zt
+
+def strategy(data, params):
+    raise RuntimeError("ZT_EXECUTION_PROOF")
+'''
+        try:
+            execute(fixture(source))
+            self.fail("Expected RuntimeError was not raised")
+        except RuntimeError as exc:
+            self.assertIn("ZT_EXECUTION_PROOF", str(exc))
+            diag = diagnostic(exc)
+            self.assertIn("ZT_EXECUTION_PROOF", diag["message"])
+            self.assertEqual(diag.get("line"), 4)
+
+    def test_strategy_d_unsupported_dependency_fails_closed(self):
+        source = '''import completely_nonexistent_package_zt_12345
+import zterminal as zt
+
+def strategy(data, params):
+    return zt.Strategy(data.close > 0, data.close < 0)
+'''
+        with self.assertRaises((ModuleNotFoundError, ImportError)):
+            execute(fixture(source))
+
+    def test_strategy_e_malformed_syntax_fails_closed_with_diagnostic(self):
+        source = '''import zterminal as zt
+
+def strategy(data, params)
+    syntax error on line 4
+'''
+        with self.assertRaises(SyntaxError) as ctx:
+            execute(fixture(source))
+        diag = diagnostic(ctx.exception)
+        self.assertIn("SyntaxError", diag["message"])
+        self.assertIsNotNone(diag.get("line"))
+
+    def test_determinism_identical_runs_produce_identical_result_hashes(self):
+        source = '''import zterminal as zt
+import pandas as pd
+
+def strategy(data, params):
+    i = pd.Series(range(len(data)), index=data.index)
+    return zt.Strategy(i == 0, i == 2)
+'''
+        req1 = fixture(source, prices=[50, 52, 55, 51, 54, 58])
+        req2 = copy.deepcopy(req1)
+        res1 = execute(req1)
+        res2 = execute(req2)
+        self.assertEqual(res1["sourceHash"], res2["sourceHash"])
+        self.assertEqual(res1["inputHash"], res2["inputHash"])
+        self.assertEqual(len(res1["trades"]), len(res2["trades"]))
+        self.assertEqual(res1["trades"][0]["pnl"], res2["trades"][0]["pnl"])
+        self.assertEqual(res1["equity"][-1]["equity"], res2["equity"][-1]["equity"])
+
+
 if __name__ == "__main__":
     unittest.main()
+

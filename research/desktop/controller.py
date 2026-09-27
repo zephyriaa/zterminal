@@ -77,11 +77,13 @@ class Controller:
         try:
             (folder / "request.json").write_text(captured, encoding="utf-8")
             # No inherited application tokens, API keys or cloud credentials.
-            env = {k: os.environ[k] for k in ["SYSTEMROOT", "WINDIR", "SYSTEMDRIVE"] if k in os.environ}
+            env = {k: os.environ[k] for k in ["SYSTEMROOT", "WINDIR", "SYSTEMDRIVE", "PATH"] if k in os.environ}
+            if hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix:
+                env["VIRTUAL_ENV"] = sys.prefix
             cache = self.root.parent / "numba-cache"
             cache.mkdir(exist_ok=True)
             env.update(TEMP=str(folder), TMP=str(folder), NUMBA_CACHE_DIR=str(cache), NUMBA_NUM_THREADS="2", OPENBLAS_NUM_THREADS="1", OMP_NUM_THREADS="1", PYTHONUTF8="1")
-            process = subprocess.Popen([sys.executable, str(Path(__file__).with_name("child.py")), str(folder)], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=folder, env=env, creationflags=subprocess.CREATE_NO_WINDOW)
+            process = subprocess.Popen([sys.executable, str(Path(__file__).with_name("child.py")), str(folder)], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, cwd=folder, env=env, creationflags=subprocess.CREATE_NO_WINDOW)
             limits = JobLimits(process.pid, self.memory_mb)
             with self.lock:
                 active["limits"] = limits
@@ -109,7 +111,14 @@ class Controller:
             if process.returncode != 0 or not result_path.exists():
                 status_path = folder / "status.json"
                 status = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else {}
-                self.archive.save_job({"id": job["id"], "stage": "failed", "diagnostic": status.get("diagnostic", {"message": "Strategy process stopped unexpectedly or exceeded its resource limit; no result was saved"})})
+                err_text = ""
+                try:
+                    if process.stderr:
+                        err_text = process.stderr.read().decode("utf-8", errors="replace").strip()
+                except Exception:
+                    pass
+                diag = status.get("diagnostic") or ({"message": err_text} if err_text else {"message": "Strategy process stopped unexpectedly or exceeded its resource limit; no result was saved"})
+                self.archive.save_job({"id": job["id"], "stage": "failed", "diagnostic": diag})
                 return
             if result_path.stat().st_size > 128_000_000:
                 raise ValueError("Result exceeds the 128 MB archive limit")

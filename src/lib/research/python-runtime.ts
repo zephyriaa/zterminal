@@ -513,20 +513,9 @@ export function evaluateStrategySource(
       }
     }
   } else {
-    // Default fallback: Dual EMA cross (9 / 21)
-    const fastEma = ta.ema(ctx.close, 9);
-    const slowEma = ta.ema(ctx.close, 21);
-    const crossUp = ta.crossover(fastEma, slowEma);
-    const crossDown = ta.crossunder(fastEma, slowEma);
-
-    for (let i = 21; i < bars.length - 1; i++) {
-      ctx.index = i;
-      if (crossUp[i] && !ctx.has_long_position) {
-        ctx.enter_long({ quantity: 1, reason: "cross_up" });
-      } else if (crossDown[i] && ctx.has_long_position) {
-        ctx.close_position({ reason: "cross_down" });
-      }
-    }
+    throw new Error(
+      "Unsupported strategy code in browser mock runtime. Arbitrary Python strategies must be executed through the ZTerminal Local Helper runtime."
+    );
   }
 
   return ctx.intents;
