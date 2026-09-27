@@ -21,7 +21,7 @@ DO $$
 DECLARE table_name text;
 BEGIN
   FOREACH table_name IN ARRAY ARRAY[
-    'User', 'Account', 'Session', 'VerificationToken', 'Workspace',
+    'User', 'Account', 'Session', 'VerificationToken', 'Post', 'Workspace',
     'CloudWorkspaceState', 'Strategy', 'StrategyVersion', 'Dataset',
     'BacktestRun', 'ResearchSource', 'ResearchSourceExcerpt', 'RuleSpec',
     'RuleSpecRevision', 'DataRequirementAssessment', 'DatasetImport',
