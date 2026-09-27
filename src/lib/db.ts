@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaClient as PrismaClientWasm } from "@prisma/client/wasm.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import path from "node:path";
 
@@ -30,7 +31,10 @@ function createClient() {
     const connectionString = usesPostgres
       ? url
       : "postgresql://unconfigured:unconfigured@127.0.0.1:5432/unconfigured";
-    return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+    // Workers cannot read Prisma's Node WASM file from the virtual filesystem.
+    // The explicit WASM entry lets the bundler import it as a Worker module.
+    const Client = isEdge ? PrismaClientWasm : PrismaClient;
+    return new Client({ adapter: new PrismaPg({ connectionString }) });
   }
 
   // Standard Node.js runtime (local dev or self-hosted VPS)
