@@ -38,11 +38,18 @@ function createClient() {
   }
 
   // Standard Node.js runtime (local dev or self-hosted VPS)
-  return new PrismaClient({
-    // Query payloads can contain user-authored strategy, journal, and risk data.
-    // Keep operational error visibility without emitting query values by default.
-    log: ["error", "warn"],
-  });
+  try {
+    return new PrismaClient({
+      // Query payloads can contain user-authored strategy, journal, and risk data.
+      // Keep operational error visibility without emitting query values by default.
+      log: ["error", "warn"],
+    });
+  } catch (error) {
+    const connectionString = usesPostgres
+      ? url
+      : "postgresql://unconfigured:unconfigured@127.0.0.1:5432/unconfigured";
+    return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  }
 }
 
 export const db = globalForPrisma.prisma ?? createClient();

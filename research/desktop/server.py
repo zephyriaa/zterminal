@@ -9,6 +9,7 @@ import platform
 import secrets
 import threading
 import time
+from importlib.metadata import version as package_version
 from urllib.parse import urlsplit
 
 from archive import Archive, encode
@@ -97,6 +98,7 @@ class Handler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin")
         if origin in self.server.service.origins:
             self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Private-Network", "true")
             self.send_header("Vary", "Origin")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
@@ -159,7 +161,7 @@ class Handler(BaseHTTPRequestHandler):
             body = self.payload() if method == "POST" else {}
             identifier = parts[2] if len(parts) >= 3 else None
             if method == "GET" and route == "capabilities":
-                return self.respond(200, {"protocol": 1, "version": "1.0.0-preview.2", "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": "1.1.0", "vectorbt": "0.28.1", "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
+                return self.respond(200, {"protocol": 1, "version": "1.0.0-preview.2", "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": "1.1.0", "vectorbt": package_version("vectorbt"), "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
             if method == "POST" and route == "pair":
                 return self.respond(200, service.pair(origin, body.get("code")))
             if method == "POST" and route == "datasets":

@@ -4,17 +4,43 @@ export class HelperError extends Error {
   constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed") { super(message); }
 }
 const RETIRED_TOKEN_KEY = "zterminal.local-research.token.v1";
+const SESSION_TOKEN_KEY = "zterminal.local-research.session-token";
 let memoryToken: string | null = null;
-function token() { return memoryToken; }
+function token() {
+  if (!memoryToken && typeof window !== "undefined") {
+    try {
+      memoryToken = window.sessionStorage.getItem(SESSION_TOKEN_KEY);
+    } catch {
+      /* Storage may be unavailable. */
+    }
+  }
+  return memoryToken;
+}
 /** Pairing grants only this browser session. Persistent localStorage tokens are retired. */
-export function forgetHelper() { memoryToken = null; }
+export function forgetHelper() {
+  memoryToken = null;
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    } catch {}
+  }
+}
 if (typeof window !== "undefined") {
   try { window.localStorage.removeItem(RETIRED_TOKEN_KEY); } catch { /* Storage may be unavailable. */ }
 }
 export async function helperRequest<T>(path: string, method = "GET", body?: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${HELPER_URL}/v1/${path}`, { method, headers: { ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(token() ? { Authorization: `Bearer ${token()}` } : {}) }, body: body === undefined ? undefined : JSON.stringify(body), credentials: "omit", cache: "no-store", signal: signal ?? AbortSignal.timeout(15_000) });
+    response = await fetch(`${HELPER_URL}/v1/${path}`, {
+      method,
+      headers: { ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(token() ? { Authorization: `Bearer ${token()}` } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      credentials: "omit",
+      cache: "no-store",
+      signal: signal ?? AbortSignal.timeout(15_000),
+      // @ts-expect-error targetAddressSpace is part of the W3C Private Network Access specification
+      targetAddressSpace: "loopback",
+    });
   } catch (error) {
     if (signal?.aborted) throw error;
     try {
@@ -40,6 +66,11 @@ export async function pairHelper(code: string) {
   const result = await helperRequest<{ token: string; protocol: number }>("pair", "POST", { code });
   if (result.protocol !== RESEARCH_PROTOCOL) throw new HelperError("Incompatible helper protocol.", "incompatible");
   memoryToken = result.token;
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage.setItem(SESSION_TOKEN_KEY, result.token);
+    } catch {}
+  }
 }
 export const helper = {
   dataset: (config: ResearchConfig) => helperRequest<Dataset | null>("datasets", "POST", { provider: config.provider, product: "perpetual", symbol: config.symbol, timeframe: config.timeframe, from: config.from, to: config.to }),
