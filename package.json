@@ -6,7 +6,7 @@
     "dev": "next dev -p 3000",
     "build": "next build && shx cp -r .next/static .next/standalone/.next/ && shx cp -r public .next/standalone/",
     "build:production": "prisma generate --schema=prisma/schema.postgresql.prisma && next build && shx cp -r .next/static .next/standalone/.next/ && shx cp -r public .next/standalone/",
-    "cf:build": "prisma generate --schema=prisma/schema.postgresql.prisma && opennextjs-cloudflare build",
+    "cf:build": "prisma generate --schema=prisma/schema.postgresql.prisma && node scripts/prepare-monaco.mjs && opennextjs-cloudflare build",
     "cf:deploy": "npm run cf:build && opennextjs-cloudflare deploy",
     "start": "NODE_ENV=production node .next/standalone/server.js",
     "start:production": "bash scripts/start-production.sh",
