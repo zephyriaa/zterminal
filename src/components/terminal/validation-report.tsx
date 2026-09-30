@@ -9,9 +9,10 @@ import type {
 } from "@/domain/validation/contracts";
 import type { ResearchResult } from "@/lib/local-research/contracts";
 
-const number = (val: number, maxDecimals = 2) =>
-  val.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
-const percent = (val: number) => `${number(val * 100, 1)}%`;
+const number = (val: number | null | undefined, maxDecimals = 2) =>
+  val == null ? "unavailable" : val.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
+const percent = (val: number | null | undefined) => val == null ? "unavailable" : `${number(val * 100, 1)}%`;
+const percentagePoints = (val: number | null | undefined) => val == null ? "unavailable" : `${number(val, 1)}%`;
 const date = (val: number) =>
   new Date(val).toISOString().slice(0, 16).replace("T", " ");
 
@@ -30,19 +31,34 @@ function ratingBadge(rating: ValidationRating) {
 
 export function ValidationReport({ result }: { result: ResearchResult }) {
   const {
-    validationResult: validation,
+    validationResult: savedValidation,
     isValidating,
     runValidation,
     validationTab,
     setValidationTab,
     error,
   } = useResearch();
+  const validation = savedValidation?.sourceRunId === result.id ? savedValidation : null;
 
   const [seed, setSeed] = useState(42);
+  const [paths, setPaths] = useState(1000);
+  const [costs, setCosts] = useState("0,5,10,20,30");
   const [splitRatio, setSplitRatio] = useState(0.7);
   const [method, setMethod] = useState<"trade_order_permutation" | "iid_trade_resampling">(
     "trade_order_permutation",
   );
+  const numericParams = Object.entries(result.params).filter(([, value]) => typeof value === "number" && Number.isFinite(value));
+  const [sweep, setSweep] = useState(false);
+  const [paramX, setParamX] = useState(numericParams[0]?.[0] ?? "");
+  const [paramY, setParamY] = useState(numericParams[1]?.[0] ?? "");
+  const [xMin, setXMin] = useState(Number(numericParams[0]?.[1] ?? 1) - 1);
+  const [xMax, setXMax] = useState(Number(numericParams[0]?.[1] ?? 1) + 1);
+  const [yMin, setYMin] = useState(Number(numericParams[1]?.[1] ?? 1) - 1);
+  const [yMax, setYMax] = useState(Number(numericParams[1]?.[1] ?? 1) + 1);
+  const [rolling, setRolling] = useState(result.dataset.bars.length >= 30);
+  const [trainingBars, setTrainingBars] = useState(Math.max(2, Math.floor(result.dataset.bars.length * .4)));
+  const [testingBars, setTestingBars] = useState(Math.max(2, Math.floor(result.dataset.bars.length * .15)));
+  const [optimize, setOptimize] = useState(false);
 
   const exportValidation = () => {
     if (!validation) return;
@@ -61,8 +77,12 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
   const handleRun = () => {
     const config: Partial<ValidationConfig> = {
       monteCarloSeed: seed,
+      monteCarloPaths: paths,
+      costTiersBps: costs.split(",").map(value => Number(value.trim())),
       oosSplitRatio: splitRatio,
       monteCarloMethod: method,
+      ...(sweep ? { sensitivityGrid: { paramX: { name: paramX, min: xMin, max: xMax, steps: 3 }, paramY: { name: paramY, min: yMin, max: yMax, steps: 3 } } } : {}),
+      ...(rolling ? { walkForward: { trainingBars, testingBars, stepBars: testingBars, optimize: sweep && optimize } } : {}),
     };
     void runValidation(config);
   };
@@ -75,7 +95,9 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
     "Sensitivity",
     "Costs",
     "Regimes",
+    "Concentration",
     "Diagnostics",
+    "Provenance",
   ] as const;
 
   return (
@@ -126,7 +148,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
             Monte Carlo
             <select
               value={method}
-              onChange={(e) => setMethod(e.target.value as any)}
+              onChange={(e) => setMethod(e.target.value as typeof method)}
               className="h-7 rounded border border-zinc-700 bg-zinc-900 px-2 text-zinc-200 outline-none"
             >
               <option value="trade_order_permutation">Permutation (Without Replacement)</option>
@@ -145,6 +167,30 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
         </div>
       </section>
 
+      <details className="rounded border border-zinc-800 bg-[#14121a] p-3 text-xs text-zinc-400">
+        <summary className="cursor-pointer text-zinc-200">Rolling windows and parameter sweep</summary>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label>Monte Carlo paths <input aria-label="Monte Carlo paths" type="number" min={100} max={5000} value={paths} onChange={e => setPaths(Number(e.target.value))} className="w-20 rounded bg-zinc-900 px-2 py-1 text-zinc-200" /></label>
+          <label>Added per-fill friction tiers (bps) <input aria-label="Added friction tiers" value={costs} onChange={e => setCosts(e.target.value)} className="w-36 rounded bg-zinc-900 px-2 py-1 text-zinc-200" /></label>
+          <label><input type="checkbox" checked={rolling} onChange={e => setRolling(e.target.checked)} /> Rolling windows</label>
+          <label>Training bars <input aria-label="Training bars" type="number" min={2} value={trainingBars} onChange={e => setTrainingBars(Number(e.target.value))} className="w-20 rounded bg-zinc-900 px-2 py-1 text-zinc-200" /></label>
+          <label>Testing bars <input aria-label="Testing bars" type="number" min={2} value={testingBars} onChange={e => setTestingBars(Number(e.target.value))} className="w-20 rounded bg-zinc-900 px-2 py-1 text-zinc-200" /></label>
+        </div>
+        <div className="mt-3 space-y-2">
+          <label><input type="checkbox" checked={sweep} disabled={numericParams.length < 2} onChange={e => setSweep(e.target.checked)} /> Two-parameter sweep (3 × 3)</label>
+          {numericParams.length < 2 && <p>Submit at least two numeric strategy parameters in the ResearchRun to enable a measured surface.</p>}
+          {sweep && <>
+            {[{ name: paramX, setName: setParamX, min: xMin, max: xMax, setMin: setXMin, setMax: setXMax, label: "X" }, { name: paramY, setName: setParamY, min: yMin, max: yMax, setMin: setYMin, setMax: setYMax, label: "Y" }].map(axis => <div key={axis.label} className="flex flex-wrap items-center gap-2">
+              <label>{axis.label} parameter <select aria-label={`${axis.label} parameter`} value={axis.name} onChange={e => { axis.setName(e.target.value); const value = Number(result.params[e.target.value]); axis.setMin(value - 1); axis.setMax(value + 1); }} className="rounded bg-zinc-900 p-1">{numericParams.map(([name]) => <option key={name}>{name}</option>)}</select></label>
+              <label>Minimum <input aria-label={`${axis.label} minimum`} type="number" value={axis.min} onChange={e => axis.setMin(Number(e.target.value))} className="w-20 rounded bg-zinc-900 p-1" /></label>
+              <label>Maximum <input aria-label={`${axis.label} maximum`} type="number" value={axis.max} onChange={e => axis.setMax(Number(e.target.value))} className="w-20 rounded bg-zinc-900 p-1" /></label>
+            </div>)}
+            <label><input type="checkbox" checked={optimize} onChange={e => setOptimize(e.target.checked)} /> Select grid parameters using training return only in each rolling window</label>
+          </>}
+          <p>Each segment starts with fresh capital and indicator state. No warm-up or positions cross the purge. Invalid or excessive workloads fail explicitly.</p>
+        </div>
+      </details>
+
       {error && (
         <div className="rounded border border-rose-800/60 bg-rose-950/40 p-2.5 text-xs text-rose-300">
           {error}
@@ -161,8 +207,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
               Does this strategy contain a real edge, or is it overfitted?
             </h3>
             <p className="text-xs leading-relaxed text-zinc-400">
-              Rerun the exact strategy on disjoint chronological segments, then analyze rolling windows, seeded trade-order permutations,
-              and projected fee/slippage decay. Parameter sensitivity requires separate Python runs.
+              The local Helper reproduces the parent and reruns the exact strategy on disjoint chronological segments, rolling windows, parameter grids and increasing costs. Seeded Monte Carlo describes recorded trade PnLs.
             </p>
             <div className="pt-2">
               <button
@@ -243,19 +288,19 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                     rating={validation.profile.parameterStability}
                     detail={
                       validation.sensitivity
-                        ? `Neighbor Ratio: ${validation.sensitivity.neighborDegradationRatio.toFixed(2)}`
+                        ? `Neighbor / best: ${number(validation.sensitivity.neighborDegradationRatio)}`
                         : "No sweep params"
                     }
                   />
                   <ProfileCard
                     title="Friction Resilience"
                     rating={validation.profile.frictionResilience}
-                    detail={`Break-even total friction: ${validation.costStress.breakEvenFrictionBps?.toFixed(1) ?? "unavailable"} bps`}
+                    detail={validation.costStress.breakEvenBracketBps ? `Sampled crossing: ${validation.costStress.breakEvenBracketBps.join("–")} bps` : "No sampled profit crossing"}
                   />
                   <ProfileCard
                     title="Regime Breadth"
                     rating={validation.profile.regimeBreadth}
-                    detail={`Max Concentration: ${validation.regimes.dominantRegimePct.toFixed(1)}%`}
+                    detail={`Largest volatility group: ${percentagePoints(validation.regimes.dominantRegimePct)} of gross wins`}
                   />
                   <ProfileCard
                     title="Sample Adequacy"
@@ -360,7 +405,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
             <div className="space-y-4">
               {!validation.outOfSample ? (
                 <p className="rounded border border-amber-900/40 bg-amber-950/20 p-4 text-xs text-amber-300">
-                  Out-of-sample split requires at least 6 closed trades and 30 historical candles.
+                  Chronological split requires 30 historical candles and enough bars after the purge. Zero-trade segments remain visible.
                 </p>
               ) : (
                 <>
@@ -372,7 +417,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                     <p className="text-zinc-400 text-[11px] leading-relaxed">
                       In-Sample period: {date(validation.outOfSample.inSampleRange.from)} → {date(validation.outOfSample.inSampleRange.to)} UTC.
                       <br />
-                      Purge gap: {validation.outOfSample.purgeBars} bar(s) embargo to prevent boundary lookahead leakage.
+                      Purge gap: {validation.outOfSample.purgeBars} omitted bar(s). Arbitrary Python may still contain lookahead or access external data.
                       <br />
                       Out-of-Sample period: {date(validation.outOfSample.outOfSampleRange.from)} → {date(validation.outOfSample.outOfSampleRange.to)} UTC.
                       <br />
@@ -380,6 +425,8 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                     </p>
                   </div>
                   <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">
+                    <MetricBox label="In-Sample Observations" value={number(validation.outOfSample.inSampleObservations, 0)} />
+                    <MetricBox label="OOS Observations" value={number(validation.outOfSample.outOfSampleObservations, 0)} />
                     <MetricBox label="In-Sample Trades" value={validation.outOfSample.inSampleMetrics.totalTrades.toString()} />
                     <MetricBox label="OOS Trades" value={validation.outOfSample.outOfSampleMetrics.totalTrades.toString()} />
                     <MetricBox label="OOS Sharpe" value={validation.outOfSample.outOfSampleMetrics.sharpe?.toString() ?? "—"} />
@@ -395,20 +442,20 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
             <div className="space-y-4">
               {!validation.walkForward ? (
                 <p className="rounded border border-amber-900/40 bg-amber-950/20 p-4 text-xs text-amber-300">
-                  Insufficient data for Walk-Forward Analysis. At least 5 cycles of 25 bars each are required.
+                  Rolling analysis was not requested. Enable complete training/testing windows in the configuration above.
                 </p>
               ) : (
                 <>
                   <p className="rounded border border-amber-900/40 bg-amber-950/20 p-3 text-xs text-amber-300">
-                    Rolling-window attribution of one backtest. No strategy rerun or training-only parameter selection occurs in these windows; this is not a walk-forward optimization result.
+                    Each training/test window was executed separately. When enabled, parameter selection uses training return only. Test windows are disjoint, indicators start cold, and positions are not carried. Researcher-selected source and grids remain unsealed.
                   </p>
                   <div className="flex flex-wrap items-center justify-between rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs">
                     <div>
-                      <span className="text-[10px] uppercase text-zinc-400">Later / Earlier Annualized Return Ratio</span>
+                      <span className="text-[10px] uppercase text-zinc-400">Independent Rolling Execution</span>
                       <div className="text-lg font-bold font-mono text-purple-300">
-                        {validation.walkForward.aggregateWfe}%
+                        {validation.walkForward.totalCycles} cycles
                       </div>
-                      <small className="text-[10px] text-zinc-500">Descriptive ratio; overlapping windows are not independent trials.</small>
+                      <small className="text-[10px] text-zinc-500">Inspect individual cycles; no pooled efficiency score.</small>
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] uppercase text-zinc-400">Positive OOS Cycles</span>
@@ -423,6 +470,8 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                       <thead className="border-b border-zinc-800 text-[10px] text-zinc-400">
                         <tr>
                           <th className="p-2">Cycle</th>
+                          <th className="p-2">Training / Testing UTC</th>
+                          <th className="p-2">Selected Parameters</th>
                           <th className="p-2">IS Return</th>
                           <th className="p-2">IS Sharpe</th>
                           <th className="p-2">OOS Return</th>
@@ -434,13 +483,15 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                         {validation.walkForward.cycles.map((c) => (
                           <tr key={c.cycle}>
                             <td className="p-2 font-sans font-medium text-zinc-400">Cycle #{c.cycle}</td>
+                            <td className="p-2 text-[10px] text-zinc-400">{date(c.inSample.from)} → {date(c.inSample.to)}<br />{date(c.outOfSample.from)} → {date(c.outOfSample.to)}<br />{c.inSample.observations} / {c.outOfSample.observations} bars · {c.inSample.trades} / {c.outOfSample.trades} trades</td>
+                            <td className="p-2 text-[10px]">{JSON.stringify(c.selectedParams)}<br />{c.trainingCandidates.length} training candidates</td>
                             <td className="p-2">{percent(c.inSample.return)}</td>
                             <td className="p-2">{c.inSample.sharpe ?? "—"}</td>
                             <td className={`p-2 ${c.outOfSample.return >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                               {percent(c.outOfSample.return)}
                             </td>
                             <td className="p-2">{c.outOfSample.sharpe ?? "—"}</td>
-                            <td className="p-2 text-right text-purple-300">{c.wfe}%</td>
+                            <td className="p-2 text-right text-purple-300">{c.wfe == null ? "unavailable" : `${number(c.wfe)}%`}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -469,7 +520,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                     <MetricBox label="Method" value={validation.monteCarlo.method === "trade_order_permutation" ? "Permutation" : "Bootstrap"} />
                     <MetricBox label="Simulations" value={validation.monteCarlo.paths.toLocaleString()} />
                     <MetricBox label={validation.monteCarlo.method === "trade_order_permutation" ? "Recorded Net Loss" : "Resampled Loss Frequency"} value={percent(validation.monteCarlo.probabilityOfLoss)} />
-                    <MetricBox label="Ruin Prob (DD≥50%)" value={percent(validation.monteCarlo.probabilityOfRuin)} />
+                    <MetricBox label="Resampled DD ≥ 50%" value={percent(validation.monteCarlo.probabilityOfRuin)} />
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -525,7 +576,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
             <div className="space-y-4">
               {!validation.sensitivity ? (
                 <p className="rounded border border-amber-900/40 bg-amber-950/20 p-4 text-xs text-amber-300">
-                  Parameter sensitivity is unavailable. Each grid cell must be produced by an independent execution of the exact Python strategy; the current validator has no parameter sweep runner.
+                  No parameter sweep was requested. Select two submitted numeric parameters and explicit ranges above. Each cell executes the exact source in fresh CPython.
                 </p>
               ) : (
                 <>
@@ -538,15 +589,15 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                     </div>
                     <div className="flex gap-4">
                       <div>
-                        <span className="text-[10px] uppercase text-zinc-400">Neighbor Stability Ratio (ρ)</span>
+                        <span className="text-[10px] uppercase text-zinc-400">Neighbors / Best Grid Return</span>
                         <div className="font-mono text-sm font-semibold text-purple-300">
-                          {validation.sensitivity.neighborDegradationRatio.toFixed(2)}
+                          {number(validation.sensitivity.neighborDegradationRatio)}
                         </div>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase text-zinc-400">Coefficient of Variation</span>
                         <div className="font-mono text-sm font-semibold text-zinc-300">
-                          {validation.sensitivity.coefficientOfVariation.toFixed(2)}
+                          {number(validation.sensitivity.coefficientOfVariation)}
                         </div>
                       </div>
                     </div>
@@ -572,7 +623,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                             <tr key={yIdx}>
                               <td className="p-1 font-bold text-zinc-400">{validation.sensitivity!.yValues[yIdx]}</td>
                               {row.map((cell, xIdx) => {
-                                const isCenter = xIdx === 2 && yIdx === 2;
+                                const isCenter = cell.x === validation.sensitivity!.baselinePoint.x && cell.y === validation.sensitivity!.baselinePoint.y;
                                 const isPos = cell.metricValue > 0;
                                 return (
                                   <td
@@ -588,7 +639,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                                     }`}
                                     title={`${validation.sensitivity!.paramX}: ${cell.x}, ${validation.sensitivity!.paramY}: ${cell.y} → Metric: ${cell.metricValue}`}
                                   >
-                                    {cell.metricValue}
+                                    {percent(cell.metricValue)}
                                   </td>
                                 );
                               })}
@@ -598,7 +649,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                       </table>
                     </div>
                     <p className="mt-2 text-[10px] text-zinc-500">
-                      Center cell with purple outline indicates the executed baseline parameters.
+                      Purple outline indicates the submitted baseline when it lies on the grid. Cells show total return. Labels describe this historical surface, with no claim of future stability.
                     </p>
                   </div>
                 </>
@@ -611,16 +662,16 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs">
                 <div>
-                  <span className="text-[10px] uppercase text-zinc-400">Projected Break-Even Total Friction</span>
+                  <span className="text-[10px] uppercase text-zinc-400">Sampled Profit Crossing</span>
                   <div className="text-lg font-bold font-mono text-purple-300">
-                    {validation.costStress.breakEvenFrictionBps?.toFixed(1) ?? "—"} bps
+                    {validation.costStress.breakEvenBracketBps?.join("–") ?? "unavailable"} bps
                   </div>
-                  <small className="text-[10px] text-zinc-500">Linear haircut of recorded fills; strategy signals are not rerun</small>
+                  <small className="text-[10px] text-zinc-500">Exact-source reruns; added per-fill bps split equally between fees and slippage. No interpolated break-even.</small>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] uppercase text-zinc-400">Friction Elasticity (+10 bps)</span>
                   <div className="text-lg font-bold font-mono text-zinc-200">
-                    {validation.costStress.frictionElasticity.toFixed(1)}% drop
+                    {validation.costStress.frictionElasticity == null ? "unavailable" : `${percentagePoints(validation.costStress.frictionElasticity)} drop`}
                   </div>
                 </div>
               </div>
@@ -634,6 +685,9 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                       <th className="p-2">Net Profit</th>
                       <th className="p-2">Sharpe</th>
                       <th className="p-2">Expectancy</th>
+                      <th className="p-2">Final Equity</th>
+                      <th className="p-2">Return</th>
+                      <th className="p-2">Trades / Win Rate</th>
                       <th className="p-2 text-right">Profit Factor</th>
                     </tr>
                   </thead>
@@ -647,6 +701,9 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                         </td>
                         <td className="p-2">{t.sharpe ?? "—"}</td>
                         <td className="p-2">${number(t.expectancy)}</td>
+                        <td className="p-2">${number(t.finalEquity)}</td>
+                        <td className="p-2">{percent(t.totalReturn)}</td>
+                        <td className="p-2">{t.totalTrades} / {percent(t.winRate)}</td>
                         <td className="p-2 text-right">{t.profitFactor ?? "—"}</td>
                       </tr>
                     ))}
@@ -662,7 +719,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
               <div className="rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs space-y-1">
                 <strong className="text-zinc-200">Market Regime Classification</strong>
                 <p className="text-zinc-400 text-[11px] leading-relaxed">
-                  Bars are partitioned into rolling ATR volatility tertiles (Low, Normal, High) and EMA50/200 trend regimes (Bull, Bear, Neutral). Trades are attributed based on market state at entry time.
+                  At each entry open, classify using the previous closed bar. Volatility is the standard deviation of 20 log returns against trailing 100 volatility observations (minimum 20); trend is EMA20/50 with a ±0.1% neutral band after 50 bars. Warm-up observations remain Unknown. Contributions use gross winning closed-trade PnL; grouping does not prove causality.
                 </p>
               </div>
 
@@ -683,7 +740,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                           <span className={r.netProfit >= 0 ? "text-emerald-400" : "text-rose-400"}>
                             ${number(r.netProfit)}
                           </span>
-                          <div className="text-[10px] text-zinc-500">{r.profitContributionPct}% of profit</div>
+                          <div className="text-[10px] text-zinc-500">{percentagePoints(r.profitContributionPct)} of gross wins</div>
                         </div>
                       </div>
                     ))}
@@ -706,7 +763,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                           <span className={r.netProfit >= 0 ? "text-emerald-400" : "text-rose-400"}>
                             ${number(r.netProfit)}
                           </span>
-                          <div className="text-[10px] text-zinc-500">{r.profitContributionPct}% of profit</div>
+                          <div className="text-[10px] text-zinc-500">{percentagePoints(r.profitContributionPct)} of gross wins</div>
                         </div>
                       </div>
                     ))}
@@ -717,14 +774,25 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
           )}
 
           {/* Tab 8: DIAGNOSTICS & CONCENTRATION */}
-          {validationTab === "Diagnostics" && (
+          {(validationTab === "Diagnostics" || validationTab === "Concentration") && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">
-                <MetricBox label="Top 5 Trades % PnL" value={`${validation.concentration.top5TradesProfitPct.toFixed(1)}%`} />
-                <MetricBox label="Top 10 Trades % PnL" value={`${validation.concentration.top10TradesProfitPct.toFixed(1)}%`} />
+                <MetricBox label="Top 5 / Gross Winning PnL" value={percentagePoints(validation.concentration.top5TradesProfitPct)} />
+                <MetricBox label="Top 10 / Gross Winning PnL" value={percentagePoints(validation.concentration.top10TradesProfitPct)} />
                 <MetricBox label="Longest Loss Streak" value={`${validation.concentration.longestLossStreak} trades`} />
                 <MetricBox label="Max DD Duration" value={`${validation.concentration.maxDrawdownDays} days`} />
               </div>
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">
+                <MetricBox label="Observations / Days" value={`${validation.sample.observations} / ${number(validation.sample.durationDays, 1)}`} />
+                <MetricBox label="Known Volatility Coverage" value={percent(validation.sample.volatilityCoverageFraction)} />
+                <MetricBox label="Later Closed Trades" value={number(validation.sample.laterClosedTrades, 0)} />
+                <MetricBox label="Largest Winner / Gross Wins" value={percentagePoints(validation.concentration.largestWinnerContributionPct)} />
+              </div>
+              {[{ label: "Closed PnL by UTC exit month", rows: validation.concentration.periods }, { label: "Closed PnL by direction", rows: validation.concentration.directions }].map(group => <section key={group.label} className="rounded border border-zinc-800 p-3 text-xs">
+                <h5 className="mb-2 text-zinc-300">{group.label}</h5>
+                {group.rows?.map(row => <div key={row.group} className="flex flex-wrap justify-between gap-2 py-1 text-zinc-400"><span>{row.group} · {row.trades} trades</span><span>${number(row.netProfit)} net · {percentagePoints(row.grossWinningContributionPct)} of gross wins</span></div>)}
+              </section>)}
 
               <section className="space-y-2">
                 <h5 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
@@ -757,6 +825,13 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
               </section>
             </div>
           )}
+          {validationTab === "Provenance" && <section className="space-y-3 text-xs text-zinc-400">
+            <p>Generated by the local Helper after reproducing the parent in the recorded runtime. Hashes identify stored inputs and results; they do not prove profitability or causal strategy logic. User Python runs with your operating-system permissions.</p>
+            <dl className="space-y-2 break-all font-mono"><dt>Parent result SHA-256</dt><dd>{validation.provenance.sourceRunFingerprint}</dd><dt>Configuration SHA-256</dt><dd>{validation.provenance.validationConfigHash}</dd><dt>Deterministic validation fingerprint</dt><dd>{validation.provenance.fingerprint}</dd><dt>Artifact SHA-256</dt><dd>{validation.resultHash}</dd></dl>
+            <details><summary>Recorded configuration and methodology</summary><pre className="overflow-x-auto p-2 text-[11px]">{JSON.stringify(validation.config, null, 2)}</pre></details>
+            <details><summary>Recorded runtime</summary><pre className="overflow-x-auto p-2 text-[11px]">{JSON.stringify(validation.provenance.runtime, null, 2)}</pre></details>
+            <div className="overflow-x-auto"><table className="w-full text-left text-[10px] font-mono"><thead><tr><th className="p-2">Execution</th><th className="p-2">Run ID</th><th className="p-2">Result SHA-256</th></tr></thead><tbody>{Object.entries(validation.evidenceRuns).map(([role, run]) => <tr key={role} className="border-t border-zinc-800"><td className="p-2">{role}</td><td className="p-2">{run.id}</td><td className="p-2">{run.resultHash}</td></tr>)}</tbody></table></div>
+          </section>}
         </>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest, type ValidationResult } from "./contracts";
+import type { ValidationConfig } from "@/domain/validation/contracts";
 
 export class HelperError extends Error {
   constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed") { super(message); }
@@ -53,7 +54,7 @@ export async function helperRequest<T>(path: string, method = "GET", body?: unkn
   if (!response.ok) {
     if (path === "pair" && [400, 401, 403].includes(response.status)) throw new HelperError("That connection code is invalid or expired. Open ZTerminal Helper and copy a new code.", "invalid_code");
     if ([401, 403].includes(response.status)) throw new HelperError("ZTerminal Helper needs to be paired with this browser session.", "unpaired");
-    if (path === "validations" && payload.error) throw new HelperError(payload.error, "request_failed");
+    if ((path.startsWith("validations") || path.endsWith("/validate") || path.endsWith("/validations")) && payload.error) throw new HelperError(payload.error, "request_failed");
     throw new HelperError("ZTerminal Helper could not complete that request. Try again after checking that it is running.", "request_failed");
   }
   return payload as T;
@@ -89,11 +90,12 @@ export const helper = {
   cancel: (id: string) => helperRequest<ResearchJob>(`jobs/${encodeURIComponent(id)}`, "DELETE"),
   results: () => helperRequest<{ id: string; name: string; created: number }[]>("results"),
   result: (id: string) => helperRequest<ResearchResult>(`results/${encodeURIComponent(id)}`),
+  reproduce: (id: string) => helperRequest<ResearchJob>(`results/${encodeURIComponent(id)}/reproduce`, "POST", {}),
   evaluation: (id: string) => helperRequest<IndicatorEvaluationResult>(`evaluations/${encodeURIComponent(id)}`),
   monteCarlo: (id: string, seed: number, simulations: number) => helperRequest<ResearchJob>(`results/${encodeURIComponent(id)}/monte-carlo`, "POST", { seed, simulations }),
   importResult: (result: unknown) => helperRequest<{ id: string }>("results", "POST", result),
   importLegacy: (record: unknown) => helperRequest<{ id: string; status: string; reason: string }>("legacy", "POST", record),
   validation: (id: string) => helperRequest<ValidationResult>(`validations/${encodeURIComponent(id)}`),
   validationsForRun: (runId: string) => helperRequest<ValidationResult[]>(`results/${encodeURIComponent(runId)}/validations`),
-  saveValidation: (result: ValidationResult) => helperRequest<{ id: string }>("validations", "POST", result),
+  validate: (runId: string, config: ValidationConfig) => helperRequest<ResearchJob>(`results/${encodeURIComponent(runId)}/validate`, "POST", { config }),
 };

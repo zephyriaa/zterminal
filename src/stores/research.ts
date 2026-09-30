@@ -10,11 +10,8 @@ import { validateConfig, validateDataset } from "@/lib/local-research/dataset";
 import { useStudies } from "./studies";
 import { createPythonStudy } from "@/lib/indicator-library";
 
-import type { ValidationResult, ValidationConfig } from "@/domain/validation/contracts";
-import { runValidationBattery } from "@/domain/validation/engine";
-import { holdoutRequests, verifyHoldoutRun } from "@/domain/validation/holdout";
+import type { ValidationResult, ValidationConfig, ValidationTab } from "@/domain/validation/contracts";
 import { defaultValidationConfig } from "@/domain/validation/contracts";
-import type { RunRequest } from "@/lib/local-research/contracts";
 
 const initial: ScriptRecord = { id: "welcome-example", name: "Moving-average crossover", kind: "strategy", source: EXAMPLES[0].source, savedSource: "", updatedAt: 0, revision: 0 };
 type Connection = "unchecked" | "checking" | "connected" | "unpaired" | "invalid_code" | "unavailable" | "permission_denied" | "incompatible";
@@ -28,8 +25,8 @@ type State = {
   validationResult: ValidationResult | null;
   validationHistory: Record<string, ValidationResult[]>;
   isValidating: boolean;
-  validationTab: "Summary" | "OOS" | "Walk Forward" | "Monte Carlo" | "Sensitivity" | "Costs" | "Regimes" | "Diagnostics";
-  setValidationTab: (tab: "Summary" | "OOS" | "Walk Forward" | "Monte Carlo" | "Sensitivity" | "Costs" | "Regimes" | "Diagnostics") => void;
+  validationTab: ValidationTab;
+  setValidationTab: (tab: ValidationTab) => void;
   setSource: (source: string) => void; configure: (patch: Partial<ResearchConfig>) => void; selectScript: (id: string) => void; createScript: (name?: string, source?: string, kind?: "strategy" | "indicator") => void;
   connect: (code?: string) => Promise<void>; save: (name?: string, copy?: boolean) => Promise<void>; deleteScript: () => Promise<void>; run: () => Promise<void>; rerunIndicator: (artifactId: string, params: Record<string, number | string | boolean>) => Promise<void>; cancel: () => Promise<void>; openResult: (id: string) => Promise<void>; analyze: (seed: number, simulations: number) => Promise<void>; reproduceRun: (targetId?: string) => Promise<void>;
   runValidation: (customConfig?: Partial<ValidationConfig>) => Promise<void>;
@@ -37,26 +34,6 @@ type State = {
 };
 let abort: AbortController | null = null;
 const finished = (job: ResearchJob | null) => !job || ["complete", "failed", "cancelled"].includes(job.stage);
-
-async function runHoldoutRequest(request: RunRequest): Promise<ResearchResult> {
-  const started = Date.now();
-  const job = await helper.run(request);
-  let state = job;
-  while (!finished(state)) {
-    if (Date.now() - started > 210_000) {
-      await helper.cancel(job.id).catch(() => undefined);
-      throw new Error("Holdout execution exceeded the local Helper time limit.");
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    state = await helper.job(job.id);
-  }
-  if (state.stage !== "complete" || !state.resultId) {
-    throw new Error(`Holdout execution failed: ${state.diagnostic?.message ?? state.stage}`);
-  }
-  const result = await helper.result(state.resultId);
-  await verifyHoldoutRun(request, result);
-  return result;
-}
 
 export const useResearch = create<State>()(persist((set, get) => ({
   drafts: { [initial.id]: initial }, activeId: initial.id, config: defaultResearchConfig(), params: {}, minimap: false,
@@ -82,6 +59,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
     set(s => ({ activeId: id, diagnostic: null, drafts: { ...s.drafts, [id]: { id, name, kind, description: "", source: template, savedSource: "", revision: 0, updatedAt: Date.now() } } }));
   },
   connect: async code => {
+    if (get().connection === "checking") return;
     set({ connection: "checking", error: "" });
     try {
       const caps = await capabilities();
@@ -184,7 +162,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
     catch (error) { set({ error: (error as Error).message }); }
   },
   runValidation: async (customConfig) => {
-    if (get().isValidating) return;
+    if (get().isValidating || !finished(get().job)) return;
     const res = get().result;
     if (!res) {
       set({ error: "Run a strategy backtest before executing validation." });
@@ -193,21 +171,33 @@ export const useResearch = create<State>()(persist((set, get) => ({
     set({ isValidating: true, validationResult: null, error: "" });
     try {
       const config = { ...defaultValidationConfig(), ...customConfig };
-      const requests = await holdoutRequests(res, config);
-      const holdout = requests ? {
-        inSample: await runHoldoutRequest(requests.inSample),
-        outOfSample: await runHoldoutRequest(requests.outOfSample),
-      } : undefined;
-      const validation = await runValidationBattery(res, config, holdout);
-      await helper.saveValidation(validation);
+      const started = Date.now();
+      let job = await helper.validate(res.id, config);
+      set({ job });
+      while (!finished(job)) {
+        if (Date.now() - started > 630_000) {
+          await helper.cancel(job.id).catch(() => undefined);
+          throw new Error("Validation exceeded the local Helper time limit.");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        job = await helper.job(job.id);
+        set({ job });
+      }
+      if (job.stage !== "complete" || !job.resultId || job.resultKind !== "validation") {
+        throw new Error(`Validation failed: ${job.diagnostic?.message ?? job.stage}`);
+      }
+      const validation = await helper.validation(job.resultId);
+      if (validation.sourceRunId !== res.id || validation.provenance.sourceRunFingerprint !== res.resultHash) {
+        throw new Error("Validation does not match the selected ResearchRun.");
+      }
       set((s) => ({
-        validationResult: validation,
+        validationResult: s.result?.id === res.id ? validation : s.validationResult,
         validationHistory: {
           ...s.validationHistory,
           [res.id]: [validation, ...(s.validationHistory[res.id] ?? [])],
         },
         isValidating: false,
-        reportTab: "Validation",
+        reportTab: s.result?.id === res.id ? "Validation" : s.reportTab,
       }));
     } catch (err) {
       set({ isValidating: false, error: (err as Error).message });
@@ -244,26 +234,11 @@ export const useResearch = create<State>()(persist((set, get) => ({
     try {
       await capabilities();
       set({ job: { id: "preparing", stage: "loading_data" } });
-      const dataset = structuredClone(target.dataset);
-      const config = structuredClone(target.config);
-      const params = structuredClone(target.params);
-      const name = `${target.name} (Reproduction)`;
       if (signal.aborted) return;
-      const job = await helper.run({
-        name,
-        source: target.source,
-        config,
-        dataset,
-        params,
-      });
+      const job = await helper.reproduce(target.id);
       set({ job });
       if (signal.aborted) await helper.cancel(job.id);
       await watch(job.id);
-      const activeResult = get().result;
-      if (activeResult && activeResult.id !== target.id) {
-        activeResult.reproducedFrom = target.id;
-        set({ result: activeResult, chartResult: activeResult });
-      }
     } catch (error) {
       set({
         job: { id: get().job?.id ?? "preparing", stage: signal.aborted ? "cancelled" : "failed" },
@@ -302,6 +277,13 @@ async function watch(id: string) {
             const evaluation = await helper.evaluation(job.resultId);
             useResearch.setState(state => ({ indicatorResults: { ...state.indicatorResults, [evaluation.artifact.id]: evaluation }, error: "" }));
             useStudies.getState().addExternal(createPythonStudy({ artifactId: evaluation.artifact.id, name: evaluation.artifact.name, params: evaluation.params, parameterSchema: evaluation.parameters, outputs: Object.entries(evaluation.outputs).filter(([, output]) => ["line", "histogram", "area", "marker"].includes(output.plot)).map(([name, output]) => ({ id: name, plot: output.plot === "level" || output.plot === "background" ? "line" : output.plot })) }));
+          } else if (job.resultKind === "validation") {
+            const validation = await helper.validation(job.resultId);
+            const parent = await helper.result(validation.sourceRunId);
+            const archived = await helper.results();
+            useResearch.setState(state => ({ result: parent, chartResult: parent, validationResult: validation, archived, isValidating: false, reportTab: "Validation", error: "",
+              validationHistory: { ...state.validationHistory, [parent.id]: [validation, ...(state.validationHistory[parent.id] ?? []).filter(item => item.id !== validation.id)] } }));
+            window.dispatchEvent(new Event("zterminal:open-backtester"));
           } else {
             const [result, archived] = await Promise.all([helper.result(job.resultId), helper.results()]);
             useResearch.setState({ result, archived, chartResult: result, selectedTrade: null });

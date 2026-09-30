@@ -156,6 +156,10 @@ def execute(request, stage=lambda value: None):
                               "Benchmark is passive price return from the first open, before costs.",
                               "Risk ratios use complete UTC daily returns, a 365-day crypto calendar and zero risk-free/target return.",
                               "User code can introduce look-ahead bias; the engine shifts signals but cannot validate the logic of arbitrary Python."]}
+    if request.get("reproducedFrom") is not None:
+        if not isinstance(request["reproducedFrom"], str) or not 0 < len(request["reproducedFrom"]) <= 100:
+            raise ValueError("Invalid reproduction parent identity")
+        result["reproducedFrom"] = request["reproducedFrom"]
     result["resultHash"] = digest(result)
     return result
 

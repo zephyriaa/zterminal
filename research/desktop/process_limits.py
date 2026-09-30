@@ -37,10 +37,11 @@ class JobLimits:
         if not self.handle:
             raise ctypes.WinError(ctypes.get_last_error())
         info = Extended()
-        info.BasicLimitInformation.LimitFlags = 0x2000 | 0x100 | 0x8 | 0x2  # kill on close, memory, process count, CPU time
+        info.BasicLimitInformation.LimitFlags = 0x2000 | 0x100 | 0x200 | 0x8 | 0x2  # kill on close, process/job memory, process count, CPU time
         info.BasicLimitInformation.ActiveProcessLimit = 8
         info.BasicLimitInformation.PerProcessUserTimeLimit = cpu_seconds * 10_000_000
         info.ProcessMemoryLimit = memory_mb * 1024 * 1024
+        info.JobMemoryLimit = memory_mb * 1024 * 1024
         process = None
         try:
             if not self.api.SetInformationJobObject(self.handle, 9, ctypes.byref(info), ctypes.sizeof(info)):

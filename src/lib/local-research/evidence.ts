@@ -15,7 +15,7 @@ export function researchEvidence(result: ResearchResult) {
   const retrievedAt = dataset.retrievedAt;
   const retrievalKnown = Number.isSafeInteger(retrievedAt) && retrievedAt! >= dataset.to && retrievedAt! <= result.createdAt + 60_000;
   return {
-    coverage,
+    coverage: dataset.simulated ? `SIMULATED DATA. ${coverage}` : coverage,
     freshness: retrievalKnown
       ? `Retrieved ${new Date(retrievedAt!).toISOString()}. Historical snapshot; cached reuse does not refresh this timestamp.`
       : "Retrieval time unknown: this archive does not establish data freshness.",

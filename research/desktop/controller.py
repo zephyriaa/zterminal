@@ -90,13 +90,15 @@ class Controller:
             process.stdin.write(b"run\n")
             process.stdin.close()
             started = time.monotonic()
+            request = json.loads(captured)
+            wall_limit = min(600, self.timeout * 3) if request.get("operation") == "validation" else self.timeout
             while process.poll() is None:
                 if active["cancel"].wait(.1):
                     limits.terminate()
                     break
-                if time.monotonic() - started > self.timeout:
+                if time.monotonic() - started > wall_limit:
                     limits.terminate()
-                    raise TimeoutError(f"Local job exceeded the {self.timeout}-second wall-clock limit")
+                    raise TimeoutError(f"Local job exceeded the {wall_limit}-second wall-clock limit")
                 status = folder / "status.json"
                 if status.exists():
                     next_status = json.loads(status.read_text(encoding="utf-8"))
@@ -125,14 +127,22 @@ class Controller:
             result = json.loads(result_path.read_text(encoding="utf-8"))
             job["stage"] = "saving_result"
             self.archive.save_job(job)
-            request = json.loads(captured)
             if request.get("operation") == "monte_carlo":
                 result_id = request["result"]["id"]
                 self.archive.save_monte_carlo(result_id, result)
                 self.archive.save_job({"id": job["id"], "stage": "complete", "resultId": result_id})
+            elif request.get("operation") == "validation":
+                self.archive.save_generated_validation(request, result, job["id"])
             elif request.get("operation") == "indicator":
                 self.archive.save_indicator_evaluation(result, job["id"], request["dataset"])
             else:
+                if result.get("reproducedFrom") is not None:
+                    self.archive.validate_result(result)
+                    parent = self.archive.result(result["reproducedFrom"])
+                    fields = ["engine", "metrics", "trades", "equity", "plots", "monthly", "drawdowns", "assumptions"]
+                    differences = [field for field in fields if result[field] != parent[field]]
+                    result["reproduction"] = {"status": "different" if differences else "matched", "parentResultHash": parent["resultHash"], "comparedFields": fields, "differences": differences}
+                    result["resultHash"] = digest({key: value for key, value in result.items() if key not in ("resultHash", "monteCarlo")})
                 self.archive.save_result(result, job["id"])
         except BaseException as error:
             failure = {"id": job["id"], "stage": "failed", "diagnostic": {"message": f"{type(error).__name__}: {error}"}}
@@ -151,6 +161,8 @@ class Controller:
                 process.kill()
             if process:
                 process.wait(timeout=5)
+                if process.stderr:
+                    process.stderr.close()
             # Only this controller-created job directory is removed.
             if folder.parent.resolve() == self.root.resolve():
                 shutil.rmtree(folder, ignore_errors=True)

@@ -22,6 +22,9 @@ def main():
         if request.get("operation") == "monte_carlo":
             import analytics
             result = analytics.monte_carlo(request["result"], request["simulations"], request["seed"])
+        elif request.get("operation") == "validation":
+            from validation_runner import execute
+            result = execute(request, lambda stage: atomic(folder / "status.json", {"stage": stage}))
         elif request.get("operation") == "indicator":
             result = engine.execute_indicator(request, lambda stage: atomic(folder / "status.json", {"stage": stage}))
         else:

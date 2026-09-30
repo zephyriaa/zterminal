@@ -36,9 +36,11 @@ class Archive:
                 CREATE TABLE IF NOT EXISTS artifact_revisions(artifact_id TEXT NOT NULL, revision INTEGER NOT NULL, kind TEXT NOT NULL, source TEXT NOT NULL, hash TEXT NOT NULL, metadata TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(artifact_id, revision));
                 CREATE TABLE IF NOT EXISTS indicator_evaluations(id TEXT PRIMARY KEY, artifact_id TEXT NOT NULL, revision INTEGER NOT NULL, dataset_hash TEXT NOT NULL, input_hash TEXT NOT NULL UNIQUE, result_hash TEXT NOT NULL, created INTEGER NOT NULL, envelope TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS validations(id TEXT PRIMARY KEY, source_run_id TEXT NOT NULL REFERENCES results(id), created INTEGER NOT NULL, config_hash TEXT NOT NULL, envelope TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS validation_receipts(validation_id TEXT PRIMARY KEY REFERENCES validations(id), result_hash TEXT NOT NULL, origin TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS validation_run_links(validation_id TEXT NOT NULL REFERENCES validations(id), run_id TEXT NOT NULL REFERENCES results(id), role TEXT NOT NULL, PRIMARY KEY(validation_id,role));
                 INSERT OR IGNORE INTO artifacts(id,kind,name,source,revision,updated) SELECT id,'strategy',name,source,revision,updated FROM scripts;
                 INSERT OR IGNORE INTO artifact_revisions(artifact_id,revision,kind,source,hash,metadata,created) SELECT script_id,revision,'strategy',source,hash,'{}',created FROM revisions;
-                PRAGMA user_version=3;
+                PRAGMA user_version=4;
             ''')
 
     @contextmanager
@@ -206,6 +208,12 @@ class Archive:
         unsigned = {k: v for k, v in result.items() if k not in ("resultHash", "monteCarlo")}
         if result.get("resultHash") != digest(unsigned):
             raise ValueError("Result hash mismatch")
+        reproduction = result.get("reproduction")
+        if result.get("reproducedFrom") is not None and (not isinstance(result["reproducedFrom"], str) or not 0 < len(result["reproducedFrom"]) <= 100):
+            raise ValueError("Invalid reproduction parent identity")
+        if reproduction is not None:
+            if not result.get("reproducedFrom") or not isinstance(reproduction, dict) or reproduction.get("status") not in ("matched", "different") or not isinstance(reproduction.get("parentResultHash"), str) or len(reproduction["parentResultHash"]) != 64 or any(not isinstance(reproduction.get(k), list) or len(reproduction[k]) > 10 or any(not isinstance(x, str) or len(x) > 40 for x in reproduction[k]) for k in ("comparedFields", "differences")):
+                raise ValueError("Invalid reproduction comparison")
         dataset = result["dataset"]
         if dataset.get("version") != 1 or not isinstance(dataset.get("bars"), list) or len(dataset["bars"]) > 100_000:
             raise ValueError("Invalid dataset envelope")
@@ -264,10 +272,18 @@ class Archive:
 
     def save_result(self, result, job_id=None):
         self.validate_result(result)
+        if result.get("reproducedFrom") is not None and not job_id:
+            raise ValueError("Import the original run and rerun it locally; imported envelopes cannot claim a Helper reproduction")
         dataset = result["dataset"]
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             # Provider, product and range live in the retained manifest, even if prices coincide.
+            if result.get("reproducedFrom") is not None:
+                parent = db.execute("SELECT envelope FROM results WHERE id=?", (result["reproducedFrom"],)).fetchone()
+                original = json.loads(parent[0]) if parent else None
+                if not original or result["id"] == original["id"] or any(result[k] != original[k] for k in ("source", "sourceHash", "config", "params", "dataset")):
+                    raise ValueError("Reproduction inputs do not match the archived parent")
+                self.validate_result(original)
             dataset_key = digest({k: v for k, v in dataset.items() if k != "bars"})
             db.execute("INSERT OR IGNORE INTO datasets VALUES(?,?)", (dataset_key, encode(dataset)))
             db.execute("INSERT INTO results VALUES(?,?,?,?,?)", (result["id"], result["name"], result["createdAt"], dataset_key, encode(result)))
@@ -276,7 +292,7 @@ class Archive:
 
     def results(self):
         with self.connect() as db:
-            return [dict(row) for row in db.execute("SELECT id,name,created FROM results ORDER BY created DESC LIMIT 1000")]
+            return [dict(row) for row in db.execute("SELECT id,name,created FROM results WHERE NOT EXISTS (SELECT 1 FROM validation_run_links WHERE run_id=results.id) ORDER BY created DESC LIMIT 1000")]
 
     def find_dataset(self, query):
         keys = ("provider", "product", "symbol", "timeframe", "from", "to")
@@ -291,7 +307,15 @@ class Archive:
             row = db.execute("SELECT envelope FROM results WHERE id=?", (result_id,)).fetchone()
             if not row:
                 raise KeyError("Result not found")
-            return json.loads(row[0])
+            result = json.loads(row[0])
+            self.validate_result(result)
+            if result.get("reproducedFrom") is not None:
+                parent = db.execute("SELECT envelope FROM results WHERE id=?", (result["reproducedFrom"],)).fetchone()
+                original = json.loads(parent[0]) if parent else None
+                if not original or result["id"] == original["id"] or any(result[k] != original[k] for k in ("source", "sourceHash", "config", "params", "dataset")):
+                    raise ValueError("Archived reproduction linkage mismatch")
+                self.validate_result(original)
+            return result
 
     def save_monte_carlo(self, result_id, analysis):
         with self.connect() as db:
@@ -371,24 +395,73 @@ class Archive:
             # diagnostics. Do not promote this draft analysis to a durable artifact.
             raise ValueError("Validation metrics are not independently verified by the Helper; archive admission is unavailable")
 
-    @staticmethod
-    def _verify_validation(row):
-        # Older envelopes were calculated in the browser and not independently
-        # verified. Retain the rows for migration, but never display as evidence.
-        raise ValueError("Archived validation is not Helper-verified and cannot be displayed as research evidence")
+    def save_generated_validation(self, request, bundle, job_id):
+        """Controller-only admission. Client envelopes never reach this method.
+
+        Recalculate the report outside user-code processes from verified executions.
+        Commit every child, the immutable report and job completion together.
+        """
+        from validation_engine import normalize_config, verify_evidence, summarize
+        parent = request["result"]
+        self.validate_result(parent)
+        cfg = normalize_config(request["config"], parent)
+        if not isinstance(bundle, dict) or set(bundle) != {"evidence"} or not isinstance(bundle["evidence"], dict):
+            raise ValueError("Invalid validation execution bundle")
+        evidence = bundle["evidence"]
+        verify_evidence(parent, cfg, evidence, self.validate_result)
+        report = summarize(parent, cfg, evidence)
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT envelope FROM results WHERE id=?", (parent["id"],)).fetchone()
+            saved_parent = json.loads(row[0]) if row else None
+            if not saved_parent or saved_parent.get("resultHash") != parent["resultHash"]:
+                raise ValueError("Validation parent changed during computation")
+            self.validate_result(saved_parent)
+            for run in evidence.values():
+                dataset = run["dataset"]
+                dataset_key = digest({k: v for k, v in dataset.items() if k != "bars"})
+                db.execute("INSERT OR IGNORE INTO datasets VALUES(?,?)", (dataset_key, encode(dataset)))
+                db.execute("INSERT INTO results VALUES(?,?,?,?,?)", (run["id"], run["name"], run["createdAt"], dataset_key, encode(run)))
+            db.execute("INSERT INTO validations VALUES(?,?,?,?,?)", (report["id"], parent["id"], report["createdAt"], report["provenance"]["validationConfigHash"], encode(report)))
+            db.execute("INSERT INTO validation_receipts VALUES(?,?,?)", (report["id"], report["resultHash"], "helper_generated_current_reproduction"))
+            for role, run in evidence.items():
+                db.execute("INSERT INTO validation_run_links VALUES(?,?,?)", (report["id"], run["id"], role))
+            db.execute("INSERT OR REPLACE INTO jobs VALUES(?,?)", (job_id, encode({"id": job_id, "stage": "complete", "resultId": report["id"], "resultKind": "validation"})))
+        return report
+
+    def _verify_validation(self, row, db):
+        report = json.loads(row[0])
+        receipt = db.execute("SELECT result_hash,origin FROM validation_receipts WHERE validation_id=?", (report.get("id"),)).fetchone()
+        if not receipt or receipt["origin"] != "helper_generated_current_reproduction" or report.get("version") != 4:
+            raise ValueError("Archived validation is not Helper-verified and cannot be displayed as research evidence")
+        if receipt["result_hash"] != report.get("resultHash") or report["resultHash"] != digest({k: v for k, v in report.items() if k != "resultHash"}):
+            raise ValueError("Archived validation integrity check failed")
+        provenance = report["provenance"]
+        if provenance["validationConfigHash"] != digest(report["config"]) or provenance["fingerprint"] != digest({"sourceRunFingerprint": provenance["sourceRunFingerprint"], "config": report["config"], "engineVersion": provenance["engineVersion"]}):
+            raise ValueError("Archived validation provenance mismatch")
+        references = {**report["evidenceRuns"], "parent": {"id": report["sourceRunId"], "resultHash": provenance["sourceRunFingerprint"]}}
+        for reference in references.values():
+            child_row = db.execute("SELECT envelope FROM results WHERE id=?", (reference["id"],)).fetchone()
+            child = json.loads(child_row[0]) if child_row else None
+            if not child or child.get("resultHash") != reference["resultHash"]:
+                raise ValueError("Archived validation run linkage mismatch")
+            self.validate_result(child)
+        # Opening an archive verifies bytes and references, never recalculates a
+        # historical report under the currently installed quantitative engine.
+        return report
 
     def validation(self, val_id):
         with self.connect() as db:
             row = db.execute("SELECT envelope FROM validations WHERE id=?", (val_id,)).fetchone()
             if not row:
                 raise KeyError("Validation not found")
-            return self._verify_validation(row)
+            return self._verify_validation(row, db)
 
     def validations_for_run(self, source_run_id):
         with self.connect() as db:
             rows = db.execute(
-                "SELECT envelope FROM validations WHERE source_run_id=? ORDER BY created DESC",
+                "SELECT envelope FROM validations WHERE source_run_id=? AND (COALESCE(json_extract(envelope,'$.version'),0)>=4 OR EXISTS (SELECT 1 FROM validation_receipts WHERE validation_id=validations.id)) ORDER BY created DESC",
                 (source_run_id,)
             ).fetchall()
-            return [self._verify_validation(row) for row in rows]
+            return [self._verify_validation(row, db) for row in rows]
 

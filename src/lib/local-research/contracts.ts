@@ -17,6 +17,7 @@ export interface Dataset {
   bars: Bar[]; hash: string;
   /** Retrieval observation, not a guarantee of provider accuracy or live freshness. */
   retrievedAt?: number;
+  simulated?: boolean;
 }
 
 /** Phase-0 event contracts. Version-1 candle requests above remain unchanged. */
@@ -112,9 +113,10 @@ export interface ResearchResult {
   drawdowns: { start: number; trough: number; recovery: number | null; depth: number; durationMs: number }[];
   observations: string[]; logs: string[]; monteCarlo?: MonteCarloResult;
   reproducedFrom?: string;
+  reproduction?: { status: "matched" | "different"; parentResultHash: string; comparedFields: string[]; differences: string[] };
 }
 export interface ResearchJob {
-  id: string; stage: ResearchStage; diagnostic?: Diagnostic; resultId?: string; resultKind?: "strategy" | "indicator";
+  id: string; stage: ResearchStage; diagnostic?: Diagnostic; resultId?: string; resultKind?: "strategy" | "indicator" | "validation";
 }
 export interface RunRequest { name: string; source: string; config: ResearchConfig; dataset: Dataset; params: Record<string, number | string | boolean>; }
 export interface IndicatorEvaluationRequest extends RunRequest { operation: "indicator"; artifact: { id: string; kind: "indicator"; revision: number; name: string }; outputs: Record<string, { plot: IndicatorEvaluationResult["outputs"][string]["plot"] }> }

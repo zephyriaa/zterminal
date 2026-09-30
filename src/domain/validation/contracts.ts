@@ -5,10 +5,11 @@
  * via sourceRunFingerprint and validationConfigHash. No magic scores (e.g. 87/100).
  */
 
-export const VALIDATION_ENGINE_VERSION = "0.1.0" as const;
-export const VALIDATION_SCHEMA_VERSION = 3 as const;
+export const VALIDATION_ENGINE_VERSION = "0.2.0" as const;
+export const VALIDATION_SCHEMA_VERSION = 4 as const;
 
 export type ValidationRating = "strong" | "moderate" | "weak" | "inconclusive";
+export type ValidationTab = "Summary" | "OOS" | "Walk Forward" | "Monte Carlo" | "Sensitivity" | "Costs" | "Regimes" | "Concentration" | "Diagnostics" | "Provenance";
 
 export interface ValidationBaseline {
   initialCapital: number;
@@ -29,27 +30,31 @@ export interface OutOfSampleResult {
   outOfSampleRun: { id: string; resultHash: string };
   inSampleRange: { from: number; to: number };
   outOfSampleRange: { from: number; to: number };
+  inSampleObservations: number;
+  outOfSampleObservations: number;
   purgeBars: number;
   inSampleMetrics: ValidationBaseline;
   outOfSampleMetrics: ValidationBaseline;
   degradation: {
     sharpeDelta: number | null;
     drawdownDelta: number;
-    winRateDelta: number;
+    winRateDelta: number | null;
     rating: ValidationRating;
   };
 }
 
 export interface WalkForwardCycle {
   cycle: number;
-  inSample: { from: number; to: number; return: number; sharpe: number | null; trades: number };
-  outOfSample: { from: number; to: number; return: number; sharpe: number | null; trades: number };
-  wfe: number; // Out-of-sample annual return / In-sample annual return (percentage ratio)
+  inSample: { from: number; to: number; return: number; sharpe: number | null; trades: number; observations: number; run: { id: string; resultHash: string } };
+  outOfSample: { from: number; to: number; return: number; sharpe: number | null; trades: number; observations: number; run: { id: string; resultHash: string } };
+  selectedParams: Record<string, string | number | boolean>;
+  trainingCandidates: { id: string; resultHash: string }[];
+  wfe: number | null; // OOS / IS return per unit time; unavailable for nonpositive IS return
 }
 
 export interface WalkForwardResult {
   cycles: WalkForwardCycle[];
-  aggregateWfe: number;
+  aggregateWfe: number | null;
   positiveOosCycles: number;
   totalCycles: number;
   rating: ValidationRating;
@@ -81,8 +86,8 @@ export interface ParameterSensitivityResult {
   yValues: number[];
   baselinePoint: { x: number; y: number; metricValue: number };
   grid: ParameterSensitivityPoint[][]; // grid[yIdx][xIdx]
-  neighborDegradationRatio: number;   // Mean(8 neighbors) / Baseline
-  coefficientOfVariation: number;
+  neighborDegradationRatio: number | null; // Mean local neighbors / best grid cell
+  coefficientOfVariation: number | null;
   surfaceClassification: "broad_plateau" | "narrow_spike" | "boundary_optimum" | "unstable_surface";
   rating: ValidationRating;
 }
@@ -94,13 +99,19 @@ export interface CostTier {
   netProfit: number;
   sharpe: number | null;
   profitFactor: number | null;
-  expectancy: number;
+  expectancy: number | null;
+  totalReturn?: number;
+  finalEquity?: number;
+  totalTrades?: number;
+  winRate?: number | null;
+  run?: { id: string; resultHash: string };
 }
 
 export interface CostStressResult {
   tiers: CostTier[];
   breakEvenFrictionBps: number | null; // Total friction; null when no positive trade notional exists
-  frictionElasticity: number; // % drop in expectancy per 10 bps friction
+  breakEvenBracketBps?: [number, number] | null;
+  frictionElasticity: number | null; // Measured % drop in expectancy at exactly +10 bps
   rating: ValidationRating;
 }
 
@@ -109,27 +120,30 @@ export interface RegimeMetric {
   label: string;
   barsCount: number;
   tradesCount: number;
-  winRate: number;
+  winRate: number | null;
   netProfit: number;
-  profitContributionPct: number;
+  profitContributionPct: number | null;
   sharpe: number | null;
 }
 
 export interface RegimeValidationResult {
   volatilityRegimes: RegimeMetric[]; // low, normal, high
   trendRegimes: RegimeMetric[];      // bull, bear, neutral
-  dominantRegimePct: number;
+  dominantRegimePct: number | null;
   rating: ValidationRating;
 }
 
 export interface ConcentrationResult {
-  top5TradesProfitPct: number;
-  top10TradesProfitPct: number;
-  giniCoefficient: number;
-  herfindahlIndex: number;
+  top5TradesProfitPct: number | null;
+  top10TradesProfitPct: number | null;
+  giniCoefficient: number | null;
+  herfindahlIndex: number | null;
   longestLossStreak: number;
   maxDrawdownDays: number;
   sampleSufficiency: "adequate" | "marginal" | "insufficient";
+  largestWinnerContributionPct?: number | null;
+  periods?: { group: string; trades: number; netProfit: number; grossWinningPnl: number; grossWinningContributionPct: number | null }[];
+  directions?: { group: string; trades: number; netProfit: number; grossWinningPnl: number; grossWinningContributionPct: number | null }[];
 }
 
 export interface ValidationProfile {
@@ -150,6 +164,7 @@ export interface ValidationDiagnostic {
 }
 
 export interface ValidationConfig {
+  version: 1;
   oosSplitRatio: number; // e.g. 0.70
   purgeBars: number;     // e.g. 1
   monteCarloPaths: number; // e.g. 1000
@@ -160,6 +175,8 @@ export interface ValidationConfig {
     paramX: { name: string; min: number; max: number; steps: number };
     paramY: { name: string; min: number; max: number; steps: number };
   };
+  walkForward?: { trainingBars: number; testingBars: number; stepBars: number; optimize: boolean };
+  regimes?: { volatilityWindow: 20; historyWindow: 100; trendFast: 20; trendSlow: 50; neutralFraction: 0.001; attribution: "previous_closed_bar"; thresholds: "trailing_tertiles" };
 }
 
 export interface ValidationResult {
@@ -167,10 +184,15 @@ export interface ValidationResult {
   id: string;
   sourceRunId: string;
   createdAt: number;
+  resultHash: string;
+  evidenceRuns: Record<string, { id: string; resultHash: string }>;
   provenance: {
     sourceRunFingerprint: string;
     validationConfigHash: string;
     engineVersion: typeof VALIDATION_ENGINE_VERSION;
+    fingerprint: string;
+    runtime: Record<string, string>;
+    execution: "helper_fresh_cpython_processes";
   };
   config: ValidationConfig;
   baseline: ValidationBaseline;
@@ -183,10 +205,12 @@ export interface ValidationResult {
   concentration: ConcentrationResult;
   profile: ValidationProfile;
   diagnostics: ValidationDiagnostic[];
+  sample: { observations: number; durationDays: number; closedTrades: number; laterClosedTrades: number | null; volatilityKnownObservations: number; volatilityCoverageFraction: number };
 }
 
 export function defaultValidationConfig(): ValidationConfig {
   return {
+    version: 1,
     oosSplitRatio: 0.70,
     purgeBars: 1,
     monteCarloPaths: 1000,

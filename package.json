@@ -26,6 +26,7 @@
     "desktop:build": "tauri build",
     "tauri": "tauri",
     "test:terminal": "node scripts/test-terminal-browser.cjs",
+    "test:validation": "node scripts/test-validation-browser.cjs",
     "test:drafts": "node scripts/test-draft-recovery.cjs",
     "test:account": "node scripts/test-public-account-browser.cjs"
   },

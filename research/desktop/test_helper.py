@@ -121,7 +121,7 @@ class APITests(unittest.TestCase):
         connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
         defaults = {"Origin": self.origin, "Content-Type": "application/json"}
         defaults.update(headers)
-        connection.request(method, path, encode(body) if body is not None else None, defaults)
+        connection.request(method, path, encode(body).encode("utf-8") if body is not None else None, defaults)
         response = connection.getresponse()
         raw = response.read()
         connection.close()

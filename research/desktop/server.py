@@ -150,6 +150,7 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(403, {"error": str(error)})
 
     def dispatch(self, method):
+        body_received = False
         try:
             parts = urlsplit(self.path).path.strip("/").split("/")
             if len(self.path) > 1024 or len(parts) < 2 or parts[0] != "v1":
@@ -159,6 +160,7 @@ class Handler(BaseHTTPRequestHandler):
             origin = self.gate(not public)
             service, archive = self.server.service, self.server.service.archive
             body = self.payload() if method == "POST" else {}
+            body_received = method == "POST"
             identifier = parts[2] if len(parts) >= 3 else None
             if method == "GET" and route == "capabilities":
                 return self.respond(200, {"protocol": 1, "version": "1.0.0-preview.2", "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": "1.1.0", "vectorbt": package_version("vectorbt"), "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
@@ -192,7 +194,7 @@ class Handler(BaseHTTPRequestHandler):
                 if method == "DELETE" and identifier:
                     return self.respond(200, service.controller.cancel(identifier))
             if route == "results":
-                if method == "GET":
+                if method == "GET" and len(parts) <= 3:
                     return self.respond(200, archive.result(identifier) if identifier else archive.results())
                 if method == "POST" and not identifier:
                     # Import never evaluates retained source. Only canonical v1 envelopes are accepted.
@@ -200,6 +202,22 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(201, {"id": body["id"]})
                 if method == "POST" and identifier and len(parts) == 4 and parts[3] == "monte-carlo":
                     return self.respond(202, service.controller.create({"operation": "monte_carlo", "result": archive.result(identifier), "simulations": body.get("simulations", 1000), "seed": body.get("seed", 42)}))
+                if method == "POST" and identifier and len(parts) == 4 and parts[3] == "validate":
+                    from validation_engine import normalize_config
+                    if set(body) != {"config"}:
+                        raise ValueError("Submit only validation configuration; metrics and evidence are Helper-owned")
+                    parent = archive.result(identifier)
+                    archive.validate_result(parent)
+                    cfg = normalize_config(body["config"], parent)
+                    return self.respond(202, service.controller.create({"operation": "validation", "result": parent, "config": cfg}))
+                if method == "POST" and identifier and len(parts) == 4 and parts[3] == "reproduce":
+                    if body:
+                        raise ValueError("Reproduction uses the archived inputs; overrides are not permitted")
+                    parent = archive.result(identifier)
+                    archive.validate_result(parent)
+                    request = {key: parent[key] for key in ("name", "source", "config", "params", "dataset")}
+                    request.update(name=(parent["name"][:105] + " (Reproduction)"), reproducedFrom=identifier)
+                    return self.respond(202, service.controller.create(request))
                 if method == "GET" and identifier and len(parts) == 4 and parts[3] == "validations":
                     return self.respond(200, archive.validations_for_run(identifier))
             if route == "validations":
@@ -216,6 +234,20 @@ class Handler(BaseHTTPRequestHandler):
                     return self.respond(200, archive.legacy())
             raise KeyError("Unknown endpoint")
         except PermissionError as error:
+            # Drain a bounded rejected POST without parsing or authorizing it.
+            # Closing a Windows socket with unread request bytes can reset the
+            # connection before the browser receives the explicit 403 response.
+            if method == "POST" and not body_received and not self.headers.get("Transfer-Encoding"):
+                try:
+                    remaining = int(self.headers.get("Content-Length", "0"))
+                    if 0 < remaining <= 32_000_000:
+                        while remaining:
+                            chunk = self.rfile.read(min(remaining, 65_536))
+                            if not chunk:
+                                break
+                            remaining -= len(chunk)
+                except (ValueError, OSError):
+                    pass
             self.respond(403, {"error": str(error), "code": "pairing_required"})
         except KeyError as error:
             self.respond(404, {"error": str(error)})
