@@ -35,6 +35,7 @@ import {
   createWalkForwardWindows,
   runMonteCarloValidation,
 } from "./resampling";
+import type { HoldoutRuns } from "./holdout";
 
 /** Compute baseline summary metrics from a subset of closed trades. */
 export function computeBaselineFromTrades(
@@ -146,39 +147,22 @@ export function computeBaselineFromTrades(
 export function evaluateOutOfSample(
   result: ResearchResult,
   config: ValidationConfig,
+  holdout?: HoldoutRuns,
 ): OutOfSampleResult | null {
-  const { dataset, trades, config: runConfig } = result;
-  const closed = trades.filter((t) => t.status === "closed");
-  if (closed.length < 6 || dataset.bars.length < 30) {
-    return null;
+  if (!holdout) return null;
+  const earlier = holdout.inSample;
+  const later = holdout.outOfSample;
+  const from = earlier.config.from;
+  const splitTime = earlier.config.to;
+  const oosStartTime = later.config.from;
+  const to = later.config.to;
+  if (from !== result.config.from || to !== result.config.to || splitTime >= oosStartTime ||
+      earlier.sourceHash !== result.sourceHash || later.sourceHash !== result.sourceHash ||
+      earlier.dataset.hash === later.dataset.hash) {
+    throw new Error("Holdout runs do not match the source run and disjoint periods.");
   }
-
-  const from = runConfig.from;
-  const to = runConfig.to;
-  const totalDuration = to - from;
-  const splitRatio = Math.max(0.5, Math.min(0.9, config.oosSplitRatio));
-  const splitTime = from + Math.floor(totalDuration * splitRatio);
-
-  // Interval duration per bar
-  const intervalMs =
-    dataset.bars.length > 1
-      ? dataset.bars[1].t - dataset.bars[0].t
-      : Math.floor(totalDuration / dataset.bars.length);
-
-  const purgeMs = config.purgeBars * intervalMs;
-  const oosStartTime = splitTime + purgeMs;
-
-  // In-Sample trades: strictly entry >= from and exit <= splitTime
-  const isTrades = closed.filter((t) => t.entryTime >= from && t.exitTime != null && t.exitTime <= splitTime);
-
-  // Out-of-Sample trades: strictly entry >= oosStartTime and exit <= to
-  const oosTrades = closed.filter((t) => t.entryTime >= oosStartTime && (t.exitTime == null || t.exitTime <= to));
-
-  const isDurationDays = (splitTime - from) / 86400000;
-  const oosDurationDays = (to - oosStartTime) / 86400000;
-
-  const isMetrics = computeBaselineFromTrades(isTrades, runConfig.initialCapital, isDurationDays);
-  const oosMetrics = computeBaselineFromTrades(oosTrades, runConfig.initialCapital, oosDurationDays);
+  const isMetrics = computeBaselineFromTrades(earlier.trades, earlier.config.initialCapital, (splitTime - from) / 86400000);
+  const oosMetrics = computeBaselineFromTrades(later.trades, later.config.initialCapital, (to - oosStartTime) / 86400000);
 
   // Degradation calculation
   let sharpeDelta: number | null = null;
@@ -210,7 +194,9 @@ export function evaluateOutOfSample(
   }
 
   return {
-    splitRatio,
+    splitRatio: config.oosSplitRatio,
+    inSampleRun: { id: earlier.id, resultHash: earlier.resultHash },
+    outOfSampleRun: { id: later.id, resultHash: later.resultHash },
     inSampleRange: { from, to: splitTime },
     outOfSampleRange: { from: oosStartTime, to },
     purgeBars: config.purgeBars,
@@ -809,7 +795,7 @@ export function generateDiagnostics(
         category: "oos",
         severity: "info",
         headline: "Positive Performance in Later Chronological Segment",
-        detail: `Later-period Sharpe is ${oos.outOfSampleMetrics.sharpe ?? "—"} versus earlier-period Sharpe ${oos.inSampleMetrics.sharpe ?? "—"}. This partition of one backtest does not establish that the strategy was selected without seeing later data.`,
+        detail: `Separately executed later-period Sharpe is ${oos.outOfSampleMetrics.sharpe ?? "—"} versus earlier-period Sharpe ${oos.inSampleMetrics.sharpe ?? "—"}. This does not establish that the strategy was selected without seeing later data.`,
       });
     }
   }
@@ -946,6 +932,7 @@ export function generateDiagnostics(
 export async function runValidationBattery(
   result: ResearchResult,
   customConfig?: Partial<ValidationConfig>,
+  holdout?: HoldoutRuns,
 ): Promise<ValidationResult> {
   const config: ValidationConfig = {
     ...defaultValidationConfig(),
@@ -955,7 +942,7 @@ export async function runValidationBattery(
   const durationDays = Math.max(1, (result.config.to - result.config.from) / 86400000);
   const baseline = computeBaselineFromTrades(result.trades, result.config.initialCapital, durationDays);
 
-  const oos = evaluateOutOfSample(result, config);
+  const oos = evaluateOutOfSample(result, config, holdout);
   const wfo = evaluateWalkForward(result, config);
   const mc = evaluateMonteCarlo(result, config);
   const sensitivity = evaluateSensitivity(result, config);

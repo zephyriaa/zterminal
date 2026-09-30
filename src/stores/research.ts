@@ -12,6 +12,9 @@ import { createPythonStudy } from "@/lib/indicator-library";
 
 import type { ValidationResult, ValidationConfig } from "@/domain/validation/contracts";
 import { runValidationBattery } from "@/domain/validation/engine";
+import { holdoutRequests, verifyHoldoutRun } from "@/domain/validation/holdout";
+import { defaultValidationConfig } from "@/domain/validation/contracts";
+import type { RunRequest } from "@/lib/local-research/contracts";
 
 const initial: ScriptRecord = { id: "welcome-example", name: "Moving-average crossover", kind: "strategy", source: EXAMPLES[0].source, savedSource: "", updatedAt: 0, revision: 0 };
 type Connection = "unchecked" | "checking" | "connected" | "unpaired" | "invalid_code" | "unavailable" | "permission_denied" | "incompatible";
@@ -34,6 +37,26 @@ type State = {
 };
 let abort: AbortController | null = null;
 const finished = (job: ResearchJob | null) => !job || ["complete", "failed", "cancelled"].includes(job.stage);
+
+async function runHoldoutRequest(request: RunRequest): Promise<ResearchResult> {
+  const started = Date.now();
+  const job = await helper.run(request);
+  let state = job;
+  while (!finished(state)) {
+    if (Date.now() - started > 210_000) {
+      await helper.cancel(job.id).catch(() => undefined);
+      throw new Error("Holdout execution exceeded the local Helper time limit.");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    state = await helper.job(job.id);
+  }
+  if (state.stage !== "complete" || !state.resultId) {
+    throw new Error(`Holdout execution failed: ${state.diagnostic?.message ?? state.stage}`);
+  }
+  const result = await helper.result(state.resultId);
+  await verifyHoldoutRun(request, result);
+  return result;
+}
 
 export const useResearch = create<State>()(persist((set, get) => ({
   drafts: { [initial.id]: initial }, activeId: initial.id, config: defaultResearchConfig(), params: {}, minimap: false,
@@ -161,6 +184,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
     catch (error) { set({ error: (error as Error).message }); }
   },
   runValidation: async (customConfig) => {
+    if (get().isValidating) return;
     const res = get().result;
     if (!res) {
       set({ error: "Run a strategy backtest before executing validation." });
@@ -168,7 +192,13 @@ export const useResearch = create<State>()(persist((set, get) => ({
     }
     set({ isValidating: true, error: "" });
     try {
-      const validation = await runValidationBattery(res, customConfig);
+      const config = { ...defaultValidationConfig(), ...customConfig };
+      const requests = await holdoutRequests(res, config);
+      const holdout = requests ? {
+        inSample: await runHoldoutRequest(requests.inSample),
+        outOfSample: await runHoldoutRequest(requests.outOfSample),
+      } : undefined;
+      const validation = await runValidationBattery(res, config, holdout);
       await helper.saveValidation(validation);
       set((s) => ({
         validationResult: validation,

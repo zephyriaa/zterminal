@@ -20,8 +20,9 @@ import type {
   Dataset,
 } from "../src/lib/local-research/contracts";
 import type { Bar } from "../src/lib/market/types";
-import { canonicalHash } from "../src/lib/local-research/dataset";
+import { canonicalHash, sha256 } from "../src/lib/local-research/dataset";
 import { defaultValidationConfig } from "../src/domain/validation/contracts";
+import { holdoutRequests, verifyHoldoutRun } from "../src/domain/validation/holdout";
 
 // Helper to create synthetic candle bars
 function createMockBars(count: number, startMs = 1_700_000_000_000, intervalMs = 3_600_000) {
@@ -106,6 +107,25 @@ function createMockResult(
   };
 }
 
+function mockHoldoutRuns(parent: ResearchResult, ratio = 0.7, purge = 1) {
+  const bars = parent.dataset.bars;
+  const split = Math.floor(bars.length * ratio);
+  const segment = (subset: typeof bars, id: string): ResearchResult => {
+    const from = subset[0].t;
+    const to = subset[subset.length - 1].t + 3_600_000;
+    return {
+      ...parent, id, resultHash: `${id}-hash`,
+      config: { ...parent.config, from, to },
+      dataset: { ...parent.dataset, from, to, bars: subset, hash: `${id}-dataset-hash` },
+      trades: parent.trades.filter((t) => t.entryTime >= from && t.exitTime != null && t.exitTime < to),
+    };
+  };
+  return {
+    inSample: segment(bars.slice(0, split), "earlier-run"),
+    outOfSample: segment(bars.slice(split + purge), "later-run"),
+  };
+}
+
 // ============================================================================
 // STRATEGY FIXTURES A THROUGH F
 // ============================================================================
@@ -137,7 +157,7 @@ test("Strategy A: Genuinely stable synthetic edge survives validation battery", 
   }
 
   const result = createMockResult(trades, bars, { fast: 20, slow: 50 });
-  const validation = await runValidationBattery(result);
+  const validation = await runValidationBattery(result, undefined, mockHoldoutRuns(result));
 
   // Assertions:
   assert.ok(validation.outOfSample, "OOS result should exist");
@@ -525,7 +545,7 @@ test("Zero Leakage: Out-of-Sample metrics cannot touch In-Sample interval", () =
 
   const allTrades = [isTrade, boundaryTrade, oosTrade, ...dummyTrades];
   const result = createMockResult(allTrades, bars);
-  const oos = evaluateOutOfSample(result, defaultValidationConfig());
+  const oos = evaluateOutOfSample(result, defaultValidationConfig(), mockHoldoutRuns(result));
 
   assert.ok(oos, "OOS result should exist");
   // The boundary straddle trade ($500) must NOT be counted in either IS or OOS:
@@ -536,6 +556,29 @@ test("Zero Leakage: Out-of-Sample metrics cannot touch In-Sample interval", () =
   assert.ok(
     oos.outOfSampleMetrics.netProfit === 100,
     `OOS net profit must only reflect the pure OOS trade ($100), got ${oos.outOfSampleMetrics.netProfit}`,
+  );
+});
+
+test("Holdout requests run exact source on disjoint closed candle datasets", async () => {
+  const alignedStart = Math.floor(1_700_000_000_000 / 3_600_000) * 3_600_000;
+  const parent = createMockResult([], createMockBars(100, alignedStart));
+  const requests = await holdoutRequests(parent, defaultValidationConfig());
+  assert.ok(requests);
+  assert.equal(requests.inSample.dataset.bars.length, 70);
+  assert.equal(requests.outOfSample.dataset.bars.length, 29);
+  assert.equal(requests.inSample.config.to + 3_600_000, requests.outOfSample.config.from);
+  assert.equal(requests.inSample.source, parent.source);
+  assert.equal(requests.outOfSample.source, parent.source);
+  assert.notEqual(requests.inSample.dataset.hash, requests.outOfSample.dataset.hash);
+  const child = {
+    ...parent, id: "linked-child", resultHash: "f".repeat(64),
+    sourceHash: await sha256(parent.source),
+    config: requests.inSample.config, dataset: requests.inSample.dataset,
+  };
+  await verifyHoldoutRun(requests.inSample, child);
+  await assert.rejects(
+    verifyHoldoutRun(requests.inSample, { ...child, dataset: { ...child.dataset, bars: child.dataset.bars.slice(1) } }),
+    /identity mismatch/,
   );
 });
 

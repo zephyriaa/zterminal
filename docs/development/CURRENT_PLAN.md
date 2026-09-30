@@ -7,7 +7,7 @@ Phase 1 is incomplete. The committed v0.1 validator contains useful chronologica
 ## Milestones
 
 1. **Integrity repair:** reject fabricated sensitivity, require successful archive save, bind validation to the archived parent and config, detect archived tampering, and describe existing calculations accurately. Acceptance: rejection tests plus TypeScript/Python gates.
-2. **True chronological validation:** execute exact source on sealed OOS data and implement rolling train/test windows with training-only parameter selection. Test boundary bars, warm-up, timestamps, indicator state, and leakage traps.
+2. **True chronological validation:** exact-source earlier/later Helper reruns with disjoint candle ranges are implemented. Next, implement rolling train/test windows with training-only parameter selection. Test boundary bars, warm-up, timestamps, indicator state, and leakage traps. Human research selection can still contaminate a later period, so do not call it sealed without a precommit workflow.
 3. **Measured sensitivity and cost stress:** run each parameter and friction variant in the paired local CPython Helper; persist each variant identity and fail the validation if any required run fails.
 4. **Quantitative method audit:** clarify Monte Carlo interpretation, non-crossed cost bounds, sample sufficiency, regime attribution, and all qualitative rules; add adversarial fixtures.
 5. **Artifact and UX certification:** stable versioned result schema, immutable archive and reopen, methodology documentation, browser flow, build, and independent review.

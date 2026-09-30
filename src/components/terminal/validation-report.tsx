@@ -161,7 +161,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
               Does this strategy contain a real edge, or is it overfitted?
             </h3>
             <p className="text-xs leading-relaxed text-zinc-400">
-              Analyze chronological segments, rolling windows, seeded trade-order permutations,
+              Rerun the exact strategy on disjoint chronological segments, then analyze rolling windows, seeded trade-order permutations,
               and projected fee/slippage decay. Parameter sensitivity requires separate Python runs.
             </p>
             <div className="pt-2">
@@ -365,7 +365,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
               ) : (
                 <>
                   <p className="rounded border border-amber-900/40 bg-amber-950/20 p-3 text-xs text-amber-300">
-                    These are earlier and later segments of one backtest. The later segment is not a sealed holdout if the strategy or parameters were selected using the full history.
+                    These earlier and later segments were executed separately by the local Helper with the same source and parameters. The later segment is not a sealed holdout if the strategy or parameters were selected using the full history.
                   </p>
                   <div className="rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs space-y-2">
                     <strong className="text-zinc-200">Temporal Split & Embargo Policy</strong>
@@ -375,6 +375,8 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                       Purge gap: {validation.outOfSample.purgeBars} bar(s) embargo to prevent boundary lookahead leakage.
                       <br />
                       Out-of-Sample period: {date(validation.outOfSample.outOfSampleRange.from)} → {date(validation.outOfSample.outOfSampleRange.to)} UTC.
+                      <br />
+                      Linked runs: {validation.outOfSample.inSampleRun.id} / {validation.outOfSample.outOfSampleRun.id}.
                     </p>
                   </div>
                   <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">

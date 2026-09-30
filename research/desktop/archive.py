@@ -319,7 +319,7 @@ class Archive:
             return [{"id": row["id"], "payload": json.loads(row["payload"]), "imported": row["imported"], "status": "incomplete"} for row in db.execute("SELECT * FROM legacy ORDER BY imported DESC")]
 
     def save_validation(self, validation):
-        if not isinstance(validation, dict) or validation.get("version") != 2:
+        if not isinstance(validation, dict) or validation.get("version") != 3:
             raise ValueError("Invalid validation envelope")
         val_id = validation.get("id")
         source_run_id = validation.get("sourceRunId")
@@ -332,13 +332,41 @@ class Archive:
             raise ValueError("Validation configuration hash mismatch")
         if validation.get("sensitivity") is not None:
             raise ValueError("Parameter sensitivity requires independently executed strategy variants")
-        if provenance.get("engineVersion") != "0.1.0":
+        if not isinstance(provenance, dict) or provenance.get("engineVersion") != "0.1.0":
             raise ValueError("Unsupported validation engine version")
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             parent = db.execute("SELECT envelope FROM results WHERE id=?", (source_run_id,)).fetchone()
-            if not parent or json.loads(parent[0]).get("resultHash") != provenance.get("sourceRunFingerprint"):
+            parent_result = json.loads(parent[0]) if parent else None
+            if not parent_result or parent_result.get("resultHash") != provenance.get("sourceRunFingerprint"):
                 raise ValueError("Validation parent fingerprint mismatch")
+            holdout = validation.get("outOfSample")
+            if holdout is not None:
+                if not isinstance(holdout, dict):
+                    raise ValueError("Invalid holdout evidence")
+                cfg = validation["config"]
+                bars = parent_result["dataset"]["bars"]
+                ratio, purge = cfg.get("oosSplitRatio"), cfg.get("purgeBars")
+                if isinstance(ratio, bool) or not isinstance(ratio, (int, float)) or not 0.5 <= ratio <= 0.9 or isinstance(purge, bool) or not isinstance(purge, int) or not 1 <= purge <= 100:
+                    raise ValueError("Invalid holdout split configuration")
+                split = math.floor(len(bars) * ratio)
+                if split < 2 or len(bars) - split - purge < 2:
+                    raise ValueError("Insufficient disjoint holdout candles")
+                expected_segments = (bars[:split], bars[split + purge:])
+                for label, expected_bars, range_key in zip(("inSample", "outOfSample"), expected_segments, ("inSampleRange", "outOfSampleRange")):
+                    reference = holdout.get(label + "Run")
+                    period = holdout.get(range_key)
+                    if not isinstance(reference, dict) or not isinstance(period, dict) or not isinstance(reference.get("id"), str):
+                        raise ValueError("Missing linked holdout run")
+                    child_row = db.execute("SELECT envelope FROM results WHERE id=?", (reference["id"],)).fetchone()
+                    child = json.loads(child_row[0]) if child_row else None
+                    if not child or child.get("resultHash") != reference.get("resultHash") or child.get("sourceHash") != parent_result.get("sourceHash") or child.get("source") != parent_result.get("source") or child.get("params") != parent_result.get("params"):
+                        raise ValueError("Holdout result identity mismatch")
+                    if child["dataset"]["bars"] != expected_bars or child["dataset"].get("hash") != digest([[b[k] for k in ("t", "o", "h", "l", "c", "v")] for b in expected_bars]):
+                        raise ValueError("Holdout dataset does not match the chronological partition")
+                    expected_range = {"from": expected_bars[0]["t"], "to": expected_bars[-1]["t"] + (bars[1]["t"] - bars[0]["t"])}
+                    if period != expected_range or any(child["config"].get(key) != value for key, value in {**parent_result["config"], **expected_range}.items()):
+                        raise ValueError("Holdout run configuration or period mismatch")
             if "archiveDigest" in validation:
                 raise ValueError("Archive digest is assigned by the Helper")
             retained = {**validation, "archiveDigest": digest(validation)}
@@ -351,6 +379,8 @@ class Archive:
     @staticmethod
     def _verify_validation(row):
         validation = json.loads(row["envelope"])
+        if validation.get("version") != 3:
+            raise ValueError("Archived validation uses a superseded schema and cannot be displayed as current evidence")
         archive_digest = validation.pop("archiveDigest", None)
         if archive_digest != digest(validation):
             raise ValueError("Archived validation digest mismatch")

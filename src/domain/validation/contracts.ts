@@ -6,7 +6,7 @@
  */
 
 export const VALIDATION_ENGINE_VERSION = "0.1.0" as const;
-export const VALIDATION_SCHEMA_VERSION = 2 as const;
+export const VALIDATION_SCHEMA_VERSION = 3 as const;
 
 export type ValidationRating = "strong" | "moderate" | "weak" | "inconclusive";
 
@@ -25,6 +25,8 @@ export interface ValidationBaseline {
 
 export interface OutOfSampleResult {
   splitRatio: number;
+  inSampleRun: { id: string; resultHash: string };
+  outOfSampleRun: { id: string; resultHash: string };
   inSampleRange: { from: number; to: number };
   outOfSampleRange: { from: number; to: number };
   purgeBars: number;
