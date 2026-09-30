@@ -6,6 +6,10 @@ import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { SessionProvider } from "next-auth/react";
 
+// createElement receives children separately; NextAuth's prop type requires
+// children inside the props object even when a third argument supplies them.
+const AccountSessionProvider = SessionProvider as React.ComponentType<Omit<React.ComponentProps<typeof SessionProvider>, "children">>;
+
 // Mock CSS imports for Node environment before loading component
 require.extensions[".css"] = () => ({});
 
@@ -22,10 +26,9 @@ const read = (file: string) => readFileSync(join(root, file), "utf8");
 test("PublicHeaderAccount: renders signed-out state when session is null", () => {
   assert.ok(PublicHeaderAccount, "Component must be loaded");
   const html = ReactDOMServer.renderToString(
-    React.createElement(SessionProvider, {
+    React.createElement(AccountSessionProvider, {
       session: null,
-      children: React.createElement(PublicHeaderAccount),
-    })
+    }, React.createElement(PublicHeaderAccount))
   );
 
   // Trigger button exists with correct accessibility attributes
@@ -54,10 +57,9 @@ test("PublicHeaderAccount: renders authenticated identity when valid user sessio
   };
 
   const html = ReactDOMServer.renderToString(
-    React.createElement(SessionProvider, {
+    React.createElement(AccountSessionProvider, {
       session: mockSession,
-      children: React.createElement(PublicHeaderAccount),
-    })
+    }, React.createElement(PublicHeaderAccount))
   );
 
   // Correct user info displayed
@@ -80,10 +82,9 @@ test("PublicHeaderAccount: handles authenticated session with email only (no dis
   };
 
   const html = ReactDOMServer.renderToString(
-    React.createElement(SessionProvider, {
+    React.createElement(AccountSessionProvider, {
       session: mockSession,
-      children: React.createElement(PublicHeaderAccount),
-    })
+    }, React.createElement(PublicHeaderAccount))
   );
 
   // Uses email as name and "Manage account" as subtitle
@@ -96,10 +97,9 @@ test("PublicHeaderAccount: handles authenticated session with email only (no dis
 
 test("PublicHeaderAccount: renders neutral reserved loading state with zero layout shift", () => {
   const html = ReactDOMServer.renderToString(
-    React.createElement(SessionProvider, {
+    React.createElement(AccountSessionProvider, {
       session: undefined,
-      children: React.createElement(PublicHeaderAccount),
-    })
+    }, React.createElement(PublicHeaderAccount))
   );
 
   // Neutral loading indicator

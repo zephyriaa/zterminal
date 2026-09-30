@@ -30,6 +30,9 @@ async function main() {
     const pairing = JSON.parse(fs.readFileSync(path.join(root, 'pairing.json'), 'utf8'));
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'dark' });
+    if (new URL(base).protocol === 'https:') {
+      await context.grantPermissions(['local-network-access'], { origin: new URL(base).origin });
+    }
     const page = await context.newPage();
     page.setDefaultTimeout(30000);
     page.on('pageerror', error => errors.push(error.message));
