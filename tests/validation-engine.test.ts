@@ -130,7 +130,7 @@ function mockHoldoutRuns(parent: ResearchResult, ratio = 0.7, purge = 1) {
 // STRATEGY FIXTURES A THROUGH F
 // ============================================================================
 
-test("Strategy A: Genuinely stable synthetic edge survives validation battery", async () => {
+test("Strategy A: Synthetic positive trade sequence produces descriptive evidence", async () => {
   const bars = createMockBars(240);
   const trades: ResearchTrade[] = [];
 
@@ -163,10 +163,9 @@ test("Strategy A: Genuinely stable synthetic edge survives validation battery", 
   assert.ok(validation.outOfSample, "OOS result should exist");
   assert.equal(validation.profile.sampleAdequacy, "strong", "60 trades should be adequate");
   assert.ok(validation.outOfSample.outOfSampleMetrics.netProfit > 0, "OOS must remain profitable");
-  assert.ok(
-    ["strong", "moderate"].includes(validation.profile.oosPersistence),
-    `OOS persistence should be strong or moderate, got ${validation.profile.oosPersistence}`,
-  );
+  assert.equal(validation.profile.oosPersistence, "inconclusive", "An unsealed strategy choice cannot receive a strength rating");
+  assert.ok(validation.diagnostics.some((d) => d.id === "oos-selection-unsealed"));
+  assert.ok(validation.diagnostics.some((d) => d.id === "oos-thin-trades"));
   assert.ok(validation.costStress.breakEvenFrictionBps != null && validation.costStress.breakEvenFrictionBps >= 25, "Stable edge should survive >= 25 bps total friction");
   assert.notEqual(validation.costStress.breakEvenFrictionBps, 100, "Break-even must be calculated rather than filled with a fixed sentinel");
   assert.equal(validation.profile.frictionResilience, "strong");
@@ -228,6 +227,13 @@ test("Strategy B: A profitable baseline cannot manufacture parameter sensitivity
   assert.equal(validation.profile.parameterStability, "inconclusive");
   assert.equal(validation.diagnostics.some((d) => d.category === "sensitivity"), false);
   assert.ok(validation.provenance.validationConfigHash.length === 64, "Config hash must be valid SHA-256");
+});
+
+test("A parent backtest alone cannot claim out-of-sample execution", async () => {
+  const parent = createMockResult([], createMockBars(100));
+  const validation = await runValidationBattery(parent);
+  assert.equal(validation.outOfSample, undefined);
+  assert.equal(validation.profile.oosPersistence, "inconclusive");
 });
 
 test("Strategy C: Cost-fragile strategy collapses under realistic friction", async () => {
@@ -473,7 +479,7 @@ test("Strategy F: Insufficient sample refuses false statistical certainty", asyn
 // ZERO LEAKAGE & EMBARGO INVARIANTS
 // ============================================================================
 
-test("Zero Leakage: Out-of-Sample metrics cannot touch In-Sample interval", () => {
+test("Disjoint segment attribution excludes a boundary-straddling parent trade", () => {
   const bars = createMockBars(100);
   const from = bars[0].t;
   const to = bars[bars.length - 1].t + 3_600_000;

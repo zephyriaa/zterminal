@@ -179,19 +179,9 @@ export function evaluateOutOfSample(
       ? Math.round((oosMetrics.winRate - isMetrics.winRate) * 1000) / 1000
       : 0;
 
-  // Deterministic OOS Rating
-  let rating: ValidationRating = "moderate";
-  if (oosMetrics.totalTrades < 3 || isMetrics.totalTrades < 3) {
-    rating = "inconclusive";
-  } else if (sharpeDelta != null && sharpeDelta >= -0.20 && (oosMetrics.sharpe ?? 0) > 0.5) {
-    rating = "strong";
-  } else if (sharpeDelta != null && sharpeDelta < -0.50 || (oosMetrics.sharpe != null && oosMetrics.sharpe <= 0)) {
-    rating = "weak";
-  } else if (oosMetrics.netProfit <= 0 && isMetrics.netProfit > 0) {
-    rating = "weak";
-  } else {
-    rating = "moderate";
-  }
+  // No precommit record proves the researcher selected source/parameters before
+  // viewing the later period. Preserve the numbers, withhold a strength label.
+  const rating: ValidationRating = "inconclusive";
 
   return {
     splitRatio: config.oosSplitRatio,
@@ -780,6 +770,19 @@ export function generateDiagnostics(
 
   // 1. OOS Diagnostics
   if (oos) {
+    diagnostics.push({
+      id: "oos-selection-unsealed", category: "oos", severity: "warning",
+      headline: "Strategy Selection Is Not Sealed",
+      detail: "The earlier and later segments were executed separately, but this artifact cannot establish that source and parameters were chosen without viewing the later period.",
+    });
+    if (oos.outOfSampleMetrics.totalTrades < 20) {
+      diagnostics.push({
+        id: "oos-thin-trades", category: "sample", severity: "warning",
+        headline: "Thin Later-Period Trade Sample",
+        detail: `The later segment contains ${oos.outOfSampleMetrics.totalTrades} closed trades; its performance ratios are unstable evidence.`,
+        metricValue: oos.outOfSampleMetrics.totalTrades,
+      });
+    }
     if (oos.degradation.sharpeDelta != null && oos.degradation.sharpeDelta < -0.30) {
       diagnostics.push({
         id: "oos-sharpe-degradation",
@@ -789,7 +792,7 @@ export function generateDiagnostics(
         detail: `Out-of-sample Sharpe ratio is ${Math.round(Math.abs(oos.degradation.sharpeDelta) * 100)}% lower than in-sample performance (${oos.outOfSampleMetrics.sharpe ?? "—"} vs ${oos.inSampleMetrics.sharpe ?? "—"}).`,
         metricValue: oos.degradation.sharpeDelta,
       });
-    } else if (oos.degradation.rating === "strong") {
+    } else if (oos.outOfSampleMetrics.netProfit > 0) {
       diagnostics.push({
         id: "oos-persistence-strong",
         category: "oos",

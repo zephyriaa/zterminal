@@ -1,6 +1,4 @@
 """Archive admission tests that do not require the numerical Python runtime."""
-import json
-import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -40,16 +38,14 @@ class ValidationArchiveTests(unittest.TestCase):
             ):
                 with self.assertRaises(ValueError):
                     archive.save_validation(altered)
-            archive.save_validation(validation)
-            self.assertEqual(archive.validation("validation-1"), validation)
-            with self.assertRaises(sqlite3.IntegrityError):
+            with self.assertRaisesRegex(ValueError, "not independently verified"):
                 archive.save_validation(validation)
             with archive.connect() as db:
-                row = db.execute("SELECT envelope FROM validations WHERE id=?", ("validation-1",)).fetchone()
-                tampered = json.loads(row[0])
-                tampered["baseline"]["totalTrades"] += 1
-                db.execute("UPDATE validations SET envelope=? WHERE id=?", (encode(tampered), "validation-1"))
-            with self.assertRaisesRegex(ValueError, "digest mismatch"):
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM validations").fetchone()[0], 0)
+                db.execute("INSERT INTO validations VALUES(?,?,?,?,?)", (
+                    "validation-1", "run-1", 1, digest(config), encode(validation),
+                ))
+            with self.assertRaisesRegex(ValueError, "not Helper-verified"):
                 archive.validation("validation-1")
 
             earlier, later = bars[:28], bars[29:]
@@ -70,8 +66,8 @@ class ValidationArchiveTests(unittest.TestCase):
                 "outOfSampleRange": {"from": 29 * 3600000, "to": 40 * 3600000},
             }
             linked = {**validation, "id": "validation-2", "outOfSample": holdout}
-            archive.save_validation(linked)
-            self.assertEqual(archive.validation("validation-2"), linked)
+            with self.assertRaisesRegex(ValueError, "not independently verified"):
+                archive.save_validation(linked)
             with self.assertRaisesRegex(ValueError, "dataset does not match"):
                 archive.save_validation({**linked, "id": "validation-3", "outOfSample": {
                     **holdout, "inSampleRun": {"id": "later", "resultHash": children[1]["resultHash"]},

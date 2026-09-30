@@ -190,7 +190,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
       set({ error: "Run a strategy backtest before executing validation." });
       return;
     }
-    set({ isValidating: true, error: "" });
+    set({ isValidating: true, validationResult: null, error: "" });
     try {
       const config = { ...defaultValidationConfig(), ...customConfig };
       const requests = await holdoutRequests(res, config);

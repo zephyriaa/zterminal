@@ -367,24 +367,15 @@ class Archive:
                     expected_range = {"from": expected_bars[0]["t"], "to": expected_bars[-1]["t"] + (bars[1]["t"] - bars[0]["t"])}
                     if period != expected_range or any(child["config"].get(key) != value for key, value in {**parent_result["config"], **expected_range}.items()):
                         raise ValueError("Holdout run configuration or period mismatch")
-            if "archiveDigest" in validation:
-                raise ValueError("Archive digest is assigned by the Helper")
-            retained = {**validation, "archiveDigest": digest(validation)}
-            db.execute(
-                "INSERT INTO validations VALUES(?,?,?,?,?)",
-                (val_id, source_run_id, created, config_hash, encode(retained))
-            )
-            return {"id": val_id}
+            # Linkage alone does not authenticate browser-computed metrics, ratings or
+            # diagnostics. Do not promote this draft analysis to a durable artifact.
+            raise ValueError("Validation metrics are not independently verified by the Helper; archive admission is unavailable")
 
     @staticmethod
     def _verify_validation(row):
-        validation = json.loads(row["envelope"])
-        if validation.get("version") != 3:
-            raise ValueError("Archived validation uses a superseded schema and cannot be displayed as current evidence")
-        archive_digest = validation.pop("archiveDigest", None)
-        if archive_digest != digest(validation):
-            raise ValueError("Archived validation digest mismatch")
-        return validation
+        # Older envelopes were calculated in the browser and not independently
+        # verified. Retain the rows for migration, but never display as evidence.
+        raise ValueError("Archived validation is not Helper-verified and cannot be displayed as research evidence")
 
     def validation(self, val_id):
         with self.connect() as db:

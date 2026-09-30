@@ -226,7 +226,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                   <ProfileCard
-                    title="OOS Persistence"
+                    title="Later-Period Evidence"
                     rating={validation.profile.oosPersistence}
                     detail={
                       validation.outOfSample

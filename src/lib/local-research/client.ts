@@ -53,6 +53,7 @@ export async function helperRequest<T>(path: string, method = "GET", body?: unkn
   if (!response.ok) {
     if (path === "pair" && [400, 401, 403].includes(response.status)) throw new HelperError("That connection code is invalid or expired. Open ZTerminal Helper and copy a new code.", "invalid_code");
     if ([401, 403].includes(response.status)) throw new HelperError("ZTerminal Helper needs to be paired with this browser session.", "unpaired");
+    if (path === "validations" && payload.error) throw new HelperError(payload.error, "request_failed");
     throw new HelperError("ZTerminal Helper could not complete that request. Try again after checking that it is running.", "request_failed");
   }
   return payload as T;
