@@ -54,6 +54,13 @@ class ValidationProcessTests(test_helper.APITests):
         status, reports = self.request("GET", f"/v1/results/{parent['id']}/validations", **auth)
         self.assertEqual(status, 200)
         self.assertEqual(reports, [report])
+        export_route = f"/v1/validations/{report['id']}/export"
+        self.assertEqual(self.request("GET", export_route)[0], 403)
+        status, exported = self.request("GET", export_route, **auth)
+        self.assertEqual(status, 200)
+        from artifacts import verify_bundle
+        self.assertEqual(verify_bundle(exported)["runCount"], 5)
+        self.assertEqual(exported["validation"], report)
         for ref in report["evidenceRuns"].values():
             run = self.service.archive.result(ref["id"])
             self.assertEqual(run["source"], parent["source"])
@@ -92,6 +99,16 @@ class ValidationProcessTests(test_helper.APITests):
         restarted = Archive(self.service.archive.path)
         self.assertEqual(restarted.result(child["id"]), child)
         self.assertEqual(self.request("POST", "/v1/results", child, **auth)[0], 400)
+        status, validation_job = self.request("POST", f"/v1/results/{child['id']}/validate", {"config": {"monteCarloPaths": 100, "costTiersBps": [0, 10]}}, **auth)
+        self.assertEqual(status, 202, validation_job)
+        validated = self.wait_job(validation_job)
+        self.assertEqual(validated["stage"], "complete", validated)
+        bundle = restarted.export_validation(validated["resultId"])
+        from artifacts import verify_bundle
+        self.assertEqual(verify_bundle(bundle)["runCount"], 6)  # child, ancestor, baseline, IS, OOS, cost
+        exported = {run["id"]: run for run in bundle["runs"]}
+        self.assertEqual(exported[child["id"]]["reproducedFrom"], parent["id"])
+        self.assertEqual(exported[parent["id"]], parent)
 
     def test_cancellation_kills_validation_process_tree(self):
         source = PERIODIC.replace("i = pd.Series", "if len(data) < 30:\n        import time\n        time.sleep(60)\n    i = pd.Series")

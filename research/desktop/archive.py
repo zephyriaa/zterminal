@@ -465,3 +465,42 @@ class Archive:
             ).fetchall()
             return [self._verify_validation(row, db) for row in rows]
 
+    def export_validation(self, val_id):
+        from artifacts import make_bundle, MAX_BYTES
+        with self.connect() as db:
+            # Read one SQLite snapshot; an export never mixes concurrent edits.
+            db.execute("BEGIN")
+            row = db.execute("SELECT envelope FROM validations WHERE id=?", (val_id,)).fetchone()
+            if not row:
+                raise KeyError("Validation not found")
+            report = self._verify_validation(row, db)
+            runs = {}
+            active = set()
+            retained_bytes = len(encode(report).encode("utf-8"))
+            def collect(identifier):
+                nonlocal retained_bytes
+                if identifier in active:
+                    raise ValueError("Cyclic reproduction lineage")
+                if identifier in runs:
+                    return
+                if len(runs) + len(active) >= 200:
+                    raise ValueError("Evidence graph exceeds 200 ResearchRuns")
+                child_row = db.execute("SELECT envelope FROM results WHERE id=?", (identifier,)).fetchone()
+                if not child_row:
+                    raise ValueError("Evidence graph is missing a ResearchRun")
+                run = json.loads(child_row[0])
+                self.validate_result(run)
+                run.pop("monteCarlo", None)
+                retained_bytes += len(encode(run).encode("utf-8"))
+                if retained_bytes > MAX_BYTES:
+                    raise ValueError("Evidence bundle exceeds 32 MB; a larger streaming format is required")
+                active.add(identifier)
+                if run.get("reproducedFrom"):
+                    collect(run["reproducedFrom"])
+                active.remove(identifier)
+                runs[identifier] = run
+            collect(report["sourceRunId"])
+            for reference in report["evidenceRuns"].values():
+                collect(reference["id"])
+            return make_bundle(report, runs.values())
+

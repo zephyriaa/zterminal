@@ -208,6 +208,19 @@ export interface ValidationResult {
   sample: { observations: number; durationDays: number; closedTrades: number; laterClosedTrades: number | null; volatilityKnownObservations: number; volatilityCoverageFraction: number };
 }
 
+/** Retained historical evidence. Integrity is separate from recipient reproduction. */
+export interface ResearchEvidenceBundle {
+  version: 1;
+  kind: "zterminal_research_evidence";
+  exportedAt: number;
+  validation: ValidationResult;
+  runs: import("@/lib/local-research/contracts").ResearchResult[];
+  manifest: { validationId: string; validationHash: string; validationFingerprint: string; sourceRunId: string; sourceRunFingerprint: string; validationConfigHash: string; runs: { id: string; resultHash: string; sourceHash: string; datasetHash: string; payloadHash: string }[] };
+  graphFingerprint: string;
+  bundleHash: string;
+  limitations: string[];
+}
+
 export function defaultValidationConfig(): ValidationConfig {
   return {
     version: 1,

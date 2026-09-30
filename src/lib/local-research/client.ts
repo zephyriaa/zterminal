@@ -1,5 +1,5 @@
 import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest, type ValidationResult } from "./contracts";
-import type { ValidationConfig } from "@/domain/validation/contracts";
+import type { ValidationConfig, ResearchEvidenceBundle } from "@/domain/validation/contracts";
 
 export class HelperError extends Error {
   constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed") { super(message); }
@@ -96,6 +96,7 @@ export const helper = {
   importResult: (result: unknown) => helperRequest<{ id: string }>("results", "POST", result),
   importLegacy: (record: unknown) => helperRequest<{ id: string; status: string; reason: string }>("legacy", "POST", record),
   validation: (id: string) => helperRequest<ValidationResult>(`validations/${encodeURIComponent(id)}`),
+  exportValidation: (id: string) => helperRequest<ResearchEvidenceBundle>(`validations/${encodeURIComponent(id)}/export`),
   validationsForRun: (runId: string) => helperRequest<ValidationResult[]>(`results/${encodeURIComponent(runId)}/validations`),
   validate: (runId: string, config: ValidationConfig) => helperRequest<ResearchJob>(`results/${encodeURIComponent(runId)}/validate`, "POST", { config }),
 };

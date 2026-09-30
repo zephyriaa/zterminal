@@ -221,7 +221,9 @@ class Handler(BaseHTTPRequestHandler):
                 if method == "GET" and identifier and len(parts) == 4 and parts[3] == "validations":
                     return self.respond(200, archive.validations_for_run(identifier))
             if route == "validations":
-                if method == "GET" and identifier:
+                if method == "GET" and identifier and len(parts) == 4 and parts[3] == "export":
+                    return self.respond(200, archive.export_validation(identifier))
+                if method == "GET" and identifier and len(parts) == 3:
                     return self.respond(200, archive.validation(identifier))
                 if method == "POST" and not identifier:
                     return self.respond(201, archive.save_validation(body))

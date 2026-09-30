@@ -8,6 +8,7 @@ import type {
   ValidationConfig,
 } from "@/domain/validation/contracts";
 import type { ResearchResult } from "@/lib/local-research/contracts";
+import { helper } from "@/lib/local-research/client";
 
 const number = (val: number | null | undefined, maxDecimals = 2) =>
   val == null ? "unavailable" : val.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
@@ -59,6 +60,25 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
   const [trainingBars, setTrainingBars] = useState(Math.max(2, Math.floor(result.dataset.bars.length * .4)));
   const [testingBars, setTestingBars] = useState(Math.max(2, Math.floor(result.dataset.bars.length * .15)));
   const [optimize, setOptimize] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+
+  const exportEvidence = async () => {
+    if (!validation || exporting) return;
+    setExporting(true);
+    setExportError("");
+    try {
+      const bundle = await helper.exportValidation(validation.id);
+      if (bundle.validation.id !== validation.id || bundle.validation.resultHash !== validation.resultHash) throw new Error("Export does not match the selected validation artifact.");
+      const url = URL.createObjectURL(new Blob([JSON.stringify(bundle)], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `zterminal-evidence-${validation.id}.json`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { setExportError((error as Error).message); }
+    finally { setExporting(false); }
+  };
 
   const exportValidation = () => {
     if (!validation) return;
@@ -157,15 +177,17 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
           </label>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => void exportEvidence()} disabled={!validation || exporting} title="Download source, data, validation and all linked executions. Hashes identify evidence; recipients must reproduce computation." className="rounded border border-zinc-700 bg-zinc-800/80 px-2.5 py-1.5 text-zinc-300 hover:bg-zinc-700 disabled:opacity-40">{exporting ? "Exporting…" : "Export Evidence Bundle"}</button>
           <button
             onClick={exportValidation}
             disabled={!validation}
             className="rounded border border-zinc-700 bg-zinc-800/80 px-2.5 py-1.5 text-zinc-300 hover:bg-zinc-700 disabled:opacity-40"
           >
-            Export JSON
+            Export Report JSON
           </button>
         </div>
       </section>
+      {exportError && <p role="alert" className="rounded border border-rose-800 p-2 text-xs text-rose-300">{exportError}</p>}
 
       <details className="rounded border border-zinc-800 bg-[#14121a] p-3 text-xs text-zinc-400">
         <summary className="cursor-pointer text-zinc-200">Rolling windows and parameter sweep</summary>
