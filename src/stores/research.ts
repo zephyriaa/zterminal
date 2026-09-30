@@ -146,15 +146,16 @@ export const useResearch = create<State>()(persist((set, get) => ({
     try {
       const result = await helper.result(id);
       let validationResult: ValidationResult | null = null;
+      let validationError = "";
       try {
         const validations = await helper.validationsForRun(id);
         if (validations && validations.length > 0) {
           validationResult = validations[0];
         }
-      } catch {
-        validationResult = get().validationHistory[id]?.[0] ?? null;
+      } catch (error) {
+        validationError = `Archived validation could not be verified: ${(error as Error).message}`;
       }
-      set({ result, chartResult: result, selectedTrade: null, validationResult, error: "" });
+      set({ result, chartResult: result, selectedTrade: null, validationResult, error: validationError });
       window.dispatchEvent(new Event("zterminal:open-backtester"));
     }
     catch (error) { set({ error: (error as Error).message }); }
@@ -168,11 +169,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
     set({ isValidating: true, error: "" });
     try {
       const validation = await runValidationBattery(res, customConfig);
-      try {
-        await helper.saveValidation(validation);
-      } catch {
-        /* Local helper may be offline or in web mode; state is still preserved in store. */
-      }
+      await helper.saveValidation(validation);
       set((s) => ({
         validationResult: validation,
         validationHistory: {

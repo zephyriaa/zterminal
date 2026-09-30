@@ -147,12 +147,13 @@ test("Strategy A: Genuinely stable synthetic edge survives validation battery", 
     ["strong", "moderate"].includes(validation.profile.oosPersistence),
     `OOS persistence should be strong or moderate, got ${validation.profile.oosPersistence}`,
   );
-  assert.ok(validation.costStress.breakEvenFrictionBps >= 25, "Stable edge should survive >= 25 bps added friction");
+  assert.ok(validation.costStress.breakEvenFrictionBps != null && validation.costStress.breakEvenFrictionBps >= 25, "Stable edge should survive >= 25 bps total friction");
+  assert.notEqual(validation.costStress.breakEvenFrictionBps, 100, "Break-even must be calculated rather than filled with a fixed sentinel");
   assert.equal(validation.profile.frictionResilience, "strong");
   assert.ok(validation.monteCarlo!.probabilityOfLoss < 0.10, "Probability of loss should be low for stable edge");
 });
 
-test("Strategy B: Overfit parameter spike is detected and diagnosed", async () => {
+test("Strategy B: A profitable baseline cannot manufacture parameter sensitivity", async () => {
   const bars = createMockBars(100);
   const trades: ResearchTrade[] = [
     {
@@ -203,12 +204,9 @@ test("Strategy B: Overfit parameter spike is detected and diagnosed", async () =
   const result = createMockResult(trades, bars, { fast: 20, slow: 50 });
   const validation = await runValidationBattery(result);
 
-  assert.ok(validation.sensitivity, "Sensitivity result should be generated");
-  // Sensitivity analysis should evaluate neighborhood degradation
-  assert.ok(
-    validation.sensitivity.neighborDegradationRatio < 0.85,
-    "Adjacent neighbors should degrade compared to peak",
-  );
+  assert.equal(validation.sensitivity, undefined, "No parameter variants were executed");
+  assert.equal(validation.profile.parameterStability, "inconclusive");
+  assert.equal(validation.diagnostics.some((d) => d.category === "sensitivity"), false);
   assert.ok(validation.provenance.validationConfigHash.length === 64, "Config hash must be valid SHA-256");
 });
 
@@ -240,7 +238,7 @@ test("Strategy C: Cost-fragile strategy collapses under realistic friction", asy
   const validation = await runValidationBattery(result);
 
   assert.equal(validation.profile.frictionResilience, "weak", "Friction resilience must be weak");
-  assert.ok(validation.costStress.breakEvenFrictionBps < 5.0, "Break-even friction must be < 5 bps");
+  assert.ok(validation.costStress.breakEvenFrictionBps != null && validation.costStress.breakEvenFrictionBps < 5.0, "Break-even friction must be < 5 bps");
 
   const fragileDiagnostic = validation.diagnostics.find((d) => d.id === "cost-fragile-edge");
   assert.ok(fragileDiagnostic, "Must emit critical cost-fragile diagnostic");

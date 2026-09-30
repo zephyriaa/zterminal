@@ -161,9 +161,8 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
               Does this strategy contain a real edge, or is it overfitted?
             </h3>
             <p className="text-xs leading-relaxed text-zinc-400">
-              Run the full validation battery to test chronological Out-of-Sample degradation,
-              Walk-Forward Efficiency (WFE), seeded Monte Carlo path-order permutations,
-              parameter sensitivity neighborhoods, and fee/slippage decay.
+              Analyze chronological segments, rolling windows, seeded trade-order permutations,
+              and projected fee/slippage decay. Parameter sensitivity requires separate Python runs.
             </p>
             <div className="pt-2">
               <button
@@ -251,7 +250,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                   <ProfileCard
                     title="Friction Resilience"
                     rating={validation.profile.frictionResilience}
-                    detail={`Break-even: ${validation.costStress.breakEvenFrictionBps.toFixed(1)} bps`}
+                    detail={`Break-even total friction: ${validation.costStress.breakEvenFrictionBps?.toFixed(1) ?? "unavailable"} bps`}
                   />
                   <ProfileCard
                     title="Regime Breadth"
@@ -368,6 +367,9 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                 </p>
               ) : (
                 <>
+                  <p className="rounded border border-amber-900/40 bg-amber-950/20 p-3 text-xs text-amber-300">
+                    These are earlier and later segments of one backtest. The later segment is not a sealed holdout if the strategy or parameters were selected using the full history.
+                  </p>
                   <div className="rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs space-y-2">
                     <strong className="text-zinc-200">Temporal Split & Embargo Policy</strong>
                     <p className="text-zinc-400 text-[11px] leading-relaxed">
@@ -398,13 +400,16 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                 </p>
               ) : (
                 <>
+                  <p className="rounded border border-amber-900/40 bg-amber-950/20 p-3 text-xs text-amber-300">
+                    Rolling-window attribution of one backtest. No strategy rerun or training-only parameter selection occurs in these windows; this is not a walk-forward optimization result.
+                  </p>
                   <div className="flex flex-wrap items-center justify-between rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs">
                     <div>
-                      <span className="text-[10px] uppercase text-zinc-400">Aggregate Walk-Forward Efficiency (WFE)</span>
+                      <span className="text-[10px] uppercase text-zinc-400">Later / Earlier Annualized Return Ratio</span>
                       <div className="text-lg font-bold font-mono text-purple-300">
                         {validation.walkForward.aggregateWfe}%
                       </div>
-                      <small className="text-[10px] text-zinc-500">Pardo criterion: ≥50% indicates persistent forward efficiency</small>
+                      <small className="text-[10px] text-zinc-500">Descriptive ratio; overlapping windows are not independent trials.</small>
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] uppercase text-zinc-400">Positive OOS Cycles</span>
@@ -456,16 +461,21 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                 </p>
               ) : (
                 <>
+                  <p className="rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs text-zinc-400">
+                    {validation.monteCarlo.method === "trade_order_permutation"
+                      ? "Trade-order permutation reorders the recorded PnLs without replacement. Ending equity and loss status are fixed by those PnLs; the distribution describes path-dependent drawdown only."
+                      : "IID trade resampling samples recorded trade PnLs with replacement. It assumes independent, identically distributed trades and does not model changing markets."}
+                  </p>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">
                     <MetricBox label="Method" value={validation.monteCarlo.method === "trade_order_permutation" ? "Permutation" : "Bootstrap"} />
                     <MetricBox label="Simulations" value={validation.monteCarlo.paths.toLocaleString()} />
-                    <MetricBox label="Loss Probability" value={percent(validation.monteCarlo.probabilityOfLoss)} />
+                    <MetricBox label={validation.monteCarlo.method === "trade_order_permutation" ? "Recorded Net Loss" : "Resampled Loss Frequency"} value={percent(validation.monteCarlo.probabilityOfLoss)} />
                     <MetricBox label="Ruin Prob (DD≥50%)" value={percent(validation.monteCarlo.probabilityOfRuin)} />
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs space-y-1">
-                      <strong className="text-zinc-300">Terminal Equity Percentiles</strong>
+                      <strong className="text-zinc-300">{validation.monteCarlo.method === "trade_order_permutation" ? "Fixed Terminal Equity" : "Terminal Equity Percentiles"}</strong>
                       <div className="flex justify-between font-mono pt-2">
                         <span className="text-zinc-400">P05 (Worst 5%):</span>
                         <span className="text-rose-400">${number(validation.monteCarlo.terminalEquity.p05)}</span>
@@ -516,7 +526,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
             <div className="space-y-4">
               {!validation.sensitivity ? (
                 <p className="rounded border border-amber-900/40 bg-amber-950/20 p-4 text-xs text-amber-300">
-                  Parameter sensitivity requires at least two numeric strategy parameters.
+                  Parameter sensitivity is unavailable. Each grid cell must be produced by an independent execution of the exact Python strategy; the current validator has no parameter sweep runner.
                 </p>
               ) : (
                 <>
@@ -602,11 +612,11 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between rounded border border-[#2b2736] bg-[#14121a] p-3 text-xs">
                 <div>
-                  <span className="text-[10px] uppercase text-zinc-400">Break-Even Added Friction</span>
+                  <span className="text-[10px] uppercase text-zinc-400">Projected Break-Even Total Friction</span>
                   <div className="text-lg font-bold font-mono text-purple-300">
-                    +{validation.costStress.breakEvenFrictionBps.toFixed(1)} bps
+                    {validation.costStress.breakEvenFrictionBps?.toFixed(1) ?? "—"} bps
                   </div>
-                  <small className="text-[10px] text-zinc-500">Strategy loses profitability beyond this added cost</small>
+                  <small className="text-[10px] text-zinc-500">Linear haircut of recorded fills; strategy signals are not rerun</small>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] uppercase text-zinc-400">Friction Elasticity (+10 bps)</span>

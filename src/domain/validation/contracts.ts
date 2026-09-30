@@ -6,7 +6,7 @@
  */
 
 export const VALIDATION_ENGINE_VERSION = "0.1.0" as const;
-export const VALIDATION_SCHEMA_VERSION = 1 as const;
+export const VALIDATION_SCHEMA_VERSION = 2 as const;
 
 export type ValidationRating = "strong" | "moderate" | "weak" | "inconclusive";
 
@@ -98,7 +98,7 @@ export interface CostTier {
 
 export interface CostStressResult {
   tiers: CostTier[];
-  breakEvenFrictionBps: number;
+  breakEvenFrictionBps: number | null; // Total friction; null when no positive trade notional exists
   frictionElasticity: number; // % drop in expectancy per 10 bps friction
   rating: ValidationRating;
 }

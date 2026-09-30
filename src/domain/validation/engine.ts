@@ -19,7 +19,6 @@ import {
   type ConcentrationResult,
   type MonteCarloValidationResult,
   type OutOfSampleResult,
-  type ParameterSensitivityPoint,
   type ParameterSensitivityResult,
   type RegimeMetric,
   type RegimeValidationResult,
@@ -443,22 +442,16 @@ export function evaluateCostStress(
     };
   });
 
-  // Calculate Break-Even Friction Bps
-  let breakEvenFrictionBps = 999;
-  for (let i = 0; i < tiers.length - 1; i += 1) {
-    const t1 = tiers[i];
-    const t2 = tiers[i + 1];
-    if (t1.netProfit >= 0 && t2.netProfit < 0) {
-      const slope = (t2.netProfit - t1.netProfit) / (t2.totalFrictionBps - t1.totalFrictionBps);
-      breakEvenFrictionBps =
-        slope !== 0
-          ? Math.round((t1.totalFrictionBps - t1.netProfit / slope) * 10) / 10
-          : t1.totalFrictionBps;
-      break;
-    }
-  }
-  if (tiers[0].netProfit < 0) breakEvenFrictionBps = 0;
-  else if (tiers[tiers.length - 1].netProfit >= 0) breakEvenFrictionBps = 100;
+  // Under this explicitly linear PnL haircut, the zero crossing is algebraic.
+  // It must not be replaced by the highest sampled tier or a made-up ceiling.
+  const totalNotional = closed.reduce(
+    (sum, t) => sum + (t.entryPrice + t.exitPrice) * t.quantity * multiplier,
+    0,
+  );
+  const baseNetProfit = closed.reduce((sum, t) => sum + t.pnl, 0);
+  const breakEvenFrictionBps = totalNotional > 0
+    ? Math.round(Math.max(0, baseFriction + (baseNetProfit / totalNotional) * 10000) * 10) / 10
+    : null;
 
   // Friction Elasticity: % drop in expectancy at +10 bps
   const baseTier = tiers.find((t) => t.totalFrictionBps === baseFriction) ?? tiers[0];
@@ -471,7 +464,9 @@ export function evaluateCostStress(
 
   // Deterministic Rating
   let rating: ValidationRating = "moderate";
-  if (breakEvenFrictionBps >= 25 && (plus10Tier.sharpe ?? 0) > 0.5) {
+  if (breakEvenFrictionBps == null) {
+    rating = "inconclusive";
+  } else if (breakEvenFrictionBps >= 25 && (plus10Tier.sharpe ?? 0) > 0.5) {
     rating = "strong";
   } else if (breakEvenFrictionBps < 10 || plus10Tier.netProfit < 0) {
     rating = "weak";
@@ -742,124 +737,12 @@ export function evaluateConcentration(result: ResearchResult): ConcentrationResu
   };
 }
 
-/**
- * 7. PARAMETER SENSITIVITY (2D Surface / Stability Analysis)
- * Evaluates local neighborhood stability vs needle-spike fragility.
- */
+/** Parameter sensitivity requires independent strategy executions for every cell. */
 export function evaluateSensitivity(
-  result: ResearchResult,
-  config: ValidationConfig,
+  _result: ResearchResult,
+  _config: ValidationConfig,
 ): ParameterSensitivityResult | null {
-  const gridDef = config.sensitivityGrid;
-  const paramKeys = Object.keys(result.params);
-
-  // If no explicit grid is provided, construct a descriptive 5x5 neighborhood
-  // around the strategy's primary numeric parameters if available.
-  let pXName = gridDef?.paramX.name;
-  let pYName = gridDef?.paramY.name;
-
-  if (!pXName || !pYName) {
-    const numericKeys = paramKeys.filter((k) => typeof result.params[k] === "number");
-    if (numericKeys.length >= 2) {
-      pXName = numericKeys[0];
-      pYName = numericKeys[1];
-    } else {
-      return null;
-    }
-  }
-
-  const baseValX = Number(result.params[pXName]);
-  const baseValY = Number(result.params[pYName]);
-  if (!Number.isFinite(baseValX) || !Number.isFinite(baseValY)) {
-    return null;
-  }
-
-  // 5x5 neighborhood around baseline
-  const xValues: number[] = [
-    Math.max(1, Math.round(baseValX * 0.8)),
-    Math.max(1, Math.round(baseValX * 0.9)),
-    baseValX,
-    Math.round(baseValX * 1.1),
-    Math.round(baseValX * 1.2),
-  ];
-  const yValues: number[] = [
-    Math.max(1, Math.round(baseValY * 0.8)),
-    Math.max(1, Math.round(baseValY * 0.9)),
-    baseValY,
-    Math.round(baseValY * 1.1),
-    Math.round(baseValY * 1.2),
-  ];
-
-  const baselineMetric = result.metrics.sharpe?.value ?? result.metrics.netProfit?.value ?? 1.0;
-  const grid: ParameterSensitivityPoint[][] = [];
-  const allMetricValues: number[] = [];
-
-  // Generate descriptive grid modeling local parameter degradation
-  for (let yIdx = 0; yIdx < yValues.length; yIdx += 1) {
-    const row: ParameterSensitivityPoint[] = [];
-    const yVal = yValues[yIdx];
-    for (let xIdx = 0; xIdx < xValues.length; xIdx += 1) {
-      const xVal = xValues[xIdx];
-      const dist = Math.hypot((xVal - baseValX) / (baseValX || 1), (yVal - baseValY) / (baseValY || 1));
-      // Decay metric with distance from baseline
-      const decay = Math.max(-1.0, 1.0 - dist * 1.8);
-      const metricVal = Math.round(baselineMetric * decay * 100) / 100;
-      row.push({
-        x: xVal,
-        y: yVal,
-        metricValue: metricVal,
-        trades: result.trades.length,
-      });
-      allMetricValues.push(metricVal);
-    }
-    grid.push(row);
-  }
-
-  // Extract 8 neighbors around center (xIdx=2, yIdx=2)
-  const neighbors: number[] = [
-    grid[1][1].metricValue, grid[1][2].metricValue, grid[1][3].metricValue,
-    grid[2][1].metricValue,                         grid[2][3].metricValue,
-    grid[3][1].metricValue, grid[3][2].metricValue, grid[3][3].metricValue,
-  ];
-
-  const meanNeighbor = neighbors.reduce((sum, v) => sum + v, 0) / neighbors.length;
-  const neighborRatio =
-    Math.abs(baselineMetric) > 1e-4
-      ? Math.round((meanNeighbor / baselineMetric) * 1000) / 1000
-      : 0;
-
-  // Coefficient of variation
-  const gridMean = allMetricValues.reduce((sum, v) => sum + v, 0) / allMetricValues.length;
-  const gridVar =
-    allMetricValues.reduce((sum, v) => sum + (v - gridMean) ** 2, 0) / allMetricValues.length;
-  const cv = Math.abs(gridMean) > 1e-4 ? Math.round((Math.sqrt(gridVar) / Math.abs(gridMean)) * 100) / 100 : 0;
-
-  let classification: ParameterSensitivityResult["surfaceClassification"] = "broad_plateau";
-  let rating: ValidationRating = "strong";
-
-  if (neighborRatio < 0.35 || neighbors.filter((v) => v <= 0).length >= 5) {
-    classification = "narrow_spike";
-    rating = "weak";
-  } else if (cv > 1.2) {
-    classification = "unstable_surface";
-    rating = "weak";
-  } else if (neighborRatio < 0.65) {
-    classification = "broad_plateau";
-    rating = "moderate";
-  }
-
-  return {
-    paramX: pXName,
-    paramY: pYName,
-    xValues,
-    yValues,
-    baselinePoint: { x: baseValX, y: baseValY, metricValue: baselineMetric },
-    grid,
-    neighborDegradationRatio: neighborRatio,
-    coefficientOfVariation: cv,
-    surfaceClassification: classification,
-    rating,
-  };
+  return null;
 }
 
 /**
@@ -921,8 +804,8 @@ export function generateDiagnostics(
         id: "oos-persistence-strong",
         category: "oos",
         severity: "info",
-        headline: "Edge Persists Out-of-Sample",
-        detail: `Strategy maintained positive performance in unseen data (OOS Sharpe ${oos.outOfSampleMetrics.sharpe ?? "—"} vs IS Sharpe ${oos.inSampleMetrics.sharpe ?? "—"}).`,
+        headline: "Positive Performance in Later Chronological Segment",
+        detail: `Later-period Sharpe is ${oos.outOfSampleMetrics.sharpe ?? "—"} versus earlier-period Sharpe ${oos.inSampleMetrics.sharpe ?? "—"}. This partition of one backtest does not establish that the strategy was selected without seeing later data.`,
       });
     }
   }
@@ -934,8 +817,8 @@ export function generateDiagnostics(
         id: "wfo-low-efficiency",
         category: "oos",
         severity: "warning",
-        headline: "Low Walk-Forward Efficiency (WFE)",
-        detail: `Aggregate Walk-Forward Efficiency is ${wfo.aggregateWfe}%, indicating that forward testing retains less than a third of in-sample annualized return.`,
+        headline: "Low Later-Window Return Ratio",
+        detail: `The later-to-earlier annualized return ratio is ${wfo.aggregateWfe}% across rolling windows of one backtest. No parameter selection or separate forward execution was performed.`,
         metricValue: wfo.aggregateWfe,
       });
     }
@@ -953,7 +836,7 @@ export function generateDiagnostics(
         metricValue: mc.maxDrawdownPct.p95,
       });
     }
-    if (mc.probabilityOfLoss > 0.15) {
+    if (mc.method === "iid_trade_resampling" && mc.probabilityOfLoss > 0.15) {
       diagnostics.push({
         id: "mc-probability-of-loss",
         category: "concentration",
@@ -989,13 +872,18 @@ export function generateDiagnostics(
   }
 
   // 5. Cost Stress Diagnostics
-  if (costs.breakEvenFrictionBps < 10) {
+  if (costs.breakEvenFrictionBps == null) {
+    diagnostics.push({
+      id: "cost-insufficient-sample", category: "cost", severity: "warning",
+      headline: "Cost threshold unavailable", detail: "No positive trade notional is available for a break-even friction calculation.",
+    });
+  } else if (costs.breakEvenFrictionBps < 10) {
     diagnostics.push({
       id: "cost-fragile-edge",
       category: "cost",
       severity: "critical",
       headline: "Edge Collapses Under Modest Friction",
-      detail: `Break-even added friction is only ${costs.breakEvenFrictionBps.toFixed(1)} bps. Realistic execution slippage could eliminate net edge entirely.`,
+      detail: `Projected break-even total friction is ${costs.breakEvenFrictionBps.toFixed(1)} bps under a linear haircut of recorded trades. Additional execution costs could eliminate net profit.`,
       metricValue: costs.breakEvenFrictionBps,
     });
   } else {
@@ -1004,7 +892,7 @@ export function generateDiagnostics(
       category: "cost",
       severity: "info",
       headline: "Friction Tolerance",
-      detail: `Strategy survives up to +${costs.breakEvenFrictionBps.toFixed(1)} bps added friction before net profit becomes negative.`,
+      detail: `Projected break-even total friction is ${costs.breakEvenFrictionBps.toFixed(1)} bps under a linear haircut of recorded trades; the strategy was not rerun.`,
       metricValue: costs.breakEvenFrictionBps,
     });
   }
