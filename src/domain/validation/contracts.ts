@@ -32,7 +32,6 @@ export interface OutOfSampleResult {
   outOfSampleMetrics: ValidationBaseline;
   degradation: {
     sharpeDelta: number | null;
-    returnDelta: number;
     drawdownDelta: number;
     winRateDelta: number;
     rating: ValidationRating;

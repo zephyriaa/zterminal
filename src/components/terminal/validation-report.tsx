@@ -288,10 +288,7 @@ export function ValidationReport({ result }: { result: ResearchResult }) {
                           <td className="py-1.5">{percent(validation.baseline.totalReturn)}</td>
                           <td className="py-1.5">{percent(validation.outOfSample.inSampleMetrics.totalReturn)}</td>
                           <td className="py-1.5">{percent(validation.outOfSample.outOfSampleMetrics.totalReturn)}</td>
-                          <td className={`py-1.5 text-right ${validation.outOfSample.degradation.returnDelta >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {validation.outOfSample.degradation.returnDelta >= 0 ? "+" : ""}
-                            {percent(validation.outOfSample.degradation.returnDelta)}
-                          </td>
+                          <td className="py-1.5 text-right text-zinc-500">Different period lengths</td>
                         </tr>
                         <tr>
                           <td className="py-1.5 text-zinc-400 font-sans">Sharpe Ratio</td>

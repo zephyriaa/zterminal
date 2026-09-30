@@ -367,6 +367,11 @@ test("Strategy E: Concentrated strategy warns when top trades dominate PnL", asy
 
   const concDiag = validation.diagnostics.find((d) => d.id === "conc-top5-outliers");
   assert.ok(concDiag, "Must emit diagnostic warning on top 5 trade concentration");
+
+  const reversed = await runValidationBattery({ ...result, trades: [...trades].reverse() });
+  assert.equal(reversed.baseline.maxDrawdown, validation.baseline.maxDrawdown, "Drawdown must use execution order, not envelope order");
+  assert.equal(reversed.concentration.longestLossStreak, validation.concentration.longestLossStreak);
+  assert.deepEqual(reversed.monteCarlo?.maxDrawdownPct, validation.monteCarlo?.maxDrawdownPct);
 });
 
 test("Strategy F: Insufficient sample refuses false statistical certainty", async () => {
@@ -560,6 +565,9 @@ test("Deterministic PRNG: Mulberry32 reproduces bit-exact Monte Carlo results", 
   assert.deepEqual(run1.maxDrawdownPct, run2.maxDrawdownPct, "Identical seed must yield exact same max drawdown");
   assert.equal(run1.probabilityOfLoss, run2.probabilityOfLoss);
   assert.deepEqual(run1.samplePaths, run2.samplePaths, "Sample paths must be bit-exact identical");
+  const expectedTerminal = 10_000 + tradePnls.reduce((sum, pnl) => sum + pnl, 0);
+  assert.deepEqual(run1.terminalEquity, { p05: expectedTerminal, p50: expectedTerminal, p95: expectedTerminal }, "Permutation cannot change additive terminal PnL");
+  assert.equal(run1.probabilityOfLoss, 0, "Permutation loss status is fixed by recorded PnL");
 });
 
 test("Provenance: Material validation config changes alter validationConfigHash", async () => {

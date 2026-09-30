@@ -42,7 +42,9 @@ export function computeBaselineFromTrades(
   initialCapital: number,
   durationDays: number,
 ): ValidationBaseline {
-  const closed = trades.filter((t) => t.status === "closed");
+  const closed = trades.filter((t) => t.status === "closed").sort(
+    (a, b) => (a.exitTime ?? a.entryTime) - (b.exitTime ?? b.entryTime) || a.entryTime - b.entryTime || a.id.localeCompare(b.id),
+  );
   const totalTrades = closed.length;
   if (totalTrades === 0) {
     return {
@@ -187,7 +189,6 @@ export function evaluateOutOfSample(
         : oosMetrics.sharpe - isMetrics.sharpe;
   }
 
-  const returnDelta = Math.round((oosMetrics.totalReturn - isMetrics.totalReturn) * 1000) / 1000;
   const drawdownDelta = Math.round((oosMetrics.maxDrawdown - isMetrics.maxDrawdown) * 1000) / 1000;
   const winRateDelta =
     isMetrics.winRate != null && oosMetrics.winRate != null
@@ -217,7 +218,6 @@ export function evaluateOutOfSample(
     outOfSampleMetrics: oosMetrics,
     degradation: {
       sharpeDelta,
-      returnDelta,
       drawdownDelta,
       winRateDelta,
       rating,
@@ -345,7 +345,9 @@ export function evaluateMonteCarlo(
   result: ResearchResult,
   config: ValidationConfig,
 ): MonteCarloValidationResult | null {
-  const closed = result.trades.filter((t) => t.status === "closed");
+  const closed = result.trades.filter((t) => t.status === "closed").sort(
+    (a, b) => (a.exitTime ?? a.entryTime) - (b.exitTime ?? b.entryTime) || a.entryTime - b.entryTime || a.id.localeCompare(b.id),
+  );
   if (closed.length < 5) {
     return null;
   }
@@ -661,7 +663,9 @@ export function evaluateRegimes(result: ResearchResult): RegimeValidationResult 
  * Analyzes whether results are dominated by a handful of outlier trades.
  */
 export function evaluateConcentration(result: ResearchResult): ConcentrationResult {
-  const closed = result.trades.filter((t) => t.status === "closed");
+  const closed = result.trades.filter((t) => t.status === "closed").sort(
+    (a, b) => (a.exitTime ?? a.entryTime) - (b.exitTime ?? b.entryTime) || a.entryTime - b.entryTime || a.id.localeCompare(b.id),
+  );
   const pnls = closed.map((t) => t.pnl);
   const totalNet = Math.max(1e-4, pnls.reduce((sum, p) => sum + p, 0));
 
