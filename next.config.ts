@@ -39,6 +39,12 @@ const nextConfig: NextConfig = {
         source: "/terminal",
         headers: [
           {
+            key: "Content-Security-Policy",
+            // Packaged/local optimized builds also use the explicit gateway.
+            value: securityHeaders.find(header => header.key === "Content-Security-Policy")!.value
+              .replace("connect-src 'self'", "connect-src 'self' http://localhost:3003 ws://localhost:3003 http://127.0.0.1:3003 ws://127.0.0.1:3003 https://fapi.binance.com wss://ws.okx.com:8443"),
+          },
+          {
             key: "Cache-Control",
             value: "private, no-store",
           },

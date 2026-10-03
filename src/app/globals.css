@@ -1543,7 +1543,7 @@ html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 
 .zt-tool-group-wrapper { position:relative; width:100%; display:flex; justify-content:center; }
 .zt-tool-group-btn { position:relative; }
 .zt-tool-group-btn.is-prediction-group.is-active { color:#34d399; }
-.zt-group-caret { position:absolute; right:1px; bottom:0px; font-size:8px; line-height:8px; color:#64748b; font-weight:700; cursor:pointer; padding:1px; }
+.zt-drawing-toolbar .zt-group-caret { position:absolute; right:-1px; bottom:0px; width:10px; height:12px; font-size:10px; line-height:10px; color:#64748b; font-weight:700; cursor:pointer; padding:1px; }
 .zt-group-caret:hover { color:#38bdf8; }
 
 .zt-drawing-flyout { position:absolute; left:33px; top:-2px; z-index:50; min-width:175px; padding:4px; border-radius:4px; background:rgba(11,14,24,.98); border:1px solid rgba(139,155,192,.28); box-shadow:0 8px 30px rgba(0,0,0,.5); }

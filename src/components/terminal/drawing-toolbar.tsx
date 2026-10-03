@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowDownRight, Baseline, CaseSensitive, ChevronLeft, ChevronRight,
   Crosshair, Eraser, Gauge, GitBranch, MousePointer2, MoveHorizontal, MoveVertical,
@@ -103,6 +104,7 @@ export function DrawingToolbar({
 }) {
   const [collapsed, setCollapsed] = React.useState(false);
   const [activeGroupFlyout, setActiveGroupFlyout] = React.useState<string | null>(null);
+  const [flyoutPosition, setFlyoutPosition] = React.useState({ left: 0, top: 0 });
   const [activeToolPerGroup, setActiveToolPerGroup] = React.useState<Record<string, DrawingTool>>({
     cursor: "crosshair",
     lines: "trend-line",
@@ -113,16 +115,31 @@ export function DrawingToolbar({
   });
 
   const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const flyoutRef = React.useRef<HTMLDivElement>(null);
+  const flyoutTriggerRef = React.useRef<HTMLElement | null>(null);
+  const closeFlyout = () => { setActiveGroupFlyout(null); flyoutTriggerRef.current?.focus(); };
+  const toggleFlyout = (group: ToolGroup, element: HTMLElement) => {
+    if (activeGroupFlyout === group.id) { closeFlyout(); return; }
+    flyoutTriggerRef.current = element;
+    const rect = element.getBoundingClientRect();
+    setFlyoutPosition({ left: Math.max(8, Math.min(rect.right + 6, window.innerWidth - 220)), top: Math.max(8, Math.min(rect.top, window.innerHeight - (group.tools.length * 32 + 45))) });
+    setActiveGroupFlyout(group.id);
+  };
+  React.useEffect(() => {
+    if (activeGroupFlyout) flyoutRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+  }, [activeGroupFlyout]);
 
   // Click outside listener for flyout
   React.useEffect(() => {
     const onPointerDownOutside = (e: MouseEvent) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node) && !flyoutRef.current?.contains(e.target as Node)) {
         setActiveGroupFlyout(null);
       }
     };
     window.addEventListener("mousedown", onPointerDownOutside);
-    return () => window.removeEventListener("mousedown", onPointerDownOutside);
+    const dismiss = () => setActiveGroupFlyout(null);
+    window.addEventListener("resize", dismiss);
+    return () => { window.removeEventListener("mousedown", onPointerDownOutside); window.removeEventListener("resize", dismiss); };
   }, []);
 
   if (collapsed) {
@@ -155,7 +172,7 @@ export function DrawingToolbar({
           <button
             type="button"
             className="zt-toolbar-collapse-btn"
-            onClick={() => setCollapsed(true)}
+            onClick={() => { setCollapsed(true); setActiveGroupFlyout(null); }}
             aria-label="Collapse drawing toolbar"
           >
             <ChevronLeft />
@@ -193,30 +210,28 @@ export function DrawingToolbar({
                   }}
                   onContextMenu={e => {
                     e.preventDefault();
-                    setActiveGroupFlyout(isFlyoutOpen ? null : group.id);
+                    toggleFlyout(group, e.currentTarget);
                   }}
                 >
                   <CurrentIcon className={currentToolObj.accent} />
-                  {group.tools.length > 1 && (
-                    <span
-                      className="zt-group-caret"
-                      onClick={e => {
-                        e.stopPropagation();
-                        setActiveGroupFlyout(isFlyoutOpen ? null : group.id);
-                      }}
-                      title="More tools"
-                    >
-                      ›
-                    </span>
-                  )}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">{currentToolObj.label} (Right-click or click arrow for options)</TooltipContent>
             </Tooltip>
+            {group.tools.length > 1 && <button type="button" className="zt-group-caret" aria-label={`More ${group.label}`} aria-haspopup="menu" aria-expanded={isFlyoutOpen} onClick={event => toggleFlyout(group, event.currentTarget)}>›</button>}
 
             {/* Flyout Submenu */}
-            {isFlyoutOpen && group.tools.length > 1 && (
-              <div className="zt-drawing-flyout" role="menu">
+            {isFlyoutOpen && group.tools.length > 1 && createPortal(
+              <div ref={flyoutRef} className="zt-drawing-flyout" role="menu" aria-label={group.label} style={{ position: "fixed", ...flyoutPosition, zIndex: 100 }} onKeyDown={event => {
+                if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeFlyout(); return; }
+                if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+                  event.preventDefault(); event.stopPropagation();
+                  const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+                  const index = items.indexOf(document.activeElement as HTMLElement);
+                  const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+                  items[next]?.focus();
+                }
+              }}>
                 <div className="zt-drawing-flyout-header">{group.label}</div>
                 {group.tools.map(item => {
                   const ItemIcon = item.icon;
@@ -230,7 +245,7 @@ export function DrawingToolbar({
                       onClick={() => {
                         setActiveToolPerGroup(prev => ({ ...prev, [group.id]: item.tool }));
                         onTool(item.tool);
-                        setActiveGroupFlyout(null);
+                        closeFlyout();
                       }}
                     >
                       <ItemIcon className={item.accent} />
@@ -238,7 +253,7 @@ export function DrawingToolbar({
                     </button>
                   );
                 })}
-              </div>
+              </div>, document.body
             )}
           </div>
         );

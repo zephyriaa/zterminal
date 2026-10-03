@@ -4,14 +4,15 @@ import { useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent
 import type { Bar } from "@/lib/market/types";
 import { defaultDrawingStyle, drawingAnchorCount, type DrawingAnchor, type DrawingObject, type DrawingType } from "@/lib/chart/contracts";
 import type { DrawingTool, MagnetMode, ProjectedDrawing } from "@/lib/chart/drawings/contracts";
-import { distance, drawingHit } from "@/lib/chart/drawings/geometry";
+import { distance, drawingHit, isPositionTimeEdge, resizePositionTime, snapDrawingAnchor } from "@/lib/chart/drawings/geometry";
 
-type Gesture = { kind: "create"; start: DrawingAnchor; type: DrawingType } | { kind: "anchor"; drawing: DrawingObject; anchorIndex: number } | { kind: "move"; drawing: DrawingObject; start: DrawingAnchor };
+type Gesture = { kind: "create"; start: DrawingAnchor; type: DrawingType } | { kind: "anchor"; drawing: DrawingObject; anchorIndex: number } | { kind: "resize-time"; drawing: DrawingObject } | { kind: "move"; drawing: DrawingObject; start: DrawingAnchor };
 
 type Props = {
   tool: DrawingTool;
   magnet: MagnetMode;
   bars: Bar[];
+  intervalMs: number;
   drawings: DrawingObject[];
   selectedId: string | null;
   toAnchor: (point: { x: number; y: number }) => DrawingAnchor | null;
@@ -33,16 +34,6 @@ function closestDrawing(projected: ProjectedDrawing[], target: { x: number; y: n
     if (points.some(value => distance(value, target) <= 7) || drawingHit(item, target)) return item;
   }
   return null;
-}
-
-function snap(anchor: DrawingAnchor, bars: Bar[], mode: MagnetMode) {
-  if (mode === "off" || bars.length === 0) return anchor;
-  let bar = bars[0];
-  for (const candidate of bars) if (Math.abs(candidate.t - anchor.time) < Math.abs(bar.t - anchor.time)) bar = candidate;
-  const prices = [bar.o, bar.h, bar.l, bar.c];
-  const price = prices.reduce((best, value) => Math.abs(value - anchor.price) < Math.abs(best - anchor.price) ? value : best);
-  if (mode === "weak" && Math.abs(price - anchor.price) / Math.max(Math.abs(anchor.price), 1) > .003) return anchor;
-  return { time: bar.t, price };
 }
 
 function preview(type: DrawingType, anchors: DrawingAnchor[], reference?: DrawingObject): DrawingObject {
@@ -71,7 +62,7 @@ export function DrawingInteractionLayer(props: Props) {
   const drawingById = (id: string) => props.drawings.find(drawing => drawing.id === id);
   const anchorFor = (event: ReactPointerEvent<HTMLElement>) => {
     const anchor = props.toAnchor(point(event));
-    return anchor ? snap(anchor, props.bars, props.magnet) : null;
+    return anchor ? snapDrawingAnchor(anchor, props.bars, props.magnet) : null;
   };
   const begin = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
@@ -85,7 +76,7 @@ export function DrawingInteractionLayer(props: Props) {
       const anchor = anchorFor(event);
       if (!anchor) return;
       const handle = hit.points.findIndex(value => distance(value, screen) <= 8);
-      gesture.current = handle >= 0 ? { kind: "anchor", drawing: hit.drawing, anchorIndex: handle } : { kind: "move", drawing: hit.drawing, start: anchor };
+      gesture.current = handle >= 0 ? { kind: "anchor", drawing: hit.drawing, anchorIndex: handle } : isPositionTimeEdge(hit, screen) ? { kind: "resize-time", drawing: hit.drawing } : { kind: "move", drawing: hit.drawing, start: anchor };
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
     }
@@ -104,10 +95,16 @@ export function DrawingInteractionLayer(props: Props) {
   };
   const move = (event: ReactPointerEvent<HTMLDivElement>) => {
     const current = gesture.current;
-    if (!current) return;
+    if (!current) {
+      const screen = point(event);
+      const hit = props.tool === "cursor" ? closestDrawing(props.projected(), screen) : null;
+      event.currentTarget.style.cursor = hit && !hit.points.some(value => distance(value, screen) <= 8) && isPositionTimeEdge(hit, screen) ? "ew-resize" : "";
+      return;
+    }
     const anchor = anchorFor(event);
     if (!anchor) return;
     if (current.kind === "create") props.onPreview(preview(current.type, [current.start, anchor]));
+    if (current.kind === "resize-time") props.onPreview({ ...current.drawing, anchors: resizePositionTime(current.drawing, anchor.time), updatedAt: Date.now() });
     if (current.kind === "anchor") {
       if (current.anchorIndex === 2 && (current.drawing.type === "long-position" || current.drawing.type === "short-position")) {
         props.onPreview({
@@ -135,14 +132,12 @@ export function DrawingInteractionLayer(props: Props) {
     if (!current) return;
     const anchor = anchorFor(event);
     if (anchor) {
+      if (current.kind === "resize-time") props.onUpdate(current.drawing.id, { anchors: resizePositionTime(current.drawing, anchor.time) });
       if (current.kind === "create") {
         const isPosition = current.type === "long-position" || current.type === "short-position";
         const isClick = Math.abs(anchor.time - current.start.time) < 1000 && Math.abs(anchor.price - current.start.price) / Math.max(1, current.start.price) < 0.001;
         if (isPosition && isClick) {
-          const barDuration = props.bars.length > 1
-            ? Math.abs(props.bars[props.bars.length - 1].t - props.bars[0].t) / (props.bars.length - 1)
-            : 3600000;
-          const forwardTime = current.start.time + Math.max(barDuration * 16, 3600000 * 12);
+          const forwardTime = current.start.time + props.intervalMs * 16;
           const targetPct = current.type === "long-position" ? 0.02 : -0.02;
           const targetPrice = current.start.price * (1 + targetPct);
           const id = props.onCreate(current.type, [current.start, { time: forwardTime, price: targetPrice }]);
@@ -182,12 +177,17 @@ export function DrawingInteractionLayer(props: Props) {
     gesture.current = null; props.onPreview(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   };
-  return <div className="zt-drawing-input" style={{ pointerEvents: active ? "auto" : "none" }} tabIndex={active ? 0 : -1} aria-label="Chart drawing interaction layer" onPointerDown={begin} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onContextMenu={event => { event.preventDefault(); const location = point(event); const hit = closestDrawing(props.projected(), location); if (hit) { props.onSelect(hit.drawing.id); setMenu({ ...location, id: hit.drawing.id }); } }} onKeyDown={event => {
-    if (event.key === "Escape") { gesture.current = null; props.onPreview(null); props.onTool("cursor"); setMenu(null); }
-    if ((event.key === "Delete" || event.key === "Backspace") && props.selectedId) { const selected = drawingById(props.selectedId); if (selected && !selected.locked) props.onDelete(selected.id); }
-    if (event.key.toLowerCase() === "d" && (event.ctrlKey || event.metaKey) && props.selectedId) { event.preventDefault(); props.onDuplicate(props.selectedId); }
+  const cancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    gesture.current = null;
+    props.onPreview(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+  return <div className="zt-drawing-input" style={{ pointerEvents: active ? "auto" : "none" }} tabIndex={active ? 0 : -1} aria-label="Chart drawing interaction layer" onPointerDown={begin} onPointerMove={move} onPointerUp={finish} onPointerCancel={cancel} onContextMenu={event => { event.preventDefault(); const location = point(event); const hit = closestDrawing(props.projected(), location); if (hit) { props.onSelect(hit.drawing.id); setMenu({ ...location, id: hit.drawing.id }); } }} onKeyDown={event => {
+    if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); gesture.current = null; props.onPreview(null); props.onTool("cursor"); props.onSelect(null); setMenu(null); }
+    if ((event.key === "Delete" || event.key === "Backspace") && props.selectedId) { event.preventDefault(); event.stopPropagation(); const selected = drawingById(props.selectedId); if (selected && !selected.locked) { props.onDelete(selected.id); props.onSelect(null); } }
+    if (event.key.toLowerCase() === "d" && (event.ctrlKey || event.metaKey) && props.selectedId) { event.preventDefault(); event.stopPropagation(); props.onDuplicate(props.selectedId); }
   }}>
-    {menu && <div className="zt-drawing-context" role="menu" style={{ left: menu.x, top: menu.y }}>
+    {menu && <div className="zt-drawing-context" role="menu" style={{ left: menu.x, top: menu.y }} onPointerDown={event => event.stopPropagation()} onContextMenu={event => { event.preventDefault(); event.stopPropagation(); }}>
       <button role="menuitem" type="button" onClick={() => { props.onSelect(menu.id); setMenu(null); }}>Settings</button>
       <button role="menuitem" type="button" onClick={() => { props.onDuplicate(menu.id); setMenu(null); }}>Duplicate</button>
       <button role="menuitem" type="button" onClick={() => { const drawing = drawingById(menu.id); if (drawing) props.onUpdate(menu.id, { locked: !drawing.locked }); setMenu(null); }}>{drawingById(menu.id)?.locked ? "Unlock" : "Lock"}</button>

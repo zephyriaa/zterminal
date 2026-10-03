@@ -7,7 +7,8 @@ import type {
   Time,
 } from "lightweight-charts";
 import type { DrawingObject } from "../contracts";
-import { drawingHit } from "./geometry";
+import { drawingAnchorToCoordinate, drawingTimeProjection } from "../drawing-coordinates";
+import { drawingHit, isPositionTimeEdge } from "./geometry";
 import type { ProjectedDrawing, ScreenPoint } from "./contracts";
 
 function alpha(color: string, opacity: number) {
@@ -22,6 +23,7 @@ function dash(style: DrawingObject["style"]["lineStyle"]) {
 }
 
 function extended(a: ScreenPoint, b: ScreenPoint, width: number, both: boolean) {
+  if (a.x === b.x && a.y === b.y) return [a, b];
   const dx = b.x - a.x;
   if (Math.abs(dx) < .001) return [{ x: a.x, y: 0 }, { x: b.x, y: 100000 }];
   const slope = (b.y - a.y) / dx;
@@ -29,11 +31,11 @@ function extended(a: ScreenPoint, b: ScreenPoint, width: number, both: boolean) 
   return [{ x: startX, y: a.y + slope * (startX - a.x) }, { x: width, y: a.y + slope * (width - a.x) }];
 }
 
-function label(ctx: CanvasRenderingContext2D, text: string, point: ScreenPoint, color: string) {
-  ctx.font = "11px ui-monospace, monospace";
+function label(ctx: CanvasRenderingContext2D, text: string, point: ScreenPoint, color: string, size = 11) {
+  ctx.font = `${size}px ui-monospace, monospace`;
   const width = ctx.measureText(text).width + 10;
   ctx.fillStyle = "rgba(7,11,17,.9)";
-  ctx.fillRect(point.x + 7, point.y - 19, width, 17);
+  ctx.fillRect(point.x + 7, point.y - size - 8, width, size + 6);
   ctx.fillStyle = color;
   ctx.fillText(text, point.x + 12, point.y - 7);
 }
@@ -198,7 +200,19 @@ class Renderer implements IPrimitivePaneRenderer {
         ctx.lineWidth = style.width;
         ctx.setLineDash(dash(style.lineStyle));
         if (drawing.type === "extended-line") [a, b] = extended(a, b, mediaSize.width, true);
-        if (["ray", "horizontal-ray"].includes(drawing.type)) [a, b] = drawing.type === "horizontal-ray" ? [a, { x: mediaSize.width, y: a.y }] : extended(a, b, mediaSize.width, false);
+        if (["ray", "horizontal-ray"].includes(drawing.type)) [a, b] = drawing.type === "horizontal-ray" ? [{ x: style.extendStart ? 0 : a.x, y: a.y }, { x: mediaSize.width, y: a.y }] : extended(a, b, mediaSize.width, style.extendStart === true);
+        if (drawing.type === "trend-line" && (style.extendStart || style.extendEnd)) {
+          const dx = rawB.x - rawA.x;
+          if (rawA.x === rawB.x && rawA.y === rawB.y) [a, b] = [rawA, rawB];
+          else if (Math.abs(dx) < .001) [a, b] = [{ x: rawA.x, y: 0 }, { x: rawA.x, y: mediaSize.height }];
+          else {
+            const slope = (rawB.y - rawA.y) / dx;
+            const left = Math.min(rawA.x, rawB.x), right = Math.max(rawA.x, rawB.x);
+            const x0 = style.extendStart ? 0 : left, x1 = style.extendEnd ? mediaSize.width : right;
+            a = { x: x0, y: rawA.y + slope * (x0 - rawA.x) };
+            b = { x: x1, y: rawA.y + slope * (x1 - rawA.x) };
+          }
+        }
         if (["horizontal-line", "price-label"].includes(drawing.type)) [a, b] = [{ x: 0, y: a.y }, { x: mediaSize.width, y: a.y }];
         if (drawing.type === "vertical-line") [a, b] = [{ x: a.x, y: 0 }, { x: a.x, y: mediaSize.height }];
 
@@ -218,7 +232,7 @@ class Renderer implements IPrimitivePaneRenderer {
             label(ctx, `${(level * 100).toFixed(1)}%`, { x: Math.max(rawA.x, rawB.x), y }, style.color);
           }
         } else if (["text", "price-label"].includes(drawing.type)) {
-          label(ctx, style.text || (drawing.type === "price-label" ? drawing.anchors[0].price.toFixed(2) : "Text"), rawA, style.color);
+          label(ctx, style.text || (drawing.type === "price-label" ? drawing.anchors[0].price.toFixed(2) : "Text"), rawA, style.color, style.textSize);
         } else {
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
           if (drawing.type === "arrow") {
@@ -235,7 +249,8 @@ class Renderer implements IPrimitivePaneRenderer {
         }
         if (drawing.id === selectedId && !drawing.locked) {
           ctx.globalAlpha = 1; ctx.setLineDash([]);
-          for (const point of points) {
+          const handles = drawing.type === "long-position" || drawing.type === "short-position" ? [...points, { x: points[1].x, y: points[0].y }] : points;
+          for (const point of handles) {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
             ctx.fillStyle = "#0c101b";
@@ -260,6 +275,8 @@ class View implements IPrimitivePaneView {
 }
 
 export class DrawingPrimitive implements ISeriesPrimitive<Time> {
+  constructor(private intervalSeconds: number) {}
+  setInterval(intervalSeconds: number) { this.intervalSeconds = intervalSeconds; }
   private attachedState: SeriesAttachedParameter<Time> | null = null;
   private drawings: DrawingObject[] = [];
   private projected: ProjectedDrawing[] = [];
@@ -273,9 +290,11 @@ export class DrawingPrimitive implements ISeriesPrimitive<Time> {
   updateAllViews() {
     if (!this.attachedState) return;
     const { chart, series } = this.attachedState;
+    const projection = drawingTimeProjection(chart, series, this.intervalSeconds);
     this.projected = this.drawings.map(drawing => {
-      const points = drawing.anchors.map(anchor => ({ x: chart.timeScale().timeToCoordinate((anchor.time / 1000) as Time), y: series.priceToCoordinate(anchor.price) }));
-      if (points.some(point => point.x == null || point.y == null)) return null;
+      const coordinates = drawing.anchors.map(anchor => drawingAnchorToCoordinate(chart, series, anchor, this.intervalSeconds, projection));
+      if (coordinates.some(point => point == null)) return null;
+      const points = coordinates as ScreenPoint[];
 
       if (drawing.type === "long-position" || drawing.type === "short-position") {
         const [a0, a1] = drawing.anchors;
@@ -303,7 +322,7 @@ export class DrawingPrimitive implements ISeriesPrimitive<Time> {
   }
   hitTest(x: number, y: number): PrimitiveHoveredItem | null {
     const found = [...this.projected].reverse().find(item => drawingHit(item, { x, y }));
-    return found ? { externalId: found.drawing.id, zOrder: "top", cursorStyle: found.drawing.locked ? "not-allowed" : "pointer", hitTestPriority: 1, itemType: "primitive" } : null;
+    return found ? { externalId: found.drawing.id, zOrder: "top", cursorStyle: found.drawing.locked ? "not-allowed" : isPositionTimeEdge(found, { x, y }) ? "ew-resize" : "pointer", hitTestPriority: 1, itemType: "primitive" } : null;
   }
   getProjected() { return this.projected; }
 }

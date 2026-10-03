@@ -1,8 +1,31 @@
 import type { DrawingAnchor, DrawingObject } from "../contracts";
 import type { ProjectedDrawing, ScreenPoint } from "./contracts";
+import type { MagnetMode } from "./contracts";
+import type { Bar } from "../../market/types";
+
+export function snapDrawingAnchor(anchor: DrawingAnchor, bars: Bar[], mode: MagnetMode) {
+  if (mode === "off" || bars.length === 0 || anchor.time < bars[0].t || anchor.time > bars[bars.length - 1].t) return anchor;
+  let bar = bars[0];
+  for (const candidate of bars) if (Math.abs(candidate.t - anchor.time) < Math.abs(bar.t - anchor.time)) bar = candidate;
+  const price = [bar.o, bar.h, bar.l, bar.c].reduce((best, value) => Math.abs(value - anchor.price) < Math.abs(best - anchor.price) ? value : best);
+  if (mode === "weak" && Math.abs(price - anchor.price) / Math.max(Math.abs(anchor.price), 1) > .003) return anchor;
+  return { time: bar.t, price };
+}
 
 export function distance(a: ScreenPoint, b: ScreenPoint) {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+export function isPositionTimeEdge(projected: ProjectedDrawing, point: ScreenPoint, tolerance = 8) {
+  if (projected.drawing.locked || !["long-position", "short-position"].includes(projected.drawing.type)) return false;
+  const [entry, target, stop = entry] = projected.points;
+  return Math.abs(point.x - target.x) <= tolerance &&
+    point.y >= Math.min(entry.y, target.y, stop.y) - tolerance &&
+    point.y <= Math.max(entry.y, target.y, stop.y) + tolerance;
+}
+
+export function resizePositionTime(drawing: DrawingObject, time: number): DrawingAnchor[] {
+  return drawing.anchors.map((anchor, index) => index === 1 ? { ...anchor, time } : anchor);
 }
 
 export function distanceToSegment(point: ScreenPoint, start: ScreenPoint, end: ScreenPoint) {
@@ -15,6 +38,21 @@ export function distanceToSegment(point: ScreenPoint, start: ScreenPoint, end: S
 export function drawingHit(projected: ProjectedDrawing, point: ScreenPoint, tolerance = 7) {
   const [a, b = a] = projected.points;
   const type = projected.drawing.type;
+  if (type === "date-range") return point.x >= Math.min(a.x, b.x) - tolerance && point.x <= Math.max(a.x, b.x) + tolerance;
+  if (type === "horizontal-ray") return (projected.drawing.style.extendStart || point.x >= a.x - tolerance) && Math.abs(point.y - a.y) <= tolerance;
+  if (["trend-line", "ray", "extended-line"].includes(type)) {
+    const { extendStart, extendEnd } = projected.drawing.style;
+    const left = type === "extended-line" || extendStart;
+    const right = type === "extended-line" || type === "ray" || extendEnd;
+    if (left || right) {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      if (dx === 0 && dy === 0) return distance(point, a) <= tolerance;
+      if (Math.abs(dx) < .001) return Math.abs(point.x - a.x) <= tolerance;
+      const startX = left ? -Infinity : type === "ray" ? a.x : Math.min(a.x, b.x);
+      const endX = right ? Infinity : Math.max(a.x, b.x);
+      return point.x >= startX - tolerance && point.x <= endX + tolerance && Math.abs(dy * (point.x - a.x) - dx * (point.y - a.y)) / Math.hypot(dx, dy) <= tolerance;
+    }
+  }
   if (["long-position", "short-position"].includes(type)) {
     const c = projected.points[2] ?? b;
     const left = Math.min(a.x, b.x) - tolerance;

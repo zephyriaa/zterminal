@@ -13,7 +13,7 @@ import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpening
 import type { ChartTimezone } from "@/stores/workspace";
 import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/lib/chart/contracts";
 import { applyVolumePaneLayout, lightweightChartOptions } from "@/lib/chart/lightweight-adapter";
-import { coordinateToDrawingAnchor } from "@/lib/chart/lightweight-adapter";
+import { coordinateToDrawingAnchor } from "@/lib/chart/drawing-coordinates";
 import type { DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
 import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import { bigTradesSettings } from "@/lib/chart/overlays/contracts";
@@ -555,7 +555,7 @@ function applyZTerminalWatermark(
     }
     const mainSeries = seriesRef.current;
     if (!mainSeries) return;
-    const drawingPrimitive = new DrawingPrimitive();
+    const drawingPrimitive = new DrawingPrimitive(tfSec);
     mainSeries.attachPrimitive(drawingPrimitive);
     drawingPrimitiveRef.current = drawingPrimitive;
     const bigTradesPrimitive = new BigTradesPrimitive(setHoveredBigTrade);
@@ -604,10 +604,11 @@ function applyZTerminalWatermark(
     const sorted = [...bars].sort((a, b) => a.t - b.t);
     const replayCursor = effectiveReplayIndex == null ? undefined : sorted[effectiveReplayIndex]?.t;
     const visible = drawings.filter(drawing => isDrawingVisible(drawing, timeframe, replayCursor));
+    drawingPrimitiveRef.current?.setInterval(tfSec);
     visibleDrawingsRef.current = visible;
     const drawingPreview = drawingPreviewRef.current;
     drawingPrimitiveRef.current?.setDrawings(drawingPreview ? [...visible.filter(drawing => drawing.id !== drawingPreview.id), drawingPreview] : visible, selectedDrawingId);
-  }, [bars, chartType, drawings, effectiveReplayIndex, selectedDrawingId, timeframe]);
+  }, [bars, chartType, drawings, effectiveReplayIndex, selectedDrawingId, timeframe, tfSec]);
 
   useEffect(() => {
     if (!seriesRef.current) return;
@@ -764,10 +765,11 @@ function applyZTerminalWatermark(
         <DrawingInteractionLayer
           tool={drawingTool}
           magnet={magnetMode}
-          bars={bars}
+          bars={availableBars}
+          intervalMs={tfSec * 1000}
           drawings={drawings}
           selectedId={selectedDrawingId}
-          toAnchor={point => chartRef.current && seriesRef.current ? coordinateToDrawingAnchor(chartRef.current, seriesRef.current, point) : null}
+          toAnchor={point => chartRef.current && seriesRef.current ? coordinateToDrawingAnchor(chartRef.current, seriesRef.current, point, tfSec) : null}
           projected={() => drawingPrimitiveRef.current?.getProjected() ?? []}
           onTool={onDrawingTool}
           onSelect={onSelectDrawing}
