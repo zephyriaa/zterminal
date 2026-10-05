@@ -1,0 +1,46 @@
+# MEXC execution development — foundation status
+
+**2026-10-05 — implemented internal foundation, not a live-trading release.**
+
+The user authorized development after the [architecture/playbook](../architecture/mexc-live-execution.md) was written. This slice implements a native vault primitive, durable local execution ledger, exact normalized Spot limit inputs, shared risk collars and a runnable deterministic offline paper engine. It does not complete the full MEXC implementation prompt or any production-live acceptance gate.
+
+## Delivered components
+
+| Component | Source | Behavior |
+| --- | --- | --- |
+| Native Windows vault primitive | [execution_vault.h](../../apps/windows-host/src/execution_vault.h), [execution_vault.cpp](../../apps/windows-host/src/execution_vault.cpp) | CURRENT USER DPAPI encrypted blobs in non-roaming LocalAppData, protected owner-only ACLs on directories/files, reparse/unsafe-path rejection, bounded credential buffers, flush before opaque reference return, erase by owned handle. No saved-secret reveal/export API. No machine-scope protection. |
+| Durable execution ledger | [journal.rs](../../crates/zt-execution/src/journal.rs) | Dedicated SQLite schema with application/version identity, WAL/FULL synchronization and exclusive lifetime ownership. Commits intent before dispatch claim; uncertain claims become quarantined; known duplicates cannot reclaim dispatch; repeated identical acknowledgement is idempotent. Never recreates missing tables or resets missing account balances after activity. |
+| Exact normalized inputs | [model.rs](../../crates/zt-execution/src/model.rs) | Decimal-string wire money, no float input; strict field validation, tick/step/min/max/notional checks, checked arithmetic and explicit Paper/SpotLive/FuturesLive modes. Both live modes return LiveDisabled. |
+| Shared risk extension | [execution.rs](../../crates/zt-risk/src/execution.rs) | Adds notional/spread/order-frequency/freshness settings to the existing risk crate. Existing RiskGatekeeper kill switch is reused by paper. Existing risk source changes made before this task remain separate. |
+| Paper owner | [paper.rs](../../crates/zt-execution/src/paper.rs) | One deployment and Spot symbol per ledger; persistent cash/inventory/fees, cash/inventory reservations across pending orders, exact partial fills with finite quoted capacity shared across orders, fees, modeled latency and adverse slippage bounded by limit. Fill/cursor/balance updates commit atomically. Freshness/gap checks, restart pause, explicit resume, owned cancellation and no liquidation on stop. |
+| Offline command runner | [main.rs](../../apps/zt-execution-paper/src/main.rs) | Bounded 16KB configuration/commands over stdin, fixed error categories, unknown fields/operations rejected, no raw input echoed, pause on EOF/Quit and termination after fatal storage/schema/arithmetic errors. Internal tool only; no network transport or authenticated worker IPC. |
+| Runnable example | [fixture example](../../examples/mexc-paper/README.md) | Explicitly synthetic quotes and filters; reproducible cash/position/fee checks, no credentials. |
+| Repeatable Windows check | [test-execution.ps1](../../scripts/test-execution.ps1) | Uses installed MSVC/Windows SDK, runs locked Rust tests/lints and Windows vault CTest; no credentials or exchange calls. |
+
+The native vault is compiled as a separate static component/test target. It is intentionally not connected to user settings, a signer, the host UI or a browser API yet. The default directory is `%LOCALAPPDATA%\ZTerminalExecutionVault`, outside research/workspace exports. SQLite stores only opaque credential references; publishing a new reference, retiring the previous blob and pausing associated deployments must be wired through the future engine connection lifecycle. The primitive allocates a fresh reference for each save so a replacement can be published only after durable storage. No real credential was collected or saved during development.
+
+## Validation performed
+
+- Rust execution/risk checks: one journal commit-failure test, 15 public-interface execution integration tests, three real-process command/recovery tests, and ten risk tests including existing tests. Process tests forcibly terminate the paper executable after a committed unfilled intent and after a committed fill, then reopen and verify account state and no replay/double accounting.
+- Coverage includes exclusive journal ownership, schema mismatch/damage, persistent IDs, unknown-outcome quarantine, duplicate acknowledgements, exact filters/overflow, reservation/rate boundaries, partial fills/shared finite liquidity, latency/slippage, stale/gap/sleep handling, kill switch, cancellation, restart activation, immutable config, live-mode rejection, strict decimal strings, malformed/oversized commands and sentinel exclusion from command errors.
+- Native Windows x64 MSVC Release vault test: owner-only creation/reopen, ciphertext plaintext exclusion, same-user DPAPI round trip using synthetic data, tamper rejection, distinct replacement references, invalid/empty input, deletion and refusal of permissive ACLs. Tests never touch the real default vault: they create/remove a separate test-owned LocalAppData directory.
+- Full Rust workspace tests and full native Windows host Release build passed. The broader workspace validation exercises existing native data/storage/research seams as well as the added execution components. Existing unrelated working-tree modifications were preserved.
+- Clippy with warnings denied passed for the execution crate and paper runner. Formatting, local documentation links and diff whitespace were checked.
+
+The vault test decrypts synthetic data directly through the Windows API **inside the test only**. That is not a product reveal API. A second Windows account test, power-loss/hardware-flush proof, fault injection during every actual network crash window, AppContainer isolation, real exchange reconciliation and production telemetry/sync exclusion tests have not been completed. Same-user arbitrary Python remains able to act with that user's permissions; this code does not claim a sandbox.
+
+## Required next development gates
+
+1. Embed the ledger/connection lifecycle into the native execution owner; add versioned native broker IPC with peer identity, bounded queues, deployment capabilities, resource limits and handle/environment isolation. Current stdin commands are not an external trading API.
+2. Add native connection settings, transient paste controls, reference publication/replace/delete workflow, private signer access and read-only connection tests. Enforce credential-file ACLs and exclusions for all future storage/sync/diagnostic paths. Do not adapt the hosted Tauri/web UI to handle credentials.
+3. Verify current official MEXC public metadata and stream contracts, normalize exact instrument units and feed-quality provenance, and connect real public data to paper. The example filters/prices are fixtures and must not be called current MEXC specs/prices. A locally monotonic persisted quote ordinal is required across reconnects; do not feed reset venue-local sequence numbers into the paper cursor unchanged.
+4. Adapt the existing causal Python strategy API to continuous paper execution without handing workers secrets; preserve backtest behavior and disclose live timing differences. Add native deployment status, tray/close/Quit ownership and sleep/wake handling. The current host close behavior is unchanged.
+5. Complete full risk policy: account-wide deployment aggregation, daily loss, symbol allowlists, simultaneous positions, leverage, reduction semantics and authoritative exchange state. Current paper has a single-symbol allowlist and cash/inventory restrictions, not a complete live firewall. The simulation omits funding, margin, liquidation, market impact and a full depth queue model.
+6. Implement separately verified Spot/Futures signers, adapters, private WS/protobuf/listen-key lifecycle, central endpoint/account/IP scheduling, authorized read-only validation and exchange-authoritative reconciliation. Add durable general fill/account/deployment models; current fill/balance tables are explicitly paper. No timeout/5xx blind retries.
+7. Pass all architecture acceptance gates before separately authorized bounded Spot-live validation; Futures remains an independent later gate. Restarts/failed builds/metadata sync cannot enable either live mode.
+
+## Supporting references
+
+[Microsoft DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata) documents user/machine protection and machine-scope behavior; device-local/no-roaming remains an explicit product policy, not a universal DPAPI guarantee. [Windows handle security inspection](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo) supports validation against an already-open handle. [SQLite durability settings](https://www.sqlite.org/pragma.html#pragma_synchronous) explain the selected WAL/FULL configuration; successful process-kill tests do not establish hardware power-loss guarantees.
+
+The [future implementation prompt](mexc-live-execution-agent-prompt.md) still records the complete intended work. Its original-source truncation/provenance labels remain unchanged.

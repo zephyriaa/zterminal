@@ -1,5 +1,10 @@
 # ARCHITECTURE
 
+> Proposed native execution extension: [MEXC architecture and playbook](architecture/mexc-live-execution.md),
+> [future implementation-agent prompt](implementation/mexc-live-execution-agent-prompt.md), and
+> [recovered source provenance](architecture/mexc-source-recovered.md).
+> These documents describe future gated work; they do not enable live trading.
+
 > For event market data, microstructure research, and options data, the
 > authoritative current contract is [MICROSTRUCTURE_ARCHITECTURE.md](MICROSTRUCTURE_ARCHITECTURE.md).
 > This legacy overview describes the web workspace generation and contains

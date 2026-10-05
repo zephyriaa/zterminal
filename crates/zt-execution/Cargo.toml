@@ -1,0 +1,22 @@
+[package]
+name = "zt-execution"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+rust_decimal = { version = "1.33", features = ["serde-with-str"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+uuid = { version = "1", features = ["v4"] }
+zt-risk = { path = "../zt-risk" }
+
+[dev-dependencies]
+tempfile = "3"
+rust_decimal_macros = "1.33"

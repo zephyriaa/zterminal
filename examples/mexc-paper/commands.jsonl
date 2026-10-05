@@ -1,0 +1,6 @@
+{"op":"quote","now_ms":0,"quote":{"symbol":"BTCUSDT","sequence":1,"received_ms":0,"bid":"99.99","ask":"100","bid_quantity":"100","ask_quantity":"100"}}
+{"op":"resume","now_ms":0}
+{"op":"place_limit","now_ms":0,"order":{"symbol":"BTCUSDT","side":"Buy","quantity":"1","price":"100"}}
+{"op":"quote","now_ms":100,"quote":{"symbol":"BTCUSDT","sequence":2,"received_ms":100,"bid":"99.99","ask":"100","bid_quantity":"100","ask_quantity":"100"}}
+{"op":"status"}
+{"op":"quit"}

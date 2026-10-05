@@ -1,0 +1,24 @@
+{
+  "account_id": "paper_account",
+  "deployment_id": "example_strategy",
+  "instrument": {
+    "symbol": "BTCUSDT",
+    "price_tick": "0.01",
+    "quantity_step": "0.001",
+    "min_quantity": "0.001",
+    "max_quantity": "100",
+    "min_notional": "1"
+  },
+  "initial_cash": "10000",
+  "fee_bps": "10",
+  "slippage_bps": "0",
+  "latency_ms": 100,
+  "order_ttl_ms": 5000,
+  "limits": {
+    "max_order_notional": "5000",
+    "max_position_notional": "10000",
+    "max_spread_bps": "100",
+    "max_orders_per_minute": 10,
+    "max_quote_age_ms": 1000
+  }
+}

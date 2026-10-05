@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 3.21)
 project(ZTerminalWindowsHost VERSION 0.1.0 LANGUAGES CXX)
 
+# Native CURRENT USER vault primitive, intentionally not exposed to the UI or
+# any browser/IPC reveal command. Live execution remains disabled.
+add_library(ZTerminalExecutionVault STATIC src/execution_vault.cpp)
+target_compile_features(ZTerminalExecutionVault PUBLIC cxx_std_20)
+target_compile_definitions(ZTerminalExecutionVault PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_include_directories(ZTerminalExecutionVault PUBLIC src)
+target_link_libraries(ZTerminalExecutionVault PRIVATE crypt32 advapi32 bcrypt shell32 ole32)
+if(MSVC)
+  target_compile_options(ZTerminalExecutionVault PRIVATE /W4 /permissive- /EHsc)
+endif()
+include(CTest)
+if(BUILD_TESTING)
+  add_executable(ZTerminalExecutionVaultTests tests/execution_vault_test.cpp)
+  target_compile_definitions(ZTerminalExecutionVaultTests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+  target_link_libraries(ZTerminalExecutionVaultTests PRIVATE ZTerminalExecutionVault crypt32 advapi32)
+  add_test(NAME execution-vault-current-user COMMAND ZTerminalExecutionVaultTests)
+endif()
+
 # Phase 0 intentionally uses a minimal Win32/D3D11 host to benchmark native
 # window, input, and swap-chain overhead before wiring WinUI 3 controls. The
 # production host will layer Windows App SDK / WinUI 3 around this surface.
