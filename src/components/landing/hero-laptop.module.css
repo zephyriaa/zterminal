@@ -25,7 +25,7 @@
   position: absolute;
   inset: -12% -8% 0 12%;
   z-index: -2;
-  background: radial-gradient(ellipse at 45% 54%, #8c78f3aa, #574aa150 43%, transparent 70%);
+  background: radial-gradient(ellipse at 45% 54%, #8c78f355, #574aa128 43%, transparent 70%);
   filter: blur(26px);
 }
 
@@ -36,7 +36,7 @@
   bottom: -4%;
   height: 30%;
   z-index: -1;
-  background: radial-gradient(ellipse at 75% 45%, #8574e088, #414e7544 60%, transparent 77%);
+  background: radial-gradient(ellipse at 75% 45%, #8574e040, #414e7522 60%, transparent 77%);
   filter: blur(18px);
   transform: rotate(3deg);
 }
@@ -44,57 +44,17 @@
 @keyframes laptopEntrance {
   0% {
     opacity: 0;
-    transform: translateY(28px) scale(0.985);
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+    transform: translateY(12px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: drop-shadow(0 12px 9px rgba(0, 0, 0, 0.733));
-  }
-}
-
-@keyframes atmosphereResolve {
-  0% {
-    opacity: 0.35;
-    transform: scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes screenSettle {
-  0% {
-    opacity: 0.88;
-    filter: brightness(0.92) contrast(0.98);
-  }
-  100% {
-    opacity: 1;
-    filter: brightness(1) contrast(1);
+    transform: translateY(0);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .laptopEntrance {
-    animation: laptopEntrance var(--public-hero-duration, 900ms) var(--public-ease) 540ms both;
-  }
-  .atmosphericGlow,
-  .groundReflection {
-    animation: atmosphereResolve var(--public-hero-duration, 900ms) var(--public-ease) both;
-  }
-  .screenGroup {
-    animation: screenSettle 360ms var(--public-ease) 1020ms both;
-  }
-}
-
-@media (max-width: 1000px) and (prefers-reduced-motion: no-preference) {
-  .laptopEntrance {
-    animation-delay: 360ms;
-  }
-  .screenGroup {
-    animation-delay: 720ms;
+    animation: laptopEntrance var(--public-hero-duration, 640ms) var(--public-ease) 180ms backwards;
   }
 }
 
@@ -109,6 +69,5 @@
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-    filter: none !important;
   }
 }

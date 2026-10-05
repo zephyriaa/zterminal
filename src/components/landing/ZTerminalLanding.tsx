@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState, type KeyboardEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { PublicHeader } from "@/components/public/public-header";
@@ -97,8 +97,19 @@ const RESEARCH_LOOP_CARDS = [
 export default function ZTerminalLanding() {
   const [surface2Tab, setSurface2Tab] = useState<"ui" | "code">("ui");
 
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const selectTab = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const next = event.key === "ArrowRight" ? (index + 1) % 2
+      : event.key === "ArrowLeft" ? (index - 1 + 2) % 2
+      : event.key === "Home" ? 0 : event.key === "End" ? 1 : null;
+    if (next === null) return;
+    event.preventDefault();
+    setSurface2Tab(next === 0 ? "ui" : "code");
+    tabs.current[next]?.focus();
+  };
+
   return (
-    <div className={`${styles.page} publicScope`}>
+    <div className={`${styles.page} publicScope`} data-landing="true">
       <PublicHeader hero />
 
       <main className={styles.content}>
@@ -344,9 +355,16 @@ export default function ZTerminalLanding() {
             </FadeInView>
 
             <ScaleReveal className={styles.surfaceMomentVisual} delay={0.08}>
-              <div className={styles.surfaceToggleTabs}>
+              <div className={styles.surfaceToggleTabs} role="tablist" aria-label="Python strategy demonstration">
                 <button
                   type="button"
+                  role="tab"
+                  id="strategy-tab-ui"
+                  aria-controls="strategy-panel-ui"
+                  aria-selected={surface2Tab === "ui"}
+                  tabIndex={surface2Tab === "ui" ? 0 : -1}
+                  ref={(element) => { tabs.current[0] = element; }}
+                  onKeyDown={(event) => selectTab(event, 0)}
                   className={`${styles.surfaceTabButton} ${surface2Tab === "ui" ? styles.surfaceTabButtonActive : ""}`}
                   onClick={() => setSurface2Tab("ui")}
                 >
@@ -354,6 +372,13 @@ export default function ZTerminalLanding() {
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  id="strategy-tab-code"
+                  aria-controls="strategy-panel-code"
+                  aria-selected={surface2Tab === "code"}
+                  tabIndex={surface2Tab === "code" ? 0 : -1}
+                  ref={(element) => { tabs.current[1] = element; }}
+                  onKeyDown={(event) => selectTab(event, 1)}
                   className={`${styles.surfaceTabButton} ${surface2Tab === "code" ? styles.surfaceTabButtonActive : ""}`}
                   onClick={() => setSurface2Tab("code")}
                 >
@@ -361,36 +386,46 @@ export default function ZTerminalLanding() {
                 </button>
               </div>
 
-              {surface2Tab === "ui" ? (
-                <ProductWindow
-                  title="ZTerminal / Python Strategy"
-                  readout="PYTHON EDITOR · LOCAL HELPER"
-                >
-                  <div className={styles.surfaceScreenshotFrame}>
-                    <Image
-                      src="/landing/product-strategy-live.png"
-                      alt="Current deployed ZTerminal Python strategy editor with the moving-average crossover example and local Helper controls"
-                      width={3200}
-                      height={2000}
-                      className={styles.surfaceScreenshotImage}
-                      sizes="(max-width: 1180px) 90vw, 55vw"
-                    />
-                    <div className={styles.surfaceTelemetryStrip}>
-                      <span className={styles.surfaceTelemetryActive}>
-                        <span className={styles.surfaceTelemetryDot} aria-hidden="true" />
-                        PYTHON STRATEGY WORKSPACE
-                      </span>
-                      <span>LOCAL HELPER REQUIRED TO RUN</span>
+              <div className={styles.surfaceTabPanels}>
+                <div role="tabpanel" id="strategy-panel-ui" aria-labelledby="strategy-tab-ui"
+                  tabIndex={surface2Tab === "ui" ? 0 : -1} aria-hidden={surface2Tab !== "ui"}
+                  inert={surface2Tab !== "ui"} data-active={surface2Tab === "ui"}
+                  className={styles.surfaceTabPanel}>
+                  <ProductWindow
+                    title="ZTerminal / Python Strategy"
+                    readout="PYTHON EDITOR · LOCAL HELPER"
+                  >
+                    <div className={styles.surfaceScreenshotFrame}>
+                      <Image
+                        src="/landing/product-strategy-live.png"
+                        alt="Current deployed ZTerminal Python strategy editor with the moving-average crossover example and local Helper controls"
+                        width={3200}
+                        height={2000}
+                        className={styles.surfaceScreenshotImage}
+                        sizes="(max-width: 1180px) 90vw, 55vw"
+                      />
+                      <div className={styles.surfaceTelemetryStrip}>
+                        <span className={styles.surfaceTelemetryActive}>
+                          <span className={styles.surfaceTelemetryDot} aria-hidden="true" />
+                          PYTHON STRATEGY WORKSPACE
+                        </span>
+                        <span>LOCAL HELPER REQUIRED TO RUN</span>
+                      </div>
                     </div>
-                  </div>
-                </ProductWindow>
-              ) : (
-                <CodeSurface
-                  filename="strategy_ema_crossover.py"
-                  runtime="PYTHON 3.11+ / LOCAL ENGINE"
-                  code={CODE_EXAMPLE_REAL}
-                />
-              )}
+                  </ProductWindow>
+                </div>
+                <div role="tabpanel" id="strategy-panel-code" aria-labelledby="strategy-tab-code"
+                  tabIndex={surface2Tab === "code" ? 0 : -1} aria-hidden={surface2Tab !== "code"}
+                  inert={surface2Tab !== "code"} data-active={surface2Tab === "code"}
+                  className={styles.surfaceTabPanel}>
+                  <CodeSurface
+                    className={styles.surfaceCode}
+                    filename="strategy_ema_crossover.py"
+                    runtime="PYTHON 3.11+ / LOCAL ENGINE"
+                    code={CODE_EXAMPLE_REAL}
+                  />
+                </div>
+              </div>
             </ScaleReveal>
           </div>
 

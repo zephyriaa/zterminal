@@ -17,6 +17,8 @@ const NAV_LINKS = [
 export function PublicHeader({ overlay = false, hero = false }: { overlay?: boolean; hero?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const pressedControl = useRef<HTMLElement | null>(null);
   const releasePress = useCallback(() => {
@@ -71,10 +73,22 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        if (headerRef.current?.closest("[data-landing]")) menuRef.current?.focus();
+      }
+    };
+    const dismissOutside = (event: globalThis.PointerEvent) => {
+      const header = headerRef.current;
+      if (header?.closest("[data-landing]") && event.target instanceof Node && !header.contains(event.target)) setOpen(false);
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // The landing audit found an outside-dismiss defect; other routes retain their behavior.
+    if (headerRef.current?.closest("[data-landing]")) document.addEventListener("pointerdown", dismissOutside);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", dismissOutside);
+    };
   }, [open]);
 
   const isLinkActive = (href: string) => {
@@ -86,6 +100,7 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
     <div className={`${styles.headerWrapper} ${overlay ? styles.overlay : ""} ${hero ? styles.heroHeader : ""}`}>
       <PublicMotion />
       <header
+        ref={headerRef}
         className={`${styles.header} ${isScrolled ? styles.headerScrolled : ""}`}
         aria-label="Site navigation"
         onPointerDown={placePressHighlight}
@@ -107,6 +122,7 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
 
         {/* Mobile Navigation Toggle */}
         <button
+          ref={menuRef}
           className={`${styles.menuButton} ${open ? styles.menuButtonOpen : ""}`}
           type="button"
           aria-expanded={open}

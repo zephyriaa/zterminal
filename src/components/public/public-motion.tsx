@@ -49,7 +49,7 @@ export function PublicMotion() {
 
     for (const target of targets) {
       target.querySelectorAll<HTMLElement>(":scope > [data-reveal-item]").forEach((item, index) => {
-        item.style.setProperty("--reveal-index", String(Math.min(index, 4)));
+        item.style.setProperty("--reveal-index", String(Math.min(index, scope.hasAttribute("data-landing") ? 3 : 4)));
       });
       // Above-the-fold and restored scroll positions stay immediately readable.
       if (reduced.matches || target.getBoundingClientRect().top < window.innerHeight) continue;
