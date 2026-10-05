@@ -103,8 +103,8 @@ export function OptimizerDialog() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6 select-none animate-in fade-in duration-200">
-      <div className="flex h-full w-full max-w-5xl flex-col rounded-lg border hairline bg-panel shadow-2xl overflow-hidden">
+    <div className="zt-terminal-dialog-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6 select-none">
+      <div className="zt-terminal-dialog flex h-full w-full max-w-5xl flex-col rounded-lg border hairline bg-panel shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex h-12 shrink-0 items-center justify-between border-b hairline px-4 bg-surface/50">
           <div className="flex items-center gap-3">

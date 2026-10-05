@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   AreaChart,
   BarChart3,
@@ -60,10 +60,19 @@ type Props = {
 export function ChartToolbar(props: Props) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showProviderMenu, setShowProviderMenu] = useState(false);
+  const providerButtonRef = useRef<HTMLButtonElement>(null);
+  const layoutButtonRef = useRef<HTMLButtonElement>(null);
   const currentLayout = props.layout ?? "1";
 
   return (
-    <div className="zt-chart-toolbar" aria-label="Chart controls">
+    <div className="zt-chart-toolbar" aria-label="Chart controls" onKeyDownCapture={event => {
+      if (event.key !== "Escape" || (!showProviderMenu && !showLayoutMenu)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      (showProviderMenu ? providerButtonRef : layoutButtonRef).current?.focus();
+      setShowProviderMenu(false);
+      setShowLayoutMenu(false);
+    }}>
       <span className="zt-chart-contract">
         {props.symbol} <small>{props.productLabel}</small>
       </span>
@@ -114,6 +123,8 @@ export function ChartToolbar(props: Props) {
             <button
               type="button"
               onClick={() => setShowProviderMenu((v) => !v)}
+              ref={providerButtonRef}
+              aria-expanded={showProviderMenu}
               className={cn(
                 "hover:underline cursor-pointer flex items-center gap-1",
                 props.dataStatus === "LIVE" ? "text-pos" : "text-muted-foreground"
@@ -126,7 +137,7 @@ export function ChartToolbar(props: Props) {
 
             {showProviderMenu && (
               <div
-                className="absolute top-full left-0 mt-1 z-50 bg-[#0d1117] border border-[#30363d] rounded shadow-xl py-1 min-w-[130px]"
+                className="zt-chart-toolbar-menu absolute top-full left-0 mt-1 z-50 bg-[#0d1117] border border-[#30363d] rounded shadow-xl py-1 min-w-[130px]"
                 onMouseLeave={() => setShowProviderMenu(false)}
               >
                 <div className="px-2 py-0.5 text-[9px] text-[#8b949e] border-b border-[#21262d] uppercase tracking-wider font-semibold">
@@ -175,6 +186,8 @@ export function ChartToolbar(props: Props) {
             <button
               type="button"
               onClick={() => setShowLayoutMenu((v) => !v)}
+              ref={layoutButtonRef}
+              aria-expanded={showLayoutMenu}
               className={cn(
                 "zt-chart-toolbar-button flex items-center gap-1 px-1.5",
                 currentLayout !== "1" && "is-active font-bold text-[#38bdf8]"
@@ -191,7 +204,7 @@ export function ChartToolbar(props: Props) {
 
             {showLayoutMenu && (
               <div
-                className="absolute right-0 top-full mt-1 z-50 bg-[#0d1117] border border-[#30363d] rounded shadow-xl py-1 min-w-[140px]"
+                className="zt-chart-toolbar-menu absolute right-0 top-full mt-1 z-50 bg-[#0d1117] border border-[#30363d] rounded shadow-xl py-1 min-w-[140px]"
                 onMouseLeave={() => setShowLayoutMenu(false)}
               >
                 <div className="px-2 py-0.5 text-[9px] text-[#8b949e] border-b border-[#21262d] uppercase tracking-wider font-semibold">

@@ -113,6 +113,22 @@ export function DrawingToolbar({
   });
 
   const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const groupButtonsRef = React.useRef<Record<string, HTMLButtonElement | null>>({});
+
+  React.useEffect(() => {
+    if (!activeGroupFlyout || TOOL_GROUPS.find(group => group.id === activeGroupFlyout)?.tools.length === 1) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      // A dialog opened over this menu owns Escape while its controls have focus.
+      if (event.target !== document.body && event.target instanceof Node && !toolbarRef.current?.contains(event.target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setActiveGroupFlyout(null);
+      groupButtonsRef.current[activeGroupFlyout]?.focus();
+    };
+    document.addEventListener("keydown", dismiss, true);
+    return () => document.removeEventListener("keydown", dismiss, true);
+  }, [activeGroupFlyout]);
 
   // Click outside listener for flyout
   React.useEffect(() => {
@@ -155,7 +171,7 @@ export function DrawingToolbar({
           <button
             type="button"
             className="zt-toolbar-collapse-btn"
-            onClick={() => setCollapsed(true)}
+            onClick={() => { setActiveGroupFlyout(null); setCollapsed(true); }}
             aria-label="Collapse drawing toolbar"
           >
             <ChevronLeft />
@@ -179,6 +195,7 @@ export function DrawingToolbar({
               <TooltipTrigger asChild>
                 <button
                   type="button"
+                  ref={element => { groupButtonsRef.current[group.id] = element; }}
                   className={cn(
                     "zt-tool-group-btn",
                     isCurrentActive && "is-active",
@@ -216,7 +233,7 @@ export function DrawingToolbar({
 
             {/* Flyout Submenu */}
             {isFlyoutOpen && group.tools.length > 1 && (
-              <div className="zt-drawing-flyout" role="menu">
+              <div className="zt-drawing-flyout" role="menu" aria-label={group.label}>
                 <div className="zt-drawing-flyout-header">{group.label}</div>
                 {group.tools.map(item => {
                   const ItemIcon = item.icon;

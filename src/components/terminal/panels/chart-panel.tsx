@@ -221,7 +221,7 @@ export function ChartPanel({ layers, customStudies, onToggleLayer }: ChartPanelP
               )}
               title={reason ?? health?.reason ?? "Market data feed"}
             >
-              {dataStatus === "LIVE" && <span className="h-1.5 w-1.5 rounded-full bg-pos animate-pulse" />}
+              {dataStatus === "LIVE" && <span className="h-1.5 w-1.5 rounded-full bg-pos" />}
               {dataStatus}
             </span>
           </div>

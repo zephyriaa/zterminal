@@ -1,0 +1,99 @@
+/* Body scope includes Radix portals. Animate surfaces, never chart geometry. */
+body[data-terminal="true"] {
+  --zt-motion-feedback: 120ms;
+  --zt-motion-menu: 160ms;
+  --zt-motion-dialog: 180ms;
+  --zt-motion-ease: cubic-bezier(.2, 0, .2, 1);
+}
+
+body[data-terminal="true"] :is(button, [role="menuitem"], [role="option"], input, select, textarea) {
+  transition-property: background-color, border-color, color, opacity;
+  transition-duration: var(--zt-motion-feedback);
+  transition-timing-function: var(--zt-motion-ease);
+}
+
+body[data-terminal="true"] :is(
+  .zt-drawing-flyout, .zt-drawing-context, .zt-swatch-popover,
+  .zt-floating-settings-card, .zt-instrument-picker-menu, .zt-account-panel, .zt-chart-toolbar-menu,
+  [data-slot="popover-content"], [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"], [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"], [data-slot="menubar-content"],
+  [data-slot="menubar-sub-content"], [data-slot="select-content"],
+  [data-slot="tooltip-content"], [data-slot="hover-card-content"]
+) {
+  animation: zt-terminal-surface-in var(--zt-motion-menu) var(--zt-motion-ease) backwards;
+}
+
+body[data-terminal="true"] :is(
+  [data-slot="dialog-content"], [data-slot="alert-dialog-content"],
+  [data-slot="sheet-content"], .zt-terminal-dialog
+) {
+  animation: zt-terminal-surface-in var(--zt-motion-dialog) var(--zt-motion-ease) backwards;
+}
+
+body[data-terminal="true"] :is(
+  [data-slot="dialog-overlay"], [data-slot="alert-dialog-overlay"],
+  [data-slot="sheet-overlay"], .zt-terminal-dialog-overlay
+) {
+  animation: zt-terminal-fade-in var(--zt-motion-dialog) var(--zt-motion-ease) backwards;
+}
+
+/* Radix Presence observes exits; custom conditional menus close immediately. */
+body[data-terminal="true"] :is(
+  [data-slot="popover-content"], [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"], [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"], [data-slot="menubar-content"],
+  [data-slot="menubar-sub-content"], [data-slot="select-content"],
+  [data-slot="tooltip-content"], [data-slot="hover-card-content"],
+  [data-slot="dialog-content"], [data-slot="alert-dialog-content"],
+  [data-slot="sheet-content"]
+)[data-state="closed"] {
+  animation-name: zt-terminal-surface-out;
+}
+
+body[data-terminal="true"] :is(
+  [data-slot="dialog-overlay"], [data-slot="alert-dialog-overlay"], [data-slot="sheet-overlay"]
+)[data-state="closed"] {
+  animation-name: zt-terminal-fade-out;
+}
+
+/* Individual translate preserves existing centering/positioning transforms.
+   No forward fill: settled surfaces retain no extra containing block. */
+@keyframes zt-terminal-surface-in {
+  from { opacity: 0; translate: 0 4px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes zt-terminal-surface-out {
+  from { opacity: 1; translate: 0 0; }
+  to { opacity: 0; translate: 0 4px; }
+}
+@keyframes zt-terminal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes zt-terminal-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* The app preference can be on the document root or body; portals are included. */
+.zt-reduce-motion body[data-terminal="true"] *,
+.zt-reduce-motion body[data-terminal="true"] *::before,
+.zt-reduce-motion body[data-terminal="true"] *::after,
+body[data-terminal="true"].zt-reduce-motion *,
+body[data-terminal="true"].zt-reduce-motion *::before,
+body[data-terminal="true"].zt-reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-terminal="true"] *,
+  body[data-terminal="true"] *::before,
+  body[data-terminal="true"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

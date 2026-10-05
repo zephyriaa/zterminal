@@ -72,7 +72,7 @@ export function MarketSessionsPopover({ children }: MarketSessionsPopoverProps) 
                       className={cn(
                         "w-1.5 h-1.5 rounded-full",
                         session.isOpen
-                          ? "bg-pos animate-pulse"
+                          ? "bg-pos"
                           : session.status === "pre"
                           ? "bg-warn"
                           : "bg-muted-foreground/40"

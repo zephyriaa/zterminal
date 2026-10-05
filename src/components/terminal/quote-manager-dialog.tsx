@@ -135,8 +135,8 @@ export function QuoteManagerDialog({ open, onClose }: QuoteManagerDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="flex h-[85vh] w-full max-w-4xl flex-col rounded-lg border hairline bg-panel shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+    <div className="zt-terminal-dialog-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div className="zt-terminal-dialog flex h-[85vh] w-full max-w-4xl flex-col rounded-lg border hairline bg-panel shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex h-12 shrink-0 items-center justify-between border-b hairline px-4 bg-surface/40">
           <div className="flex items-center gap-2">
