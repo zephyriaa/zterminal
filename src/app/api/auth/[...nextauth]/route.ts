@@ -17,9 +17,9 @@ function unavailable() {
 
 function disabledClientResponse(method: "GET" | "POST", nextauth?: string[]) {
   const action = nextauth?.[0];
-  // Keep the local-only terminal quiet: useSession treats a null session and
-  // empty provider list as an unauthenticated state, not an application error.
-  if (method === "GET" && action === "session") return NextResponse.json(null, { headers: { "Cache-Control": "no-store" } });
+  // NextAuth v4 calls Object.keys() on the JSON response and converts an empty
+  // object to a null client session. JSON null throws during client refetches.
+  if (method === "GET" && action === "session") return NextResponse.json({}, { headers: { "Cache-Control": "no-store" } });
   if (method === "GET" && action === "providers") return NextResponse.json({}, { headers: { "Cache-Control": "no-store" } });
   if (method === "POST" && action === "_log") return new Response(null, { status: 204 });
   return unavailable();

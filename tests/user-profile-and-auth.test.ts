@@ -9,6 +9,7 @@ import { deleteWorkspace, listWorkspaces, saveWorkspace } from "../src/server/wo
 import { useWorkspace } from "../src/stores/workspace";
 import { GET as getAuthRoute } from "../src/app/api/auth/[...nextauth]/route";
 import { NextRequest } from "next/server";
+import { getSession } from "next-auth/react";
 import { GET as getResearchRoute } from "../src/app/api/research/[...path]/route";
 
 test("Google identity is exposed only when the full production boundary is configured", () => {
@@ -73,7 +74,23 @@ test("unconfigured auth endpoints return a controlled session and provider respo
   assert.deepEqual(await providers.json(), {});
   const session = await getAuthRoute(new NextRequest("http://localhost:3000/api/auth/session"), context("session"));
   assert.equal(session.status, 200);
-  assert.equal(await session.json(), null);
+  assert.deepEqual(await session.json(), {});
+});
+
+test("the installed NextAuth client reads disabled sessions without logging fetch errors", async (context) => {
+  if (googleSignInConfigured) { context.skip("Requires an unconfigured auth runtime"); return; }
+  const response = await getAuthRoute(new NextRequest("http://localhost:3000/api/auth/session"), {
+    params: Promise.resolve({ nextauth: ["session"] }),
+  });
+  const fetchMock = context.mock.method(globalThis, "fetch", async () => response.clone());
+  const errorMock = context.mock.method(console, "error", () => undefined);
+
+  // Exercise NextAuth's real parser on initial fetch and subsequent refetch.
+  assert.equal(await getSession({ broadcast: false }), null);
+  assert.equal(await getSession({ broadcast: false }), null);
+  assert.equal(fetchMock.mock.callCount(), 2);
+  assert.equal(errorMock.mock.callCount(), 0);
+  assert.match(response.headers.get("Cache-Control") ?? "", /no-store/);
 });
 
 test("Google callback accepts only a verified email and immutable provider identity", async () => {
