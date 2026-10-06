@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit and Rebuild"
+  short_description: "Reliable subsystem rebuilds with evidence"
+  default_prompt: "Use $audit-and-rebuild to investigate and rebuild this existing subsystem, preserving its architecture and verifying the complete user journey."
