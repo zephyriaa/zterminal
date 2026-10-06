@@ -1,0 +1,11 @@
+# Windows sign-in exchange contract
+
+Status: design boundary only; the native sign-in bridge is not implemented. The existing Tauri launcher continues to support local research. Google identity and the web database session remain authoritative; Supabase Auth is not an additional identity source.
+
+The Windows client should generate a cryptographically random state and PKCE verifier, retain both in memory, and open the system browser with an S256 challenge. The web authorization route must require the current verified ZTerminal web session and explicit approval of the named device. Callback destinations must come from a server allowlist of registered application links or loopback listeners; never accept an arbitrary redirect destination.
+
+After approval, create an opaque, single-use authorization code with a maximum lifetime of 60 seconds. Persist only its hash, user ID, PKCE challenge, exact callback destination, requested scope, creation/expiry times, and consumption time. Return only that code and the client's state through the callback. The native app checks state and exchanges the code plus verifier over HTTPS. Code consumption must be an atomic transaction that rejects replay, expiry, callback mismatches, and wrong verifiers.
+
+Issue a separate, revocable device session, with short-lived access credentials and rotating refresh credentials bound to that device. Store sensitive credentials in Windows Credential Manager/DPAPI; never in localStorage, logs, configuration files, or callback URLs. Do not copy the browser cookie into the webview. Device credentials must use a dedicated, scoped API authentication boundary and must not bypass the web APIs' same-origin protections. Native logout revokes its device session; account-wide revocation should cover every device and browser session.
+
+Before exposing a login button, implement and test the server exchange records/endpoints, native callback registration, secure storage, rotation/reuse detection, revocation, and origin/callback allowlists. Acceptance cases include wrong state/verifier, duplicate callback, expired code, simultaneous exchanges, interrupted browser flow, hostile deep links, device removal, and account switch. None of these native acceptance cases has been executed in this change.
