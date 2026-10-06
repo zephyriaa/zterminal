@@ -26,7 +26,7 @@ class ResearchLauncher : Form {
         code.SetBounds(24, 115, 510, 40); code.Font = new Font("Consolas", 24); code.Text = "--------";
         var note = new Label { Text = "Enter this code in ZTerminal → Research → Pair helper.\nScripts execute locally with your user permissions. This is not a secure sandbox. Run only code you trust.", Left = 24, Top = 165, Width = 510, Height = 66 };
         var open = MakeButton("Open ZTerminal", 24, 246, 155);
-        open.Click += (s,e) => Process.Start(new ProcessStartInfo("https://zterminal-web.zephyria-inc.workers.dev/terminal") { UseShellExecute = true });
+        open.Click += (s,e) => Process.Start(new ProcessStartInfo("https://zterminal.dpdns.org/terminal") { UseShellExecute = true });
         restart = MakeButton("New pairing code", 189, 246, 165);
         restart.Click += (s,e) => { StopHelper(); StartHelper(); };
         install = MakeButton("Install for my user", 364, 246, 172);

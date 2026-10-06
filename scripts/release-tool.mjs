@@ -85,7 +85,7 @@ Commands:
       size_bytes: buf.length,
       published_at: new Date().toISOString(),
       minimum_supported_version: "0.1.0",
-      release_notes_url: "https://zterminal-web.zephyria-inc.workers.dev/download",
+      release_notes_url: "https://zterminal.dpdns.org/download",
       publisher: "ZTerminal Quantitative Systems",
       signature_verified: true,
     };

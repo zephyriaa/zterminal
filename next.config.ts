@@ -18,6 +18,14 @@ const nextConfig: NextConfig = {
   },
   // `npm run build` is a release gate: type errors must fail the build.
   reactStrictMode: true,
+  async redirects() {
+    return [{
+      source: "/:path*",
+      has: [{ type: "host", value: "zterminal-web.zephyria-inc.workers.dev" }],
+      destination: "https://zterminal.dpdns.org/:path*",
+      permanent: true,
+    }];
+  },
   async headers() {
     return [
       {

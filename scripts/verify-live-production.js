@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const assert = require('node:assert/strict');
 
-const PROD_URL = process.env.TERMINAL_URL || 'https://zterminal-web.zephyria-inc.workers.dev';
+const PROD_URL = process.env.TERMINAL_URL || 'https://zterminal.dpdns.org';
 const { verifyTerminal } = require('./test-terminal-browser.cjs');
 const OUT_DIR = path.resolve(__dirname, '../calibrated-captures/live-production');
 if (!fs.existsSync(OUT_DIR)) {

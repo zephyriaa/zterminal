@@ -12,11 +12,11 @@ if (!fs.existsSync(OUT_DIR)) {
 }
 
 const TARGETS = [
-  { name: 'live_home_1440', url: 'https://zterminal-web.zephyria-inc.workers.dev/', width: 1440, height: 900, mobile: false },
-  { name: 'live_home_390', url: 'https://zterminal-web.zephyria-inc.workers.dev/', width: 390, height: 844, mobile: true },
-  { name: 'live_research_1440', url: 'https://zterminal-web.zephyria-inc.workers.dev/research', width: 1440, height: 900, mobile: false },
-  { name: 'live_download_1440', url: 'https://zterminal-web.zephyria-inc.workers.dev/download', width: 1440, height: 900, mobile: false },
-  { name: 'live_docs_1440', url: 'https://zterminal-web.zephyria-inc.workers.dev/docs', width: 1440, height: 900, mobile: false },
+  { name: 'live_home_1440', url: 'https://zterminal.dpdns.org/', width: 1440, height: 900, mobile: false },
+  { name: 'live_home_390', url: 'https://zterminal.dpdns.org/', width: 390, height: 844, mobile: true },
+  { name: 'live_research_1440', url: 'https://zterminal.dpdns.org/research', width: 1440, height: 900, mobile: false },
+  { name: 'live_download_1440', url: 'https://zterminal.dpdns.org/download', width: 1440, height: 900, mobile: false },
+  { name: 'live_docs_1440', url: 'https://zterminal.dpdns.org/docs', width: 1440, height: 900, mobile: false },
 ];
 
 async function main() {

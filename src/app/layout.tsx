@@ -24,6 +24,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://zterminal.dpdns.org"),
   title: "ZTerminal — See Further. Guess Less.",
   description:
     "See Further. Guess Less. A market research workspace for charting, Python strategy research, backtesting, and evidence-led decisions.",

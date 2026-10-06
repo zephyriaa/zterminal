@@ -15,7 +15,7 @@ from archive import Archive, encode
 from controller import Controller
 
 PORT = 47321
-ORIGINS = frozenset(["https://zterminal-web.zephyria-inc.workers.dev", "http://localhost:3000", "http://127.0.0.1:3000", "http://127.0.0.1:3100"])
+ORIGINS = frozenset(["https://zterminal.dpdns.org", "https://zterminal-web.zephyria-inc.workers.dev", "http://localhost:3000", "http://127.0.0.1:3000", "http://127.0.0.1:3100"])
 
 
 class Service:

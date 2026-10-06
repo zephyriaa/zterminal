@@ -7,7 +7,7 @@
     "beforeDevCommand": null,
     "beforeBuildCommand": null,
     "devUrl": "http://localhost:3000/desktop/launch",
-    "frontendDist": "https://zterminal-web.zephyria-inc.workers.dev/desktop/launch"
+    "frontendDist": "https://zterminal.dpdns.org/desktop/launch"
   },
   "app": {
     "windows": [

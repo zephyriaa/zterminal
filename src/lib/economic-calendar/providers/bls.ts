@@ -72,7 +72,7 @@ export class BlsCalendarProvider implements EconomicCalendarProvider {
   async fetchEvents(request: CalendarRequest): Promise<EconomicCalendarProviderResult> {
     try {
       const response = await fetch(FEED_URL, {
-        headers: { Accept: "text/calendar", "User-Agent": "Mozilla/5.0 (compatible; ZTerminalCalendar/1.0; +https://zterminal-web.zephyria-inc.workers.dev)" },
+        headers: { Accept: "text/calendar", "User-Agent": "Mozilla/5.0 (compatible; ZTerminalCalendar/1.0; +https://zterminal.dpdns.org)" },
         signal: AbortSignal.timeout(8000),
       });
       if (!response.ok) return { providerId: this.id, status: "failed", events: [], message: `BLS calendar returned HTTP ${response.status}.` };

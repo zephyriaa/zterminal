@@ -43,7 +43,7 @@ function validManifest(overrides: Record<string, unknown> = {}) {
     size_bytes: 123456,
     published_at: "2026-08-23T00:00:00.000Z",
     minimum_supported_version: "1.0.0",
-    release_notes_url: "https://zterminal-web.zephyria-inc.workers.dev/docs/windows/releases/1.0.0",
+    release_notes_url: "https://zterminal.dpdns.org/docs/windows/releases/1.0.0",
     publisher: "ZTerminal",
     signature_verified: true,
     ...overrides,

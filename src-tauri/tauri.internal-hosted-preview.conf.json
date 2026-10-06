@@ -6,8 +6,8 @@
   "build": {
     "beforeBuildCommand": null,
     "beforeDevCommand": null,
-    "devUrl": "https://zterminal-web.zephyria-inc.workers.dev/terminal",
-    "frontendDist": "https://zterminal-web.zephyria-inc.workers.dev/terminal"
+    "devUrl": "https://zterminal.dpdns.org/terminal",
+    "frontendDist": "https://zterminal.dpdns.org/terminal"
   },
   "app": {
     "windows": [
