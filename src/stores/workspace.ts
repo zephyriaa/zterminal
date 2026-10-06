@@ -4,6 +4,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
 import type { DataStatus, Environment, ProviderId } from "@/lib/market/types";
+import { useChartDocuments } from "@/stores/chart-documents";
+import { workspaceChartDocuments } from "@/lib/chart/workspace-snapshot";
+import type { ChartDocument } from "@/lib/chart/contracts";
 
 export type ChartTimezone = "America/New_York" | "UTC" | "Europe/London" | "Asia/Tokyo" | "Asia/Dubai" | "local";
 
@@ -29,6 +32,7 @@ export interface SavedWorkspace {
   timeframe: string;
   timezone: ChartTimezone;
   createdAt: number;
+  chartDocuments?: ChartDocument[];
 }
 
 interface WorkspaceState {
@@ -65,6 +69,7 @@ interface WorkspaceState {
   cloudWorkspaces: SavedWorkspace[];
   cloudAuthenticated: boolean;
   setCloudAuthenticated: (authenticated: boolean) => void;
+  suspendCloudAuthentication: () => void;
   saveWorkspace: (name: string) => void;
   loadWorkspace: (id: string) => void;
   mergeCloudWorkspaces: (workspaces: SavedWorkspace[]) => void;
@@ -136,10 +141,11 @@ export const useWorkspace = create<WorkspaceState>()(
       workspaces: [],
       cloudWorkspaces: [],
       cloudAuthenticated: false,
+      suspendCloudAuthentication: () => set({ cloudAuthenticated: false }),
       setCloudAuthenticated: (authenticated) => set((state) => ({
         cloudAuthenticated: authenticated,
         cloudWorkspaces: authenticated ? state.cloudWorkspaces : [],
-        activeWorkspaceId: !authenticated && state.cloudWorkspaces.some((workspace) => workspace.id === state.activeWorkspaceId)
+        activeWorkspaceId: !authenticated && state.activeWorkspaceId !== "local-default" && !state.workspaces.some((workspace) => workspace.id === state.activeWorkspaceId)
           ? "local-default" : state.activeWorkspaceId,
       })),
       saveWorkspace: (name) => {
@@ -153,6 +159,8 @@ export const useWorkspace = create<WorkspaceState>()(
           timezone: s.timezone,
           createdAt: Date.now(),
         };
+        ws.chartDocuments = workspaceChartDocuments(Object.values(useChartDocuments.getState().documents).filter(document => document.workspaceId === s.activeWorkspaceId), ws.id);
+        useChartDocuments.getState().restoreDocuments(ws.id, ws.chartDocuments);
         set({ workspaces: [...s.workspaces, ws] });
         if (!s.cloudAuthenticated) return;
         // Attempt cloud sync; update status store so the UI reflects success/failure.
@@ -175,6 +183,7 @@ export const useWorkspace = create<WorkspaceState>()(
       loadWorkspace: (id) => {
         const ws = [...get().workspaces, ...get().cloudWorkspaces].find((w) => w.id === id);
         if (!ws) return;
+        useChartDocuments.getState().restoreDocuments(ws.id, ws.chartDocuments ?? []);
         set({
           activeWorkspaceId: ws.id,
           activeView: ws.view,

@@ -51,7 +51,8 @@ export type DrawingType =
   | "trend-line" | "ray" | "extended-line" | "horizontal-line"
   | "horizontal-ray" | "vertical-line" | "rectangle" | "arrow" | "text"
   | "price-label" | "ruler" | "price-range" | "date-range"
-  | "long-position" | "short-position" | "fibonacci-retracement";
+  | "long-position" | "short-position" | "fibonacci-retracement"
+  | "cross-line" | "parallel-channel" | "fibonacci-extension" | "ellipse" | "polyline" | "callout";
 
 export interface DrawingAnchor { time: number; price: number; }
 export interface DrawingStyle {
@@ -71,6 +72,10 @@ export interface DrawingStyle {
   stopPrice?: number;
   riskReward?: number;
   compactLabels?: boolean;
+  levels?: number[];
+  showLabels?: boolean;
+  textWeight?: "normal" | "bold";
+  textAlign?: "left" | "center" | "right";
 }
 export interface DrawingVisibility { timeframes: Timeframe[] | "all"; }
 export interface DrawingObject {
@@ -93,6 +98,7 @@ export const DRAWING_TYPES: readonly DrawingType[] = [
   "trend-line", "ray", "extended-line", "horizontal-line", "horizontal-ray", "vertical-line",
   "rectangle", "arrow", "text", "price-label", "ruler", "price-range", "date-range",
   "long-position", "short-position", "fibonacci-retracement",
+  "cross-line", "parallel-channel", "fibonacci-extension", "ellipse", "polyline", "callout",
 ];
 
 const TIMEFRAMES: readonly Timeframe[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d"];
@@ -102,11 +108,12 @@ export function sameInstrument(left: InstrumentKey, right: InstrumentKey) {
 }
 
 export function drawingAnchorCount(type: DrawingType) {
-  return ["horizontal-line", "vertical-line", "text", "price-label"].includes(type) ? 1 : 2;
+  if (["parallel-channel", "fibonacci-extension"].includes(type)) return 3;
+  return ["horizontal-line", "vertical-line", "cross-line", "text", "price-label", "callout"].includes(type) ? 1 : 2;
 }
 
 export function defaultDrawingStyle(type: DrawingType): DrawingStyle {
-  const filled = ["rectangle", "long-position", "short-position"].includes(type);
+  const filled = ["rectangle", "ellipse", "parallel-channel", "long-position", "short-position"].includes(type);
   if (type === "long-position" || type === "short-position") {
     return {
       color: "#38bdf8",
@@ -126,16 +133,18 @@ export function defaultDrawingStyle(type: DrawingType): DrawingStyle {
     lineStyle: "solid",
     opacity: 0.9,
     ...(filled ? { fill: "#34d399" } : {}),
-    ...(["text", "price-label"].includes(type) ? { text: type === "text" ? "Text" : "", textSize: 12 } : {}),
+    ...(["text", "price-label", "callout"].includes(type) ? { text: type === "price-label" ? "" : "Text", textSize: 12 } : {}),
+    ...(["fibonacci-retracement", "fibonacci-extension"].includes(type) ? { levels: type === "fibonacci-extension" ? [0, .618, 1, 1.618, 2.618] : [0, .236, .382, .5, .618, .786, 1], showLabels: true } : {}),
   };
 }
 
 export function sanitizeDrawing(value: unknown, fallback: { instrument: InstrumentKey; chartId: string }): DrawingObject | null {
   if (!value || typeof value !== "object") return null;
   const input = value as Partial<DrawingObject>;
+  if (input.schemaVersion != null && input.schemaVersion !== DRAWING_SCHEMA_VERSION) return null;
   if (typeof input.id !== "string" || !input.id || input.id.length > 100 || !DRAWING_TYPES.includes(input.type as DrawingType) || input.chartId !== fallback.chartId || !input.instrument || !sameInstrument(input.instrument, fallback.instrument)) return null;
   const type = input.type as DrawingType;
-  if (!Array.isArray(input.anchors) || input.anchors.length !== drawingAnchorCount(type)) return null;
+  if (!Array.isArray(input.anchors) || (type === "polyline" ? input.anchors.length < 2 || input.anchors.length > 500 : input.anchors.length !== drawingAnchorCount(type))) return null;
   const anchors = input.anchors.map(anchor => ({ time: finite(anchor?.time, NaN, 0, Number.MAX_SAFE_INTEGER), price: finite(anchor?.price, NaN, -Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER) }));
   if (anchors.some(anchor => !Number.isFinite(anchor.time) || !Number.isFinite(anchor.price))) return null;
   const sourceStyle: Partial<DrawingStyle> = input.style && typeof input.style === "object" ? input.style : {};
@@ -149,7 +158,8 @@ export function sanitizeDrawing(value: unknown, fallback: { instrument: Instrume
     opacity: finite(sourceStyle.opacity, defaults.opacity, 0.05, 1),
     ...(sourceStyle.fill ? { fill: color(sourceStyle.fill, defaults.fill ?? defaults.color) } : defaults.fill ? { fill: defaults.fill } : {}),
     ...(typeof sourceStyle.text === "string" ? { text: sourceStyle.text.slice(0, 500) } : defaults.text ? { text: defaults.text } : {}),
-    ...(["text", "price-label"].includes(type) ? { textSize: Math.round(finite(sourceStyle.textSize, defaults.textSize ?? 12, 9, 32)) } : {}),
+    ...(["text", "price-label", "callout"].includes(type) ? { textSize: Math.round(finite(sourceStyle.textSize, defaults.textSize ?? 12, 9, 32)), textWeight: sourceStyle.textWeight === "bold" ? "bold" : "normal", textAlign: ["left", "center", "right"].includes(String(sourceStyle.textAlign)) ? sourceStyle.textAlign : "left" } : {}),
+    ...(defaults.levels ? { levels: Array.isArray(sourceStyle.levels) ? [...new Set(sourceStyle.levels.filter(level => typeof level === "number" && Number.isFinite(level) && Math.abs(level) <= 100))].slice(0, 32) : defaults.levels, showLabels: sourceStyle.showLabels !== false } : {}),
     extendStart: sourceStyle.extendStart === true,
     extendEnd: sourceStyle.extendEnd === true,
     ...(sourceStyle.targetColor ? { targetColor: color(sourceStyle.targetColor, defaults.targetColor ?? "#22c55e") } : defaults.targetColor ? { targetColor: defaults.targetColor } : {}),

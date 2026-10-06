@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowDownRight, Baseline, CaseSensitive, ChevronLeft, ChevronRight,
   Crosshair, Eraser, Gauge, GitBranch, MousePointer2, MoveHorizontal, MoveVertical,
   PenLine, RectangleHorizontal, Ruler, Tag, Trash2, TrendingDown, TrendingUp, WandSparkles,
+  Circle, MessageSquare, Route, Repeat2, Undo2, Redo2, List,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -46,6 +48,8 @@ const TOOL_GROUPS: ToolGroup[] = [
       { tool: "horizontal-line", label: "Horizontal Line", icon: MoveHorizontal },
       { tool: "horizontal-ray", label: "Horizontal Ray", icon: ArrowDownRight },
       { tool: "vertical-line", label: "Vertical Line", icon: MoveVertical },
+      { tool: "cross-line", label: "Cross Line", icon: Crosshair },
+      { tool: "parallel-channel", label: "Parallel Channel", icon: MoveHorizontal },
     ],
   },
   {
@@ -54,6 +58,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     defaultTool: "fibonacci-retracement",
     tools: [
       { tool: "fibonacci-retracement", label: "Fibonacci Retracement", icon: GitBranch },
+      { tool: "fibonacci-extension", label: "Fibonacci Extension", icon: GitBranch },
     ],
   },
   {
@@ -62,6 +67,8 @@ const TOOL_GROUPS: ToolGroup[] = [
     defaultTool: "rectangle",
     tools: [
       { tool: "rectangle", label: "Rectangle", icon: RectangleHorizontal },
+      { tool: "ellipse", label: "Ellipse", icon: Circle },
+      { tool: "polyline", label: "Path / Polyline", icon: Route },
       { tool: "arrow", label: "Arrow Marker", icon: ArrowDownRight },
     ],
   },
@@ -72,6 +79,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       { tool: "text", label: "Text", icon: CaseSensitive },
       { tool: "price-label", label: "Price Label", icon: Tag },
+      { tool: "callout", label: "Callout / Note", icon: MessageSquare },
     ],
   },
   {
@@ -94,15 +102,20 @@ export function DrawingToolbar({
   onTool,
   onMagnet,
   onClear,
+  persistent, onPersistent, onUndo, onRedo, canUndo, canRedo, onObjects,
 }: {
   tool: DrawingTool;
   magnet: MagnetMode;
   onTool: (tool: DrawingTool) => void;
   onMagnet: (mode: MagnetMode) => void;
   onClear?: () => void;
+  persistent?: boolean; onPersistent?: () => void;
+  onUndo?: () => void; onRedo?: () => void; canUndo?: boolean; canRedo?: boolean;
+  onObjects?: () => void;
 }) {
   const [collapsed, setCollapsed] = React.useState(false);
   const [activeGroupFlyout, setActiveGroupFlyout] = React.useState<string | null>(null);
+  const [flyoutPosition, setFlyoutPosition] = React.useState({ left: 0, top: 0 });
   const [activeToolPerGroup, setActiveToolPerGroup] = React.useState<Record<string, DrawingTool>>({
     cursor: "crosshair",
     lines: "trend-line",
@@ -113,14 +126,21 @@ export function DrawingToolbar({
   });
 
   const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const flyoutRef = React.useRef<HTMLDivElement>(null);
   const groupButtonsRef = React.useRef<Record<string, HTMLButtonElement | null>>({});
+  const openFlyout = (id: string) => {
+    const bounds = groupButtonsRef.current[id]?.getBoundingClientRect();
+    const count = TOOL_GROUPS.find(group => group.id === id)?.tools.length ?? 0;
+    setFlyoutPosition({ left: Math.max(8, Math.min((bounds?.right ?? 0) + 7, window.innerWidth - 220)), top: Math.max(8, Math.min(bounds?.top ?? 0, window.innerHeight - (count * 32 + 40))) });
+    setActiveGroupFlyout(activeGroupFlyout === id ? null : id);
+  };
 
   React.useEffect(() => {
     if (!activeGroupFlyout || TOOL_GROUPS.find(group => group.id === activeGroupFlyout)?.tools.length === 1) return;
     const dismiss = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       // A dialog opened over this menu owns Escape while its controls have focus.
-      if (event.target !== document.body && event.target instanceof Node && !toolbarRef.current?.contains(event.target)) return;
+      if (event.target !== document.body && event.target instanceof Node && !toolbarRef.current?.contains(event.target) && !flyoutRef.current?.contains(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
       setActiveGroupFlyout(null);
@@ -133,7 +153,7 @@ export function DrawingToolbar({
   // Click outside listener for flyout
   React.useEffect(() => {
     const onPointerDownOutside = (e: MouseEvent) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node) && !flyoutRef.current?.contains(e.target as Node)) {
         setActiveGroupFlyout(null);
       }
     };
@@ -210,7 +230,7 @@ export function DrawingToolbar({
                   }}
                   onContextMenu={e => {
                     e.preventDefault();
-                    setActiveGroupFlyout(isFlyoutOpen ? null : group.id);
+                    openFlyout(group.id);
                   }}
                 >
                   <CurrentIcon className={currentToolObj.accent} />
@@ -219,7 +239,7 @@ export function DrawingToolbar({
                       className="zt-group-caret"
                       onClick={e => {
                         e.stopPropagation();
-                        setActiveGroupFlyout(isFlyoutOpen ? null : group.id);
+                        openFlyout(group.id);
                       }}
                       title="More tools"
                     >
@@ -233,7 +253,7 @@ export function DrawingToolbar({
 
             {/* Flyout Submenu */}
             {isFlyoutOpen && group.tools.length > 1 && (
-              <div className="zt-drawing-flyout" role="menu" aria-label={group.label}>
+              createPortal(<div ref={flyoutRef} className="zt-drawing-flyout" role="menu" aria-label={group.label} style={{ position: "fixed", zIndex: 100, ...flyoutPosition, maxHeight: "calc(100vh - 16px)", overflowY: "auto" }}>
                 <div className="zt-drawing-flyout-header">{group.label}</div>
                 {group.tools.map(item => {
                   const ItemIcon = item.icon;
@@ -255,13 +275,17 @@ export function DrawingToolbar({
                     </button>
                   );
                 })}
-              </div>
+              </div>, document.body)
             )}
           </div>
         );
       })}
 
       <div className="zt-toolbar-separator" />
+      {onPersistent && <button type="button" className={cn("zt-tool-btn", persistent && "is-active")} aria-label="Keep drawing tool active" aria-pressed={persistent} onClick={onPersistent} title="Keep tool active"><Repeat2 /></button>}
+      {onUndo && <button type="button" className="zt-tool-btn" aria-label="Undo drawing" disabled={!canUndo} onClick={onUndo} title="Undo (Ctrl/Cmd+Z)"><Undo2 /></button>}
+      {onRedo && <button type="button" className="zt-tool-btn" aria-label="Redo drawing" disabled={!canRedo} onClick={onRedo} title="Redo (Ctrl/Cmd+Shift+Z)"><Redo2 /></button>}
+      {onObjects && <button type="button" className="zt-tool-btn" aria-label="Drawing objects" onClick={onObjects} title="Drawing objects · show hidden drawings"><List /></button>}
 
       {/* Magnet Mode */}
       <Tooltip>

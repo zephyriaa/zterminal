@@ -7,9 +7,12 @@ import {
   type IChartApi,
   type ISeriesApi,
   type Time,
+  type Logical,
+  type SeriesType,
 } from "lightweight-charts";
 import type { ChartSettingsV2 } from "./contracts";
 import type { DrawingAnchor } from "./contracts";
+import { logicalToTime, timeToLogical, type DrawingCoordinates } from "./drawings/coordinates";
 
 function scaleMode(settings: ChartSettingsV2) {
   if (settings.scaleMode === "logarithmic") return PriceScaleMode.Logarithmic;
@@ -74,4 +77,20 @@ export function drawingAnchorToCoordinate(chart: IChartApi, series: ISeriesApi<a
   const x = chart.timeScale().timeToCoordinate((anchor.time / 1000) as Time);
   const y = series.priceToCoordinate(anchor.price);
   return x == null || y == null ? null : { x, y };
+}
+
+export function createDrawingCoordinates(chart: IChartApi, series: ISeriesApi<SeriesType>, times: readonly number[], interval: number): DrawingCoordinates {
+  const scale = chart.timeScale();
+  return {
+    project(anchor) {
+      const logical = timeToLogical(times, anchor.time, interval);
+      const x = logical == null ? null : scale.logicalToCoordinate(logical as Logical), y = series.priceToCoordinate(anchor.price);
+      return x == null || y == null || !Number.isFinite(x) || !Number.isFinite(y) ? null : { x, y };
+    },
+    unproject(point) {
+      const logical = scale.coordinateToLogical(point.x), price = series.coordinateToPrice(point.y);
+      const time = logical == null ? null : logicalToTime(times, logical, interval);
+      return time == null || time < 0 || price == null || !Number.isFinite(price) ? null : { time, price };
+    },
+  };
 }

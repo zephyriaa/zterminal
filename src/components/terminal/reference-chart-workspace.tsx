@@ -17,7 +17,7 @@ import { useMarketStream } from "@/hooks/use-market-stream";
 import { publicMarketData, type StreamProvider } from "@/lib/market/public-stream";
 import type { Bar, Timeframe } from "@/lib/market/types";
 import { ChartToolbar } from "./chart-toolbar";
-import { chartDocumentKey, createChartDocument, PRIMARY_CHART_ID, type InstrumentKey } from "@/lib/chart/contracts";
+import { chartDocumentKey, createChartDocument, PRIMARY_CHART_ID, type InstrumentKey, type DrawingObject } from "@/lib/chart/contracts";
 import { useChartDocuments } from "@/stores/chart-documents";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import { MultiChartGrid } from "./multi-chart-grid";
@@ -61,6 +61,8 @@ export function ReferenceChartWorkspace() {
   const [drawingTool, setDrawingTool] = useState<DrawingTool>("crosshair");
   const [magnetMode, setMagnetMode] = useState<MagnetMode>("off");
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(null);
+  const [persistentDrawing, setPersistentDrawing] = useState(false);
+  const drawingClipboard = useRef<DrawingObject | null>(null);
   const [studiesHydrated, setStudiesHydrated] = useState(false);
   const indicatorDocumentRef = useRef<string | null>(null);
   const indicatorLoadingRef = useRef(false);
@@ -80,6 +82,8 @@ export function ReferenceChartWorkspace() {
   const chartType = chartDocument.chartType;
   const chartSettings = chartDocument.settings;
   const selectedDrawing = chartDocument.drawings.find(drawing => drawing.id === selectedDrawingId) ?? null;
+  const drawingHistory = useChartDocuments(state => state.drawingHistory[chartDocumentId]);
+  useEffect(() => { setSelectedDrawingId(null); setDrawingTool("crosshair"); }, [chartDocumentId]);
   const volumePane = chartDocument.panes.find(pane => pane.id === "volume") ?? { id: "volume", kind: "volume" as const, visible: true, height: 0.22, order: 1 };
   const indicators: ChartIndicators = useMemo(() => ({
     vwap: false, ema20: false, ema50: false,
@@ -92,13 +96,18 @@ export function ReferenceChartWorkspace() {
 
   useEffect(() => {
     void Promise.resolve(useStudies.persist.rehydrate()).then(() => setStudiesHydrated(true));
-    void Promise.resolve(useChartDocuments.persist.rehydrate()).then(() => { useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings }); });
+    void Promise.resolve(useChartDocuments.persist.rehydrate()).then(() => { useChartDocuments.getState().ensure({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings }); });
     void hydrateTerminalAppearance();
+    const storage = (event: StorageEvent) => { if (event.key === "zterminal.chart-documents") void useChartDocuments.persist.rehydrate(); };
+    window.addEventListener("storage", storage);
+    return () => window.removeEventListener("storage", storage);
   }, []);
 
   useEffect(() => {
-    useChartDocuments.getState().ensure({ instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings });
-  }, [chartDocumentId]);
+    const store = useChartDocuments.getState();
+    store.ensure({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings });
+    if (useChartDocuments.getState().documents[chartDocumentId]?.timeframe !== chartTimeframe) store.setTimeframe(chartDocumentId, chartTimeframe as Timeframe);
+  }, [chartDocumentId, chartTimeframe]);
 
   useEffect(() => {
     if (!studiesHydrated) return;
@@ -117,7 +126,19 @@ export function ReferenceChartWorkspace() {
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
-      const editable = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || (event.target instanceof HTMLElement && event.target.isContentEditable);
+      const owner = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-drawing-chart]") : null;
+      if (owner && owner.dataset.drawingChart !== "primary") return;
+      const editable = event.target instanceof Element && Boolean(event.target.closest("input,textarea,select,[contenteditable=true],.monaco-editor,[role=dialog]"));
+      if (editable || event.defaultPrevented) return;
+      const modifier = event.ctrlKey || event.metaKey;
+      const store = useChartDocuments.getState();
+      if (modifier && event.key.toLowerCase() === "z") { event.preventDefault(); if (event.shiftKey) store.redoDrawings(chartDocumentId); else store.undoDrawings(chartDocumentId); return; }
+      if (modifier && event.key.toLowerCase() === "y") { event.preventDefault(); store.redoDrawings(chartDocumentId); return; }
+      if (modifier && event.key.toLowerCase() === "c" && selectedDrawingId) {
+        const drawing = store.documents[chartDocumentId]?.drawings.find(d => d.id === selectedDrawingId);
+        if (drawing) { event.preventDefault(); drawingClipboard.current = structuredClone(drawing); } return;
+      }
+      if (modifier && event.key.toLowerCase() === "v" && drawingClipboard.current) { event.preventDefault(); setSelectedDrawingId(store.pasteDrawing(chartDocumentId, drawingClipboard.current)); return; }
       if (!editable && event.key === "Escape") { setDrawingTool("cursor"); setSelectedDrawingId(null); return; }
       if (!editable && (event.key === "Delete" || event.key === "Backspace") && selectedDrawingId) {
         const drawing = useChartDocuments.getState().documents[chartDocumentId]?.drawings.find(item => item.id === selectedDrawingId);
@@ -190,6 +211,12 @@ export function ReferenceChartWorkspace() {
             drawings={chartDocument.drawings}
             selectedDrawingId={selectedDrawingId}
             drawingTool={drawingTool}
+            persistentDrawing={persistentDrawing}
+            onPersistentDrawing={() => setPersistentDrawing(value => !value)}
+            onUndoDrawings={() => useChartDocuments.getState().undoDrawings(chartDocumentId)}
+            onRedoDrawings={() => useChartDocuments.getState().redoDrawings(chartDocumentId)}
+            canUndoDrawings={Boolean(drawingHistory?.past.length)}
+            canRedoDrawings={Boolean(drawingHistory?.future.length)}
             magnetMode={magnetMode}
             onDrawingTool={setDrawingTool}
             onMagnetMode={setMagnetMode}
@@ -199,7 +226,7 @@ export function ReferenceChartWorkspace() {
             onDeleteDrawing={id => { useChartDocuments.getState().deleteDrawing(chartDocumentId, id); if (selectedDrawingId === id) setSelectedDrawingId(null); }}
             onDuplicateDrawing={id => { const duplicate = useChartDocuments.getState().duplicateDrawing(chartDocumentId, id); if (duplicate) setSelectedDrawingId(duplicate); }}
             onClearDrawings={chartDocument.drawings.length > 0 ? () => {
-              chartDocument.drawings.forEach(d => useChartDocuments.getState().deleteDrawing(chartDocumentId, d.id));
+              useChartDocuments.getState().clearDrawings(chartDocumentId);
               setSelectedDrawingId(null);
             } : undefined}
             selectedDrawing={selectedDrawing}

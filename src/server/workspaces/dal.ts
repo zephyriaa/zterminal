@@ -1,22 +1,14 @@
 import { verifiedServerSession } from "@/server/auth-session";
-import { z } from "zod";
 import { db } from "@/lib/db";
+import { workspaceChartDocuments } from "@/lib/chart/workspace-snapshot";
+import { type WorkspacePayload } from "@/lib/workspace-payload";
+export { workspacePayloadSchema } from "@/lib/workspace-payload";
 
 /**
  * Server-only workspace data access. Route handlers must use this boundary
  * rather than exposing Prisma or ownership decisions to client modules.
  */
-export const workspacePayloadSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().trim().min(1).max(80),
-  view: z.enum(["markets", "calendar", "alerts", "chart", "strategy", "backtester", "research", "portfolio", "risk", "journal", "connections", "settings"]),
-  symbol: z.string().trim().regex(/^[A-Z0-9]{3,24}$/),
-  timeframe: z.enum(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]),
-  timezone: z.enum(["America/New_York", "UTC", "Europe/London", "Asia/Dubai", "Asia/Tokyo", "local"]),
-  createdAt: z.number().int().positive(),
-});
-
-export type WorkspacePayload = z.infer<typeof workspacePayloadSchema>;
+export type { WorkspacePayload } from "@/lib/workspace-payload";
 
 export class WorkspaceAccessError extends Error {
   constructor(public readonly code: "WORKSPACE_FORBIDDEN" | "NOT_FOUND", message: string) {
@@ -32,7 +24,7 @@ export async function authenticatedWorkspaceOwner() {
 }
 
 function serializeSnapshot(payload: WorkspacePayload) {
-  return JSON.stringify({ version: 1, view: payload.view, symbol: payload.symbol, timeframe: payload.timeframe, timezone: payload.timezone, createdAt: payload.createdAt });
+  return JSON.stringify({ version: 2, view: payload.view, symbol: payload.symbol, timeframe: payload.timeframe, timezone: payload.timezone, createdAt: payload.createdAt, chartDocuments: workspaceChartDocuments(payload.chartDocuments, payload.id) });
 }
 
 export async function listWorkspaces(ownerId: string) {
@@ -52,8 +44,8 @@ export async function saveWorkspace(ownerId: string, payload: WorkspacePayload) 
       : await tx.workspace.create({ data: { id: payload.id, ownerId, name: payload.name } });
     const cloudState = await tx.cloudWorkspaceState.upsert({
       where: { workspaceId: workspace.id },
-      create: { workspaceId: workspace.id, schemaVersion: 1, payload: serializeSnapshot(payload) },
-      update: { schemaVersion: 1, payload: serializeSnapshot(payload) },
+      create: { workspaceId: workspace.id, schemaVersion: 2, payload: serializeSnapshot(payload) },
+      update: { schemaVersion: 2, payload: serializeSnapshot(payload) },
       select: { schemaVersion: true, updatedAt: true },
     });
     return { workspace: { id: workspace.id, name: workspace.name, updatedAt: workspace.updatedAt, cloudState }, created: !existing };

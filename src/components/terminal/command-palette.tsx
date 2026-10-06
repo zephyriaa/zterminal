@@ -45,6 +45,9 @@ export function CommandPalette() {
     symbol,
     timeframe,
     saveWorkspace,
+    loadWorkspace,
+    workspaces,
+    cloudWorkspaces,
     toggleSidebar,
   } = useWorkspace();
   const catalogue = useContractCatalogue();
@@ -114,6 +117,13 @@ export function CommandPalette() {
           })}
         </CommandGroup>
         <CommandSeparator />
+        {(workspaces.length > 0 || cloudWorkspaces.length > 0) && <CommandGroup heading="Saved workspaces">
+          {Array.from(new Map([...cloudWorkspaces, ...workspaces].map(workspace => [workspace.id, workspace])).values()).map(workspace => (
+            <CommandItem key={workspace.id} value={`open workspace ${workspace.name}`} onSelect={() => {
+              loadWorkspace(workspace.id); dock.focusPanel("chart"); setCommandOpen(false);
+            }}><Save className="mr-2 h-3.5 w-3.5" /><span>Open workspace: {workspace.name}</span></CommandItem>
+          ))}
+        </CommandGroup>}
         <CommandGroup heading="Actions">
           <CommandItem
             value="save workspace layout"

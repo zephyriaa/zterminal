@@ -98,7 +98,7 @@ export function DrawingInspector({
   onClose: () => void;
 }) {
   const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
-  const [expandedSettings, setExpandedSettings] = React.useState(false);
+  const [expandedSettings, setExpandedSettings] = React.useState(drawing.type === "text" || drawing.type === "callout");
   const [activeTab, setActiveTab] = React.useState<"style" | "inputs">("style");
   const [activePopover, setActivePopover] = React.useState<"target" | "stop" | "line" | "fill" | null>(null);
 
@@ -610,6 +610,14 @@ export function DrawingInspector({
                         />
                       </label>
                       <label>
+                        Weight
+                        <select value={style.textWeight ?? "normal"} onChange={e => updateStyle({ textWeight: e.target.value as "normal" | "bold" })}><option value="normal">Normal</option><option value="bold">Bold</option></select>
+                      </label>
+                      <label>
+                        Alignment
+                        <select value={style.textAlign ?? "left"} onChange={e => updateStyle({ textAlign: e.target.value as "left" | "center" | "right" })}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
+                      </label>
+                      <label>
                         Font Size
                         <select
                           value={style.textSize ?? 12}
@@ -620,7 +628,16 @@ export function DrawingInspector({
                       </label>
                     </>
                   )}
-                  {["trend-line", "ray", "extended-line", "horizontal-ray"].includes(drawing.type) && (
+                  {style.levels && <>
+                    <label style={{ gridColumn: "span 2" }}>Levels (ratios, comma separated)
+                      <input key={style.levels.join(",")} defaultValue={style.levels.join(", ")} onBlur={e => {
+                        const levels = e.target.value.split(",").map(value => Number(value.trim())).filter(Number.isFinite);
+                        if (levels.length && levels.length <= 32) updateStyle({ levels });
+                      }} />
+                    </label>
+                    <label className="zt-settings-checkbox"><input type="checkbox" checked={style.showLabels !== false} onChange={e => updateStyle({ showLabels: e.target.checked })} /><span>Level labels</span></label>
+                  </>}
+                  {["trend-line", "ray", "extended-line", "horizontal-ray", "parallel-channel", "fibonacci-retracement", "fibonacci-extension"].includes(drawing.type) && (
                     <>
                       <label className="zt-settings-checkbox">
                         <input

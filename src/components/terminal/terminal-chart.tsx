@@ -13,7 +13,9 @@ import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpening
 import type { ChartTimezone } from "@/stores/workspace";
 import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/lib/chart/contracts";
 import { applyVolumePaneLayout, lightweightChartOptions } from "@/lib/chart/lightweight-adapter";
-import { coordinateToDrawingAnchor } from "@/lib/chart/lightweight-adapter";
+import { createDrawingCoordinates } from "@/lib/chart/lightweight-adapter";
+import { intervalMs } from "@/lib/local-research/dataset";
+import type { DrawingCoordinates } from "@/lib/chart/drawings/coordinates";
 import type { DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
 import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import { bigTradesSettings } from "@/lib/chart/overlays/contracts";
@@ -90,6 +92,7 @@ interface ChartProps {
   drawings?: DrawingObject[];
   selectedDrawingId?: string | null;
   drawingTool?: DrawingTool;
+  persistentDrawing?: boolean;
   magnetMode?: MagnetMode;
   onDrawingTool?: (tool: DrawingTool) => void;
   onSelectDrawing?: (id: string | null) => void;
@@ -142,7 +145,7 @@ export function TerminalChart({
   onCrosshair,
   onLatestBar,
   volumePaneHeight = 0.22,
-  drawings = [], selectedDrawingId = null, drawingTool = "crosshair", magnetMode = "off",
+  drawings = [], selectedDrawingId = null, drawingTool = "crosshair", magnetMode = "off", persistentDrawing = false,
   onDrawingTool, onSelectDrawing, onCreateDrawing, onUpdateDrawing, onDeleteDrawing, onDuplicateDrawing,
   overlays = [],
 }: ChartProps) {
@@ -154,6 +157,7 @@ export function TerminalChart({
   const markPriceLineRef = useRef<IPriceLine | null>(null);
   const barsRef = useRef<Bar[]>([]);
   const drawingPrimitiveRef = useRef<DrawingPrimitive | null>(null);
+  const drawingCoordinatesRef = useRef<DrawingCoordinates | null>(null);
   const bigTradesPrimitiveRef = useRef<BigTradesPrimitive | null>(null);
   const bigTradesBufferRef = useRef(new BigTradesBuffer(4_000));
   const bigTradesFrameRef = useRef<number>(0);
@@ -606,8 +610,12 @@ function applyZTerminalWatermark(
     const visible = drawings.filter(drawing => isDrawingVisible(drawing, timeframe, replayCursor));
     visibleDrawingsRef.current = visible;
     const drawingPreview = drawingPreviewRef.current;
+    if (chartRef.current && seriesRef.current) {
+      drawingCoordinatesRef.current = createDrawingCoordinates(chartRef.current, seriesRef.current, availableBars.map(bar => bar.t), intervalMs(timeframe));
+      drawingPrimitiveRef.current?.setCoordinates(drawingCoordinatesRef.current);
+    }
     drawingPrimitiveRef.current?.setDrawings(drawingPreview ? [...visible.filter(drawing => drawing.id !== drawingPreview.id), drawingPreview] : visible, selectedDrawingId);
-  }, [bars, chartType, drawings, effectiveReplayIndex, selectedDrawingId, timeframe]);
+  }, [availableBars, bars, chartType, drawings, effectiveReplayIndex, selectedDrawingId, timeframe]);
 
   useEffect(() => {
     if (!seriesRef.current) return;
@@ -762,12 +770,15 @@ function applyZTerminalWatermark(
       )}
       {onDrawingTool && onSelectDrawing && onCreateDrawing && onUpdateDrawing && onDeleteDrawing && onDuplicateDrawing && (
         <DrawingInteractionLayer
+          key={`${symbol}:${timeframe}`}
           tool={drawingTool}
+          persistent={persistentDrawing}
           magnet={magnetMode}
-          bars={bars}
+          bars={availableBars}
           drawings={drawings}
           selectedId={selectedDrawingId}
-          toAnchor={point => chartRef.current && seriesRef.current ? coordinateToDrawingAnchor(chartRef.current, seriesRef.current, point) : null}
+          coordinates={() => drawingCoordinatesRef.current}
+          viewport={() => ({ width: chartRef.current?.timeScale().width() ?? 0, height: chartRef.current?.panes()[0]?.getHeight() ?? 0 })}
           projected={() => drawingPrimitiveRef.current?.getProjected() ?? []}
           onTool={onDrawingTool}
           onSelect={onSelectDrawing}
@@ -775,6 +786,7 @@ function applyZTerminalWatermark(
           onUpdate={onUpdateDrawing}
           onDelete={onDeleteDrawing}
           onDuplicate={onDuplicateDrawing}
+          onSnap={point => drawingPrimitiveRef.current?.setSnapTarget(point)}
           onPreview={drawing => {
             drawingPreviewRef.current = drawing;
             const visible = visibleDrawingsRef.current;

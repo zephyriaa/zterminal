@@ -1526,6 +1526,11 @@ html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 
 /* Chart-owned drawing surfaces. The input layer captures gestures while the
    actual geometry is rendered by a Lightweight Charts series primitive. */
 .zt-drawing-input { position:absolute; inset:0; z-index:20; outline:none; touch-action:none; }
+.zt-drawing-object-list { position:absolute; right:12px; top:40px; z-index:60; width:260px; max-height:55%; overflow:auto; padding:8px; border:1px solid #293342; border-radius:4px; background:#0d131e; font-size:11px; }
+.zt-drawing-object-list header,.zt-drawing-object-list>div { display:flex; align-items:center; gap:8px; padding:5px 0; }
+.zt-drawing-object-list header b,.zt-drawing-object-list>div button:first-child { flex:1; text-align:left; }
+.zt-drawing-object-list button { color:#a6bbce; padding:3px; }
+.zt-tool-btn:disabled { opacity:.35; cursor:default; }
 .zt-drawing-input:focus-visible { box-shadow:inset 0 0 0 1px rgba(167,139,250,.7); }
 
 /* Left Toolbar (TradingView Style with Groups & Flyouts) */
@@ -1548,7 +1553,7 @@ html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 
 
 .zt-drawing-flyout { position:absolute; left:33px; top:-2px; z-index:50; min-width:175px; padding:4px; border-radius:4px; background:rgba(11,14,24,.98); border:1px solid rgba(139,155,192,.28); box-shadow:0 8px 30px rgba(0,0,0,.5); }
 .zt-drawing-flyout-header { font-size:8px; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; padding:4px 8px; font-weight:700; border-bottom:1px solid rgba(139,155,192,.12); margin-bottom:3px; }
-.zt-flyout-item { display:flex; align-items:center; gap:8px; width:100%; padding:6px 8px; border-radius:3px; font-size:10px; color:#cbd5e1; text-align:left; background:transparent; border:none; cursor:pointer; }
+.zt-drawing-flyout .zt-flyout-item { display:flex; align-items:center; justify-content:flex-start; gap:8px; width:100%; height:auto; min-height:27px; padding:6px 8px; border-radius:3px; font-size:10px; color:#cbd5e1; text-align:left; background:transparent; border:none; cursor:pointer; }
 .zt-flyout-item:hover { background:rgba(139,112,218,.25); color:#ffffff; }
 .zt-flyout-item.is-selected { background:rgba(56,189,248,.2); color:#38bdf8; font-weight:600; }
 .zt-flyout-item svg { width:14px; height:14px; flex:0 0 auto; }

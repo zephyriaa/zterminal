@@ -7,7 +7,8 @@ import type {
   Time,
 } from "lightweight-charts";
 import type { DrawingObject } from "../contracts";
-import { drawingHit } from "./geometry";
+import { drawingHit, drawingSegments, channelPoints, textBounds } from "./geometry";
+import type { DrawingCoordinates } from "./coordinates";
 import type { ProjectedDrawing, ScreenPoint } from "./contracts";
 
 function alpha(color: string, opacity: number) {
@@ -19,14 +20,6 @@ function alpha(color: string, opacity: number) {
 
 function dash(style: DrawingObject["style"]["lineStyle"]) {
   return style === "dashed" ? [7, 5] : style === "dotted" ? [2, 4] : [];
-}
-
-function extended(a: ScreenPoint, b: ScreenPoint, width: number, both: boolean) {
-  const dx = b.x - a.x;
-  if (Math.abs(dx) < .001) return [{ x: a.x, y: 0 }, { x: b.x, y: 100000 }];
-  const slope = (b.y - a.y) / dx;
-  const startX = both ? 0 : a.x;
-  return [{ x: startX, y: a.y + slope * (startX - a.x) }, { x: width, y: a.y + slope * (width - a.x) }];
 }
 
 function label(ctx: CanvasRenderingContext2D, text: string, point: ScreenPoint, color: string) {
@@ -181,15 +174,15 @@ function drawPositionTool(
 }
 
 class Renderer implements IPrimitivePaneRenderer {
-  constructor(private readonly read: () => { drawings: ProjectedDrawing[]; selectedId: string | null }) {}
+  constructor(private readonly read: () => { drawings: ProjectedDrawing[]; selectedId: string | null; snapTarget: ScreenPoint | null }) {}
 
   draw(target: Parameters<IPrimitivePaneRenderer["draw"]>[0]) {
     target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => {
-      const { drawings, selectedId } = this.read();
+      const { drawings, selectedId, snapTarget } = this.read();
       for (const projected of drawings) {
         const { drawing, points } = projected;
         const [rawA, rawB = rawA] = points;
-        let a = rawA, b = rawB;
+        const a = rawA, b = rawB;
         const style = drawing.style;
         ctx.save();
         ctx.globalAlpha = style.opacity;
@@ -197,10 +190,7 @@ class Renderer implements IPrimitivePaneRenderer {
         ctx.fillStyle = alpha(style.fill ?? style.color, Math.min(.18, style.opacity * .18));
         ctx.lineWidth = style.width;
         ctx.setLineDash(dash(style.lineStyle));
-        if (drawing.type === "extended-line") [a, b] = extended(a, b, mediaSize.width, true);
-        if (["ray", "horizontal-ray"].includes(drawing.type)) [a, b] = drawing.type === "horizontal-ray" ? [a, { x: mediaSize.width, y: a.y }] : extended(a, b, mediaSize.width, false);
-        if (["horizontal-line", "price-label"].includes(drawing.type)) [a, b] = [{ x: 0, y: a.y }, { x: mediaSize.width, y: a.y }];
-        if (drawing.type === "vertical-line") [a, b] = [{ x: a.x, y: 0 }, { x: a.x, y: mediaSize.height }];
+        const segments = drawingSegments({ ...projected, viewport: mediaSize });
 
         if (drawing.type === "long-position" || drawing.type === "short-position") {
           drawPositionTool(ctx, projected);
@@ -210,17 +200,23 @@ class Renderer implements IPrimitivePaneRenderer {
         } else if (drawing.type === "date-range") {
           const x = Math.min(a.x, b.x), w = Math.abs(b.x - a.x);
           ctx.fillRect(x, 0, w, mediaSize.height); ctx.strokeRect(x, 0, w, mediaSize.height);
-        } else if (drawing.type === "fibonacci-retracement") {
-          const levels = [0, .236, .382, .5, .618, .786, 1];
-          for (const level of levels) {
-            const y = rawA.y + (rawB.y - rawA.y) * level;
-            ctx.beginPath(); ctx.moveTo(Math.min(rawA.x, rawB.x), y); ctx.lineTo(Math.max(rawA.x, rawB.x), y); ctx.stroke();
-            label(ctx, `${(level * 100).toFixed(1)}%`, { x: Math.max(rawA.x, rawB.x), y }, style.color);
-          }
-        } else if (["text", "price-label"].includes(drawing.type)) {
-          label(ctx, style.text || (drawing.type === "price-label" ? drawing.anchors[0].price.toFixed(2) : "Text"), rawA, style.color);
+        } else if (drawing.type === "ellipse") {
+          ctx.beginPath(); ctx.ellipse((a.x + b.x) / 2, (a.y + b.y) / 2, Math.abs(b.x - a.x) / 2, Math.abs(b.y - a.y) / 2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        } else if (["text", "price-label", "callout"].includes(drawing.type)) {
+          const bounds = textBounds(projected);
+          ctx.fillStyle = alpha(style.fill ?? "#070b11", .9);
+          ctx.fillRect(bounds.left, bounds.top, bounds.width, bounds.height);
+          ctx.fillStyle = style.color;
+          ctx.font = `${style.textWeight ?? "normal"} ${bounds.size}px ui-monospace, monospace`;
+          bounds.lines.forEach((line, i) => ctx.fillText(line, bounds.left + 5, bounds.top + bounds.size + 1 + i * (bounds.size + 3)));
+          if (drawing.type === "callout") { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(bounds.left + 5, bounds.top + bounds.height); ctx.stroke(); }
         } else {
-          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+          if (drawing.type === "parallel-channel") {
+            const polygon = channelPoints(points, mediaSize, style.extendStart, style.extendEnd);
+            ctx.beginPath(); polygon.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.fill();
+          }
+          for (const [start, end] of segments) { ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke(); }
+          if (drawing.type.startsWith("fibonacci-") && style.showLabels !== false) segments.forEach(([, end], index) => label(ctx, `${((projected.levels?.[index].value ?? style.levels?.[index] ?? 0) * 100).toFixed(1)}%`, end, style.color));
           if (drawing.type === "arrow") {
             const angle = Math.atan2(b.y - a.y, b.x - a.x), size = 9;
             ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - size * Math.cos(angle - .45), b.y - size * Math.sin(angle - .45)); ctx.lineTo(b.x - size * Math.cos(angle + .45), b.y - size * Math.sin(angle + .45)); ctx.closePath(); ctx.fillStyle = style.color; ctx.fill();
@@ -230,7 +226,7 @@ class Renderer implements IPrimitivePaneRenderer {
           const priceDelta = drawing.anchors[1].price - drawing.anchors[0].price;
           const percent = drawing.anchors[0].price === 0 ? 0 : priceDelta / drawing.anchors[0].price * 100;
           const duration = Math.abs(drawing.anchors[1].time - drawing.anchors[0].time);
-          const text = drawing.type === "date-range" ? `${Math.round(duration / 60000)}m` : `${priceDelta >= 0 ? "+" : ""}${priceDelta.toFixed(2)}  ${percent.toFixed(2)}%`;
+          const text = drawing.type === "date-range" ? `${Math.round(duration / 60000)}m` : `${priceDelta >= 0 ? "+" : ""}${priceDelta.toFixed(2)}  ${percent.toFixed(2)}%${drawing.type === "ruler" ? ` · ${Math.round(duration / 60000)}m` : ""}`;
           label(ctx, text, rawB, style.color);
         }
         if (drawing.id === selectedId && !drawing.locked) {
@@ -247,13 +243,17 @@ class Renderer implements IPrimitivePaneRenderer {
         }
         ctx.restore();
       }
+      if (snapTarget) {
+        ctx.save(); ctx.strokeStyle = "#fbbf24"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(snapTarget.x, snapTarget.y, 6, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      }
     });
   }
 }
 
 class View implements IPrimitivePaneView {
   private readonly output: Renderer;
-  constructor(read: () => { drawings: ProjectedDrawing[]; selectedId: string | null }) { this.output = new Renderer(read); }
+  constructor(read: () => { drawings: ProjectedDrawing[]; selectedId: string | null; snapTarget: ScreenPoint | null }) { this.output = new Renderer(read); }
   zGeneric() { return "top" as const; }
   zOrder() { return this.zGeneric(); }
   renderer() { return this.output; }
@@ -264,18 +264,29 @@ export class DrawingPrimitive implements ISeriesPrimitive<Time> {
   private drawings: DrawingObject[] = [];
   private projected: ProjectedDrawing[] = [];
   private selectedId: string | null = null;
-  private readonly view = new View(() => ({ drawings: this.projected, selectedId: this.selectedId }));
+  private coordinates: DrawingCoordinates | null = null;
+  private snapTarget: ScreenPoint | null = null;
+  private readonly view = new View(() => ({ drawings: this.projected, selectedId: this.selectedId, snapTarget: this.snapTarget }));
 
   attached(param: SeriesAttachedParameter<Time>) { this.attachedState = param; this.updateAllViews(); }
   detached() { this.attachedState = null; this.projected = []; }
   paneViews() { return [this.view]; }
-  setDrawings(drawings: DrawingObject[], selectedId: string | null) { this.drawings = drawings; this.selectedId = selectedId; this.updateAllViews(); this.attachedState?.requestUpdate(); }
+  setSnapTarget(point: ScreenPoint | null) { this.snapTarget = point; this.attachedState?.requestUpdate(); }
+  setCoordinates(coordinates: DrawingCoordinates) { this.coordinates = coordinates; this.updateAllViews(); this.attachedState?.requestUpdate(); }
+  setDrawings(drawings: DrawingObject[], selectedId: string | null) { this.drawings = [...drawings].sort((a, b) => a.zOrder - b.zOrder); this.selectedId = selectedId; this.updateAllViews(); this.attachedState?.requestUpdate(); }
   updateAllViews() {
     if (!this.attachedState) return;
     const { chart, series } = this.attachedState;
-    this.projected = this.drawings.map(drawing => {
-      const points = drawing.anchors.map(anchor => ({ x: chart.timeScale().timeToCoordinate((anchor.time / 1000) as Time), y: series.priceToCoordinate(anchor.price) }));
-      if (points.some(point => point.x == null || point.y == null)) return null;
+    this.projected = this.drawings.map((drawing): ProjectedDrawing | null => {
+      const points = drawing.anchors.map(anchor => this.coordinates?.project(anchor) ?? null);
+      if (points.some(point => point == null)) return null;
+      const viewport = { width: chart.timeScale().width(), height: chart.panes()[0]?.getHeight() ?? 0 };
+      const levels = drawing.type.startsWith("fibonacci-") ? (drawing.style.levels ?? []).flatMap(value => {
+        const [a, b, c = a] = drawing.anchors;
+        const price = drawing.type === "fibonacci-extension" ? c.price + (b.price - a.price) * value : a.price + (b.price - a.price) * value;
+        const y = series.priceToCoordinate(price);
+        return y == null ? [] : [{ value, y }];
+      }) : undefined;
 
       if (drawing.type === "long-position" || drawing.type === "short-position") {
         const [a0, a1] = drawing.anchors;
@@ -294,11 +305,12 @@ export class DrawingPrimitive implements ISeriesPrimitive<Time> {
           return {
             drawing,
             points: [pt0, pt1, { x: pt1.x, y: stopY }],
+            viewport,
           };
         }
       }
 
-      return { drawing, points: points as ScreenPoint[] };
+      return { drawing, points: points as ScreenPoint[], viewport, levels };
     }).filter((item): item is ProjectedDrawing => item !== null);
   }
   hitTest(x: number, y: number): PrimitiveHoveredItem | null {

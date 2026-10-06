@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Columns2,
   Grid2X2,
@@ -21,6 +21,8 @@ import {
 } from "./terminal-chart";
 import { DrawingToolbar } from "./drawing-toolbar";
 import { DrawingInspector } from "./drawing-inspector";
+import { DrawingObjects } from "./drawing-objects";
+import { SecondaryDrawingChart } from "./secondary-drawing-chart";
 import type { Bar, Timeframe } from "@/lib/market/types";
 import type { ChartType, DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
 import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
@@ -78,6 +80,10 @@ interface MultiChartGridProps {
   drawings: DrawingObject[];
   selectedDrawingId: string | null;
   drawingTool: DrawingTool;
+  persistentDrawing?: boolean;
+  onPersistentDrawing?: () => void;
+  onUndoDrawings?: () => void; onRedoDrawings?: () => void;
+  canUndoDrawings?: boolean; canRedoDrawings?: boolean;
   magnetMode: MagnetMode;
   onDrawingTool: (tool: DrawingTool) => void;
   onMagnetMode: (magnet: MagnetMode) => void;
@@ -95,6 +101,7 @@ interface MultiChartGridProps {
 }
 
 export function MultiChartGrid(props: MultiChartGridProps) {
+  const [objectsOpen, setObjectsOpen] = useState(false);
   const {
     layout,
     setLayout,
@@ -123,13 +130,16 @@ export function MultiChartGrid(props: MultiChartGridProps) {
   // Single chart layout (standard mode)
   if (layout === "1") {
     return (
-      <div className="zt-chart-stage h-full w-full relative">
+      <div className="zt-chart-stage h-full w-full relative" data-drawing-chart="primary">
         <DrawingToolbar
           tool={props.drawingTool}
           magnet={props.magnetMode}
           onTool={props.onDrawingTool}
           onMagnet={props.onMagnetMode}
           onClear={props.onClearDrawings}
+          persistent={props.persistentDrawing} onPersistent={props.onPersistentDrawing}
+          onUndo={props.onUndoDrawings} onRedo={props.onRedoDrawings} canUndo={props.canUndoDrawings} canRedo={props.canRedoDrawings}
+          onObjects={() => setObjectsOpen(value => !value)}
         />
         <div className="zt-chart-readout">
           <span>
@@ -178,6 +188,7 @@ export function MultiChartGrid(props: MultiChartGridProps) {
           drawings={props.drawings}
           selectedDrawingId={props.selectedDrawingId}
           drawingTool={props.drawingTool}
+          persistentDrawing={props.persistentDrawing}
           magnetMode={props.magnetMode}
           onDrawingTool={props.onDrawingTool}
           onSelectDrawing={props.onSelectDrawing}
@@ -187,8 +198,10 @@ export function MultiChartGrid(props: MultiChartGridProps) {
           onDuplicateDrawing={props.onDuplicateDrawing}
           overlays={props.overlays}
         />
+        {objectsOpen && <DrawingObjects drawings={props.drawings} onSelect={props.onSelectDrawing} onUpdate={(id, patch) => props.onUpdateDrawing?.(id, patch)} onClose={() => setObjectsOpen(false)} />}
         {selectedDrawing && (
           <DrawingInspector
+            key={selectedDrawing.id}
             drawing={selectedDrawing}
             onChange={(patch) => props.onUpdateDrawing?.(selectedDrawing.id, patch)}
             onDuplicate={() => props.onDuplicateDrawing?.(selectedDrawing.id)}
@@ -281,7 +294,8 @@ export function MultiChartGrid(props: MultiChartGridProps) {
         {renderPaneHeader(index, pane)}
         <div className="flex-1 min-h-0 relative">
           {isPrimary ? (
-            <div className="h-full w-full relative">
+            <div className="zt-chart-stage h-full w-full relative" data-drawing-chart="primary">
+              <DrawingToolbar tool={props.drawingTool} magnet={props.magnetMode} onTool={props.onDrawingTool} onMagnet={props.onMagnetMode} onClear={props.onClearDrawings} persistent={props.persistentDrawing} onPersistent={props.onPersistentDrawing} onUndo={props.onUndoDrawings} onRedo={props.onRedoDrawings} canUndo={props.canUndoDrawings} canRedo={props.canRedoDrawings} onObjects={() => setObjectsOpen(value => !value)} />
               <TerminalChart
                 symbol={props.primarySymbol}
                 timeframe={props.primaryTimeframe}
@@ -302,6 +316,7 @@ export function MultiChartGrid(props: MultiChartGridProps) {
                 drawings={props.drawings}
                 selectedDrawingId={props.selectedDrawingId}
                 drawingTool={props.drawingTool}
+                persistentDrawing={props.persistentDrawing}
                 magnetMode={props.magnetMode}
                 onDrawingTool={props.onDrawingTool}
                 onSelectDrawing={props.onSelectDrawing}
@@ -311,17 +326,11 @@ export function MultiChartGrid(props: MultiChartGridProps) {
                 onDuplicateDrawing={props.onDuplicateDrawing}
                 overlays={props.overlays}
               />
+              {objectsOpen && <DrawingObjects drawings={props.drawings} onSelect={props.onSelectDrawing} onUpdate={(id, patch) => props.onUpdateDrawing?.(id, patch)} onClose={() => setObjectsOpen(false)} />}
+              {selectedDrawing && <DrawingInspector key={selectedDrawing.id} drawing={selectedDrawing} onChange={patch => props.onUpdateDrawing?.(selectedDrawing.id, patch)} onDuplicate={() => props.onDuplicateDrawing?.(selectedDrawing.id)} onDelete={() => props.onDeleteDrawing?.(selectedDrawing.id)} onClose={() => props.onSelectDrawing(null)} />}
             </div>
           ) : (
-            <TerminalChart
-              symbol={paneSymbol}
-              timeframe={paneTimeframe}
-              chartType={pane.chartType || "candles"}
-              indicators={secondaryIndicators}
-              settings={props.settings}
-              volumePaneHeight={0.18}
-              timezone={props.timezone}
-            />
+            <SecondaryDrawingChart pane={{ ...pane, symbol: paneSymbol, timeframe: paneTimeframe }} indicators={secondaryIndicators} settings={props.settings} timezone={props.timezone} />
           )}
         </div>
       </div>
