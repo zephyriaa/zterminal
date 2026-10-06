@@ -29,7 +29,7 @@ import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import type { IndicatorInstance } from "@/lib/indicator-library";
 import type { IndicatorEvaluationResult } from "@/lib/local-research/contracts";
-import type { ChartTimezone } from "@/stores/workspace";
+import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
 import { formatSymbol } from "@/lib/market/contracts";
 import { cn } from "@/lib/utils";
 
@@ -231,7 +231,11 @@ export function MultiChartGrid(props: MultiChartGridProps) {
           {/* Symbol selector */}
           <select
             value={currentSymbol}
-            onChange={(e) => setPaneSymbol(index, e.target.value)}
+            disabled={isPrimary && props.archivedBars !== undefined}
+            onChange={(e) => {
+              if (isPrimary) useWorkspace.getState().setSymbol(e.target.value);
+              setPaneSymbol(index, e.target.value);
+            }}
             className="bg-[#1f2937] text-white rounded px-1.5 py-0.5 text-[10px] font-bold border border-[#374151] focus:outline-none focus:border-[#38bdf8]"
           >
             {POPULAR_TICKERS.map((sym) => (
@@ -247,7 +251,11 @@ export function MultiChartGrid(props: MultiChartGridProps) {
               <button
                 key={tf.value}
                 type="button"
-                onClick={() => setPaneTimeframe(index, tf.value)}
+                disabled={isPrimary && props.archivedBars !== undefined}
+                onClick={() => {
+                  if (isPrimary) useWorkspace.getState().setTimeframe(tf.value);
+                  setPaneTimeframe(index, tf.value);
+                }}
                 className={cn(
                   "px-1 py-0.2 rounded text-[9.5px]",
                   currentTimeframe === tf.value

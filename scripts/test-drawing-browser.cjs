@@ -189,6 +189,20 @@ async function verifyDrawings() {
       await paneHeader.selectOption('SOLUSDT'); await secondary.locator('canvas').first().waitFor();
       assert.equal((await readSecondary('SOLUSDT')).length, 0, 'new symbol has no previous-symbol drawings');
       await paneHeader.selectOption('ETHUSDT'); assert.equal((await readSecondary('ETHUSDT')).length, 1, 'returning symbol restores its document');
+      const primaryPane = chart.locator('..').locator('..'), primarySymbol = primaryPane.locator('select').first();
+      const beforePrimarySwitch = await savedRead();
+      await primaryPane.getByRole('button', { name: '15m', exact: true }).click();
+      assert.equal(await page.locator('.zt-chart-timeframes').getByRole('button', { name: '15m', exact: true }).getAttribute('aria-pressed'), 'true', 'primary pane header controls the actual chart timeframe');
+      assert.deepEqual(await savedRead(), beforePrimarySwitch);
+      await primarySymbol.selectOption('AAPL');
+      await page.waitForFunction(() => {
+        const workspaceId = JSON.parse(localStorage.getItem('zterminal-workspace')).state.activeWorkspaceId;
+        return Object.values(JSON.parse(localStorage.getItem('zterminal.chart-documents')).state.documents).some(d => d.workspaceId === workspaceId && d.chartId === 'primary-chart' && d.instrument.nativeSymbol === 'AAPL' && d.drawings.length === 0);
+      });
+      assert.match(await page.locator('.zt-chart-contract').innerText(), /AAPL/, 'primary header controls the actual instrument');
+      await primarySymbol.selectOption('BTCUSDT');
+      await primaryPane.getByRole('button', { name: '5m', exact: true }).click();
+      assert.deepEqual(await savedRead(), beforePrimarySwitch, 'primary symbol/timeframe round trip restores its drawing document');
       await page.screenshot({ path: path.join(output, `multi-chart-dpr-${deviceScaleFactor}.png`) });
       const beforeScale = await savedRead();
       await page.locator('button[title="Chart settings"]').click();
@@ -236,7 +250,7 @@ async function verifyDrawings() {
         await page.screenshot({ path: path.join(output, 'stress-1000.png') });
       }
       assert.deepEqual(errors, [], 'no uncaught browser errors');
-      results.push({ deviceScaleFactor, drawings: expected, stress, checks: 'all 22 types, mouse/touch click creation, move, anchors, history, clipboard, context-menu duplicate, Escape/right-click/pointer cancellation, edit rollback, drag beyond chart, text, lock, hide/show, pan, zoom, resize, timeframe, logarithmic/inverted scales, replay-safe strong magnet, persistent tool, named workspace save/load/reload/isolation, secondary pane history and symbol isolation, DPI, 1000-drawing edit/undo and frame sampling at DPR 1', errors });
+      results.push({ deviceScaleFactor, drawings: expected, stress, checks: 'all 22 types, mouse/touch click creation, move, anchors, history, clipboard, context-menu duplicate, Escape/right-click/pointer cancellation, edit rollback, drag beyond chart, text, lock, hide/show, pan, zoom, resize, timeframe, logarithmic/inverted scales, replay-safe strong magnet, persistent tool, named workspace save/load/reload/isolation, primary header controls and primary/secondary symbol isolation, pane history, DPI, 1000-drawing edit/undo and frame sampling at DPR 1', errors });
       console.log(`PASS drawing browser DPR ${deviceScaleFactor}`);
       await context.close();
       await browser.close(); browser = undefined;
