@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import { join } from "node:path";
 
@@ -7,7 +7,9 @@ const root = process.cwd();
 const read = (file: string) => readFileSync(join(root, file), "utf8");
 
 test("public brand keeps the official slogan and removes obsolete motion reel identifiers", () => {
-  const landing = read("src/components/landing/ZTerminalLanding.tsx");
+  const landing = readdirSync(join(root, "src/components/landing"))
+    .filter(file => /\.tsx?$/.test(file))
+    .map(file => read(`src/components/landing/${file}`)).join("\n");
   assert.match(landing, /See Further\./);
   assert.match(landing, /Guess Less\./);
   assert.match(landing, /Open ZTerminal/);

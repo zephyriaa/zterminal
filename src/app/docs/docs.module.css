@@ -1,9 +1,7 @@
 .page {
   position: relative;
   overflow-x: hidden;
-  background:
-    radial-gradient(ellipse at 85% -5%, rgba(65, 39, 155, 0.25), transparent 42%),
-    var(--public-bg);
+  background: var(--public-bg);
   min-height: 100vh;
 }
 .page > :global(.backgroundField) {
@@ -193,7 +191,7 @@
   border: 1px solid var(--public-line);
   border-radius: 5px;
   overflow: hidden;
-  background: #060912;
+  background: var(--public-surface-inset);
 }
 
 .codeBar {
@@ -201,7 +199,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: #0a0e1c;
+  background: var(--public-surface-header);
   border-bottom: 1px solid var(--public-line-soft);
   font-family: var(--public-font-mono), monospace;
   font-size: 11px;
@@ -265,7 +263,7 @@
   padding: 28px 30px;
   border: 1px solid var(--public-line);
   border-radius: 6px;
-  background: rgba(9, 13, 27, 0.6);
+  background: var(--public-surface-card);
   text-decoration: none;
   transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
@@ -323,7 +321,7 @@
   padding: 28px;
   border: 1px solid var(--public-line);
   border-radius: 6px;
-  background: rgba(10, 15, 32, 0.75);
+  background: var(--public-surface);
 }
 
 .statusBoxHeader {

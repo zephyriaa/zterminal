@@ -29,7 +29,7 @@ export default function PythonResearchDocumentationPage() {
       </p>
 
       {/* LOCAL EXECUTION SECTION */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Local execution &amp; user permissions</h2>
         <p className={styles.sectionPara}>
           Install the private package and start the ZTerminal Research Helper. Enter its eight-digit authentication code in the terminal. Your browser or OS may prompt for local network permissions. Scripts run under your user permissions; process limits do not constitute a remote multi-tenant sandbox. Run only code you trust.
@@ -37,7 +37,7 @@ export default function PythonResearchDocumentationPage() {
       </section>
 
       {/* STRATEGY SPECIFICATION */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Authoring a testable strategy</h2>
         <p className={styles.sectionPara}>
           The engine provides an observed, UTC-indexed pandas DataFrame with standard columns: <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, and <code>volume</code>. Your strategy returns an aligned boolean series through <code>zt.Strategy</code>.
@@ -59,7 +59,7 @@ export default function PythonResearchDocumentationPage() {
       </section>
 
       {/* SIMULATION ASSUMPTIONS */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Explicit simulation assumptions</h2>
         <p className={styles.sectionPara}>
           ZTerminal insists on visible execution limits to eliminate look-ahead bias and curve-fitting illusions:
@@ -81,7 +81,7 @@ export default function PythonResearchDocumentationPage() {
       </section>
 
       {/* REPRODUCIBILITY */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Reproducible audit archive</h2>
         <p className={styles.sectionPara}>
           Every successful simulation run records its complete source code, parameter configuration, observed dataset slice, and cryptographic SHA-256 hash in the local helper archive. You can click any historical trade in the log to inspect exact entry and exit candles without active market data connectivity.
@@ -92,7 +92,7 @@ export default function PythonResearchDocumentationPage() {
       </section>
 
       {/* QUICK LINKS */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Explore the workstation</h2>
         <p className={styles.sectionPara}>
           Open the terminal workspace to inspect existing strategy templates or review migration options.

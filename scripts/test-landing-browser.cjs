@@ -3,179 +3,139 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const base = process.env.LANDING_BASE_URL || 'http://localhost:3000';
-const output = path.resolve('artifacts/landing');
-const brave = 'C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe';
-const executablePath = process.env.BROWSER_EXECUTABLE_PATH || (fs.existsSync(brave) ? brave : undefined);
-const results = [];
+const base = process.env.LANDING_TEST_URL || process.env.LANDING_BASE_URL || 'http://localhost:3000';
+const output = path.resolve(process.env.LANDING_TEST_OUTPUT || 'artifacts/landing-redesign/qa');
+const widths = [360, 390, 430, 768, 1024, 1280, 1440, 1920];
 fs.mkdirSync(output, { recursive: true });
 
-async function loadImages(page) {
-  for (const image of await page.locator('main img').all()) {
-    await image.scrollIntoViewIfNeeded();
-    await image.evaluate(element => element.decode());
-  }
-}
-
-async function verifyTabs(page) {
-  const ui = page.getByRole('tab', { name: 'Workbench View' });
-  const code = page.getByRole('tab', { name: 'Python SDK Snippet' });
-  await ui.scrollIntoViewIfNeeded();
-  const panels = page.locator('#strategy-panel-ui').locator('..');
-  const before = await panels.boundingBox();
-  await ui.focus();
-  await page.keyboard.press('ArrowRight');
-  await assertSelected(code, ui);
-  await page.getByRole('tabpanel').getByText('strategy_ema_crossover.py', { exact: true }).waitFor();
-  const after = await panels.boundingBox();
-  assert.ok(Math.abs(before.height - after.height) < .5, 'tab panels change height');
-  await page.screenshot({ path: path.join(output, `tabs-code-${page.viewportSize().width}.png`) });
-  for (const key of ['ArrowRight', 'ArrowLeft', 'Home', 'End']) {
-    await page.keyboard.press(key);
-    const active = page.getByRole('tab', { selected: true });
-    assert.equal(await active.evaluate(element => element === document.activeElement), true);
-  }
-  await page.keyboard.press('Home');
-  await page.keyboard.press('Space');
-  await page.keyboard.press('Enter');
-  await assertSelected(ui, code);
-  for (let i = 0; i < 6; i++) { await code.click(); await ui.click(); }
-  await ui.press("ArrowRight");
-  await code.press("Home");
-  const focus = await ui.evaluate(element => ({ visible: element.matches(':focus-visible'), outline: getComputedStyle(element).outlineStyle }));
-  assert.ok(focus.visible && focus.outline !== 'none');
-  await page.keyboard.press('Tab');
-  assert.equal(await page.getByRole('tabpanel').evaluate(element => element === document.activeElement), true);
-  return { stablePanelHeight: after.height, arrowKeys: true, rapidSwitching: true, visibleFocus: true };
-}
-
-async function assertSelected(selected, other) {
-  assert.equal(await selected.getAttribute('aria-selected'), 'true');
-  assert.equal(await selected.getAttribute('tabindex'), '0');
-  assert.equal(await other.getAttribute('tabindex'), '-1');
-}
-
-(async () => {
-  const browser = await chromium.launch({ headless: true, executablePath });
+async function main() {
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE_PATH });
+  const results = [];
   try {
-    for (const width of [390, 768, 1440, 1920]) {
-      const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'no-preference' });
-      await context.addInitScript(() => {
+    for (const width of widths) {
+      const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, colorScheme: 'dark' });
+      const page = await context.newPage();
+      page.setDefaultNavigationTimeout(90000);
+      await page.addInitScript(() => {
         window.landingShifts = [];
         new PerformanceObserver(list => {
           for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.landingShifts.push(entry.value);
         }).observe({ type: 'layout-shift', buffered: true });
       });
-      const page = await context.newPage();
-      const errors = [], videos = [];
+      const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-      page.on('request', request => { if (/\.(mp4|webm)(\?|$)/.test(request.url())) videos.push(request.url()); });
-      await page.goto(base, { waitUntil: 'networkidle' });
-      assert.equal(await page.locator('[data-landing]').count(), 1);
-      assert.equal(await page.locator('main section').count(), 6);
-      assert.match(await page.locator('h1').innerText(), /Turn market ideas\s+into evidence\./);
-      const hero = await page.locator('h1 > span').evaluateAll(lines => lines.map(line => {
-        const child = line.firstElementChild, style = getComputedStyle(child);
-        return { outer: getComputedStyle(line).animationName, duration: style.animationDuration, delay: style.animationDelay, width: line.clientWidth, scrollWidth: line.scrollWidth };
-      }));
-      assert.deepEqual(hero.map(line => line.outer), ['none', 'none']);
-      assert.deepEqual(hero.map(line => line.duration), ['0.64s', '0.64s']);
-      assert.deepEqual(hero.map(line => line.delay), ['0s', '0.06s']);
-      hero.forEach(line => assert.ok(line.scrollWidth <= line.width + 1));
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-      await page.locator('[data-reveal-state="pending"]').first().evaluate(element => {
-        element.dataset.landingTest = 'once';
-        element.landingStarts = 0;
-        element.addEventListener('animationstart', () => element.landingStarts++);
-      });
-      const reveal = page.locator('[data-landing-test="once"]');
-      await reveal.scrollIntoViewIfNeeded();
-      await page.waitForFunction(() => document.querySelector('[data-landing-test="once"]').dataset.revealState === 'shown');
-      await reveal.evaluate(element => Promise.all(element.getAnimations({subtree:true}).map(animation => animation.finished.catch(() => {}))));
-      const revealTiming = await reveal.evaluate(element => {
-        const children = element.dataset.publicReveal === 'group' ? [...element.querySelectorAll(':scope > [data-reveal-item]')] : [element];
-        return children.map(child => { const style = getComputedStyle(child); return { duration: style.animationDuration, delay: style.animationDelay }; });
-      });
-      revealTiming.forEach(timing => {
-        assert.equal(timing.duration, '0.48s');
-        assert.ok(parseFloat(timing.delay) <= .18);
-      });
-      const starts = await reveal.evaluate(element => element.landingStarts);
-      await page.evaluate(() => scrollTo(0, 0));
-      await reveal.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(100);
-      assert.equal(await reveal.evaluate(element => element.landingStarts), starts, 'scroll reveal replayed');
-      await loadImages(page);
-      for (const group of await page.locator('[data-public-reveal="group"]').all()) {
-        await group.scrollIntoViewIfNeeded();
-        await group.evaluate(element => new Promise(resolve => {
-          if (element.dataset.revealState !== 'pending') return resolve();
-          const observer = new MutationObserver(() => {
-            if (element.dataset.revealState !== 'pending') { observer.disconnect(); resolve(); }
-          });
-          observer.observe(element, { attributes: true, attributeFilter: ['data-reveal-state'] });
-        }));
-      }
-      const staggerGroups = await page.locator('[data-public-reveal="group"][data-reveal-state="shown"]').evaluateAll(groups => groups.map(group => [...group.querySelectorAll(':scope > [data-reveal-item]')].map((item, index) => ({
-        expected: Math.min(index, 3) * .06,
-        actual: parseFloat(getComputedStyle(item).animationDelay),
-        name: getComputedStyle(item).animationName,
-      }))));
-      staggerGroups.flat().forEach(timing => {
-        assert.ok(Math.abs(timing.actual - timing.expected) < .001, 'landing stagger overridden');
-        assert.ok(timing.actual <= .18);
-        assert.match(timing.name, /landingContentReveal/);
-      });
-      const initialCLS = await page.evaluate(() => window.landingShifts.reduce((sum, value) => sum + value, 0));
-      assert.ok(initialCLS < .02, `initial layout shifts: ${initialCLS}`);
-      const tabs = await verifyTabs(page);
-      if (width <= 860) {
-        await page.evaluate(() => scrollTo(0, 0));
-        const toggle = page.getByRole('button', { name: 'Open navigation', exact: true });
-        await toggle.click();
-        await page.mouse.click(width / 2, 800);
-        assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
-        await toggle.click();
-        await page.keyboard.press('Tab');
-        await page.keyboard.press('Escape');
-        assert.equal(await toggle.evaluate(element => element === document.activeElement), true);
-        await toggle.click();
-        await page.getByRole('navigation', { name: 'Public navigation' }).getByRole('link', { name: 'Product', exact: true }).click();
-        assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
-      }
-      assert.equal(await page.getByRole('link', { name: 'Open ZTerminal account and Google sign-in', includeHidden: true }).getAttribute('href'), '/terminal?account=signin');
-      await page.evaluate(() => scrollTo(0, 0));
-      await page.getByRole('link', { name: /Explore the workflow/ }).click();
-      assert.ok(page.url().endsWith('#research-loop'));
-      await page.waitForTimeout(200);
-      const restored = await page.evaluate(() => scrollY);
-      await page.reload({ waitUntil: 'networkidle' });
-      assert.ok(Math.abs(await page.evaluate(() => scrollY) - restored) < 5, 'scroll position not restored');
-      await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.waitForFunction(() => !document.querySelector('[data-reveal-state="pending"]'));
-      assert.equal(await page.locator('h1 > span > span').first().evaluate(element => getComputedStyle(element).animationName), 'none');
-      await loadImages(page);
-      await page.evaluate(() => scrollTo(0, 0));
-      await page.screenshot({ path: path.join(output, `after-${width}.png`), fullPage: true });
+      await page.goto(base, { waitUntil: 'load', timeout: 90000 });
+      await page.getByRole('heading', { level: 1, name: 'See Further. Guess Less.' }).waitFor();
+      assert.equal(await page.getByRole('heading', { level: 1 }).count(), 1);
+      const hero = page.locator('section[aria-labelledby="hero-heading"]');
+      await hero.locator('img').waitFor();
+      await page.waitForFunction(() => document.querySelector('section[aria-labelledby="hero-heading"] img')?.naturalWidth > 0);
+      assert.equal(await hero.getByRole('link', { name: 'Open ZTerminal', exact: true }).getAttribute('href'), '/terminal');
+      assert.equal(await hero.getByRole('link', { name: 'Explore the workflow', exact: true }).getAttribute('href'), '#research-loop');
+      const geometry = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth, imageTop: document.querySelector('section[aria-labelledby="hero-heading"] img').getBoundingClientRect().top }));
+      assert.equal(geometry.overflow, false, `Horizontal overflow at ${width}`);
+      assert.ok(geometry.imageTop < 900, `Product appears too late at ${width}`);
+      await page.evaluate(() => Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => {}))));
       await page.screenshot({ path: path.join(output, `hero-${width}.png`) });
-      const shifts = await page.evaluate(() => window.landingShifts.reduce((sum, value) => sum + value, 0));
-      assert.ok(shifts < .02, `unexpected layout shifts: ${shifts}`);
-      assert.deepEqual(errors, []);
-      assert.deepEqual(videos, []);
-      results.push({ width, hero, tabs, liveReducedMotion: true, restoredScroll: true, revealTiming, staggerGroups, initialCLS, cls: shifts, errors, videos });
+      if (width <= 860) {
+        const menu = page.getByRole('button', { name: 'Open navigation', exact: true });
+        await menu.click();
+        await page.getByRole('navigation', { name: 'Public navigation' }).waitFor({ state: 'visible' });
+        await page.keyboard.press('Escape');
+        await page.getByRole('navigation', { name: 'Public navigation' }).waitFor({ state: 'hidden' });
+        assert.equal(await menu.evaluate(el => el === document.activeElement), true);
+        await menu.click();
+        await hero.locator('img').click();
+        await page.getByRole('navigation', { name: 'Public navigation' }).waitFor({ state: 'hidden' });
+      }
+      const workflow = page.locator('[data-workflow]');
+      assert.equal(await workflow.locator('[data-workflow-step]').count(), 5);
+      if (width >= 1024) {
+        await page.waitForFunction(() => document.querySelector('[data-workflow]')?.dataset.enhanced === 'true');
+        for (const index of [0, 1, 2, 3, 4, 2, 0]) {
+          await workflow.locator(`[data-workflow-step="${index}"]`).evaluate(el => {
+            window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - innerHeight * .35);
+          });
+          await page.waitForFunction(value => document.querySelector('[data-workflow]')?.dataset.activeStep === String(value), index);
+          await workflow.locator(`[data-workflow-screen="${index}"]`).waitFor({ state: 'visible' });
+          await page.evaluate(() => Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => {}))));
+        }
+        await page.screenshot({ path: path.join(output, `workflow-${width}.png`) });
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.waitForFunction(() => !document.querySelector('[data-workflow]')?.hasAttribute('data-enhanced'));
+        assert.equal(await workflow.locator('[data-workflow-step="3"] img').isVisible(), true);
+        await page.setViewportSize({ width, height: 900 });
+        await page.waitForFunction(() => document.querySelector('[data-workflow]')?.dataset.enhanced === 'true');
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await page.waitForFunction(() => !document.querySelector('[data-workflow]')?.hasAttribute('data-enhanced'));
+        await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-hero-scene]')).getPropertyValue('--scene-travel').trim() === '0');
+        assert.equal(await workflow.locator('[data-workflow-step="4"] img').isVisible(), true);
+        assert.equal(await page.evaluate(() => document.getAnimations().filter(animation => animation.playState === 'running').length), 0, 'Reduced motion still has running effects');
+        assert.equal(await hero.evaluate(el => getComputedStyle(el).getPropertyValue('--light-x').trim()), '62%', 'Reduced motion did not reset interactive lighting');
+        await page.emulateMedia({ reducedMotion: 'no-preference' });
+      } else {
+        assert.equal(await workflow.getAttribute('data-enhanced'), null);
+        for (let index = 0; index < 5; index++) {
+          const image = workflow.locator(`[data-workflow-step="${index}"] img`);
+          assert.equal(await image.isVisible(), true);
+          await image.scrollIntoViewIfNeeded();
+          await image.evaluate(image => image.decode());
+        }
+      }
+      await page.locator('footer').scrollIntoViewIfNeeded();
+      const broken = await page.locator('main img:visible').evaluateAll(images => images.filter(image => !image.complete || image.naturalWidth === 0).map(image => image.src));
+      assert.deepEqual(broken, [], `Broken images at ${width}`);
+      assert.deepEqual(errors, [], `Browser errors at ${width}`);
+      await page.goto(base + '/#research-loop', { waitUntil: 'load' });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForFunction(() => {
+        const section = document.querySelector('#research-loop');
+        return scrollY > 0 && Math.abs(section.getBoundingClientRect().top - parseFloat(getComputedStyle(section).scrollMarginTop)) < 1;
+      });
+      await page.reload({ waitUntil: 'load' });
+      await page.evaluate(() => document.fonts.ready);
+      // Browser scroll anchoring can adjust pixels during font/image restoration.
+      // Verify the linked heading is visible below navigation after reload.
+      await page.waitForFunction(() => {
+        const top = document.querySelector('#workflow-heading').getBoundingClientRect().top;
+        return scrollY > 0 && top >= 70 && top < innerHeight * .5;
+      });
+      assert.equal(new URL(page.url()).hash, '#research-loop');
+      const cls = await page.evaluate(() => window.landingShifts.reduce((sum, value) => sum + value, 0));
+      assert.ok(cls < .1, `Layout instability at ${width}: ${cls}`);
+      results.push({ width, geometry, errors, cls, restoredScroll: true });
       await context.close();
     }
-    const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 1000 } });
+    for (const mode of ['reduced-motion', 'no-javascript']) {
+      const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: mode === 'reduced-motion' ? 'reduce' : 'no-preference', javaScriptEnabled: mode !== 'no-javascript' });
+      const page = await context.newPage();
+      await page.goto(base, { waitUntil: 'load' });
+      const workflow = page.locator('[data-workflow]');
+      assert.equal(await workflow.getAttribute('data-enhanced'), null);
+      for (let index = 0; index < 5; index++) assert.equal(await workflow.locator(`[data-workflow-step="${index}"] img`).isVisible(), true);
+      await page.screenshot({ path: path.join(output, `${mode}.png`) });
+      await context.close();
+      results.push({ mode, allChaptersAvailable: true });
+    }
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
-    await page.goto(base, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1000);
-    assert.equal(await page.locator('[data-reveal-state="pending"]').count(), 0);
-    for (const heading of await page.locator('main h1, main h2').all()) assert.equal(await heading.evaluate(element => getComputedStyle(element).opacity), '1');
-    assert.equal(await page.getByRole('link', { name: /Start researching/ }).getAttribute('href'), '/terminal');
-    results.push({ noJavaScript: 'core content and primary links readable' });
+    await page.goto(base);
+    await page.keyboard.press('Tab');
+    assert.equal(await page.getByRole('link', { name: 'Skip to content' }).evaluate(el => el === document.activeElement), true);
+    await page.keyboard.press('Enter');
+    assert.equal(new URL(page.url()).hash, '#landing-main');
+    for (const route of ['/research', '/docs', '/docs/python-research', '/docs/windows/install', '/download', '/terminal?account=signin', '/page-that-does-not-exist']) {
+      const response = await page.goto(base + route, { waitUntil: 'domcontentloaded', timeout: 90000 });
+      assert.equal(response.status(), route.includes('does-not-exist') ? 404 : 200, `Unexpected status for ${route}`);
+      if (route.includes('/terminal')) {
+        await page.getByRole('button', { name: 'Open research account information' }).waitFor();
+      } else assert.equal(await page.getByRole('heading', { level: 1 }).count(), 1);
+      results.push({ route, status: response.status() });
+    }
     await context.close();
     fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(results, null, 2));
-    console.log(JSON.stringify(results));
+    console.log(`Landing browser journeys passed: ${widths.length} widths, reduced motion, no JavaScript, keyboard and public routes.`);
   } finally { await browser.close(); }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -64,7 +64,7 @@ export default function WindowsInstallationGuide() {
       </section>
 
       {/* VERIFIED RELEASE PROCEDURE */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Verified installation procedure</h2>
         <p className={styles.sectionPara}>
           When an official release becomes available, follow these security-first verification steps:
@@ -88,7 +88,7 @@ export default function WindowsInstallationGuide() {
       </section>
 
       {/* UPDATES & PERSISTENCE */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Updates, caching &amp; data persistence</h2>
         <p className={styles.sectionPara}>
           ZTerminal stores historical tick data, Parquet files, and strategy logs in standard local directories. Upgrades to the application binary preserve your research databases and configuration without loss.
@@ -99,7 +99,7 @@ export default function WindowsInstallationGuide() {
       </section>
 
       {/* BROWSER WORKSPACE FALLBACK */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Immediate browser workspace</h2>
         <p className={styles.sectionPara}>
           While the Windows native client completes final package signing, the browser research terminal remains available for immediate exploration.

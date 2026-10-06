@@ -22,6 +22,8 @@ import { CloudSyncBridge } from "@/components/auth/cloud-sync-bridge";
 import { MobileResearchMenu, ResearchSidebar } from "./research-sidebar";
 import { cn } from "@/lib/utils";
 import { DynamicWorkspaceDock } from "./docking";
+import { TerminalAppearanceBridge } from "./terminal-appearance-bridge";
+import { useTerminalAppearance } from "@/stores/terminal-appearance";
 
 /**
  * The public terminal uses one reference-led windowed workstation. Existing P0
@@ -41,6 +43,7 @@ function Workstation() {
   const { symbol, sidebarCollapsed } = useWorkspace();
   const { provider, dataStatus } = useMarketStream(symbol, { trades: 1, depth: false });
   const [accountOpen, setAccountOpen] = useState(false);
+  const material = useTerminalAppearance(state => state.appearance.material);
   useEffect(() => {
     document.body.dataset.terminal = "true";
     const params = new URLSearchParams(window.location.search);
@@ -68,8 +71,8 @@ function Workstation() {
   }, []);
 
   return (
-    <div className="zt-reference-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
-      <CloudSyncBridge /><CommandPalette />
+    <div data-terminal-material={material} className="zt-reference-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
+      <TerminalAppearanceBridge /><CloudSyncBridge /><CommandPalette />
       <header className="zt-reference-header" aria-label="Terminal header">
         <button type="button" className="zt-reference-mark" onClick={() => dock.focusPanel("chart")} aria-label="Focus chart workspace" title="Chart workspace">
           <Image src="/brand/zterminal-mark-v2.png" alt="" width={24} height={24} priority />

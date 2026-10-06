@@ -715,3 +715,21 @@
   .headerScrolled::before { transform: none; }
   .brand:hover .brandMarkFrame { transform: none; }
 }
+
+/* The same graphite navigation material on every public document. */
+.headerWrapper { top: 16px; animation: none; }
+.headerWrapper .header { max-width: 1280px; height: 54px; padding-inline: 12px 18px; border-radius: 5px; }
+.headerWrapper .header::before { background: linear-gradient(110deg, #272033c9, #111018dc 55%, #211a2dc9); border: 1px solid #c5a1e62e; box-shadow: inset 0 1px 0 #ead9ff0d, 0 8px 32px #0004; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transform: none; }
+.headerWrapper .headerScrolled::before { background-color: #111018; border-color: #c5a1e642; }
+.brand { gap: 4px; }
+.brand > span:last-child { color: #e3ddec; font-size: 11px; font-weight: 600; letter-spacing: .12em; }
+.headerWrapper .accountCapsule { height: 32px; padding: 0 14px; gap: 16px; background: #ffffff06; border: 1px solid #ffffff17; border-radius: 4px; color: #d6cedf; font-size: 12px; box-shadow: none; }
+.headerWrapper .navLink { color: #b3adbf; font-size: 12px; border-radius: 4px; }
+.headerWrapper .navLink:hover, .headerWrapper .navLinkActive { color: #f0eff5; }
+.footer { background: var(--public-bg); }
+@media (max-width: 860px) {
+  .headerWrapper .header { height: 48px; }
+  .headerWrapper .nav { padding: 12px; border-radius: 5px; background: #111018f5; border-color: #ffffff1f; box-shadow: 0 12px 32px #0006; }
+  .headerWrapper .navLink { font-size: 14px; }
+  .headerWrapper .accountCapsule { height: 42px; justify-content: center; }
+}

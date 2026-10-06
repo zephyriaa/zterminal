@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { PublicScroll } from "./public-scroll";
 
 /** Progressive enhancement: one observer, no scroll loop, no hidden SSR content. */
 export function PublicMotion() {
@@ -10,7 +11,7 @@ export function PublicMotion() {
 
   useEffect(() => {
     const scope = marker.current?.closest<HTMLElement>(".publicScope");
-    if (!scope) return;
+    if (!scope || !("IntersectionObserver" in window)) return;
     let pressed: HTMLElement | null = null;
     const release = () => { pressed?.removeAttribute("data-pressed"); pressed = null; };
     const press = (event: PointerEvent) => {
@@ -36,7 +37,7 @@ export function PublicMotion() {
 
   useEffect(() => {
     const scope = marker.current?.closest<HTMLElement>(".publicScope");
-    if (!scope) return;
+    if (!scope || !("IntersectionObserver" in window)) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const targets = Array.from(scope.querySelectorAll<HTMLElement>("[data-public-reveal]"));
     const observer = new IntersectionObserver((entries) => {
@@ -75,5 +76,5 @@ export function PublicMotion() {
     };
   }, [pathname]);
 
-  return <span ref={marker} hidden aria-hidden="true" />;
+  return <><span ref={marker} hidden aria-hidden="true" /><PublicScroll /></>;
 }

@@ -75,16 +75,16 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
-        if (headerRef.current?.closest("[data-landing]")) menuRef.current?.focus();
+        menuRef.current?.focus();
       }
     };
     const dismissOutside = (event: globalThis.PointerEvent) => {
       const header = headerRef.current;
-      if (header?.closest("[data-landing]") && event.target instanceof Node && !header.contains(event.target)) setOpen(false);
+      if (header && event.target instanceof Node && !header.contains(event.target)) setOpen(false);
     };
     window.addEventListener("keydown", handleKeyDown);
-    // The landing audit found an outside-dismiss defect; other routes retain their behavior.
-    if (headerRef.current?.closest("[data-landing]")) document.addEventListener("pointerdown", dismissOutside);
+    // All public routes share the same dismissal and keyboard behavior.
+    document.addEventListener("pointerdown", dismissOutside);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("pointerdown", dismissOutside);
@@ -118,6 +118,7 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
               className={styles.brandMarkImage}
             />
           </span>
+          <span>ZTERMINAL</span>
         </Link>
 
         {/* Mobile Navigation Toggle */}
@@ -167,41 +168,7 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
             aria-label="Open ZTerminal account and Google sign-in"
             onClick={() => setOpen(false)}
           >
-            <div className={styles.accountAvatar}>
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <span className={styles.syncDot} aria-hidden="true" />
-            </div>
-            <div className={styles.accountMeta}>
-              <span className={styles.accountName}>Account</span>
-              <span className={styles.accountStatus}>Sign in or manage profile</span>
-            </div>
-            <svg
-              className={styles.accountChevron}
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
+            <span>Account</span><span aria-hidden="true">↗</span>
           </Link>
         </nav>
       </header>

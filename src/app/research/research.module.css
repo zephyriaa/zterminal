@@ -4,10 +4,7 @@
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
-  background:
-    radial-gradient(ellipse at 85% -5%, rgba(65, 39, 155, 0.26), transparent 44%),
-    radial-gradient(ellipse at 15% 45%, rgba(22, 38, 90, 0.16), transparent 40%),
-    var(--public-bg);
+  background: var(--public-bg);
 }
 
 .content {
@@ -27,7 +24,7 @@
 .title {
   margin: 0 0 24px;
   font-size: clamp(40px, 5.2vw, 76px);
-  font-weight: 620;
+  font-weight: 450;
   letter-spacing: -0.04em;
   line-height: 1.04;
   color: var(--public-ink);
@@ -148,7 +145,7 @@
 .stageName {
   margin: 0;
   font-size: 26px;
-  font-weight: 620;
+  font-weight: 450;
   letter-spacing: -0.03em;
   color: var(--public-ink);
 }
@@ -214,7 +211,7 @@
 .codeHeading {
   margin: 12px 0 16px;
   font-size: clamp(28px, 3.8vw, 44px);
-  font-weight: 620;
+  font-weight: 450;
   letter-spacing: -0.035em;
   color: var(--public-ink);
 }
@@ -240,7 +237,7 @@
 .boundaryHeading {
   margin: 18px 0 14px;
   font-size: clamp(26px, 3.2vw, 40px);
-  font-weight: 620;
+  font-weight: 450;
   letter-spacing: -0.035em;
   color: var(--public-ink);
 }
@@ -264,7 +261,7 @@
   padding: 24px 28px;
   border: 1px solid var(--public-line-soft);
   border-radius: var(--public-radius-sm);
-  background: rgba(8, 12, 24, 0.6);
+  background: var(--public-surface-card);
   transition: border-color var(--public-fast) var(--public-ease);
 }
 
@@ -306,7 +303,7 @@
 .actionBannerTitle {
   margin: 0 0 8px;
   font-size: clamp(24px, 3vw, 32px);
-  font-weight: 620;
+  font-weight: 450;
   letter-spacing: -0.03em;
   color: var(--public-ink);
 }

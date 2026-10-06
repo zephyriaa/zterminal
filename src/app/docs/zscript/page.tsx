@@ -27,7 +27,7 @@ export default function ZScriptMigrationPage() {
       </p>
 
       {/* WHY PYTHON */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Why standard Python &amp; vectorbt</h2>
         <p className={styles.sectionPara}>
           Proprietary domain-specific languages limit portability, introduce hidden compilation bugs, and isolate quants from the broader scientific Python ecosystem (NumPy, SciPy, pandas, vectorbt). Moving to standard Python gives traders:
@@ -46,7 +46,7 @@ export default function ZScriptMigrationPage() {
       </section>
 
       {/* WHAT REMAINS */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>What happens to historical ZScript records</h2>
         <p className={styles.sectionPara}>
           Previous ZScript runs are preserved as read-only historical records in your archive. ZTerminal will never silently rewrite or reinterpret legacy ZS code. If you wish to run historical tests forward, migrate the logic to standard Python using the SDK v1 patterns.
@@ -57,7 +57,7 @@ export default function ZScriptMigrationPage() {
       </section>
 
       {/* CTA */}
-      <section className={styles.docSection}>
+      <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Get started with Python</h2>
         <p className={styles.sectionPara}>
           Learn how to pair the local helper and write your first vectorized strategy using the new API.

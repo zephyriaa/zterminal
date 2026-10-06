@@ -92,3 +92,35 @@ body[data-terminal="true"] :is(button, input, select, textarea, [tabindex]):focu
 .zt-research-account b { font-size: 11px; }
 .zt-research-account small { font-size: 9px; color: #98a8b9; }
 @media (max-width: 639px) { .zt-research-account > div { display: none; } }
+
+/* Violet material: chrome follows appearance settings; chart semantics stay intact. */
+body[data-terminal-material="violet"], .zt-reference-terminal[data-terminal-material="violet"] {
+  --background: var(--zt-app-bg, #090a10); --base: var(--zt-app-bg, #090a10);
+  --panel: var(--zt-panel-bg, #14111d); --card: var(--zt-panel-bg, #14111d);
+  --surface: #1c1726; --elevated: #231c30; --hover: #30263e;
+  --foreground: #f0eff5; --card-foreground: #f0eff5; --muted-foreground: #a8a2b5;
+  --popover: var(--zt-panel-bg, #14111d); --popover-foreground: #f0eff5;
+  --secondary: #231c30; --secondary-foreground: #f0eff5; --muted: #231c30;
+  --accent: #30263e; --accent-foreground: #f0eff5; --border: #b5a2e82e; --input: #30263e;
+  --ring: var(--zt-accent, #b5a2e8); --research: var(--zt-accent, #b5a2e8);
+  --zt-line: #b5a2e82e; --zt-glass-fill: #211a2dd9; --zt-glass-opaque: #211a2d;
+  --zt-glass-gradient: linear-gradient(110deg, color-mix(in srgb, var(--zt-accent, #b5a2e8) 14%, transparent), transparent 55%, color-mix(in srgb, var(--zt-accent, #b5a2e8) 7%, transparent)), var(--zt-glass-fill);
+  --zt-glass-border: color-mix(in srgb, var(--zt-accent, #b5a2e8) 28%, transparent);
+  --zt-glass-highlight: inset 0 1px 0 #ead9ff14, inset 0 -1px 0 #a886cb08;
+  --zt-glass-focus: var(--zt-accent, #b5a2e8);
+}
+.zt-reference-terminal[data-terminal-material="violet"] { background: radial-gradient(ellipse at 85% 0, #7851c026, transparent 55%), var(--zt-app-bg, #090a10); }
+body[data-terminal-material="violet"] :is(.zt-reference-header, .zt-research-sidebar, .dv-tabs-and-actions-container, .dv-active-tab) { border-color: var(--zt-glass-border); }
+body[data-terminal-material="violet"] .zt-sidebar-tool.is-active { background: var(--zt-glass-gradient); border-color: var(--zt-glass-border); box-shadow: var(--zt-glass-highlight), 0 5px 16px #0004; }
+body[data-terminal-material="violet"] :is(.zt-instrument-picker-trigger, .zt-research-account, .zt-chart-timeframes) { background: color-mix(in srgb, var(--zt-accent) 8%, var(--zt-panel-bg)); border-color: var(--zt-glass-border); }
+body[data-terminal-material="violet"] :is(.zt-instrument-picker-trigger, .zt-research-account):hover { border-color: var(--zt-accent); background-color: color-mix(in srgb, var(--zt-accent) 13%, var(--zt-panel-bg)); }
+body[data-terminal-material="violet"] .zt-workspace-dock .dockview-theme-dark { --dv-activegroup-visiblepanel-tab-background-color: color-mix(in srgb, var(--zt-accent) 12%, transparent); --dv-activegroup-visiblepanel-tab-color: #eee7f6; --dv-tab-divider-color: #b5a2e81f; --dv-separator-border: #b5a2e82e; }
+body[data-terminal-material="violet"] .zt-workspace-dock .dv-active-group > .dv-tabs-and-actions-container { border-top-color: var(--zt-glass-border); }
+body[data-terminal-material="violet"] :is(.zt-chart-settings-panel, .zt-study-settings, .zt-terminal-preferences-custom) { background: var(--zt-panel-bg); color: var(--muted-foreground); }
+body[data-terminal-material="violet"] :is(.zt-settings-select select, .zt-study-settings input:not([type=checkbox])) { background: var(--zt-panel-bg); border-color: var(--zt-glass-border); color: var(--foreground); }
+body[data-terminal-material="violet"] .zt-chart-settings-tabs button:is(:hover, .is-active) { border-color: var(--zt-glass-border); background: color-mix(in srgb, var(--zt-accent) 10%, transparent); color: var(--zt-accent); }
+body[data-terminal-material="violet"] :is(.zt-workspace-label, .zt-sidebar-tool.is-active, .zt-mobile-navigation-tool.is-active) { color: var(--zt-accent); }
+.zt-preference-presets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (prefers-reduced-transparency: reduce) {
+  body[data-terminal-material="violet"], .zt-reference-terminal[data-terminal-material="violet"] { --zt-glass-fill: var(--zt-glass-opaque); --zt-glass-gradient: var(--zt-glass-opaque); }
+}

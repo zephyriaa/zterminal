@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspaceDock } from "./docking/workspace-dock-controller";
-import { useTerminalAppearance, hydrateTerminalAppearance } from "./terminal-preferences";
+import { hydrateTerminalAppearance, useTerminalAppearance } from "@/stores/terminal-appearance";
 import { useStudies } from "@/stores/studies";
 import { migrateStudy, type IndicatorInstance } from "@/lib/indicator-library";
 import {
@@ -64,6 +64,7 @@ export function ReferenceChartWorkspace() {
   const [persistentDrawing, setPersistentDrawing] = useState(false);
   const drawingClipboard = useRef<DrawingObject | null>(null);
   const [studiesHydrated, setStudiesHydrated] = useState(false);
+  const [documentsHydrated, setDocumentsHydrated] = useState(false);
   const indicatorDocumentRef = useRef<string | null>(null);
   const indicatorLoadingRef = useRef(false);
   const { lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
@@ -96,18 +97,21 @@ export function ReferenceChartWorkspace() {
 
   useEffect(() => {
     void Promise.resolve(useStudies.persist.rehydrate()).then(() => setStudiesHydrated(true));
-    void Promise.resolve(useChartDocuments.persist.rehydrate()).then(() => { useChartDocuments.getState().ensure({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings }); });
-    void hydrateTerminalAppearance();
+    let disposed = false;
+    void Promise.all([useChartDocuments.persist.rehydrate(), hydrateTerminalAppearance()]).then(() => {
+      if (!disposed) setDocumentsHydrated(true);
+    });
     const storage = (event: StorageEvent) => { if (event.key === "zterminal.chart-documents") void useChartDocuments.persist.rehydrate(); };
     window.addEventListener("storage", storage);
-    return () => window.removeEventListener("storage", storage);
+    return () => { disposed = true; window.removeEventListener("storage", storage); };
   }, []);
 
   useEffect(() => {
+    if (!documentsHydrated) return;
     const store = useChartDocuments.getState();
     store.ensure({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings });
     if (useChartDocuments.getState().documents[chartDocumentId]?.timeframe !== chartTimeframe) store.setTimeframe(chartDocumentId, chartTimeframe as Timeframe);
-  }, [chartDocumentId, chartTimeframe]);
+  }, [activeWorkspaceId, chartDocumentId, chartTimeframe, documentsHydrated, fallbackChartDocument.settings, instrument]);
 
   useEffect(() => {
     if (!studiesHydrated) return;
@@ -152,13 +156,7 @@ export function ReferenceChartWorkspace() {
     return () => window.removeEventListener("keydown", keyboard);
   }, [chartDocumentId, selectedDrawingId]);
 
-  useEffect(() => {
-    document.documentElement.dataset.terminalDensity = appearance.density;
-    document.documentElement.style.setProperty("--zt-app-bg", appearance.appBackground);
-    document.documentElement.style.setProperty("--zt-panel-bg", appearance.panelBackground);
-    document.documentElement.style.setProperty("--zt-chart-bg", appearance.chartBackground);
-    document.documentElement.style.setProperty("--zt-accent", appearance.accent);
-  }, [appearance]);
+
 
   useEffect(() => {
     const rerun = (event: Event) => { const detail = (event as CustomEvent<{ artifactId: string; params: Record<string, number | string | boolean> }>).detail; if (detail?.artifactId) void useResearch.getState().rerunIndicator(detail.artifactId, detail.params); };

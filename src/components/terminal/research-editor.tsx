@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import Editor, { loader, type Monaco, type OnMount } from "@monaco-editor/react";
 import type { editor, IDisposable } from "monaco-editor";
 import { useResearch } from "@/stores/research";
+import { useTerminalAppearance } from "@/stores/terminal-appearance";
 loader.config({ paths: { vs: "/vendor/monaco-0.55.1/vs" } });
 
 export default function ResearchEditor() {
@@ -10,9 +11,20 @@ export default function ResearchEditor() {
   const minimap = useResearch(s => s.minimap);
   const diagnostic = useResearch(s => s.diagnostic);
   const captured = useResearch(s => s.capturedScript);
+  const appearance = useTerminalAppearance(state => state.appearance);
   const instance = useRef<editor.IStandaloneCodeEditor | null>(null);
   const api = useRef<Monaco | null>(null);
   const disposables = useRef<IDisposable[]>([]);
+  const prepare = (monaco: Monaco) => monaco.editor.defineTheme("zterminal-dark", {
+    base: "vs-dark", inherit: true,
+    rules: [{ token: "comment", foreground: "82A774" }],
+    colors: { "editor.background": appearance.panelBackground, "editor.selectionBackground": appearance.accent + "35", "editor.lineHighlightBackground": appearance.accent + "0b" },
+  });
+  useEffect(() => {
+    if (!api.current) return;
+    prepare(api.current);
+    api.current.editor.setTheme("zterminal-dark");
+  }, [appearance.panelBackground, appearance.accent]);
   useEffect(() => () => { disposables.current.forEach(item => item.dispose()); }, []);
   useEffect(() => {
     const model = instance.current?.getModel();
@@ -40,10 +52,5 @@ export default function ResearchEditor() {
     } }));
     editor.focus();
   };
-  const prepare = (monaco: Monaco) => monaco.editor.defineTheme("zterminal-dark", {
-    base: "vs-dark", inherit: true,
-    rules: [{ token: "comment", foreground: "82A774" }],
-    colors: { "editor.background": "#1e1e1e" },
-  });
   return <Editor height="100%" path={`zterminal://scripts/${script.id}.py`} defaultLanguage="python" theme="zterminal-dark" value={script.source} onChange={value => useResearch.getState().setSource(value ?? "")} beforeMount={prepare} onMount={mount} loading={<p className="p-4 text-xs text-muted-foreground">Loading Python editor…</p>} options={{ fontSize: 12, lineHeight: 20, fontFamily: "var(--font-geist-mono), Consolas, monospace", minimap: { enabled: minimap }, automaticLayout: true, scrollBeyondLastLine: false, wordWrap: "off", padding: { top: 12 }, tabSize: 4, renderLineHighlight: "line", ariaLabel: "Python strategy editor", accessibilitySupport: "auto" }} />;
 }

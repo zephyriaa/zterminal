@@ -1,34 +1,34 @@
 /* Public site design system tokens — Scoped strictly to .publicScope */
 .publicScope {
   /* Surfaces & Canvas */
-  --public-bg: #050a15;
-  --public-bg-soft: #070d1c;
-  --public-surface: rgba(12, 17, 34, 0.78);
-  --public-surface-card: rgba(9, 13, 27, 0.65);
-  --public-surface-card-hover: rgba(14, 20, 42, 0.85);
-  --public-surface-raised: rgba(14, 20, 42, 0.92);
-  --public-surface-inset: #060912;
-  --public-surface-header: #0a0e1c;
+  --public-bg: #090a10;
+  --public-bg-soft: #0d0e16;
+  --public-surface: rgba(24, 20, 33, 0.78);
+  --public-surface-card: rgba(18, 16, 25, 0.75);
+  --public-surface-card-hover: rgba(35, 28, 47, 0.85);
+  --public-surface-raised: rgba(30, 25, 40, 0.92);
+  --public-surface-inset: #0c0b13;
+  --public-surface-header: #17121f;
 
   /* Restrained Liquid Glass System */
-  --public-glass-bg: rgba(10, 15, 30, 0.75);
-  --public-glass-bg-hover: rgba(16, 24, 48, 0.88);
-  --public-glass-border: rgba(133, 153, 195, 0.16);
+  --public-glass-bg: rgba(24, 19, 33, 0.75);
+  --public-glass-bg-hover: rgba(36, 27, 50, 0.88);
+  --public-glass-border: rgba(197, 161, 230, 0.16);
   --public-glass-border-focus: rgba(192, 147, 245, 0.42);
   --public-glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
   --public-glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
 
   /* Typography Colors */
-  --public-ink: #f5f6fc;
-  --public-copy: #a8bedc;
-  --public-muted: #778ca9;
-  --public-subtle: #4e5d78;
+  --public-ink: #f0eff5;
+  --public-copy: #a8a8b9;
+  --public-muted: #9292a5;
+  --public-subtle: #686475;
 
   /* Accents */
-  --public-violet: #6527e4;
-  --public-violet-dark: #501cb8;
+  --public-violet: #9061d1;
+  --public-violet-dark: #69429f;
   --public-violet-glow: rgba(101, 39, 228, 0.22);
-  --public-lilac: #c093f5;
+  --public-lilac: #b5a2e8;
   --public-lilac-subtle: rgba(192, 147, 245, 0.12);
   --public-lilac-badge-bg: rgba(101, 39, 228, 0.16);
   --public-lilac-badge-border: rgba(192, 147, 245, 0.32);
@@ -40,14 +40,14 @@
   --public-red: #f87171;
 
   /* Hairlines & Grid Rules */
-  --public-line: rgba(133, 153, 195, 0.2);
-  --public-line-soft: rgba(133, 153, 195, 0.12);
-  --public-line-subtle: rgba(133, 153, 195, 0.08);
+  --public-line: rgba(197, 176, 222, 0.16);
+  --public-line-soft: rgba(197, 176, 222, 0.1);
+  --public-line-subtle: rgba(197, 176, 222, 0.06);
   --public-line-focus: rgba(192, 147, 245, 0.45);
 
   /* Layout, Spacing & Container */
-  --public-gutter: clamp(20px, 4.5vw, 80px);
-  --public-content: min(1320px, calc(100% - (var(--public-gutter) * 2)));
+  --public-gutter: clamp(20px, 5vw, 80px);
+  --public-content: min(1280px, calc(100% - (var(--public-gutter) * 2)));
   --public-max-reading: 820px;
   --public-header-height: 60px;
 
@@ -86,7 +86,7 @@
 
   /* Fonts */
   --public-font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --public-font-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+  --public-font-serif: Georgia, "Times New Roman", serif;
   --public-font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Base Document Properties */
@@ -169,4 +169,12 @@
   .publicScope :is(a, button):is(:hover, :active),
   .publicScope :is(a, button)[data-pressed="true"],
   .publicScope :is(a, button):hover > span { transform: none !important; }
+}
+
+/* Native anchors remain smooth without JavaScript; Lenis owns desktop wheel input. */
+html:has(.publicScope) { scroll-behavior: smooth; }
+.publicScope :where(section[id], article[id], h2[id], h3[id]) { scroll-margin-top: 100px; }
+.publicScope pre { overscroll-behavior: contain; }
+@media (prefers-reduced-motion: reduce) {
+  html:has(.publicScope) { scroll-behavior: auto; }
 }

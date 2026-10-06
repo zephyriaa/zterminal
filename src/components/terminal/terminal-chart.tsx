@@ -105,7 +105,7 @@ interface ChartProps {
 
 function themeVar(name: string, fallback: string): string {
   if (typeof window === "undefined") return fallback;
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const value = getComputedStyle(document.body).getPropertyValue(name).trim();
   // Lightweight Charts does not parse newer CSS Color 4 formats such as
   // lab()/oklch(), while the app's Tailwind tokens may resolve to them.
   return /^(#[0-9a-f]{3,8}|rgba?\(|hsla?\(|transparent$)/i.test(value) ? value : fallback;

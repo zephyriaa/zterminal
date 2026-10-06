@@ -1,20 +1,21 @@
 /* Public design system primitives */
 
-/* Background Field: Restrained technical coordinate grid + architectural lighting */
+/* Shared graphite atmosphere, fading into the reading canvas. */
 .backgroundField {
   position: absolute;
-  inset: 0;
+  inset: 0 0 auto;
+  height: min(1400px, 100%);
   z-index: 0;
   overflow: hidden;
   clip-path: inset(0);
   contain: paint;
   max-width: 100%;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(140, 165, 215, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(140, 165, 215, 0.04) 1px, transparent 1px);
-  background-size: 72px 72px;
+  background: radial-gradient(ellipse at 75% 22%, #7851c044, transparent 50%), radial-gradient(ellipse at 10% 30%, #40365724, transparent 45%), linear-gradient(180deg, #171322, #090a10 85%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 300px), transparent);
 }
+
+.backgroundField::after { content: ''; position: absolute; inset: 0; opacity: .045; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E"); background-size: 180px 180px; }
 
 .backgroundField i {
   position: absolute;
@@ -23,19 +24,14 @@
 }
 
 .backgroundField i:nth-child(1) {
-  width: 64vw;
-  height: 64vw;
-  right: -24vw;
-  top: -24vw;
-  border: 1px solid rgba(192, 147, 245, 0.12);
+  width: 70%; height: 950px; right: -25%; top: -380px;
+  border-radius: 0; transform: rotate(-36deg);
+  background: linear-gradient(90deg, transparent 25%, #a078e410 49%, #e2c7ff28 50%, #9062cb09 53%, transparent 75%);
+  mask-image: linear-gradient(180deg, transparent, #000 20%, #000 60%, transparent);
 }
 
 .backgroundField i:nth-child(2) {
-  width: 42vw;
-  height: 42vw;
-  left: -20vw;
-  top: 35vh;
-  border: 1px solid rgba(133, 153, 195, 0.06);
+  display: none;
 }
 
 .backgroundField i:nth-child(3) {
@@ -91,7 +87,7 @@
   margin-top: 4px;
 }
 
-/* CTA Action Buttons — Restrained solid treatment without purple gradients or glow */
+/* Violet metal treatment shared with the landing actions. */
 .cta {
   display: inline-flex;
   align-items: center;
@@ -103,18 +99,18 @@
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.015em;
-  color: #060a14;
+  color: #fff;
   text-decoration: none;
-  background: #f5f6fc;
-  border: 1px solid #ffffff;
+  background: linear-gradient(180deg, #9061d1, #69429f);
+  border: 1px solid #c3a1ff73;
   border-radius: var(--public-radius-sm);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 1px 0 #efdcff40, 0 4px 18px #0005, 0 0 32px #8851c62c;
   transition: background var(--public-fast) var(--public-ease),
               transform var(--public-fast) var(--public-ease);
 }
 
 .cta:hover {
-  background: #e2e6f2;
+  background: #825ec7;
   transform: translateY(-1.5px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
