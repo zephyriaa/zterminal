@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async redirects() {
     return [{
+      source: "/",
+      has: [{ type: "host", value: "zterminal-web.zephyria-inc.workers.dev" }],
+      destination: "https://zterminal.dpdns.org/",
+      permanent: true,
+    }, {
       source: "/:path*",
       has: [{ type: "host", value: "zterminal-web.zephyria-inc.workers.dev" }],
       destination: "https://zterminal.dpdns.org/:path*",
