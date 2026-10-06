@@ -22,7 +22,7 @@ const value = (environment: AuthEnvironment, key: string) => environment[key]?.t
  * exercised in tests without opening a database connection.
  */
 export function resolveAuthRuntime(environment: AuthEnvironment = process.env): AuthRuntime {
-  const sessionSecret = value(environment, "NEXTAUTH_SECRET") ?? value(environment, "JWT_SECRET");
+  const sessionSecret = value(environment, "NEXTAUTH_SECRET") ?? value(environment, "AUTH_SECRET") ?? value(environment, "JWT_SECRET");
   const googleClientId = value(environment, "GOOGLE_CLIENT_ID");
   const googleClientSecret = value(environment, "GOOGLE_CLIENT_SECRET");
   const databaseUrl = value(environment, "DATABASE_URL");
@@ -33,16 +33,18 @@ export function resolveAuthRuntime(environment: AuthEnvironment = process.env): 
     if (siteUrl) {
       const parsed = new URL(siteUrl);
       validSiteUrl = parsed.origin === siteUrl.replace(/\/$/, "") &&
-        (parsed.protocol === "https:" || (!isProduction && parsed.hostname === "localhost"));
+        !parsed.username && !parsed.password &&
+        (parsed.protocol === "https:" || (!isProduction && parsed.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname)));
     }
   } catch { /* Invalid public origin is reported in missing. */ }
   const durableDatabaseConfigured = Boolean(databaseUrl && /^postgres(?:ql)?:\/\//i.test(databaseUrl));
   const googleOAuthConfigured = Boolean(googleClientId && googleClientSecret);
   const missing = [
-    !sessionSecret && "NEXTAUTH_SECRET (or JWT_SECRET)",
+    !sessionSecret && "NEXTAUTH_SECRET (or AUTH_SECRET / JWT_SECRET)",
+    isProduction && sessionSecret && sessionSecret.length < 32 && "NEXTAUTH_SECRET (at least 32 characters)",
     !googleClientId && "GOOGLE_CLIENT_ID",
     !googleClientSecret && "GOOGLE_CLIENT_SECRET",
-    isProduction && !validSiteUrl && "NEXTAUTH_URL (public HTTPS origin)",
+    !validSiteUrl && "NEXTAUTH_URL (public HTTPS origin)",
     isProduction && !durableDatabaseConfigured && "a PostgreSQL DATABASE_URL",
   ].filter((entry): entry is string => Boolean(entry));
   const authConfigured = missing.length === 0;

@@ -13,6 +13,7 @@ import { WorkspaceDockProvider, useWorkspaceDock } from "./docking/workspace-doc
 import { TerminalErrorBoundary } from "./terminal-error-boundary";
 import { CommandPalette } from "./command-palette";
 import { useSession } from "next-auth/react";
+import { useAuthHealth } from "@/components/auth/session-provider";
 import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
 import { AccountPanel } from "./account-panel";
 import { useWorkspace } from "@/stores/workspace";
@@ -34,6 +35,7 @@ export function FloatingWorkstationShell() {
 function Workstation() {
   const dock = useWorkspaceDock();
   const { data: session, status } = useSession();
+  const authHealth = useAuthHealth();
   const syncStatus = useCloudSyncStatus(state => state.status);
   const displayName = session?.user?.name || session?.user?.email || "Account";
   const { symbol, sidebarCollapsed } = useWorkspace();
@@ -81,7 +83,7 @@ function Workstation() {
           <button type="button" className="zt-header-icon" onClick={() => dock.openPanel("strategy")} aria-label="Open Python strategy developer" title="Python strategy developer"><Code2 /></button>
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><Search /></button>
           <button type="button" className="zt-header-icon" onClick={() => dock.openPanel("settings")} aria-label="Terminal preferences" title="Terminal preferences"><Settings2 /></button>
-          <button type="button" className="zt-research-account" onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} aria-label="Open research account information">{session?.user?.image ? <img src={session.user.image} alt="" referrerPolicy="no-referrer" /> : <span aria-hidden="true">{status === "authenticated" ? displayName[0].toUpperCase() : "○"}</span>}<div className="hidden sm:block"><b>{status === "authenticated" ? displayName : "Local workspace"}</b><small>{status === "authenticated" ? syncStatus : "On this device"}</small></div></button>
+          <button type="button" className="zt-research-account" onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} aria-label="Open research account information">{session?.user?.image ? <img src={session.user.image} alt="" referrerPolicy="no-referrer" /> : <span aria-hidden="true">{status === "authenticated" ? displayName[0].toUpperCase() : "○"}</span>}<div className="hidden sm:block"><b>{status === "authenticated" ? displayName : authHealth.phase === "error" ? "Session unavailable" : status === "loading" ? "Checking session…" : "Local workspace"}</b><small>{status === "authenticated" ? syncStatus : authHealth.phase === "error" ? "Retry account verification" : status === "loading" ? "" : "On this device"}</small></div></button>
           {accountOpen && <AccountPanel symbol={symbol} provider={provider} dataStatus={dataStatus} onClose={() => setAccountOpen(false)} />}
         </div>
       </header>

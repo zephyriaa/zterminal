@@ -16,12 +16,12 @@ test("Google identity is exposed only when the full production boundary is confi
   const incomplete = resolveAuthRuntime({ NODE_ENV: "production" });
   assert.equal(incomplete.authConfigured, false);
   assert.equal(incomplete.cloudSyncConfigured, false);
-  assert.deepEqual(incomplete.missing, ["NEXTAUTH_SECRET (or JWT_SECRET)", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "NEXTAUTH_URL (public HTTPS origin)", "a PostgreSQL DATABASE_URL"]);
+  assert.deepEqual(incomplete.missing, ["NEXTAUTH_SECRET (or AUTH_SECRET / JWT_SECRET)", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "NEXTAUTH_URL (public HTTPS origin)", "a PostgreSQL DATABASE_URL"]);
   assert.throws(() => requireProductionAuthRuntime(incomplete), /authentication is not configured/i);
 
   const complete = resolveAuthRuntime({
     NODE_ENV: "production",
-    NEXTAUTH_SECRET: "test-secret",
+    NEXTAUTH_SECRET: "test-only-secret-with-at-least-32-characters",
     GOOGLE_CLIENT_ID: "google-client-id",
     GOOGLE_CLIENT_SECRET: "google-client-secret",
     NEXTAUTH_URL: "https://zterminal.example",
@@ -35,7 +35,7 @@ test("Google identity is exposed only when the full production boundary is confi
   // A proxy URL is not usable by the PostgreSQL driver adapter.
   const accelerate = resolveAuthRuntime({
     NODE_ENV: "production",
-    NEXTAUTH_SECRET: "test-secret",
+    NEXTAUTH_SECRET: "test-only-secret-with-at-least-32-characters",
     GOOGLE_CLIENT_ID: "google-client-id",
     GOOGLE_CLIENT_SECRET: "google-client-secret",
     NEXTAUTH_URL: "https://zterminal.example",
@@ -46,7 +46,7 @@ test("Google identity is exposed only when the full production boundary is confi
   assert.equal(accelerate.cloudSyncConfigured, false);
 
   const invalidOrigin = resolveAuthRuntime({
-    NODE_ENV: "production", NEXTAUTH_SECRET: "test-secret", GOOGLE_CLIENT_ID: "id",
+    NODE_ENV: "production", NEXTAUTH_SECRET: "test-only-secret-with-at-least-32-characters", GOOGLE_CLIENT_ID: "id",
     GOOGLE_CLIENT_SECRET: "secret", DATABASE_URL: "postgresql://host/database",
     NEXTAUTH_URL: "http://localhost:3000",
   });
@@ -96,11 +96,11 @@ test("the installed NextAuth client reads disabled sessions without logging fetc
 test("Google callback accepts only a verified email and immutable provider identity", async () => {
   const callback = authOptions.callbacks?.signIn;
   assert.ok(callback);
-  const base = { account: { provider: "google" }, user: { id: "google-subject" }, profile: { email: "person@example.test", email_verified: true } };
+  const base = { account: { provider: "google", providerAccountId: "google-subject" }, user: { id: "google-subject" }, profile: { sub: "google-subject", email: "person@example.test", email_verified: true } };
   const input = (value: unknown) => value as Parameters<typeof callback>[0];
   assert.equal(await callback(input(base)), true);
   assert.equal(await callback(input({ ...base, profile: { ...base.profile, email_verified: false } })), false);
-  assert.equal(await callback(input({ ...base, user: { id: "" } })), false);
+  assert.equal(await callback(input({ ...base, account: { provider: "google", providerAccountId: "wrong-subject" } })), false);
 });
 
 test("public research proxy does not expose persisted jobs by ID", async () => {

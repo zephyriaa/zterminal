@@ -38,11 +38,13 @@ function createClient() {
   }
 
   // Standard Node.js runtime (local dev or self-hosted VPS)
-  return new PrismaClient({
-    // Query payloads can contain user-authored strategy, journal, and risk data.
-    // Keep operational error visibility without emitting query values by default.
-    log: ["error", "warn"],
+  const client = new PrismaClient({
+    // Error event messages can include Prisma invocations and connection details.
+    log: [{ level: "error", emit: "event" }, { level: "warn", emit: "event" }],
   });
+  client.$on("error", () => console.error("ZTerminal database error"));
+  client.$on("warn", () => console.warn("ZTerminal database warning"));
+  return client;
 }
 
 export const db = globalForPrisma.prisma ?? createClient();

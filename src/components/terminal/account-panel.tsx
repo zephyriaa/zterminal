@@ -3,6 +3,8 @@ import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
 
 import { useEffect, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { authErrorMessage } from "@/lib/auth-policy";
+import { useAuthHealth } from "@/components/auth/session-provider";
 import {
   Camera,
   Check,
@@ -60,18 +62,17 @@ export function AccountPanel({
   onClose: () => void;
 }) {
   const { data: session, status, update: updateSession } = useSession();
+  const health = useAuthHealth();
   const syncStatus = useCloudSyncStatus(state => state.status);
   const [signingIn, setSigningIn] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [googleSignInAvailable, setGoogleSignInAvailable] = useState<boolean | null>(null);
   const [authError, setAuthError] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     const urlParams = new URLSearchParams(window.location.search);
     const err = urlParams.get("error");
     if (!err) return null;
-    if (process.env.NODE_ENV !== "production") console.error("Google sign-in failed", { code: err });
-    if (err === "OAuthAccountNotLinked") return "This email is already linked to another sign-in method. Sign in using that method first.";
-    if (err === "AccessDenied") return "Google sign-in was cancelled or permission was denied.";
-    return "We couldn't complete Google sign-in. Please try again.";
+    return authErrorMessage(err);
   });
 
   // Profile Edit State
@@ -134,11 +135,20 @@ export function AccountPanel({
     try {
       const result = await signIn("google", { callbackUrl: "/terminal" });
       if (result?.error) throw new Error(result.error);
-    } catch (e) {
-      if (process.env.NODE_ENV !== "production") console.error("Google sign-in could not start", { code: e instanceof Error ? e.message : "unknown" });
+    } catch {
       setAuthError("We couldn't start Google sign-in. Please try again.");
       setSigningIn(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    setSigningOut(true); setAuthError(null);
+    try {
+      await signOut({ callbackUrl: "/terminal", redirect: false });
+      const remaining = await updateSession();
+      if (remaining) setAuthError("Sign-out could not be completed. Please try again.");
+    } catch { setAuthError("Sign-out is temporarily unavailable. Please try again."); }
+    finally { setSigningOut(false); }
   };
 
   const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,6 +221,9 @@ export function AccountPanel({
   const displayName = session?.user?.name || session?.user?.email || "Research workspace";
   const userImage = session?.user?.image;
 
+  if (health.phase === "error") return <section ref={panelRef} className="zt-account-panel" role="alert" aria-label="Session verification unavailable"><p className="p-4 text-xs">Your session could not be verified. Check your connection and try again.</p><button type="button" className="px-4 pb-4 text-xs" onClick={() => void health.retry()}>Retry session verification</button></section>;
+  if (status === "loading") return <section ref={panelRef} className="zt-account-panel" aria-busy="true" aria-label="Loading account"><p className="p-4 text-xs text-muted-foreground">Checking your session…</p></section>;
+
   return (
     <section
       ref={panelRef}
@@ -278,7 +291,8 @@ export function AccountPanel({
                 <button
                   type="button"
                   className="zt-account-signout"
-                  onClick={() => void signOut({ callbackUrl: "/terminal" })}
+                  disabled={signingOut}
+                  onClick={() => void handleSignOut()}
                   title="Sign out of Google"
                 >
                   <LogOut />
@@ -547,7 +561,7 @@ export function AccountPanel({
             <button
               type="button"
               className="w-full py-2.5 px-4 rounded bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-medium text-xs shadow-sm flex items-center justify-center gap-2.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:shadow"
-              disabled={status === "loading" || signingIn || googleSignInAvailable === null}
+              disabled={signingIn || googleSignInAvailable !== true}
               onClick={() => void handleGoogleSignIn()}
             >
               {signingIn ? (

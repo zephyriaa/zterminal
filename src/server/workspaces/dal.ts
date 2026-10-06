@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
+import { verifiedServerSession } from "@/server/auth-session";
 import { z } from "zod";
-import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 /**
@@ -26,7 +25,7 @@ export class WorkspaceAccessError extends Error {
 }
 
 export async function authenticatedWorkspaceOwner() {
-  const session = await getServerSession(authOptions);
+  const session = await verifiedServerSession();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return null;
   return db.user.findUnique({ where: { id: userId } });

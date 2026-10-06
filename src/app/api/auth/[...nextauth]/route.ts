@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import NextAuth from "next-auth";
 import { authOptions, googleSignInConfigured } from "@/lib/auth";
+import { sessionAvailabilityProbe } from "@/lib/auth-session";
 
-const handler = NextAuth(authOptions);
 type AuthRouteContext = { params: Promise<{ nextauth?: string[] }> };
+
+async function configuredResponse(request: NextRequest, params: { nextauth?: string[] }) {
+  const probe = sessionAvailabilityProbe(authOptions);
+  const response = await NextAuth(probe.options)(request, { params });
+  if (probe.failed()) return NextResponse.json({ code: "SESSION_UNAVAILABLE", message: "Your session could not be verified. Try again shortly." }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  return response;
+}
 
 function unavailable() {
   return Response.json(
@@ -28,11 +35,11 @@ function disabledClientResponse(method: "GET" | "POST", nextauth?: string[]) {
 export async function GET(request: NextRequest, context: AuthRouteContext) {
   const params = await context.params;
   if (!googleSignInConfigured) return disabledClientResponse("GET", params.nextauth);
-  return handler(request, { params });
+  return configuredResponse(request, params);
 }
 
 export async function POST(request: NextRequest, context: AuthRouteContext) {
   const params = await context.params;
   if (!googleSignInConfigured) return disabledClientResponse("POST", params.nextauth);
-  return handler(request, { params });
+  return configuredResponse(request, params);
 }
