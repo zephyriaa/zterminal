@@ -3,12 +3,23 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 
 
 def atomic(path, value):
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(value, allow_nan=False, ensure_ascii=False), encoding="utf-8")
-    os.replace(temporary, path)
+    # On Windows the controller's short read can hold a handle without delete
+    # sharing. Keep the previous complete JSON visible while that reader closes.
+    deadline = time.monotonic() + .5
+    while True:
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError as error:
+            if os.name != 'nt' or getattr(error, 'winerror', None) not in (5, 32, 33) or time.monotonic() >= deadline:
+                raise
+            time.sleep(.01)
 
 
 def main():

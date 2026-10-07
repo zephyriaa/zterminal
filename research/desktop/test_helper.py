@@ -221,7 +221,10 @@ class ProcessTests(unittest.TestCase):
     def test_resource_limit_and_process_crash_return_failures(self):
         for source in ["allocation = bytearray(3_000_000_000)", "import os\nos._exit(2)"]:
             job = self.controller.create(fixture(source))
-            self.assertEqual(self.wait(job)["stage"], "failed")
+            status = self.wait(job)
+            self.assertEqual(status["stage"], "failed")
+            if source.endswith("os._exit(2)"):
+                self.assertEqual(status["diagnostic"]["exitCode"], 2)
             while self.controller.active:
                 time.sleep(.05)
         self.assertEqual(self.archive.results(), [])

@@ -109,7 +109,7 @@ class Controller:
             if process.returncode != 0 or not result_path.exists():
                 status_path = folder / "status.json"
                 status = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else {}
-                self.archive.save_job({"id": job["id"], "stage": "failed", "diagnostic": status.get("diagnostic", {"message": "Strategy process stopped unexpectedly or exceeded its resource limit; no result was saved"})})
+                self.archive.save_job({"id": job["id"], "stage": "failed", "diagnostic": status.get("diagnostic", {"message": f"Strategy process exited with code {process.returncode} without a completed result; no result was saved", "exitCode": process.returncode})})
                 return
             if result_path.stat().st_size > 128_000_000:
                 raise ValueError("Result exceeds the 128 MB archive limit")

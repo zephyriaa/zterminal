@@ -237,6 +237,7 @@ public:
         input_layout_.Reset();
         vertex_shader_.Reset();
         pixel_shader_.Reset();
+        rasterizer_state_.Reset();
         swap_chain_.Reset();
         context_.Reset();
         device_.Reset();
@@ -323,7 +324,8 @@ public:
         std::uint64_t scene_revision,
         std::uint64_t view_revision,
         bool force_rebuild,
-        bool unsynchronised_present
+        bool unsynchronised_present,
+        bool verify_pixels = false
     ) {
         if (!context_ || !render_target_ || !swap_chain_ || !vertex_buffer_) {
             return;
@@ -332,6 +334,11 @@ public:
         constexpr float background[] = {0.027F, 0.047F, 0.075F, 1.0F};
         ID3D11RenderTargetView* const targets[] = {render_target_.Get()};
         context_->OMSetRenderTargets(1, targets, nullptr);
+        // ClearState during resize discards the viewport too. Bind the complete
+        // 2D rasterization state on every draw, including the first frame.
+        const D3D11_VIEWPORT viewport{0.0F, 0.0F, static_cast<float>(width_), static_cast<float>(height_), 0.0F, 1.0F};
+        context_->RSSetViewports(1, &viewport);
+        context_->RSSetState(rasterizer_state_.Get());
         context_->ClearRenderTargetView(render_target_.Get(), background);
 
         bool can_draw = false;
@@ -371,6 +378,9 @@ public:
             context_->Draw(retained_vertex_count_, 0);
         }
 
+        if (verify_pixels && !verified_chart_pixels_.has_value()) {
+            verified_chart_pixels_ = verify_rendered_pixels();
+        }
         const HRESULT present_result = swap_chain_->Present(unsynchronised_present ? 0U : 1U, 0);
         if (SUCCEEDED(present_result)) {
             frame_stats_.add(std::chrono::duration<double, std::milli>(Clock::now() - frame_started).count());
@@ -424,8 +434,45 @@ private:
         if (FAILED(swap_chain_->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf())))) {
             return false;
         }
+        D3D11_TEXTURE2D_DESC description{};
+        back_buffer->GetDesc(&description);
+        width_ = description.Width;
+        height_ = description.Height;
         return SUCCEEDED(device_->CreateRenderTargetView(back_buffer.Get(), nullptr, render_target_.GetAddressOf()));
     }
+
+public:
+    [[nodiscard]] std::optional<std::uint64_t> verified_chart_pixels() const { return verified_chart_pixels_; }
+    // Explicit diagnostic only. Reading pixels catches a successful Draw/Present
+    // that produced no chart, which aggregate HRESULT counters cannot detect.
+    [[nodiscard]] std::optional<std::uint64_t> verify_rendered_pixels() {
+        ComPtr<ID3D11Texture2D> back_buffer;
+        if (FAILED(swap_chain_->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf())))) return std::nullopt;
+        D3D11_TEXTURE2D_DESC description{};
+        back_buffer->GetDesc(&description);
+        description.Usage = D3D11_USAGE_STAGING;
+        description.BindFlags = 0;
+        description.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        description.MiscFlags = 0;
+        ComPtr<ID3D11Texture2D> staging;
+        if (FAILED(device_->CreateTexture2D(&description, nullptr, staging.GetAddressOf()))) return std::nullopt;
+        context_->CopyResource(staging.Get(), back_buffer.Get());
+        D3D11_MAPPED_SUBRESOURCE mapped{};
+        if (FAILED(context_->Map(staging.Get(), 0, D3D11_MAP_READ, 0, &mapped))) return std::nullopt;
+        std::uint64_t count = 0;
+        for (UINT row = 0; row < description.Height; ++row) {
+            const auto* pixels = static_cast<const unsigned char*>(mapped.pData) + row * mapped.RowPitch;
+            for (UINT column = 0; column < description.Width; ++column) {
+                const auto* pixel = pixels + column * 4;
+                // Chart and crosshair colors are well outside the dark clear color.
+                if (pixel[0] > 40 || pixel[1] > 40 || pixel[2] > 40) ++count;
+            }
+        }
+        context_->Unmap(staging.Get(), 0);
+        return count;
+    }
+
+private:
 
     bool create_pipeline() {
         constexpr char shader_source[] = R"(
@@ -456,6 +503,11 @@ private:
         buffer.Usage = D3D11_USAGE_DYNAMIC;
         buffer.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         buffer.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        D3D11_RASTERIZER_DESC rasterizer{};
+        rasterizer.FillMode = D3D11_FILL_SOLID;
+        rasterizer.CullMode = D3D11_CULL_NONE;
+        rasterizer.DepthClipEnable = TRUE;
+        if (FAILED(device_->CreateRasterizerState(&rasterizer, rasterizer_state_.GetAddressOf()))) return false;
         return SUCCEEDED(device_->CreateBuffer(&buffer, nullptr, vertex_buffer_.GetAddressOf()));
     }
 
@@ -524,7 +576,7 @@ private:
         const float slot = 2.0F / static_cast<float>(visible);
         const float body_half_width = std::max(slot * 0.28F, 0.0004F);
         const float wick_half_width = std::max(slot * 0.05F, 0.0002F);
-        const auto y = [low, range](double price) { return static_cast<float>(1.0 - ((price - low) / range) * 2.0); };
+        const auto y = [low, range](double price) { return static_cast<float>(((price - low) / range) * 2.0 - 1.0); };
 
         vertices.reserve(kMaximumVertices);
         for (std::size_t local_index = 0; local_index < visible; ++local_index) {
@@ -537,7 +589,7 @@ private:
             append_rectangle(vertices, x - wick_half_width, y(candle.high), x + wick_half_width, y(candle.low), color);
             const float top = y(std::max(candle.open, candle.close));
             const float bottom = y(std::min(candle.open, candle.close));
-            append_rectangle(vertices, x - body_half_width, top, x + body_half_width, std::max(bottom, top + 0.002F), color);
+            append_rectangle(vertices, x - body_half_width, top, x + body_half_width, std::min(bottom, top - 0.002F), color);
         }
         if (view.has_cursor && width_ > 0 && height_ > 0) {
             const float x = (static_cast<float>(view.cursor.x) / static_cast<float>(width_)) * 2.0F - 1.0F;
@@ -592,6 +644,8 @@ private:
     ComPtr<ID3D11PixelShader> pixel_shader_;
     ComPtr<ID3D11InputLayout> input_layout_;
     ComPtr<ID3D11Buffer> vertex_buffer_;
+    ComPtr<ID3D11RasterizerState> rasterizer_state_;
+    std::optional<std::uint64_t> verified_chart_pixels_;
 };
 
 enum class ChartSource {
@@ -737,7 +791,8 @@ void advance_chart_view_revision() {
 }
 
 void update_title(HWND window) {
-    SetWindowTextW(window, kWindowTitle);
+    SetWindowTextW(window, chart_source == ChartSource::FixtureDiagnostic
+        ? L"ZTerminal - diagnostic synthetic candles" : kWindowTitle);
     update_workspace_overlay(window);
 }
 
@@ -930,7 +985,9 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
     case WM_CTLCOLORSTATIC: {
         HDC device_context = reinterpret_cast<HDC>(w_param);
         const HWND control = reinterpret_cast<HWND>(l_param);
-        SetBkMode(device_context, TRANSPARENT);
+        SetBkMode(device_context, OPAQUE);
+        SetBkColor(device_context, RGB(7, 12, 19));
+        SetDCBrushColor(device_context, RGB(7, 12, 19));
         if (control == workspace_state) {
             SetTextColor(device_context, RGB(243, 176, 75));
         } else if (control == workspace_brand) {
@@ -940,7 +997,7 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         } else {
             SetTextColor(device_context, RGB(223, 234, 244));
         }
-        return reinterpret_cast<LRESULT>(GetStockObject(NULL_BRUSH));
+        return reinterpret_cast<LRESULT>(GetStockObject(DC_BRUSH));
     }
     case WM_MOUSEMOVE: {
         TRACKMOUSEEVENT tracking{sizeof(TRACKMOUSEEVENT), TME_LEAVE, window, 0};
@@ -989,9 +1046,18 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
         ReleaseCapture();
         request_frame(window);
         return 0;
-    case WM_PAINT:
-        ValidateRect(window, nullptr);
+    case WM_PAINT: {
+        PAINTSTRUCT paint{};
+        HDC context = BeginPaint(window, &paint);
+        if (chart_source == ChartSource::Unavailable) {
+            SetDCBrushColor(context, RGB(7, 12, 19));
+            FillRect(context, &paint.rcPaint, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+        }
+        EndPaint(window, &paint);
+        // Repainting a chart must request a fresh GPU frame after exposure.
+        render_requested = true;
         return 0;
+    }
     case WM_KEYDOWN:
         if (w_param == VK_ESCAPE) {
             DestroyWindow(window);
@@ -1301,6 +1367,10 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"renderer_retained_vertex_clears\": " << native_renderer.retained_vertex_clears() << ",\n";
     output << "  \"renderer_retained_vertex_rebuilds\": " << native_renderer.retained_vertex_rebuilds() << ",\n";
     output << "  \"renderer_last_error_hr\": " << static_cast<long>(native_renderer.last_renderer_error()) << ",\n";
+    output << "  \"verified_chart_pixels\": ";
+    if (native_renderer.verified_chart_pixels().has_value()) output << *native_renderer.verified_chart_pixels();
+    else output << "null";
+    output << ",\n";
     output << "  \"working_set_bytes\": " << (has_memory ? memory.WorkingSetSize : 0) << ",\n";
     output << "  \"private_usage_bytes\": " << (has_memory ? memory.PrivateUsage : 0) << "\n";
     output << "}\n";
@@ -1325,7 +1395,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
         write_startup_status("window_class_failed", static_cast<long>(GetLastError()));
         return 1;
     }
-    HWND window = CreateWindowEx(0, kWindowClass, kWindowTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 820, nullptr, nullptr, instance, nullptr);
+    HWND window = CreateWindowEx(0, kWindowClass, kWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 820, nullptr, nullptr, instance, nullptr);
     if (window == nullptr) {
         write_startup_status("window_create_failed", static_cast<long>(GetLastError()));
         return 2;
@@ -1351,6 +1421,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
         && has_option(command_line, L"--benchmark-unsynchronised-present");
     benchmark_resize_once = auto_close_after_seconds > 0
         && has_option(command_line, L"--benchmark-resize-once");
+    const bool verify_pixels = auto_close_after_seconds > 0
+        && has_option(command_line, L"--benchmark-verify-pixels");
     const bool diagnostic_next_segment = auto_close_after_seconds > 0
         && diagnostic_next_local_segment(command_line);
     const std::optional<WPARAM> diagnostic_navigation = auto_close_after_seconds > 0
@@ -1378,13 +1450,18 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
             TranslateMessage(&message);
             DispatchMessage(&message);
         } else if (render_requested || continuous_benchmark_rendering) {
-            native_renderer.render(
-                chart_candles,
-                chart_view,
-                chart_scene_revision,
-                chart_view_revision,
-                force_chart_vertex_rebuild,
-                unsynchronised_benchmark_present);
+            if (chart_source != ChartSource::Unavailable) {
+                native_renderer.render(
+                    chart_candles,
+                    chart_view,
+                    chart_scene_revision,
+                    chart_view_revision,
+                    force_chart_vertex_rebuild,
+                    unsynchronised_benchmark_present,
+                    verify_pixels);
+            } else if (continuous_benchmark_rendering) {
+                Sleep(16);
+            }
             force_chart_vertex_rebuild = false;
             render_requested = false;
             if (auto_close_after_seconds > 0 && Clock::now() >= benchmark_deadline) {
