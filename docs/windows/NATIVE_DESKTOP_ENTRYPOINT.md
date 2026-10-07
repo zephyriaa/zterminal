@@ -1,0 +1,13 @@
+# Native desktop entry point
+
+7 October 2026. The Windows product is the native local-first client described in LOCAL_FIRST_PRODUCT_BOUNDARY.md. The hosted Tauri preview is a separate diagnostic tool and must not be used as the desktop-product entry point.
+
+`npm run desktop:dev` now builds and opens the Win32/Direct3D11 host with its local Rust sidecars. `npm run desktop:build` builds that same native Release package. Both use apps/windows-host/scripts/build-native.ps1, independent of the website, frontend development server and hosted site. Normal native startup opens no provider connection, starts no cloud sync and fabricates no candles. Verified local segments are required to show market data.
+
+The hosted preview is accessible only through the explicitly named desktop:hosted-preview:dev and desktop:hosted-preview:build commands. The latter also repairs the missing script referenced by the existing internal preview workflows. It remains an online diagnostic wrapper, never the native renderer or an offline-capable Windows release.
+
+The compute boundary remains: native rendering and input, direct permitted provider ingestion, local normalization/storage, indicators, replay, Python research and Monte Carlo on the user's machine. Optional remote services supply identity, entitlement, small signed release metadata and explicitly enabled synchronization. No default raw-market-data relay, server-side research or remote execution is introduced. Direct provider use still depends on provider limits and terms; local compute reduces ZTerminal server load but is not proof of unlimited concurrency.
+
+The native host and local sidecars are an engineering foundation, not full parity with the browser workstation. Native product work still includes the integrated workstation controls, research/editor experience, chart/drawing tools and appearance settings. The web violet theme does not automatically style Direct3D/Win32 controls. Production installer signing and publication remain separate release work.
+
+Validation on this Windows device: both desktop:build and desktop:dev completed successfully using Visual Studio 2022/MSVC, CMake and the local Cargo workspace. The native launcher produced a responsive nonzero window handle with title ZTerminal. An isolated two-second default-startup check reported ready, network_opened=false, chart_source=withheld and LOCAL DATA UNAVAILABLE, with hardware Direct3D rendering. Its measured launch time was about 59 ms and working set about 53 MiB; these describe this minimal native slice, not the eventual full workstation. Diagnostic evidence is in artifacts/native-entrypoint. No installer, public release, server deployment or live ingestion was performed.
