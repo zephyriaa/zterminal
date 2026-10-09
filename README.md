@@ -25,9 +25,9 @@ ZTerminal brings charting, market structure, and quantitative research into one 
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-f4f4f5?style=flat-square&labelColor=18181b" /></a>
 </p>
 
-<img src="verify-chart2.png" alt="Actual ZTerminal chart workspace with technical research tools" width="100%" />
+<a href="docs/assets/readme/workstation-current.webp"><img src="docs/assets/readme/workstation-current.webp" alt="Current ZTerminal web chart workspace showing BTC/USDT five-minute candles, EMA, session VWAP, volume, drawing tools, and a disconnected feed inspector" width="960" /></a>
 
-<sub>The ZTerminal web workstation. The native Windows experience is still in development.</sub>
+<sub>Price, studies, and data health in one workspace.<br />Captured from the web beta on October 9, 2026. Historical bars are visible; the streaming feed is disconnected. Windows remains in development.</sub>
 
 </div>
 
@@ -48,16 +48,26 @@ ZTerminal is being built for the entire process: **observe → investigate → c
 
 ### A closer look
 
+**Study the market. Make the assumptions explicit.** These are actual views from the current [web terminal](https://zterminal.dpdns.org/terminal). Select an image to inspect it at full resolution.
+
 <table>
   <tr>
-    <td width="50%"><img src="verify-strategy.png" alt="ZTerminal strategy research interface with parameters and execution assumptions" /></td>
-    <td width="50%"><img src="verify-final-backtest.png" alt="ZTerminal backtest report with performance and risk analysis" /></td>
+    <th width="50%" align="left">01 / Study the sequence</th>
+    <th width="50%" align="left">02 / Define the test</th>
   </tr>
   <tr>
-    <td><strong>From a hypothesis to code.</strong><br /><sub>Make strategy logic, parameters, and test conditions explicit.</sub></td>
-    <td><strong>From a backtest to a decision.</strong><br /><sub>Review performance, trades, risks, and the evidence behind the result.</sub></td>
+    <td width="50%" valign="top"><a href="docs/assets/readme/replay-study-current.webp"><img src="docs/assets/readme/replay-study-current.webp" alt="ZTerminal bar replay at bar 481 of 600, with historical BTC/USDT candles, price and volume axes, studies, replay controls, and a disconnected feed inspector" width="480" /></a></td>
+    <td width="50%" valign="top"><a href="docs/assets/readme/research-assumptions-current.webp"><img src="docs/assets/readme/research-assumptions-current.webp" alt="ZTerminal research setup beside the chart, showing dataset dates, capital, fees, slippage, position sizing, execution assumptions, and Run Backtest disabled until the local Helper is connected" width="480" /></a></td>
+  </tr>
+  <tr>
+    <td valign="top"><strong>Return to the moment.</strong><br /><sub>Replay loaded historical bars alongside EMA, session VWAP, and volume. This capture is a historical study, not a live-feed claim.</sub></td>
+    <td valign="top"><strong>Keep the inputs visible.</strong><br /><sub>Inspect the dataset, costs, sizing, and fill assumptions before running research. The local Helper is required to execute a backtest.</sub></td>
   </tr>
 </table>
+
+<sub>Capture limits: the local Helper was unavailable, the Python code editor remained at its loading state, and no completed backtest report was available. These images show the accessible chart, replay, and research configuration—not a performance result.</sub>
+
+---
 
 ## What you can explore today
 
@@ -104,6 +114,8 @@ See [Backtesting](docs/BACKTESTING.md) and [Local Research](docs/LOCAL_RESEARCH.
 ## Product roadmap
 
 ### One terminal. A connected research workflow.
+
+**Next: unify the Windows product.** Then strengthen charting, market structure, research, and execution in sequence.
 
 Our long-term goal is to combine the strengths of professional charting, order-flow analytics, and quantitative strategy development in a single web and Windows product. The priorities below describe the **intended order of work**, not announced delivery dates or a claim that these capabilities have shipped.
 
@@ -196,11 +208,12 @@ Public Windows distribution is gated on Windows compatibility testing, publisher
 
 ## Documentation
 
-- [Backtesting and execution assumptions](docs/BACKTESTING.md)
-- [Market microstructure architecture](docs/MICROSTRUCTURE_ARCHITECTURE.md)
-- [Local research contract](docs/LOCAL_RESEARCH.md)
-- [Windows local-first direction](docs/windows/LOCAL_FIRST_PRODUCT_BOUNDARY.md)
-- [Security](docs/SECURITY.md)
+| Explore | Read |
+| :--- | :--- |
+| **Research** | [Backtesting and execution assumptions](docs/BACKTESTING.md) · [Local research contract](docs/LOCAL_RESEARCH.md) |
+| **Market data** | [Market microstructure architecture](docs/MICROSTRUCTURE_ARCHITECTURE.md) |
+| **Windows direction** | [Windows local-first direction](docs/windows/LOCAL_FIRST_PRODUCT_BOUNDARY.md) |
+| **Security** | [Security and trust boundaries](docs/SECURITY.md) |
 
 ## License
 
