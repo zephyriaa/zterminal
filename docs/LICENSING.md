@@ -1,5 +1,7 @@
 # LICENSING
 
+This document covers **market-data rights**, which are separate from the license for ZTerminal's software. For commercial use, redistribution, and hosting restrictions on the software, see [software licensing](SOFTWARE_LICENSE.md) and the authoritative [LICENSE](../LICENSE).
+
 Market-data licensing is a **first-class concern**. Z TERMINAL is built to
 operate against authorized market-data APIs only. The current repository
 ships with **synthetic SIMULATED data** that carries no licensing

@@ -1,6 +1,7 @@
 {
   "name": "zterminal-market-data",
   "private": true,
+  "license": "SEE LICENSE IN ../../LICENSE",
   "type": "module",
   "scripts": {
     "dev": "bun --hot index.ts"

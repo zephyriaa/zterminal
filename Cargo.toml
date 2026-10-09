@@ -23,7 +23,7 @@ exclude = ["src-tauri"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "UNLICENSED"
+license-file = "LICENSE"
 authors = ["ZTerminal"]
 repository = "https://github.com/zephyriaa/zterminal"
 

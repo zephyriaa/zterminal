@@ -1,4 +1,5 @@
 [package]
+license-file = "../LICENSE"
 name = "zterminal-desktop"
 version = "0.2.1"
 description = "ZTerminal native desktop client"

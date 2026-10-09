@@ -13,6 +13,10 @@ New-Item -ItemType Directory -Path (Join-Path $packageRoot 'app') -Force | Out-N
 Copy-Item -LiteralPath $runtimeRoot -Destination (Join-Path $packageRoot 'runtime') -Recurse
 Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.py' | Where-Object { $_.Name -notlike 'test_*' } | Copy-Item -Destination (Join-Path $packageRoot 'app')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'requirements.lock'), (Join-Path $PSScriptRoot 'README.md'), (Join-Path $PSScriptRoot 'THIRD-PARTY-NOTICES.md'), (Join-Path $PSScriptRoot 'VECTORBT-LICENSE.md') -Destination $packageRoot
+Copy-Item -LiteralPath (Join-Path $repoRoot 'LICENSE') -Destination $packageRoot
+# Preserve the historical notice referenced by LICENSE without replacing dependency notices.
+New-Item -ItemType Directory -Path (Join-Path $packageRoot 'docs/licenses') -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $repoRoot 'docs/licenses/MIT-legacy.txt') -Destination (Join-Path $packageRoot 'docs/licenses')
 # Runtime paths are relative to the packaged interpreter, independent of a system Python.
 [IO.File]::WriteAllText((Join-Path $packageRoot 'runtime/python312._pth'), "python312.zip`n.`nLib/site-packages`n../app`nimport site`n")
 # Build a native Windows GUI launcher with the installed .NET Framework compiler.
