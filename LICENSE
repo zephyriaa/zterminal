@@ -1,21 +1,99 @@
-MIT License
+ZTerminal Source-Available License 1.0
+Noncommercial Use; Redistribution Requires Permission
 
-Copyright (c) 2026 ZTerminal Team (Aykhan K.)
+Copyright (c) 2026 Aykhan K. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Scope
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+"Software" means ZTerminal source code, executables, documentation, and
+project-owned assets offered with this license, including copies and
+modifications. "Licensor" means the copyright holder above, acting only with
+respect to rights the Licensor owns or is authorized to grant.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Separately licensed third-party materials remain subject to their own licenses
+and notices. This license does not replace those terms or withdraw rights
+independently granted by other copyright holders. Preserve applicable notices.
+
+2. Permitted private, noncommercial use
+
+Subject to these terms, You may download, copy, compile, run, inspect, and
+privately modify the Software solely for Your own private, noncommercial
+research, evaluation, testing, learning, and personal use. You may make backup
+copies for those purposes. Retain this license and copyright notices in all
+copies and private modifications.
+
+This nonexclusive permission does not include commercial use, redistribution,
+sublicensing, or providing the Software to others as a hosted service.
+No patent or trademark rights are granted by implication.
+
+3. Commercial use requires written permission
+
+Obtain a separate written license from the Licensor before commercial use.
+Commercial use includes use primarily intended for commercial advantage or
+financial gain; use in a business's operations or for an employer or client;
+paid products, subscriptions, consulting, or services; and selling, licensing,
+monetizing, or commercially exploiting the Software or modified versions.
+Trading or investment activity intended for financial gain requires written
+permission. Private study and hypothetical testing without a commercial
+purpose remain permitted under section 2.
+
+Charging nothing does not make a use noncommercial when it supports a
+commercial activity.
+
+4. Redistribution and hosting require written permission
+
+Except for section 5, obtain a separate written license from the Licensor before
+publishing, sharing, distributing, sublicensing, selling, or otherwise making
+the Software or any substantial portion available to another person or entity.
+This restriction covers source and binaries, modified versions, derivative
+works, installers, package-registry uploads, mirrors, bundles, and rebranded
+copies, whether provided free of charge or for payment.
+
+Written permission is also required to operate a hosted, cloud, network, or
+software-as-a-service offering that gives others access to the Software's
+functionality. The Licensor's own distribution and hosting, and uses expressly
+authorized by a separate written license, are not restricted by these terms.
+
+5. GitHub and rights provided by law
+
+For a repository the Licensor makes public on GitHub, viewing and forking
+within GitHub remain permitted to the extent granted by GitHub's Terms of
+Service. These platform permissions do not independently authorize commercial
+use, off-platform redistribution, rebranding, or hosted services. Retain this
+license and applicable notices in permitted forks.
+
+Nothing here restricts fair use, fair dealing, or other rights provided by law
+without the Licensor's permission. This license does not claim ownership of
+independently authored strategies, user data, or research outputs merely
+because they were created using the Software. Market-data rights remain
+subject to their providers' terms.
+
+6. Earlier versions and separate permissions
+
+These terms apply to versions offered under this license. They do not revoke
+permissions already granted for copies or portions previously released under
+MIT or another license. The historical MIT notice is retained at
+docs/licenses/MIT-legacy.txt for that earlier material; its presence does not
+license newly introduced material under MIT. Separately licensed portions
+retain their applicable terms.
+
+Restricted uses require express written permission from the Licensor or an
+authorized representative. Public source access, a fork, issue, contribution,
+silence, or demo access is not itself permission. A separate written agreement
+controls the uses it expressly authorizes. All other rights are reserved.
+
+7. Termination
+
+Permissions under this license terminate automatically upon violation. Stop
+unauthorized use and distribution and remove copies held under this license,
+except copies You may or must retain under a separate license or applicable
+law. Independent rights in earlier MIT-licensed material are not revoked.
+
+8. No warranty or liability
+
+TO THE EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS" WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+THE LICENSOR IS NOT LIABLE FOR DAMAGES, CLAIMS, OR OTHER LIABILITY ARISING
+FROM THE SOFTWARE OR ITS USE, WHETHER IN CONTRACT, TORT, OR OTHERWISE.
+THE SOFTWARE DOES NOT GUARANTEE TRADING, INVESTMENT, OR RESEARCH OUTCOMES.

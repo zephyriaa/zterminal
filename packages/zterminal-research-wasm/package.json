@@ -2,7 +2,8 @@
   "name": "zterminal-research-wasm",
   "type": "module",
   "version": "0.1.0",
-  "license": "UNLICENSED",
+  "private": true,
+  "license": "SEE LICENSE IN ../../LICENSE",
   "files": [
     "research_core_bg.wasm",
     "research_core.js",
