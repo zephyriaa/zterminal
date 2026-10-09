@@ -1,5 +1,5 @@
-ZTerminal Source-Available License 1.0
-Noncommercial Use; Redistribution Requires Permission
+ZTerminal Source-Available License 1.1
+Personal Trading and Noncommercial Use; Redistribution Requires Permission
 
 Copyright (c) 2026 Aykhan K. All rights reserved.
 
@@ -14,13 +14,17 @@ Separately licensed third-party materials remain subject to their own licenses
 and notices. This license does not replace those terms or withdraw rights
 independently granted by other copyright holders. Preserve applicable notices.
 
-2. Permitted private, noncommercial use
+2. Permitted private use and personal trading
 
 Subject to these terms, You may download, copy, compile, run, inspect, and
-privately modify the Software solely for Your own private, noncommercial
-research, evaluation, testing, learning, and personal use. You may make backup
-copies for those purposes. Retain this license and copyright notices in all
-copies and private modifications.
+privately modify the Software for Your own private, noncommercial research,
+evaluation, testing, learning, and personal use. You may also use and privately
+modify the Software for trading, investing, and related research solely for
+Your own individual account, including when seeking or earning a profit.
+This personal-trading permission applies notwithstanding the commercial-use
+definition in section 3 and does not require separate written permission.
+You may make backup copies for these permitted purposes. Retain this license
+and copyright notices in all copies and private modifications.
 
 This nonexclusive permission does not include commercial use, redistribution,
 sublicensing, or providing the Software to others as a hosted service.
@@ -28,14 +32,17 @@ No patent or trademark rights are granted by implication.
 
 3. Commercial use requires written permission
 
-Obtain a separate written license from the Licensor before commercial use.
+Except for the personal-trading permission in section 2, obtain a separate
+written license from the Licensor before commercial use.
 Commercial use includes use primarily intended for commercial advantage or
 financial gain; use in a business's operations or for an employer or client;
 paid products, subscriptions, consulting, or services; and selling, licensing,
 monetizing, or commercially exploiting the Software or modified versions.
-Trading or investment activity intended for financial gain requires written
-permission. Private study and hypothetical testing without a commercial
-purpose remain permitted under section 2.
+Seeking or earning trading or investment profits for Your own individual
+account is not, by itself, restricted commercial use under this license.
+Use for an employer, a firm, a client, or managing others' accounts remains
+commercial use requiring written permission. Personal trading does not permit
+reselling the Software, redistributing it, or hosting it for others.
 
 Charging nothing does not make a use noncommercial when it supports a
 commercial activity.

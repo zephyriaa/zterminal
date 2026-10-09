@@ -22,7 +22,7 @@ ZTerminal brings charting, market structure, and quantitative research into one 
   <img alt="Quality checks" src="https://img.shields.io/github/actions/workflow/status/zephyriaa/zterminal/quality.yml?branch=main&style=flat-square&label=checks&labelColor=18181b" />
   <img alt="Public beta" src="https://img.shields.io/badge/web-public_beta-8b5cf6?style=flat-square&labelColor=18181b" />
   <img alt="Windows in development" src="https://img.shields.io/badge/Windows-in_development-a1a1aa?style=flat-square&labelColor=18181b" />
-  <a href="LICENSE"><img alt="Source-available license: noncommercial use; redistribution requires permission" src="https://img.shields.io/badge/license-source--available-8b5cf6?style=flat-square&labelColor=18181b" /></a>
+  <a href="LICENSE"><img alt="Source-available license: personal trading permitted; commercial use and redistribution restricted" src="https://img.shields.io/badge/license-source--available-8b5cf6?style=flat-square&labelColor=18181b" /></a>
 </p>
 
 <a href="docs/assets/readme/workstation-current.webp"><img src="docs/assets/readme/workstation-current.webp" alt="Current ZTerminal web chart workspace showing BTC/USDT five-minute candles, EMA, session VWAP, volume, drawing tools, and a disconnected feed inspector" width="960" /></a>
@@ -217,10 +217,10 @@ Public Windows distribution is gated on Windows compatibility testing, publisher
 
 ## License
 
-ZTerminal is **source-available** under the [ZTerminal Source-Available License 1.0](LICENSE), a custom restrictive license.
+ZTerminal is **source-available** under the [ZTerminal Source-Available License 1.1](LICENSE), a custom restrictive license.
 
-- **Permitted:** private, noncommercial research, evaluation, testing, learning, and modification.
-- **Written permission required:** commercial use (including business or profit-seeking trading use), redistribution of source or binaries, modified or rebranded versions, and hosting ZTerminal for others—even when offered free of charge.
+- **Permitted:** private, noncommercial research, evaluation, testing, learning, and modification; personal trading, investing, and related research for your own individual account, including for profit.
+- **Written permission required:** other commercial use (including use for a firm, employer, or client), redistribution of source or binaries, modified or rebranded versions, and hosting ZTerminal for others—even when offered free of charge.
 - **Preserved:** GitHub's platform viewing/forking rights, applicable legal exceptions, and third-party licenses. Earlier MIT-licensed copies retain their existing permissions; the change is not retroactive.
 
 This is not an OSI-approved open-source license. See the [software licensing summary](docs/SOFTWARE_LICENSE.md) for examples and permission requests. Market-data rights are separate and remain governed by the relevant provider agreements.
