@@ -1,13 +1,14 @@
 # ZTerminal software licensing
 
-The authoritative terms are the [ZTerminal Source-Available License 1.0](../LICENSE), a custom restrictive license. This page summarizes those terms; it does not expand the permissions granted by the license.
+The authoritative terms are the [ZTerminal Source-Available License 1.1](../LICENSE), a custom restrictive license. This page summarizes those terms; it does not expand the permissions granted by the license.
 
 | Activity | Permission |
 | :--- | :--- |
 | Read the source and fork the public repository within GitHub | Permitted to the extent granted by GitHub's Terms of Service; retain the license and notices. |
 | Download, build, and run privately for noncommercial learning, evaluation, or hypothetical research | Permitted. |
-| Modify a private copy for those noncommercial purposes | Permitted; retain notices and keep the modified copy private. |
-| Use in a business, for an employer/client, or for trading/investment intended for financial gain | Separate written permission required. |
+| Trade, invest, or conduct related research for your own individual account, including seeking or earning profits | Permitted without separate written permission. |
+| Modify a private copy for permitted noncommercial purposes or personal trading | Permitted; retain notices and keep the modified copy private. |
+| Use for a firm, employer, client, or managing others' accounts | Separate written permission required; the personal-trading exception does not cover these uses. |
 | Sell, sublicense, redistribute, mirror, upload to a package registry, or share source/binaries or modified/rebranded versions | Separate written permission required, including free distribution outside GitHub's platform permissions. |
 | Offer ZTerminal to others through a hosted website, cloud service, or SaaS | Separate written permission required, including a free service. |
 
