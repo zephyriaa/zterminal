@@ -1,0 +1,19 @@
+[package]
+name = "zt-workstation-local"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+rusqlite = { version = "0.31", features = ["bundled"] }
+zt-domain = { path = "../../crates/zt-domain" }
+zt-core = { path = "../../crates/zt-core" }
+zt-storage = { path = "../../crates/zt-storage" }
+zt-protocol = { path = "../../crates/zt-protocol" }
+
+[dev-dependencies]
+tempfile = "3"
+
+[workspace]
