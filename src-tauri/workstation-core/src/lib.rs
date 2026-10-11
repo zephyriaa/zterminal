@@ -20,6 +20,49 @@ pub type Result<T> = std::result::Result<T, String>;
 pub const MAX_IMPORT_BYTES: usize = 8 * 1024 * 1024;
 const MAX_BARS: usize = 100_000;
 
+/// Device appearance only; never serialized into dataset or research documents.
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ShellPreferences {
+    pub version: u16,
+    pub material: Material,
+    pub reduced_motion: bool,
+    pub density: Density,
+    pub grid_percent: u8,
+}
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum Material {
+    Rich,
+    Reduced,
+    Opaque,
+}
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum Density {
+    Compact,
+    Comfortable,
+}
+impl Default for ShellPreferences {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            material: Material::Rich,
+            reduced_motion: false,
+            density: Density::Compact,
+            grid_percent: 7,
+        }
+    }
+}
+impl ShellPreferences {
+    fn validate(&self) -> Result<()> {
+        if self.version != 1 || self.grid_percent > 20 {
+            return Err("Unsupported appearance version or grid intensity (0–20%)".into());
+        }
+        Ok(())
+    }
+}
+
 fn err(e: impl std::fmt::Display) -> String {
     e.to_string()
 }
@@ -131,6 +174,30 @@ impl Store {
             .map_err(err)?
             .collect::<std::result::Result<Vec<_>, _>>()
             .map_err(err)
+    }
+
+    pub fn preferences(&self) -> Result<ShellPreferences> {
+        let value: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT value FROM state WHERE key='shell-preferences-v1'",
+                [],
+                |r| r.get(0),
+            )
+            .optional()
+            .map_err(err)?;
+        let preferences: ShellPreferences = value
+            .map(|v| serde_json::from_str(&v).map_err(err))
+            .transpose()?
+            .unwrap_or_default();
+        preferences.validate()?;
+        Ok(preferences)
+    }
+
+    pub fn save_preferences(&self, preferences: ShellPreferences) -> Result<ShellPreferences> {
+        preferences.validate()?;
+        self.conn.execute("INSERT INTO state VALUES('shell-preferences-v1',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [serde_json::to_string(&preferences).map_err(err)?]).map_err(err)?;
+        Ok(preferences)
     }
 
     pub fn restore(&self) -> Result<Option<Workspace>> {
@@ -634,5 +701,42 @@ mod tests {
             too_many.push_str(&format!("{},10,12,9,11,2\n", i * 60_000u64));
         }
         assert!(parse_csv(&import(&too_many), u64::MAX / 1_000_000).is_err());
+    }
+
+    #[test]
+    fn appearance_restarts_and_invalid_updates_preserve_workspace_and_settings() {
+        let root = tempfile::tempdir().unwrap();
+        let mut store = Store::open(root.path()).unwrap();
+        let workspace = store
+            .create("appearance".into(), "Preserved".into())
+            .unwrap();
+        assert_eq!(store.preferences().unwrap(), ShellPreferences::default());
+        let preferences = ShellPreferences {
+            material: Material::Opaque,
+            reduced_motion: true,
+            density: Density::Comfortable,
+            grid_percent: 0,
+            ..ShellPreferences::default()
+        };
+        store.save_preferences(preferences.clone()).unwrap();
+        let mut invalid = preferences.clone();
+        invalid.grid_percent = 21;
+        assert!(store.save_preferences(invalid).is_err());
+        drop(store);
+        let store = Store::open(root.path()).unwrap();
+        assert_eq!(store.preferences().unwrap(), preferences);
+        assert_eq!(
+            store.restore().unwrap().unwrap().document.revision,
+            workspace.document.revision
+        );
+        assert!(serde_json::from_str::<ShellPreferences>(r#"{"version":1,"material":"unknown","reducedMotion":false,"density":"compact","gridPercent":7}"#).is_err());
+        store
+            .conn
+            .execute(
+                "UPDATE state SET value='corrupt' WHERE key='shell-preferences-v1'",
+                [],
+            )
+            .unwrap();
+        assert!(store.preferences().is_err());
     }
 }

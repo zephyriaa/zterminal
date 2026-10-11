@@ -1,6 +1,6 @@
 > Update 11 October 2026: M0 engineering audit COMPLETE; original combined gate NOT PASSED. EX-M1-01 authorizes M1 provisional implementation only. Original-Figma approval/parity remain BLOCKED where evidence is missing. See [Milestone 1](MILESTONE-1.md). Historical results below are unchanged.
 
-# Windows V2 â€” Milestone 0 review packet
+# Windows V2 — Milestone 0 review packet
 
 11 October 2026. **Stopped at the M0 acceptance gate: BLOCKED on approved references and control/state design decisions.** The baseline and audit packet are delivered. No Milestone 1 implementation, deployment, release, signing, trade execution, design-file mutation or external sharing occurred.
 
@@ -17,7 +17,7 @@ The governing specification is `../V2-PRODUCT-BUILD-PROMPT.md`, read in full. Po
 
 ## Findings that change the next step
 
-**33:1080 is no longer the wrong diagnostics frame.** Fresh metadata and a natural 1440Ã—900 export show baseline/candidate comparison. The old handoff/capture-state claim is stale. No frame was overwritten. The current Figma header says Binance Futures while the saved source says Spot; typography/geometry also differ. Review `evidence/figma-33-1080.png`, `comparison-source-overlay.png`, `comparison-source-diff.png` and `comparison-diff-metrics.json`. These compare Figma to source, not actual product parity, and use no masks.
+**33:1080 is no longer the wrong diagnostics frame.** Fresh metadata and a natural 1440×900 export show baseline/candidate comparison. The old handoff/capture-state claim is stale. No frame was overwritten. The current Figma header says Binance Futures while the saved source says Spot; typography/geometry also differ. Review `evidence/figma-33-1080.png`, `comparison-source-overlay.png`, `comparison-source-diff.png` and `comparison-diff-metrics.json`. These compare Figma to source, not actual product parity, and use no masks.
 
 Only that natural Figma export was obtainable before current Starter quota rejection. The other 24 original exports and full node/font/component/variable/prototype reads remain unavailable. Saved `figma-proof.png` and `figma-first-launch-proof.png` were inspected: they are zoomed browser-canvas screenshots, not natural frame exports. Their format/navigation content differs from later sources. Every supplied source arrangement was inspected through browser-harness and two contact sheets; none is substituted for an approved Figma export.
 
@@ -37,7 +37,7 @@ Code baseline: **`4040781e142dd44ab1c537941935c79011467037`**, branch `codex/aut
 
 **NOT RUN:** native fixed 100/150/200% visual parity set, full V2 actions, deployed web end-to-end checks, new perpetual/replay/isolation models, multi-monitor/Narrator/IME/long-session checks, 1m retained-history release performance and installation/upgrade/uninstall/offline-missing-runtime gates.
 
-The native screenshot is **1800Ã—1055 physical client pixels under current desktop conditions**, not a fixed reference-size parity capture. Network emulation is WebView-only, not OS firewall isolation. Wheel range persistence is asserted; pan/crosshair compositor input was delivered, but crosshair numeric correctness was not independently asserted. Original file deletion and OS restart are separate from reload. Python runtime reuse is qualified: parent imported clean sources; child runtime path points to original helper sources whose exact hashes match the clean commit; this is not fresh runtime installation acceptance.
+The native screenshot is **1800×1055 physical client pixels under current desktop conditions**, not a fixed reference-size parity capture. Network emulation is WebView-only, not OS firewall isolation. Wheel range persistence is asserted; pan/crosshair compositor input was delivered, but crosshair numeric correctness was not independently asserted. Original file deletion and OS restart are separate from reload. Python runtime reuse is qualified: parent imported clean sources; child runtime path points to original helper sources whose exact hashes match the clean commit; this is not fresh runtime installation acceptance.
 
 The local unsigned baseline executable is `C:/Users/aykhank/Desktop/Others/Projects/ZT/out/windows-v2-m0/zterminal-desktop.exe` (10,610,688 bytes; SHA-256 `68b59637bd3b08bce0b6a54d83e15d81e0d094737b52a141e55512ddd120f937`). Launching it uses the normal product storage identifier; validation used a separate identifier. No installer was produced. The source export path is retained in `evidence/clean-checkout-path.txt`.
 
@@ -69,4 +69,4 @@ For source review, extract `evidence/design-source.zip` into a new local directo
 
 ## Restart handoff
 
-Before any continuation, read this packet, current Git diff, manifest, governing brief and prior test failures. Preserve unrelated baseline paths in `evidence/user-working-tree-baseline.txt`; only the domain prerequisite was incorporated. No new Figma/Penpot file or edit exists to approve. Review the supplied candidates and D01â€“D04 plus relevant M1 policies first. The next independently testable milestone is **M1 â€” V2 shell**, under EX-M1-01, as explicitly dispatched by the user. Original M0 design approval remains incomplete. Stop after M1.
+Before any continuation, read this packet, current Git diff, manifest, governing brief and prior test failures. Preserve unrelated baseline paths in `evidence/user-working-tree-baseline.txt`; only the domain prerequisite was incorporated. No new Figma/Penpot file or edit exists to approve. Review the supplied candidates and D01–D04 plus relevant M1 policies first. The next independently testable milestone is **M1 — V2 shell**, under EX-M1-01, as explicitly dispatched by the user. Original M0 design approval remains incomplete. Stop after M1.

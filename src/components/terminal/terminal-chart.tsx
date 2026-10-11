@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { getContract } from "@/lib/market/contracts";
 import type { Bar } from "@/lib/market/types";
-import { subscribeMarketTrades, useMarketStream } from "@/hooks/use-market-stream";
+import { subscribeMarketTrades, useMarketStream, type MarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import { normalizeChartBars } from "@/lib/market/chart-data";
@@ -72,6 +72,10 @@ export type ChartSettings = ChartSettingsV2;
 export { DEFAULT_CHART_SETTINGS } from "@/lib/chart/contracts";
 
 interface ChartProps {
+  /** Local mode never mounts a provider subscription; callers supply observed bars. */
+  dataMode?: "live" | "local";
+  onVisibleRangeChange?: (from: number, to: number) => void;
+  appearance?: { fontFamily: string; fontSize: number; axisText: string; gridColor: string };
   symbol: string;
   timeframe: Timeframe;
   chartType: ChartType;
@@ -127,7 +131,18 @@ function themeColors() {
   };
 }
 
-export function TerminalChart({
+export function TerminalChart(props: ChartProps) {
+  return props.dataMode === "local"
+    ? <TerminalChartCanvas {...props} market={{ lastTrade: null, provider: undefined }} />
+    : <LiveTerminalChart {...props} />;
+}
+
+function LiveTerminalChart(props: ChartProps) {
+  const market = useMarketStream(props.symbol, { trades: 1, depth: false });
+  return <TerminalChartCanvas {...props} market={market} />;
+}
+
+function TerminalChartCanvas({
   symbol,
   timeframe,
   chartType,
@@ -148,7 +163,8 @@ export function TerminalChart({
   drawings = [], selectedDrawingId = null, drawingTool = "crosshair", magnetMode = "off", persistentDrawing = false,
   onDrawingTool, onSelectDrawing, onCreateDrawing, onUpdateDrawing, onDeleteDrawing, onDuplicateDrawing,
   overlays = [],
-}: ChartProps) {
+  dataMode = "live", onVisibleRangeChange, appearance, market,
+}: ChartProps & { market: Pick<MarketStream, "lastTrade" | "provider"> }) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<any> | null>(null);
@@ -164,11 +180,14 @@ export function TerminalChart({
   const visibleDrawingsRef = useRef<DrawingObject[]>([]);
   const drawingPreviewRef = useRef<DrawingObject | null>(null);
   const settingsRef = useRef(settings);
+  const rangeCallback = useRef(onVisibleRangeChange);
+  const interacting = useRef(false);
+  useEffect(() => { rangeCallback.current = onVisibleRangeChange; }, [onVisibleRangeChange]);
 
   const [liveBars, setBars] = useState<Bar[]>([]);
-  const bars = snapshot ?? liveBars;
+  const bars = snapshot ?? (dataMode === "local" ? [] : liveBars);
   const markerPlugin = useRef<ReturnType<typeof createSeriesMarkers<Time>> | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(dataMode !== "local");
   const [err, setErr] = useState<string | null>(null);
   const [internalReplayIndex, setInternalReplayIndex] = useState<number | null>(null);
   const [replayPlaying, setReplayPlaying] = useState(false);
@@ -195,25 +214,25 @@ export function TerminalChart({
   }, [availableBars, contract.tickSize, indicators.profile]);
 
   const marketContext = useMemo(() => {
-    if (availableBars.length < 3) return null;
+    if (dataMode === "local" || availableBars.length < 3) return null;
     const volatility = calculateVolatility(availableBars, Math.min(50, availableBars.length));
     const regime = classifyRegime(availableBars, { lookback: Math.min(50, availableBars.length), trendThreshold: 0.01, compressionThreshold: 0.002 });
     const latest = availableBars.at(-1)!;
     const utcDayStart = Date.UTC(new Date(latest.t).getUTCFullYear(), new Date(latest.t).getUTCMonth(), new Date(latest.t).getUTCDate());
     const openingRange = computeOpeningRange(availableBars, utcDayStart, utcDayStart + 30 * 60 * 1_000);
     return { volatility, regime, openingRange };
-  }, [availableBars]);
+  }, [availableBars, dataMode]);
 
-  const { lastTrade, provider } = useMarketStream(symbol, { trades: 1, depth: false });
+  const { lastTrade, provider } = market;
 
   // Archived data is immutable; live history belongs to the current provider and instrument.
   useEffect(() => {
     let cancelled = false;
     // These states mirror the lifecycle of the external historical-data request.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(!snapshot);
+    setLoading(dataMode !== "local" && !snapshot);
     setErr(null);
-    if (snapshot) return;
+    if (snapshot || dataMode === "local") return;
     setBars([]);
     (async () => {
       try {
@@ -235,7 +254,7 @@ export function TerminalChart({
     return () => {
       cancelled = true;
     };
-  }, [provider, symbol, timeframe, tfSec, snapshot]);
+  }, [provider, symbol, timeframe, tfSec, snapshot, dataMode]);
 
   // Handle live trade update
   useEffect(() => {
@@ -315,6 +334,11 @@ export function TerminalChart({
     const chart = createChart(chartContainerRef.current, lightweightChartOptions(settings, themeColors().axisText));
     
     chartRef.current = chart;
+    chart.timeScale().subscribeVisibleTimeRangeChange(range => {
+      if (interacting.current && range && typeof range.from === "number" && typeof range.to === "number" && range.from < range.to) {
+        rangeCallback.current?.(range.from * 1000, range.to * 1000);
+      }
+    });
 
     if (onCrosshair) {
       chart.subscribeCrosshairMove((param) => {
@@ -499,7 +523,7 @@ function applyZTerminalWatermark(
         customEvent.detail.onComplete?.(false, err?.message || "Failed to take chart screenshot");
       }
     };
-    window.addEventListener("zterminal:capture-chart", onCapture);
+    if (dataMode !== "local") window.addEventListener("zterminal:capture-chart", onCapture);
 
     return () => {
       window.removeEventListener("zterminal:capture-chart", onCapture);
@@ -515,10 +539,11 @@ function applyZTerminalWatermark(
     settingsRef.current = settings;
     if (chartRef.current) {
       chartRef.current.applyOptions(lightweightChartOptions(settings, themeColors().axisText));
+      if (appearance) chartRef.current.applyOptions({ layout: { fontFamily: appearance.fontFamily, fontSize: appearance.fontSize, textColor: appearance.axisText }, grid: { vertLines: { color: appearance.gridColor }, horzLines: { color: appearance.gridColor } } });
       const width = chartContainerRef.current?.clientWidth ?? 0;
       chartRef.current.applyOptions({ timeScale: { rightOffset: width < 640 ? Math.min(5, settings.futureBars) : settings.futureBars } });
     }
-  }, [settings]);
+  }, [settings, appearance]);
 
   // Apply main series type
   useEffect(() => {
@@ -580,7 +605,7 @@ function applyZTerminalWatermark(
 
   useEffect(() => {
     bigTradesBufferRef.current.clear();
-    if (!activeBigTradesSettings) {
+    if (!activeBigTradesSettings || dataMode === "local") {
       bigTradesPrimitiveRef.current?.setClusters([], null);
       return;
     }
@@ -602,7 +627,7 @@ function applyZTerminalWatermark(
       if (bigTradesFrameRef.current) cancelAnimationFrame(bigTradesFrameRef.current);
       bigTradesFrameRef.current = 0;
     };
-  }, [activeBigTradesSettings, contract.tickSize, symbol]);
+  }, [activeBigTradesSettings, contract.tickSize, symbol, dataMode]);
 
   useEffect(() => {
     const sorted = [...bars].sort((a, b) => a.t - b.t);
@@ -743,13 +768,14 @@ function applyZTerminalWatermark(
 
   useEffect(() => {
     if (!chartRef.current || !snapshot?.length) return;
+    interacting.current = false;
     if (focusRange) chartRef.current.timeScale().setVisibleRange({ from: (focusRange.from / 1000) as Time, to: (focusRange.to / 1000) as Time });
     else chartRef.current.timeScale().fitContent();
   }, [snapshot, focusRange]);
 
   return (
-    <div className="relative h-full w-full bg-background" onDoubleClick={() => chartRef.current?.timeScale().fitContent()}>
-      <div ref={chartContainerRef} className="absolute inset-0 z-10" />
+    <div className="terminal-chart relative h-full w-full bg-background" onPointerDownCapture={() => { interacting.current = true; }} onWheelCapture={() => { interacting.current = true; }} onDoubleClick={() => { interacting.current = true; chartRef.current?.timeScale().fitContent(); }}>
+      <div ref={chartContainerRef} className="terminal-chart-canvas absolute inset-0 z-10" />
       {hoveredBigTrade && (
         <div className="pointer-events-none absolute left-3 top-3 z-50 min-w-56 border hairline bg-panel/95 px-3 py-2 font-mono text-[10px] shadow-lg backdrop-blur">
           <div className="mb-1 flex items-center justify-between gap-4 text-foreground">
@@ -795,7 +821,7 @@ function applyZTerminalWatermark(
         />
       )}
       {volumeProfile && <VolumeProfileOverlay profile={volumeProfile} />}
-      {marketContext && <MarketContextOverlay context={marketContext} tickSize={contract.tickSize} />}
+      {dataMode !== "local" && marketContext && <MarketContextOverlay context={marketContext} tickSize={contract.tickSize} />}
       
       {replayEnabled && internalReplayIndex != null && (
         <div className="absolute bottom-7 right-2 z-50 flex items-center gap-1 border hairline bg-panel/95 p-1 shadow-sm backdrop-blur">

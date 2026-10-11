@@ -43,7 +43,8 @@ def main():
     harness_env = os.environ.copy()
     if native:
         import sqlite3
-        validation_root = Path(os.environ["LOCALAPPDATA"]) / "com.zterminal.workstation.validation"
+        validation_id = "com.zterminal.workstation.validation.m1" if "--shell" in sys.argv else "com.zterminal.workstation.validation"
+        validation_root = Path(os.environ["LOCALAPPDATA"]) / validation_id
         # Only the explicitly separate validation identifier may be reset; never touch product storage.
         actual_parent = validation_root.resolve().parent
         local_root = Path(os.environ["LOCALAPPDATA"]).resolve()
@@ -51,7 +52,7 @@ def main():
             # Packaged Codex virtualizes LocalAppData into its own LocalCache.
             parts = actual_parent.relative_to(local_root).parts
             assert len(parts)==4 and parts[0]=="Packages" and parts[1].startswith("OpenAI.Codex_") and parts[2:]==("LocalCache","Local")
-        assert validation_root.name == "com.zterminal.workstation.validation"
+        assert validation_root.name in ("com.zterminal.workstation.validation", "com.zterminal.workstation.validation.m1")
         if (validation_root / "workstation.sqlite3").exists():
             with sqlite3.connect(validation_root / "workstation.sqlite3") as db:
                 names=[r[0] for r in db.execute("SELECT name FROM workspaces")]
@@ -114,6 +115,9 @@ if not native:
 else:
     cdp('Network.enable')
     cdp('Network.emulateNetworkConditions',offline=True,latency=0,downloadThroughput=0,uploadThroughput=0)
+    network_spy = "window.__chartNetworkAttempts=[]; const originalFetch=window.fetch; window.fetch=(...args)=>{if(/api\\/market|socket.io|:3003/.test(String(args[0]))) window.__chartNetworkAttempts.push(String(args[0])); return originalFetch(...args)}; const OriginalWebSocket=window.WebSocket; window.WebSocket=new Proxy(OriginalWebSocket,{construct(target,args){window.__chartNetworkAttempts.push(String(args[0]));return Reflect.construct(target,args)}});"
+    cdp('Page.addScriptToEvaluateOnNewDocument',source=network_spy)
+    js(network_spy)
 
 def wait_for(expression):
     deadline=time.monotonic()+15
@@ -175,6 +179,12 @@ assert js("document.querySelector('[aria-label=\"Workspace name\"]').value==='TE
 capture_screenshot(SCREENSHOT_FILE)
 print("PASS: fresh startup, create, save, strict import, wheel zoom, pointer pan/crosshair, save, invalid import and reload")
 '''
+        if "--shell" in sys.argv:
+            shell_evidence = REPO / "docs/windows/v2/evidence/m1-shell"
+            shell_evidence.mkdir(parents=True, exist_ok=True)
+            script = script.replace('click("New workspace")', 'capture_screenshot(' + json.dumps(str(shell_evidence / "empty.png")) + ')\nclick("New workspace")')
+            script = script.replace('assert js("document.body.innerText.includes(\'200 bars\')")', 'assert js("document.body.innerText.includes(\'200 bars\')")\ncapture_screenshot(' + json.dumps(str(shell_evidence / "error-rejected-import.png")) + ')')
+            script += (REPO / "docs/windows/v2/verify-shell.py").read_text(encoding="utf-8").replace("SHELL_EVIDENCE", json.dumps(str(REPO / "docs/windows/v2/evidence/m1-shell")))
         script = script.replace("NATIVE_MODE",str(native)).replace("BRIDGE_URL", f"http://127.0.0.1:{server.server_port}").replace("INVALID_FILE", json.dumps(str(invalid))).replace("VALID_FILE", json.dumps(str(valid))).replace("SCREENSHOT_FILE",json.dumps(str(REPO / "out/workstation-validation.png")))
         try:
             result = subprocess.run([HARNESS], input=script, text=True, capture_output=True, timeout=120,env=harness_env)
@@ -183,7 +193,7 @@ print("PASS: fresh startup, create, save, strict import, wheel zoom, pointer pan
                 raise RuntimeError(result.stderr)
             if native:
                 import sqlite3
-                validation_root = Path(os.environ["LOCALAPPDATA"]) / "com.zterminal.workstation.validation"
+                validation_root = Path(os.environ["LOCALAPPDATA"]) / validation_id
                 with sqlite3.connect(validation_root / "workstation.sqlite3") as db:
                     restored=json.loads(db.execute("SELECT payload FROM workspaces").fetchone()[0])
                 native_process.terminate(); native_process.wait(timeout=10)

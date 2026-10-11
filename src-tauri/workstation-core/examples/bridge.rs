@@ -1,7 +1,7 @@
 //! Test-only JSON command driver for browser regression against real Rust persistence.
 use serde_json::{json, Value};
 use std::io::Read;
-use zt_workstation_local::{Import, Store};
+use zt_workstation_local::{Import, ShellPreferences, Store};
 
 fn run() -> Result<Value, String> {
     let root = std::env::args()
@@ -26,6 +26,11 @@ fn run() -> Result<Value, String> {
     };
     let mut store = Store::open(root)?;
     let value = match request["command"].as_str().ok_or("Missing command")? {
+        "get_shell_preferences" => json!(store.preferences()?),
+        "save_shell_preferences" => json!(store.save_preferences(
+            serde_json::from_value::<ShellPreferences>(args["preferences"].clone())
+                .map_err(|e| e.to_string())?
+        )?),
         "list_workspaces" => json!(store.list()?),
         "restore_workspace" => json!(store.restore()?),
         "open_workspace" => json!(store.select(text("id")?)?),
