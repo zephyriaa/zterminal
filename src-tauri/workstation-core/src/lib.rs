@@ -1,5 +1,6 @@
 //! Device-owned workstation persistence. No network, execution or worker access.
 use rusqlite::{params, Connection, OptionalExtension};
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -139,6 +140,12 @@ impl Store {
             .optional()
             .map_err(err)?;
         id.map(|id| self.load(&id)).transpose()
+    }
+
+    pub fn select(&self, id: &str) -> Result<Workspace> {
+        let workspace = self.load(id)?;
+        self.conn.execute("INSERT INTO state VALUES('last',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [id]).map_err(err)?;
+        Ok(workspace)
     }
 
     fn artifact(&self, reference: &ArtifactReference) -> Result<Vec<u8>> {
@@ -420,18 +427,21 @@ impl Store {
 }
 
 fn units(value: &str, step: f64) -> Result<i64> {
-    let value: f64 = value.parse().map_err(err)?;
-    let scaled = value / step;
-    if !scaled.is_finite()
-        || scaled <= 0.0
-        || scaled > 9_007_199_254_740_991.0
-        || (scaled - scaled.round()).abs() > 1e-7
+    let value = Decimal::from_str_exact(value).map_err(err)?;
+    let step = Decimal::from_str_exact(&step.to_string()).map_err(err)?;
+    if value <= Decimal::ZERO
+        || step <= Decimal::ZERO
+        || value.checked_rem(step) != Some(Decimal::ZERO)
     {
         return Err(
             "OHLCV must be positive and exactly representable in the declared increments".into(),
         );
     }
-    Ok(scaled.round() as i64)
+    value
+        .checked_div(step)
+        .and_then(|n| n.to_i64())
+        .filter(|n| *n <= 9_007_199_254_740_991)
+        .ok_or_else(|| "OHLCV integer units exceed the supported exact bound".into())
 }
 
 fn parse_csv(input: &Import, now: u64) -> Result<Vec<Bar>> {
@@ -581,5 +591,48 @@ mod tests {
         store.conn.execute_batch("PRAGMA user_version=99;").unwrap();
         drop(store);
         assert!(Store::open(root.path()).is_err());
+    }
+
+    #[test]
+    fn selection_is_durable_and_bounded_scenes_withhold_modified_segments() {
+        let root = tempfile::tempdir().unwrap();
+        let mut store = Store::open(root.path()).unwrap();
+        store.create("one".into(), "One".into()).unwrap();
+        let w = store.import("one", 1, import(CSV)).unwrap();
+        store.create("two".into(), "Two".into()).unwrap();
+        assert_eq!(store.restore().unwrap().unwrap().document.id, "two");
+        store.select("one").unwrap();
+        assert_eq!(store.restore().unwrap().unwrap().document.id, "one");
+        assert!(store.scene("one", 0, 2001).is_err());
+        assert!(store.scene("one", 2, 2).is_err());
+        let segment = root
+            .path()
+            .join(w.dataset.unwrap().segment.sha256)
+            .join("segments");
+        let path = std::fs::read_dir(segment)
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        std::fs::write(path, b"corrupt test segment").unwrap();
+        assert!(store.scene("one", 0, 3).is_err());
+        // Corrupt scene is withheld while the workspace's editable intent remains readable.
+        assert_eq!(store.load("one").unwrap().document.name, "One");
+    }
+
+    #[test]
+    fn input_resource_bounds_are_enforced() {
+        assert!(units("10.0000000001", 0.5).is_err());
+        assert_eq!(units("0.3", 0.1).unwrap(), 3);
+        assert!(units("NaN", 0.1).is_err());
+        let mut oversized = import(CSV);
+        oversized.csv = "x".repeat(MAX_IMPORT_BYTES + 1);
+        assert!(parse_csv(&oversized, u64::MAX / 1_000_000).is_err());
+        let mut too_many = String::from("t,o,h,l,c,v\n");
+        for i in 1..=100_001 {
+            too_many.push_str(&format!("{},10,12,9,11,2\n", i * 60_000u64));
+        }
+        assert!(parse_csv(&import(&too_many), u64::MAX / 1_000_000).is_err());
     }
 }
