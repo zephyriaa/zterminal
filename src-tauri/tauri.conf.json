@@ -4,12 +4,15 @@
   "version": "0.2.2",
   "identifier": "com.zterminal.workstation",
   "build": {
-    "beforeDevCommand": null,
-    "beforeBuildCommand": null,
-    "devUrl": "http://localhost:3000/desktop/launch",
-    "frontendDist": "https://zterminal.dpdns.org/desktop/launch"
+    "beforeDevCommand": "npm run workstation:dev",
+    "beforeBuildCommand": "npm run workstation:build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../out/workstation"
   },
   "app": {
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; form-action 'none'"
+    },
     "windows": [
       {
         "label": "main",
