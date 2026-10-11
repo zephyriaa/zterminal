@@ -1,0 +1,60 @@
+[
+  {
+    "view": "studio",
+    "selector": ".code",
+    "renderedFonts": []
+  },
+  {
+    "view": "studio",
+    "selector": ".instrument strong",
+    "renderedFonts": [
+      {
+        "familyName": "Geist Mono",
+        "postScriptName": "Geist-Mono-SemiBold",
+        "isCustomFont": true,
+        "glyphCount": 7
+      }
+    ]
+  },
+  {
+    "view": "comparison",
+    "selector": ".eyebrow",
+    "renderedFonts": [
+      {
+        "familyName": "Geist",
+        "postScriptName": "Geist",
+        "isCustomFont": true,
+        "glyphCount": 18
+      }
+    ]
+  },
+  {
+    "view": "comparison",
+    "selector": "h1",
+    "renderedFonts": [
+      {
+        "familyName": "Geist",
+        "postScriptName": "Geist-SemiBold",
+        "isCustomFont": true,
+        "glyphCount": 27
+      }
+    ]
+  },
+  {
+    "view": "comparison",
+    "selector": ".instrument strong",
+    "renderedFonts": [
+      {
+        "familyName": "Geist Mono",
+        "postScriptName": "Geist-Mono-SemiBold",
+        "isCustomFont": true,
+        "glyphCount": 7
+      }
+    ]
+  },
+  {
+    "view": "comparison",
+    "selector": ".j-table",
+    "renderedFonts": []
+  }
+]

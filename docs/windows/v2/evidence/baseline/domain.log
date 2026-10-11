@@ -1,0 +1,687 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.151
+   Compiling serde v1.0.229
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling syn v3.0.4
+   Compiling serde_derive v1.0.229
+   Compiling zt-domain v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-domain)
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:22:5
+   |
+22 |     pub sha256: String,
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: requested on the command line with `-W missing-docs`
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:23:5
+   |
+23 |     pub bytes: u64,
+   |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> crates\zt-domain\src\lib.rs:26:5
+   |
+26 |     pub fn validate(&self) -> ValidationResult {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> crates\zt-domain\src\lib.rs:36:1
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:36:32
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   |                                ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:36:48
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   |                                                ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:36:67
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   |                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> crates\zt-domain\src\lib.rs:38:5
+   |
+38 |     pub fn validate(&self) -> ValidationResult {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> crates\zt-domain\src\lib.rs:46:31
+   |
+46 | pub trait ValidatedDocument { fn validate(&self) -> ValidationResult; }
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> crates\zt-domain\src\lib.rs:50:1
+   |
+50 | pub struct WorkspaceDocumentV2 {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:51:5
+   |
+51 |     pub version: u16,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:52:5
+   |
+52 |     pub id: String,
+   |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:53:5
+   |
+53 |     pub revision: u64,
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:54:5
+   |
+54 |     pub name: String,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:55:5
+   |
+55 |     pub documents: Vec<DocumentReference>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:56:5
+   |
+56 |     pub active_document: Option<String>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:57:5
+   |
+57 |     pub presentation: Option<ArtifactReference>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an enum
+  --> crates\zt-domain\src\lib.rs:73:1
+   |
+73 | pub enum Product { Spot, UsdtPerpetual }
+   | ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:73:20
+   |
+73 | pub enum Product { Spot, UsdtPerpetual }
+   |                    ^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:73:26
+   |
+73 | pub enum Product { Spot, UsdtPerpetual }
+   |                          ^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:22
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                      ^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:28
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                            ^^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:36
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                                    ^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:43
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                                           ^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> crates\zt-domain\src\lib.rs:82:1
+   |
+82 | pub struct InstrumentDefinitionV1 {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:5
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:23
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:39
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |                                       ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:61
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |                                                             ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:84:5
+   |
+84 |     pub product: Product, pub settlement_currency: String,
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:84:27
+   |
+84 |     pub product: Product, pub settlement_currency: String,
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:85:5
+   |
+85 |     pub tick_size: f64, pub quantity_step: f64, pub multiplier: f64,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:85:25
+   |
+85 |     pub tick_size: f64, pub quantity_step: f64, pub multiplier: f64,
+   |                         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:85:49
+   |
+85 |     pub tick_size: f64, pub quantity_step: f64, pub multiplier: f64,
+   |                                                 ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:86:5
+   |
+86 |     pub status: String, pub observed_at_ms: i64, pub source: ArtifactReference,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:86:25
+   |
+86 |     pub status: String, pub observed_at_ms: i64, pub source: ArtifactReference,
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:86:50
+   |
+86 |     pub status: String, pub observed_at_ms: i64, pub source: ArtifactReference,
+   |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:100:1
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    | ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:23
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                       ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:41
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                         ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:57
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                                         ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:79
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                                                               ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:95
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> crates\zt-domain\src\lib.rs:102:5
+    |
+102 |     pub fn validate(&self) -> ValidationResult {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:119:1
+    |
+119 | pub struct DatasetManifestV3 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:120:5
+    |
+120 |     pub version: u16, pub id: String, pub instrument: InstrumentDefinitionV1,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:120:23
+    |
+120 |     pub version: u16, pub id: String, pub instrument: InstrumentDefinitionV1,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:120:39
+    |
+120 |     pub version: u16, pub id: String, pub instrument: InstrumentDefinitionV1,
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:121:5
+    |
+121 |     pub bars: ArtifactReference, pub coverage: Coverage, pub freshness: Freshness,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:121:34
+    |
+121 |     pub bars: ArtifactReference, pub coverage: Coverage, pub freshness: Freshness,
+    |                                  ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:121:58
+    |
+121 |     pub bars: ArtifactReference, pub coverage: Coverage, pub freshness: Freshness,
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:5
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:31
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:64
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |                                                                ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:86
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |                                                                                      ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:123:5
+    |
+123 |     pub mark_prices: Option<ArtifactReference>, pub mark_coverage: Option<Coverage>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:123:49
+    |
+123 |     pub mark_prices: Option<ArtifactReference>, pub mark_coverage: Option<Coverage>,
+    |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:124:5
+    |
+124 |     pub funding_events: Option<ArtifactReference>, pub funding_from_ms: Option<i64>, pub funding_to_ms: Option<i64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:124:52
+    |
+124 |     pub funding_events: Option<ArtifactReference>, pub funding_from_ms: Option<i64>, pub funding_to_ms: Option<i64>,
+    |                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:124:86
+    |
+124 |     pub funding_events: Option<ArtifactReference>, pub funding_from_ms: Option<i64>, pub funding_to_ms: Option<i64>,
+    |                                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> crates\zt-domain\src\lib.rs:138:5
+    |
+138 |     pub fn validate_research_coverage(&self) -> ValidationResult {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:152:1
+    |
+152 | pub struct ChartDocumentV3 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:153:5
+    |
+153 |     pub version: u16, pub id: String, pub revision: u64,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:153:23
+    |
+153 |     pub version: u16, pub id: String, pub revision: u64,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:153:39
+    |
+153 |     pub version: u16, pub id: String, pub revision: u64,
+    |                                       ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:154:5
+    |
+154 |     pub dataset: Option<DocumentReference>, pub interval_ms: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:154:45
+    |
+154 |     pub dataset: Option<DocumentReference>, pub interval_ms: u64,
+    |                                             ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:155:5
+    |
+155 |     pub visible_from_ms: Option<i64>, pub visible_to_ms: Option<i64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:155:39
+    |
+155 |     pub visible_from_ms: Option<i64>, pub visible_to_ms: Option<i64>,
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:156:5
+    |
+156 |     pub indicators: Vec<IndicatorConfiguration>, pub drawings: Option<ArtifactReference>, pub replay: Option<ReplayClock>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:156:50
+    |
+156 |     pub indicators: Vec<IndicatorConfiguration>, pub drawings: Option<ArtifactReference>, pub replay: Option<ReplayClock>,
+    |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:156:91
+    |
+156 |     pub indicators: Vec<IndicatorConfiguration>, pub drawings: Option<ArtifactReference>, pub replay: Option<ReplayClock>,
+    |                                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:160:1
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:160:37
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    |                                     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:160:53
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    |                                                     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:160:71
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    |                                                                       ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:178:5
+    |
+178 |     pub version: u16, pub dataset: DocumentReference, pub available_through_ms: i64,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:178:23
+    |
+178 |     pub version: u16, pub dataset: DocumentReference, pub available_through_ms: i64,
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:178:55
+    |
+178 |     pub version: u16, pub dataset: DocumentReference, pub available_through_ms: i64,
+    |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:5
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:23
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:39
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |                                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:55
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |                                                       ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:191:1
+    |
+191 | pub struct StrategyRevisionV2 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:5
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:23
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:39
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |                                       ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:58
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:193:5
+    |
+193 |     pub parameters: ArtifactReference, pub sdk_version: String, pub created_at_ms: i64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:193:40
+    |
+193 |     pub parameters: ArtifactReference, pub sdk_version: String, pub created_at_ms: i64,
+    |                                        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:193:65
+    |
+193 |     pub parameters: ArtifactReference, pub sdk_version: String, pub created_at_ms: i64,
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an enum
+   --> crates\zt-domain\src\lib.rs:205:1
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    | ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:21
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                     ^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:29
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                             ^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:38
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                      ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:49
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                                 ^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:57
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                                         ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:70
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                                                      ^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:208:1
+    |
+208 | pub struct ExperimentRunV2 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:5
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:23
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:39
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:72
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:210:5
+    |
+210 |     pub configuration: ArtifactReference, pub runtime: ArtifactReference, pub engine_identity: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:210:43
+    |
+210 |     pub configuration: ArtifactReference, pub runtime: ArtifactReference, pub engine_identity: String,
+    |                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:210:75
+    |
+210 |     pub configuration: ArtifactReference, pub runtime: ArtifactReference, pub engine_identity: String,
+    |                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:211:5
+    |
+211 |     pub state: RunState, pub result: Option<ArtifactReference>, pub diagnostics: Option<ArtifactReference>,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:211:26
+    |
+211 |     pub state: RunState, pub result: Option<ArtifactReference>, pub diagnostics: Option<ArtifactReference>,
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:211:65
+    |
+211 |     pub state: RunState, pub result: Option<ArtifactReference>, pub diagnostics: Option<ArtifactReference>,
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `zt-domain` (lib test) generated 109 warnings (109 duplicates)
+warning: `zt-domain` (lib) generated 109 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.99s
+     Running unittests src\lib.rs (target\debug\deps\zt_domain-89bc1b2a7126f6dd.exe)
+
+running 5 tests
+test tests::coverage_must_account_for_every_interval ... ok
+test tests::failed_runs_cannot_publish_results ... ok
+test tests::identifiers_cannot_escape_repository ... ok
+test tests::replay_rejects_future_visibility ... ok
+test tests::workspace_rejects_dangling_active_and_duplicate_documents ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests zt_domain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

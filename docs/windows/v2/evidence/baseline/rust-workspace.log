@@ -1,0 +1,996 @@
+   Compiling cfg-if v1.0.4
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling getrandom v0.4.3
+   Compiling find-msvc-tools v0.1.11
+   Compiling shlex v2.0.1
+   Compiling zt-protocol v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-protocol)
+   Compiling windows-link v0.2.1
+   Compiling dunce v1.0.5
+   Compiling fs_extra v1.3.0
+   Compiling once_cell v1.21.4
+   Compiling zeroize v1.9.0
+   Compiling windows-sys v0.61.2
+   Compiling zt-storage v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-storage)
+   Compiling version_check v0.9.5
+   Compiling autocfg v1.5.1
+   Compiling aws-lc-rs v1.18.0
+   Compiling getrandom v0.3.4
+   Compiling rustls-pki-types v1.15.1
+   Compiling zerocopy v0.8.56
+   Compiling typenum v1.20.1
+   Compiling jobserver v0.1.35
+   Compiling generic-array v0.14.7
+   Compiling num-traits v0.2.19
+   Compiling getrandom v0.2.17
+   Compiling thiserror v1.0.69
+   Compiling untrusted v0.9.0
+   Compiling cc v1.4.4
+   Compiling syn v3.0.4
+   Compiling syn v2.0.119
+   Compiling rust_decimal v1.43.0
+   Compiling rustls v0.23.43
+   Compiling arrayvec v0.7.8
+   Compiling pkg-config v0.3.34
+   Compiling vcpkg v0.2.15
+   Compiling bytes v1.12.1
+   Compiling rand_core v0.9.5
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling zt-core v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-core)
+   Compiling thiserror v2.0.20
+   Compiling subtle v2.6.1
+   Compiling httparse v1.10.1
+   Compiling foldhash v0.2.0
+   Compiling log v0.4.34
+   Compiling pin-project-lite v0.2.17
+   Compiling hashbrown v0.17.1
+   Compiling digest v0.10.7
+   Compiling cpufeatures v0.2.17
+   Compiling cmake v0.1.58
+   Compiling sha1 v0.10.7
+   Compiling http v1.5.0
+   Compiling hashlink v0.12.2
+   Compiling webpki-roots v1.0.9
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling slab v0.4.12
+   Compiling utf-8 v0.7.6
+   Compiling futures-task v0.3.34
+   Compiling futures-sink v0.3.34
+   Compiling data-encoding v2.11.1
+   Compiling futures-core v0.3.34
+   Compiling fallible-iterator v0.3.0
+   Compiling bitflags v2.13.2
+   Compiling smallvec v1.16.2
+   Compiling webpki-roots v0.26.11
+   Compiling uuid v1.27.0
+   Compiling fastrand v2.5.0
+   Compiling aws-lc-sys v0.44.0
+   Compiling ring v0.17.14
+   Compiling libsqlite3-sys v0.38.2
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.2
+   Compiling tempfile v3.27.0
+   Compiling zt-local-scene-bridge v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\zt-local-scene-bridge)
+   Compiling desktop-phase0-cli v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\desktop-phase0-cli)
+   Compiling zt-local-segment-catalog v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\zt-local-segment-catalog)
+   Compiling zt-local-monte-carlo v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\zt-local-monte-carlo)
+   Compiling zt-local-workspace v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\zt-local-workspace)
+   Compiling thiserror-impl v1.0.69
+   Compiling rust_decimal_macros v1.40.0
+   Compiling serde_derive v1.0.229
+   Compiling tokio-macros v2.7.2
+   Compiling thiserror-impl v2.0.20
+   Compiling futures-macro v0.3.34
+   Compiling tokio v1.53.1
+   Compiling futures-util v0.3.34
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.9.0
+   Compiling rusqlite v0.40.2
+   Compiling rand v0.9.5
+   Compiling serde v1.0.229
+   Compiling zt-domain v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-domain)
+   Compiling zt-risk v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-risk)
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:22:5
+   |
+22 |     pub sha256: String,
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: requested on the command line with `-W missing-docs`
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:23:5
+   |
+23 |     pub bytes: u64,
+   |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> crates\zt-domain\src\lib.rs:26:5
+   |
+26 |     pub fn validate(&self) -> ValidationResult {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> crates\zt-domain\src\lib.rs:36:1
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:36:32
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   |                                ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:36:48
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   |                                                ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:36:67
+   |
+36 | pub struct DocumentReference { pub id: String, pub revision: u64, pub artifact: ArtifactReference }
+   |                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> crates\zt-domain\src\lib.rs:38:5
+   |
+38 |     pub fn validate(&self) -> ValidationResult {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> crates\zt-domain\src\lib.rs:46:31
+   |
+46 | pub trait ValidatedDocument { fn validate(&self) -> ValidationResult; }
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> crates\zt-domain\src\lib.rs:50:1
+   |
+50 | pub struct WorkspaceDocumentV2 {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:51:5
+   |
+51 |     pub version: u16,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:52:5
+   |
+52 |     pub id: String,
+   |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:53:5
+   |
+53 |     pub revision: u64,
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:54:5
+   |
+54 |     pub name: String,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:55:5
+   |
+55 |     pub documents: Vec<DocumentReference>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:56:5
+   |
+56 |     pub active_document: Option<String>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:57:5
+   |
+57 |     pub presentation: Option<ArtifactReference>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an enum
+  --> crates\zt-domain\src\lib.rs:73:1
+   |
+73 | pub enum Product { Spot, UsdtPerpetual }
+   | ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:73:20
+   |
+73 | pub enum Product { Spot, UsdtPerpetual }
+   |                    ^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:73:26
+   |
+73 | pub enum Product { Spot, UsdtPerpetual }
+   |                          ^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:22
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                      ^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:28
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                            ^^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:36
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                                    ^^^^^
+
+warning: missing documentation for a variant
+  --> crates\zt-domain\src\lib.rs:78:43
+   |
+78 | pub enum Freshness { Live, Cached, Stale, Unavailable }
+   |                                           ^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> crates\zt-domain\src\lib.rs:82:1
+   |
+82 | pub struct InstrumentDefinitionV1 {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:5
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:23
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:39
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |                                       ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:83:61
+   |
+83 |     pub version: u16, pub id: String, pub provider: String, pub symbol: String,
+   |                                                             ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:84:5
+   |
+84 |     pub product: Product, pub settlement_currency: String,
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:84:27
+   |
+84 |     pub product: Product, pub settlement_currency: String,
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:85:5
+   |
+85 |     pub tick_size: f64, pub quantity_step: f64, pub multiplier: f64,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:85:25
+   |
+85 |     pub tick_size: f64, pub quantity_step: f64, pub multiplier: f64,
+   |                         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:85:49
+   |
+85 |     pub tick_size: f64, pub quantity_step: f64, pub multiplier: f64,
+   |                                                 ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:86:5
+   |
+86 |     pub status: String, pub observed_at_ms: i64, pub source: ArtifactReference,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:86:25
+   |
+86 |     pub status: String, pub observed_at_ms: i64, pub source: ArtifactReference,
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> crates\zt-domain\src\lib.rs:86:50
+   |
+86 |     pub status: String, pub observed_at_ms: i64, pub source: ArtifactReference,
+   |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:100:1
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    | ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:23
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                       ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:41
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                         ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:57
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                                         ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:79
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                                                               ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:100:95
+    |
+100 | pub struct Coverage { pub from_ms: i64, pub to_ms: i64, pub interval_ms: u64, pub count: u64, pub gaps: Vec<(i64,i64)> }
+    |                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> crates\zt-domain\src\lib.rs:102:5
+    |
+102 |     pub fn validate(&self) -> ValidationResult {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:119:1
+    |
+119 | pub struct DatasetManifestV3 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:120:5
+    |
+120 |     pub version: u16, pub id: String, pub instrument: InstrumentDefinitionV1,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:120:23
+    |
+120 |     pub version: u16, pub id: String, pub instrument: InstrumentDefinitionV1,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:120:39
+    |
+120 |     pub version: u16, pub id: String, pub instrument: InstrumentDefinitionV1,
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:121:5
+    |
+121 |     pub bars: ArtifactReference, pub coverage: Coverage, pub freshness: Freshness,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:121:34
+    |
+121 |     pub bars: ArtifactReference, pub coverage: Coverage, pub freshness: Freshness,
+    |                                  ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:121:58
+    |
+121 |     pub bars: ArtifactReference, pub coverage: Coverage, pub freshness: Freshness,
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:5
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:31
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:64
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |                                                                ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:122:86
+    |
+122 |     pub retrieved_at_ms: i64, pub original: ArtifactReference, pub timezone: String, pub units: String,
+    |                                                                                      ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:123:5
+    |
+123 |     pub mark_prices: Option<ArtifactReference>, pub mark_coverage: Option<Coverage>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:123:49
+    |
+123 |     pub mark_prices: Option<ArtifactReference>, pub mark_coverage: Option<Coverage>,
+    |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:124:5
+    |
+124 |     pub funding_events: Option<ArtifactReference>, pub funding_from_ms: Option<i64>, pub funding_to_ms: Option<i64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:124:52
+    |
+124 |     pub funding_events: Option<ArtifactReference>, pub funding_from_ms: Option<i64>, pub funding_to_ms: Option<i64>,
+    |                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:124:86
+    |
+124 |     pub funding_events: Option<ArtifactReference>, pub funding_from_ms: Option<i64>, pub funding_to_ms: Option<i64>,
+    |                                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> crates\zt-domain\src\lib.rs:138:5
+    |
+138 |     pub fn validate_research_coverage(&self) -> ValidationResult {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:152:1
+    |
+152 | pub struct ChartDocumentV3 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:153:5
+    |
+153 |     pub version: u16, pub id: String, pub revision: u64,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:153:23
+    |
+153 |     pub version: u16, pub id: String, pub revision: u64,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:153:39
+    |
+153 |     pub version: u16, pub id: String, pub revision: u64,
+    |                                       ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:154:5
+    |
+154 |     pub dataset: Option<DocumentReference>, pub interval_ms: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:154:45
+    |
+154 |     pub dataset: Option<DocumentReference>, pub interval_ms: u64,
+    |                                             ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:155:5
+    |
+155 |     pub visible_from_ms: Option<i64>, pub visible_to_ms: Option<i64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:155:39
+    |
+155 |     pub visible_from_ms: Option<i64>, pub visible_to_ms: Option<i64>,
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:156:5
+    |
+156 |     pub indicators: Vec<IndicatorConfiguration>, pub drawings: Option<ArtifactReference>, pub replay: Option<ReplayClock>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:156:50
+    |
+156 |     pub indicators: Vec<IndicatorConfiguration>, pub drawings: Option<ArtifactReference>, pub replay: Option<ReplayClock>,
+    |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:156:91
+    |
+156 |     pub indicators: Vec<IndicatorConfiguration>, pub drawings: Option<ArtifactReference>, pub replay: Option<ReplayClock>,
+    |                                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:160:1
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:160:37
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    |                                     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:160:53
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    |                                                     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:160:71
+    |
+160 | pub struct IndicatorConfiguration { pub id: String, pub kind: String, pub period: u32 }
+    |                                                                       ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:178:5
+    |
+178 |     pub version: u16, pub dataset: DocumentReference, pub available_through_ms: i64,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:178:23
+    |
+178 |     pub version: u16, pub dataset: DocumentReference, pub available_through_ms: i64,
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:178:55
+    |
+178 |     pub version: u16, pub dataset: DocumentReference, pub available_through_ms: i64,
+    |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:5
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:23
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:39
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |                                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:179:55
+    |
+179 |     pub from_ms: i64, pub to_ms: i64, pub speed: f64, pub playing: bool,
+    |                                                       ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:191:1
+    |
+191 | pub struct StrategyRevisionV2 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:5
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:23
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:39
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |                                       ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:192:58
+    |
+192 |     pub version: u16, pub id: String, pub revision: u64, pub source: ArtifactReference,
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:193:5
+    |
+193 |     pub parameters: ArtifactReference, pub sdk_version: String, pub created_at_ms: i64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:193:40
+    |
+193 |     pub parameters: ArtifactReference, pub sdk_version: String, pub created_at_ms: i64,
+    |                                        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:193:65
+    |
+193 |     pub parameters: ArtifactReference, pub sdk_version: String, pub created_at_ms: i64,
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an enum
+   --> crates\zt-domain\src\lib.rs:205:1
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    | ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:21
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                     ^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:29
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                             ^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:38
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                      ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:49
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                                 ^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:57
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                                         ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> crates\zt-domain\src\lib.rs:205:70
+    |
+205 | pub enum RunState { Queued, Running, Cancelled, Failed, Interrupted, Completed }
+    |                                                                      ^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> crates\zt-domain\src\lib.rs:208:1
+    |
+208 | pub struct ExperimentRunV2 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:5
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:23
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:39
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:209:72
+    |
+209 |     pub version: u16, pub id: String, pub strategy: DocumentReference, pub dataset: DocumentReference,
+    |                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:210:5
+    |
+210 |     pub configuration: ArtifactReference, pub runtime: ArtifactReference, pub engine_identity: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:210:43
+    |
+210 |     pub configuration: ArtifactReference, pub runtime: ArtifactReference, pub engine_identity: String,
+    |                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:210:75
+    |
+210 |     pub configuration: ArtifactReference, pub runtime: ArtifactReference, pub engine_identity: String,
+    |                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:211:5
+    |
+211 |     pub state: RunState, pub result: Option<ArtifactReference>, pub diagnostics: Option<ArtifactReference>,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:211:26
+    |
+211 |     pub state: RunState, pub result: Option<ArtifactReference>, pub diagnostics: Option<ArtifactReference>,
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> crates\zt-domain\src\lib.rs:211:65
+    |
+211 |     pub state: RunState, pub result: Option<ArtifactReference>, pub diagnostics: Option<ArtifactReference>,
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Compiling zt-execution v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-execution)
+warning: `zt-domain` (lib test) generated 109 warnings (109 duplicates)
+warning: `zt-domain` (lib) generated 109 warnings
+   Compiling zt-execution-paper v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\zt-execution-paper)
+   Compiling rustls-webpki v0.103.15
+   Compiling tokio-rustls v0.26.4
+   Compiling tungstenite v0.28.0
+   Compiling tokio-tungstenite v0.28.0
+   Compiling zt-adapters v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\crates\zt-adapters)
+   Compiling zt-offline-provider-import v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\zt-offline-provider-import)
+   Compiling zt-direct-public-ingest v0.1.0 (C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\apps\zt-direct-public-ingest)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 13s
+     Running unittests src\main.rs (target\debug\deps\desktop_phase0_cli-90e9afc595ab1e10.exe)
+     Running unittests src\lib.rs (target\debug\deps\zt_adapters-282011f2f0047e97.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 10 tests
+test live_public::tests::connection_deadline_expires_without_retry_or_fallback ... ok
+test live_public::tests::finite_supplied_events_stop_without_flush_when_not_explicitly_requested ... ok
+test live_public::tests::invalid_bounds_are_rejected_before_any_direct_connection_attempt ... ok
+test tests::normalizes_a_provider_shaped_binance_trade_without_network_access ... ok
+test live_public::tests::supplied_gap_withholds_final_flush_without_provider_fallback ... ok
+test tests::gaps_and_rejected_symbols_clear_the_batch_and_refuse_flush ... ok
+test tests::rejects_extra_precision_and_wrong_symbols ... ok
+test tests::reports_gap_instead_of_inventing_continuity ... ok
+test tests::persists_only_completed_contiguous_live_bars_into_an_immutable_local_segment ... ok
+test tests::restart_conflict_preserves_existing_immutable_segment_and_bounds_are_explicit ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running unittests src\lib.rs (target\debug\deps\zt_core-0e95bda905a3286a.exe)
+
+running 15 tests
+test tests::aggregates_only_observed_events ... ok
+test tests::ema_is_incremental ... ok
+test tests::ignores_duplicate_without_recounting_volume ... ok
+test tests::local_monte_carlo_is_deterministic_and_records_its_exact_local_inputs ... ok
+test tests::local_monte_carlo_rejects_invalid_bounds_before_simulation ... ok
+test tests::local_monte_carlo_withholds_gap_and_degraded_local_history ... ok
+test tests::local_scene_refuses_noncontiguous_or_oversized_draw_requests ... ok
+test tests::marks_gap_instead_of_manufacturing_continuity ... ok
+test tests::replay_runs_local_ema_only_on_contiguous_verified_history ... ok
+test tests::replay_halts_on_missing_interval_without_synthetic_bar ... ok
+test tests::local_scene_exposes_only_the_requested_bounded_cached_window ... ok
+test tests::local_scene_withholds_missing_and_logically_corrupt_segments ... ok
+test tests::contiguous_local_history_research_assembles_only_exact_verified_segments ... ok
+test tests::local_scene_withholds_gap_and_stale_ranges_without_candles ... ok
+test tests::local_history_research_withholds_cross_segment_gaps_and_degraded_sources ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running unittests src\main.rs (target\debug\deps\zt_direct_public_ingest-4e38d81431fbdb57.exe)
+
+running 2 tests
+test tests::strict_arguments_configure_a_finite_request_without_opening_a_connection ... ok
+test tests::invalid_or_unsupported_arguments_are_rejected_before_transport ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\zt_domain-96e929890d9a211b.exe)
+
+running 5 tests
+test tests::coverage_must_account_for_every_interval ... ok
+test tests::failed_runs_cannot_publish_results ... ok
+test tests::replay_rejects_future_visibility ... ok
+test tests::identifiers_cannot_escape_repository ... ok
+test tests::workspace_rejects_dangling_active_and_duplicate_documents ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (target\debug\deps\zt_execution-bbf89d7fda70a724.exe)
+
+running 1 test
+test journal::tests::failed_commit_never_returns_dispatchable_intent_or_echoes_error_payload ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\execution.rs (target\debug\deps\execution-a1801b638bf35ac4.exe)
+
+running 15 tests
+test invalid_filters_and_overflow_never_round_or_panic ... ok
+test invalid_config_cannot_reset_persisted_cash ... ok
+test cancel_scope_and_expiry_do_not_change_positions ... ok
+test paper_fills_after_latency_with_exact_fees_and_deduplicates ... ok
+test finite_liquidity_shared_and_partial_fills_resume_without_double_counting ... ok
+test both_live_modes_fail_closed ... ok
+test adverse_slippage_cannot_fill_past_limit_and_sell_proceeds_account_exactly ... ok
+test rate_window_persists_across_cancellation ... ok
+test journal_owns_file_exclusively_and_rejects_foreign_or_future_schema ... ok
+test journal_commits_before_claim_and_never_reclaims_unknown ... ok
+test reserves_cash_and_inventory_across_concurrent_intents ... ok
+test damaged_ledger_is_not_recreated_and_missing_balances_are_not_reset ... ok
+test stale_gaps_sleep_and_kill_switch_clear_signals_without_liquidating ... ok
+test restart_restores_balances_cancels_unsent_orders_and_requires_activation ... ok
+test persistent_ids_unique_and_raw_secret_fields_rejected ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running unittests src\main.rs (target\debug\deps\zt_execution_paper-a1eee992e9c5a647.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\process_recovery.rs (target\debug\deps\process_recovery-ada83f5245e3d223.exe)
+
+running 3 tests
+test command_errors_never_echo_secret_sentinels_and_quit_exits ... ok
+test oversized_commands_terminate_without_echo ... ok
+test kill_after_committed_intent_or_fill_preserves_account_without_replay ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+
+     Running unittests src\main.rs (target\debug\deps\zt_local_monte_carlo-fc0fcf3dc8a9f472.exe)
+
+running 6 tests
+test tests::complete_json_keeps_algorithm_and_integer_distribution_fields_explicit ... ok
+test tests::missing_local_layout_returns_versioned_unavailable_json ... ok
+test tests::strict_arguments_reject_missing_duplicate_unsupported_and_unbounded_requests ... ok
+test tests::integrity_checked_local_segment_produces_a_complete_bounded_result ... ok
+test tests::cross_segment_gap_is_withheld_without_partial_monte_carlo_output ... ok
+test tests::explicit_contiguous_history_segments_produce_a_bounded_complete_result ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running unittests src\main.rs (target\debug\deps\zt_local_scene_bridge-25c3448a042ceba4.exe)
+
+running 3 tests
+test tests::json_output_keeps_status_and_integer_candle_values_explicit ... ok
+test tests::missing_local_layout_returns_versioned_unavailable_json ... ok
+test tests::rejects_missing_duplicate_and_unsupported_arguments ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\zt_local_segment_catalog-d1f9c43e9706bb36.exe)
+
+running 3 tests
+test tests::catalog_json_keeps_only_aggregate_metadata_fields_explicit ... ok
+test tests::missing_local_layout_returns_versioned_unavailable_catalog ... ok
+test tests::strict_arguments_reject_missing_duplicate_unsupported_and_unbounded_requests ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\zt_local_workspace-02d66eadb10e9238.exe)
+
+running 3 tests
+test tests::strict_arguments_reject_missing_duplicate_unsupported_and_cloud_state_requests ... ok
+test tests::absent_local_root_reads_as_not_found_without_creating_a_journal ... ok
+test tests::local_save_and_read_emit_only_aggregate_metadata ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running unittests src\main.rs (target\debug\deps\zt_offline_provider_import-0a317cc426f566da.exe)
+
+running 3 tests
+test tests::gaps_are_withheld_and_no_flush_leaves_no_segment ... ok
+test tests::import_persists_verified_completed_bars_for_a_local_chart_scene ... ok
+test tests::explicit_no_flush_and_restart_conflict_preserve_local_history ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running unittests src\lib.rs (target\debug\deps\zt_protocol-28a9c0dd0be6a9e3.exe)
+
+running 2 tests
+test tests::accepts_declared_valid_trade ... ok
+test tests::rejects_non_positive_quantities ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (target\debug\deps\zt_risk-63a274d912a68c93.exe)
+
+running 10 tests
+test execution::tests::collars_fail_closed_at_boundaries_and_overflow ... ok
+test gatekeeper::tests::test_dollar_risk_exceeded ... ok
+test gatekeeper::tests::test_drawdown_exceeded ... ok
+test gatekeeper::tests::test_quantity_collar ... ok
+test gatekeeper::tests::test_rate_limiter ... ok
+test sizing::tests::test_floor_step ... ok
+test sizing::tests::test_valid_sizing ... ok
+test sizing::tests::test_zero_atr ... ok
+test sizing::tests::test_negative_equity ... ok
+test gatekeeper::tests::test_kill_switch ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src\lib.rs (target\debug\deps\zt_storage-2ee23a927c9a3b1b.exe)
+
+running 11 tests
+test tests::evicts_the_least_recently_used_segment ... ok
+test tests::refuses_to_retain_a_segment_larger_than_budget ... ok
+test tests::rejects_workspace_records_that_exceed_the_local_budget ... ok
+test tests::touching_changes_eviction_priority ... ok
+test tests::reports_live_cached_and_stale_without_manufacturing_freshness ... ok
+test tests::journals_latest_workspace_locally_with_no_cloud_dependency ... ok
+test tests::persists_and_verifies_an_immutable_local_segment ... ok
+test tests::compacts_workspace_journal_locally_without_losing_latest_snapshot ... ok
+test tests::withholds_a_corrupt_local_segment ... ok
+test tests::catalog_enforces_request_bounds_and_reports_truncation ... ok
+test tests::catalogs_only_verified_matching_local_segments_in_start_order ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+   Doc-tests zt_adapters
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests zt_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests zt_domain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests zt_execution
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests zt_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests zt_risk
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests zt_storage
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

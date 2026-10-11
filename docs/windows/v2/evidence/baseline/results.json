@@ -1,0 +1,74 @@
+[
+  {
+    "check": "install",
+    "command": "npm.cmd ci",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 95.19,
+    "log": "install.log"
+  },
+  {
+    "check": "domain",
+    "command": "cargo test --locked -p zt-domain",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 11.46,
+    "log": "domain.log"
+  },
+  {
+    "check": "local-core",
+    "command": "cargo test --locked --manifest-path src-tauri/workstation-core/Cargo.toml",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 22.48,
+    "log": "local-core.log"
+  },
+  {
+    "check": "web-tests",
+    "command": "npm.cmd test",
+    "exit": 1,
+    "status": "FAIL",
+    "seconds": 10.73,
+    "log": "web-tests.log"
+  },
+  {
+    "check": "typecheck",
+    "command": "npm.cmd run typecheck",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 23.12,
+    "log": "typecheck.log"
+  },
+  {
+    "check": "lint",
+    "command": "npm.cmd run lint",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 72.7,
+    "log": "lint.log"
+  },
+  {
+    "check": "web-build",
+    "command": "npm.cmd run build",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 81.85,
+    "log": "web-build.log"
+  },
+  {
+    "check": "desktop-build",
+    "command": "npm.cmd run desktop:build",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 387.97,
+    "log": "desktop-build.log"
+  },
+  {
+    "check": "command-origin",
+    "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml --release --lib",
+    "exit": 0,
+    "status": "PASS",
+    "seconds": 21.7,
+    "log": "command-origin.log"
+  }
+]

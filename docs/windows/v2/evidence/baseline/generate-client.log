@@ -1,0 +1,21 @@
+
+> nextjs_tailwind_shadcn_ts@0.2.1 db:generate
+> prisma generate
+
+Prisma schema loaded from prisma\schema.prisma
+┌─────────────────────────────────────────────────────────┐
+
+│  Update available 6.19.3 -> 8.0.0-rc.22                 │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+✔ Generated Prisma Client (v6.19.3) to .\node_modules\@prisma\client in 1.37s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+└─────────────────────────────────────────────────────────┘
+Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints

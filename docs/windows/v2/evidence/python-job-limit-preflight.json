@@ -1,0 +1,7 @@
+{
+  "interpreter": "C:\\Users\\aykhank\\Desktop\\Others\\Projects\\ZT\\.venv-research\\Scripts\\python.exe",
+  "activeProcessLimit": 1,
+  "exit": 101,
+  "stdout": "",
+  "stderr": "Unable to create process using '\"C:\\Users\\aykhank\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" -c \"import sys; sys.stdin.readline(); print(\\\"ready\\\")\"'\n"
+}

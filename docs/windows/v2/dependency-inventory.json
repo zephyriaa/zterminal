@@ -1,0 +1,49 @@
+{
+  "lockAndSourceHashes": {
+    "package-lock.json": "0cfb010165a8242e70020c3302128ac75fe08572338f4d5223904ddb6876beab",
+    "Cargo.lock": "922f65ab4758ce24477a9442f03b35c7e03e4534a7a7efba2775967c1f86a963",
+    "src-tauri/Cargo.lock": "ca10b2e3c6c4ddfcee54ec36e22aee1b799f78cbce60b48df8cf8c91a34b58ac",
+    "src-tauri/workstation-core/Cargo.lock": "52fcce1f9b0fc663089556d2eacfc6acba564855e96e5ea50daa3cd42315466e",
+    "crates/zt-domain/src/lib.rs": "e86c7f09755ad0161a07a24719df986bbb95881f0aa8d0ea96232be4f4146bb9",
+    "src-tauri/tauri.conf.json": "2cbd61f2700ea693f55c07fb645851aee18be9d019f769d1ae28d856c206ae6e",
+    "src-tauri/workstation-core/src/lib.rs": "417b23f98c1181ef5947593ce556281664a06069d3914b942de730e9e0d4633f"
+  },
+  "lockedNpmVersions": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "vite": "7.3.6",
+    "typescript": "5.9.3",
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/cli": "2.11.4",
+    "lightweight-charts": "5.2.1",
+    "dockview-react": "8.3.1",
+    "dockview-core": "8.3.1",
+    "@monaco-editor/react": "4.7.0",
+    "monaco-editor": "0.55.1",
+    "next": "16.3.6",
+    "next-auth": "4.24.15",
+    "prisma": "6.19.3",
+    "@prisma/client": "6.19.3",
+    "lucide-react": "0.525.0",
+    "zustand": "5.0.14",
+    "@tanstack/react-query": "5.101.4",
+    "@dnd-kit/core": "6.3.1",
+    "react-resizable-panels": "3.0.6"
+  },
+  "fontAssets": [
+    {
+      "path": "artifacts\\figma-rebuild\\revision-v2\\assets\\geist-mono.woff2",
+      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3",
+      "bytes": 31288
+    },
+    {
+      "path": "artifacts\\figma-rebuild\\revision-v2\\assets\\geist.woff2",
+      "sha256": "1b5ebfb3a01a97343ac96873e6d59a8cb285c66012b6a1ac509cb2765e995ba8",
+      "bytes": 28356
+    }
+  ],
+  "fontComparison": {
+    "geist-latin.woff2": true,
+    "geist-mono-latin.woff2": true
+  }
+}

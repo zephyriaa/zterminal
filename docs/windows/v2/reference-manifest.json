@@ -1,0 +1,836 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "status": "BLOCKED \u2014 review manifest frozen, approval not granted",
+  "governing": "docs/windows/V2-PRODUCT-BUILD-PROMPT.md",
+  "fileKey": "VtIJq6WBPRJUUKtc4XvnxE",
+  "pageId": "3:3",
+  "referencePriority": "Existing accepted V2 direction over earlier 35-screen draft; prepared local corrections require review",
+  "approvalAuthority": "Human product/design gate; source inspection and capture completion do not grant approval",
+  "frames": [
+    {
+      "nodeId": "14:1080",
+      "view": "chart",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-00-chart-1440-rich.png",
+      "localSourceSha256": "e81669dc65992778b1fe4b11ad7d1a0c469949eee08e2062c6b64979d8fdab74",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "main visually inspected",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "16:1080",
+      "view": "studio",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-01-studio-1440-rich.png",
+      "localSourceSha256": "34129aae4e78f8e56c2fc8c3caf063fcdddc3054a0b4714f902547ceba61e29c",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "source reviewed; Figma individual audit not established",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "17:1080",
+      "view": "results",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-02-results-1440-rich.png",
+      "localSourceSha256": "27d4d40af0b734e54149d36b05b0859cf17a8736f6d726dd4f4551d435ecc507",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "source reviewed; Figma individual audit not established",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "18:1080",
+      "view": "preferences",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-03-preferences-1440-rich.png",
+      "localSourceSha256": "6f6632f81bf4905f0240d902dad20e06c1c3cebadf53dabc31f55527ba643d47",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "source reviewed; Figma individual audit not established",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "19:1080",
+      "view": "chart",
+      "dimensionsDip": [
+        1366,
+        768
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-04-chart-1366-rich.png",
+      "localSourceSha256": "121ac7a12b9865d2c9c86dce245535308f218209ce513f92c8234cfdb2936ae6",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "source reviewed; Figma individual audit not established",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "21:1080",
+      "view": "chart",
+      "dimensionsDip": [
+        1920,
+        1080
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-05-chart-1920-rich.png",
+      "localSourceSha256": "3b670fa7ccaaf7d20b9ad18f0ff10eeec3e7c66dd1f7c4c016f950cfb0a8060f",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "source reviewed; Figma individual audit not established",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "22:1080",
+      "view": "max",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-06-max-1440-rich.png",
+      "localSourceSha256": "eeee93b6fe6ecd36c19e15e27c696de1cdb238a9d7a0897f2280c8c393cc95c1",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "source reviewed; Figma individual audit not established",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "20:1080",
+      "view": "detached",
+      "dimensionsDip": [
+        1024,
+        680
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-07-detached-1024-rich.png",
+      "localSourceSha256": "abfa86c7dc6716c0d0c894ab613f516f6e7b5f5636305a8b7a61a368012c1f66",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "source reviewed; Figma individual audit not established",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "25:1080",
+      "view": "launch",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-08-launch-1440-rich.png",
+      "localSourceSha256": "0a75f441403b9767ce80dd003aa45538e3448af61bfe09e579083101562b799a",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "matched_source",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "26:1080",
+      "view": "library",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-09-library-1440-rich.png",
+      "localSourceSha256": "351cfbd63d67c1d651df2ed1986213bb1817847b34e9601deda987025f249a24",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "27:1080",
+      "view": "datasets",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-10-datasets-1440-rich.png",
+      "localSourceSha256": "8cc41c94ca7549ad457e4e0cdf58900d6d8a768cabff886aaa5de5d631515841",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "matched_source",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "28:1080",
+      "view": "import",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-11-import-1440-rich.png",
+      "localSourceSha256": "dfb8d090d2d71cc99c012c6d9942830c908b8dce9178d85e6d10361c533e8dfd",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "29:1080",
+      "view": "import-error",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-12-import-error-1440-rich.png",
+      "localSourceSha256": "de5b702cdb3cceb4017a6cfc2e2d0803d4002baf550fe0178d0c070bf3584cf4",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "30:1080",
+      "view": "configure",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-13-configure-1440-rich.png",
+      "localSourceSha256": "4d4d23204e5c9bc3ffbfa4df37b10d13e65d6140fbe4fce05b9ba22a42b8fca4",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "matched_source",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "31:1080",
+      "view": "jobs",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-14-jobs-1440-rich.png",
+      "localSourceSha256": "a58558a4b71f94e335cc493da59dadb423a569f8a9bcceadb36bd56a8adde229",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "32:1080",
+      "view": "job-error",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-15-job-error-1440-rich.png",
+      "localSourceSha256": "6a947cdcf511e6fcc582f8f0dec0af858e17d80f3a74aaff3944aebd6a41a5d2",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "33:1080",
+      "view": "comparison",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-16-comparison-1440-rich.png",
+      "localSourceSha256": "ea6bdcf368ec2532f6a26ad700413fd74def45a94cf77c2fa2e14f1d44091eb5",
+      "originalFigmaExport": "evidence/figma-33-1080.png",
+      "originalFigmaSha256": "e5e728c54e3b2569838c1d47cecd34a28f784847cbc9a25bfb666e4996a7f7b5",
+      "historicalReview": "failed_wrong_content",
+      "currentReview": "Fresh metadata + 1440x900 PNG shows correct comparison, not diagnostics; awaiting approval",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "34:1080",
+      "view": "robustness",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-17-robustness-1440-rich.png",
+      "localSourceSha256": "29285bd4540b4bd7004712dab198114b132c45c7f7706ea07e8141b502c308f6",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "matched_source",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "35:1080",
+      "view": "replay",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-18-replay-1440-rich.png",
+      "localSourceSha256": "441038f0cb29fe18b8d3a9eb9538a750af5ca4e9132e7a91a830129279cdd1af",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "36:1080",
+      "view": "indicators",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-19-indicators-1440-rich.png",
+      "localSourceSha256": "a2dc03c64414e525c21192a9f9d380a9c80ea431fda639ad7266f4df2921546d",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "37:1080",
+      "view": "health",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-20-health-1440-rich.png",
+      "localSourceSha256": "a069ddcbb83071f89fb81adfc35488fe2a1919d342c5d96a9cc82ca8929453b4",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "38:1080",
+      "view": "recovery",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-21-recovery-1440-rich.png",
+      "localSourceSha256": "558c385c195a2a80734fdddbcf9613d06e61d5432fbb1fe8153a164d9a3d6f8d",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "39:1080",
+      "view": "evidence",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-22-evidence-1440-rich.png",
+      "localSourceSha256": "6bbfbdb2796f43cc219e90f0d820f452f253f3a23264f292ea60dfc7b26e5f8f",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "40:1080",
+      "view": "instruments",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-23-instruments-1440-rich.png",
+      "localSourceSha256": "25277a59371ef0f2ce56deec8b8adc85244271cb9c5034eefc074e2d6c3e12b7",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    },
+    {
+      "nodeId": "41:1080",
+      "view": "handoff",
+      "dimensionsDip": [
+        1440,
+        900
+      ],
+      "sourceComposition": "app.js + journeys.js + design-gate.js",
+      "localSourceExport": "evidence/source/source-24-handoff-1440-rich.png",
+      "localSourceSha256": "fc4967c555bb4528f70c2f0cd57f67589bd13c9ea777251f0cf52b29e6be9836",
+      "originalFigmaExport": null,
+      "originalFigmaSha256": null,
+      "historicalReview": "pending",
+      "currentReview": "BLOCKED: full-resolution Figma export/layer verification unavailable at quota",
+      "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
+      "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
+      "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
+      "approvedExceptions": []
+    }
+  ],
+  "missingOrUnapproved": [
+    "24 original full-resolution frame exports unavailable this run",
+    "Figma node fonts/types/image fills/bounds/clipping, components/variables/prototype wiring",
+    "Earlier eight Figma compositions lack propagated local library destinations",
+    "Equity/drawdown, trade detail, empty and mixed-monitor source additions have no accepted V2 node",
+    "Rich/reduced/opaque variants, themes/density, high-DPI 911x512 and 683x384 source variants lack approval",
+    "All interaction state variants and full menu contents",
+    "Provider connection/history failures, perpetual research/funding/mark coverage and liquidation states",
+    "Editable editor/revisions, actual cancellation/retry/repair, comparison incompatibility, export failure/pickers",
+    "All preference page bodies, shortcuts, cleanup/recovery failure and accessibility review",
+    "Current comparison header says Binance Futures, saved source says Binance Spot; decide exact product identity",
+    "Prepared token capability milestone numbers conflict with governing milestones; use governing sequence"
+  ],
+  "preparedSourceSnapshots": [
+    {
+      "path": "app.js",
+      "bytes": 22431,
+      "sha256": "2d2e6ee77d6f00a4b1de24e9cfabeec32edb86026087edfd5297b4238b1e4028"
+    },
+    {
+      "path": "assets/geist-mono.woff2",
+      "bytes": 31288,
+      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3"
+    },
+    {
+      "path": "assets/geist.woff2",
+      "bytes": 28356,
+      "sha256": "1b5ebfb3a01a97343ac96873e6d59a8cb285c66012b6a1ac509cb2765e995ba8"
+    },
+    {
+      "path": "assets/mark.png",
+      "bytes": 241832,
+      "sha256": "cad7cc28ca96efe424e3786d0f25072c2a91a174ac8157f164d50b4a9a8988ca"
+    },
+    {
+      "path": "build.cjs",
+      "bytes": 2193,
+      "sha256": "8cf52e2715e3ff967943d10c051600c7583393bf806401387d6a6fdfe97401b5"
+    },
+    {
+      "path": "capture-state.json",
+      "bytes": 1948,
+      "sha256": "035d99f9d9007d7e9bc8c502ccf7416deaefffbd8cbb66cffdd8fc5081426738"
+    },
+    {
+      "path": "design-gate.css",
+      "bytes": 7903,
+      "sha256": "06793810576c884874de973d2677f6f24758c5450323ead8d9728a69478762d6"
+    },
+    {
+      "path": "design-gate.js",
+      "bytes": 13727,
+      "sha256": "386f58c4e69c4205a78b154599dd11ca7f7d30431f7a40e3caa2f796ad24a2ad"
+    },
+    {
+      "path": "figma-first-launch-proof.png",
+      "bytes": 54158,
+      "sha256": "daa9a3cb4d273c8dcece5052f7bf623a981255a9f3a0d7159e25fee262b2bbb3"
+    },
+    {
+      "path": "figma-proof.png",
+      "bytes": 52091,
+      "sha256": "5db85c557940d4d597e94aedff44791b5e24c6ee8d560fa01d8f7a0a009dfd4f"
+    },
+    {
+      "path": "HANDOFF.md",
+      "bytes": 6664,
+      "sha256": "3c247ed24c4f764423f0a838bf2547c659b61110509067ae732f39220eda57b8"
+    },
+    {
+      "path": "icons.json",
+      "bytes": 19374,
+      "sha256": "46acddd32ec187333baf301faff95a9b71c9c80b261b2b8a981344d91a6c9990"
+    },
+    {
+      "path": "index.html",
+      "bytes": 611,
+      "sha256": "457913d56c10c6c7ed96ac26d0f77a41f51b237121508adc36c1cfdb9ca4030e"
+    },
+    {
+      "path": "INTERACTION-CONTRACT.md",
+      "bytes": 8040,
+      "sha256": "54152dd8275ef61e88d2a5ffb6ae0c037f97d486da097f099dd0334c25ef5570"
+    },
+    {
+      "path": "journey-capture-state.json",
+      "bytes": 5371,
+      "sha256": "2469a096bed6e82db68ad9b62f2ccf0eaf12aa110f958eea80cb07318278f5e5"
+    },
+    {
+      "path": "journeys.css",
+      "bytes": 14661,
+      "sha256": "bca758c7554335ee7e5b6a8e7a92d83a42229e81d49b2aaff4d49b8c38481c22"
+    },
+    {
+      "path": "journeys.js",
+      "bytes": 34749,
+      "sha256": "7046fbf771e9201f9df4ccf4a42822951c23744d09374627eae7f210c375b765"
+    },
+    {
+      "path": "native-design-source-checks.json",
+      "bytes": 3003,
+      "sha256": "68a11375260e97322cc026948daf5dbf99fca8c566f43a4a8fefa062cc3f8ab6"
+    },
+    {
+      "path": "native-design-tokens.json",
+      "bytes": 1661,
+      "sha256": "be2922ba1f4aef57c6bf0681501d7b11cf7e69bd7074c63d3a8029e6c23352eb"
+    },
+    {
+      "path": "NATIVE-IMPLEMENTATION-STATUS.md",
+      "bytes": 3365,
+      "sha256": "b578c6c9690c6cf17e51cc8d1002f44a73771f4edd720b4f6d5bcb582c653005"
+    },
+    {
+      "path": "preview-comparison.png",
+      "bytes": 96677,
+      "sha256": "3c6680eed57fa6a33b85135dfb17f80906e615a17522a92daa9ac46d7997b608"
+    },
+    {
+      "path": "preview-main.png",
+      "bytes": 105090,
+      "sha256": "afb2068cf431556412bb542d79d578e817cd9c5f1bd60cb68281dd837d2510ee"
+    },
+    {
+      "path": "preview-native-compact.png",
+      "bytes": 18553,
+      "sha256": "914c148e89d2fe4ef9bb4a6425dac2274650ccecc1287eec710406c08409ce48"
+    },
+    {
+      "path": "preview-native-equity.png",
+      "bytes": 76804,
+      "sha256": "f2cc6cd76f744c9cc66a7daba17214b07476a51653a7903dd9786122812a1b98"
+    },
+    {
+      "path": "preview-native-monitors.png",
+      "bytes": 83254,
+      "sha256": "44998eafbb7f2095f90ede4a83644bfcf037c53ea08f28c965354c04fd1e019a"
+    },
+    {
+      "path": "preview-native-trades.png",
+      "bytes": 66436,
+      "sha256": "3880c6631d03e4e06f95c61b107d0958ab84b26f6575019f7e80b138197ceaa6"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1734,
+      "sha256": "c5671ef9468debb3ed1dcb9e0fa7c183ce4cb7dd0999fead8f79aa726bd66a6f"
+    },
+    {
+      "path": "RESUME.md",
+      "bytes": 4531,
+      "sha256": "28e3163495e333a74b84304764ca602c43037dbe943039601c84f0302542612a"
+    },
+    {
+      "path": "server.cjs",
+      "bytes": 824,
+      "sha256": "6cb0d749048bce69b4ba261ad6857241d8b6cf1eb011dacc13c71083670c61a3"
+    },
+    {
+      "path": "source-verification.json",
+      "bytes": 1417,
+      "sha256": "40241fd8f0551cc9e3b57e4942cf0b433df0fd7b56063cbb3fbb756e2305e500"
+    },
+    {
+      "path": "style.css",
+      "bytes": 20181,
+      "sha256": "38026934ebe238bc9c8308657a1170118904cde0183ea234e15084cb0d64edaa"
+    }
+  ],
+  "legacyRecords": [
+    {
+      "path": "legacy/01-foundations.request.json",
+      "bytes": 3701,
+      "sha256": "2f8ead3d43cbd62a8b57f76cab1aba7896c7ac2801c2e734699e9d15b1089ce9",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/02-components.request.json",
+      "bytes": 18096,
+      "sha256": "31d6a8b89e0bd2752e5c0a12b2cb8e7af036c725ed04aec26a0b0a4a21aa71b9",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/03-direction.request.json",
+      "bytes": 16964,
+      "sha256": "0fddf64ac52cb0074e997651366472ccb34960988a32aca31530fff9cae9d7ee",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/04-core-screens.request.json",
+      "bytes": 21701,
+      "sha256": "b210098f50c42c14adc132a2c6b07eedf483854c3145888cb94afc61ddbb2b6a",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/05-charts-and-jobs.request.json",
+      "bytes": 22755,
+      "sha256": "37c30b70b1d83a3db9b4574ad7b231ab2efe57648d7d2f87ec9acde3ad5db83f",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/06-evidence-and-settings.request.json",
+      "bytes": 26052,
+      "sha256": "8aac3ed6475c9a615f02a5e4b245714f8a8be83775d4ba99a237c2d8d4da9c5a",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/07-pending-finalization.request.json",
+      "bytes": 31491,
+      "sha256": "08c40c4f0fab66f65292c9fecabed4ec44527e9971bfc30c779c69d219b00eff",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/design-system-state.json",
+      "bytes": 8434,
+      "sha256": "47434b82290462a7a01f1d31afc5eaced2e981af95ca223a2aa569399d4ac568",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/figma-toolkit.js",
+      "bytes": 10009,
+      "sha256": "4b91a09ebf7e95ee7277c95fdd336266ad2091bc50521ec5dd727fb79dcd1d35",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    },
+    {
+      "path": "legacy/HANDOFF.md",
+      "bytes": 7692,
+      "sha256": "c2c659318345c191f55bf49f11e5958e8af8be692f90cff64fde65b1246e1360",
+      "status": "Earlier editor-first draft; not accepted V2 target; do not replay construction requests"
+    }
+  ],
+  "sourceSnapshotArchive": {
+    "path": "evidence/design-source.zip",
+    "sha256": "9f417c7aa5629d995040e4485ff70671f5049eb8513a5947bc18f198e4e2a28d",
+    "purpose": "Exact original ignored source/handoff/fonts packaged for review; not an approved design"
+  },
+  "additionalSourceArrangements": [
+    {
+      "view": "equity",
+      "width": 1440,
+      "height": 900,
+      "nodeId": null,
+      "effects": "rich",
+      "export": "evidence/source/source-25-equity-1440-rich.png",
+      "sha256": "3fa20850bb53442441b25a4d0b3fb4cbccde96773feb746491892fab224e4614",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "trades",
+      "width": 1440,
+      "height": 900,
+      "nodeId": null,
+      "effects": "rich",
+      "export": "evidence/source/source-26-trades-1440-rich.png",
+      "sha256": "739a793f78baaf8ca344ab3a50d182c74d5db6f14da9ab1e1b4ab0ddfd14f308",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "empty",
+      "width": 1440,
+      "height": 900,
+      "nodeId": null,
+      "effects": "opaque",
+      "export": "evidence/source/source-27-empty-1440-opaque.png",
+      "sha256": "ee52a05589be287482141e1c94e317bf57a8c6c6e1ff6eeeb3355905deff390b",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "mixed-monitors",
+      "width": 1920,
+      "height": 1080,
+      "nodeId": null,
+      "effects": "rich",
+      "export": "evidence/source/source-28-mixed-monitors-1920-rich.png",
+      "sha256": "8f9e72e9ba36a4730de4c58e47dd1c45c2f26331080877374a98cd7991093829",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "design-review",
+      "width": 1440,
+      "height": 900,
+      "nodeId": null,
+      "effects": "rich",
+      "export": "evidence/source/source-29-design-review-1440-rich.png",
+      "sha256": "460a8dd97113e9ce35791cf20014533eb5fec403c8718c630b12b9f37e5fd8b8",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "chart",
+      "width": 911,
+      "height": 512,
+      "nodeId": null,
+      "effects": "reduced",
+      "export": "evidence/source/source-30-chart-911-reduced.png",
+      "sha256": "ff86df5f1bfc9c344d3a7b31515a3e2cef8f8f0b162e591b788a42abf6846b2d",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "studio",
+      "width": 683,
+      "height": 384,
+      "nodeId": null,
+      "effects": "opaque",
+      "export": "evidence/source/source-31-studio-683-opaque.png",
+      "sha256": "cd838a87f94a7c62067c14e2891821b55ec06689ac3f95f8927768645b87a4cb",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "configure",
+      "width": 683,
+      "height": 384,
+      "nodeId": null,
+      "effects": "opaque",
+      "export": "evidence/source/source-32-configure-683-opaque.png",
+      "sha256": "09334f037bebcceeb0cc4603a7ffd1a8d36cded5155885268ed49018900c2d29",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "chart",
+      "width": 1440,
+      "height": 900,
+      "nodeId": null,
+      "effects": "reduced",
+      "export": "evidence/source/source-33-chart-1440-reduced.png",
+      "sha256": "ef91238cdce8516d6f323e0bfb1ad5e7879100d90f6e1da3afec1b292d2bb51e",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "chart",
+      "width": 1440,
+      "height": 900,
+      "nodeId": null,
+      "effects": "opaque",
+      "export": "evidence/source/source-34-chart-1440-opaque.png",
+      "sha256": "32326a321343477fd833a15d882820be14de5f7b426582c34ca0dd0f094d0938",
+      "status": "UNAPPROVED SOURCE"
+    },
+    {
+      "view": "detached",
+      "width": 1024,
+      "height": 680,
+      "nodeId": null,
+      "effects": "rich",
+      "export": "evidence/source/source-35-detached-1024-rich.png",
+      "sha256": "abfa86c7dc6716c0d0c894ab613f516f6e7b5f5636305a8b7a61a368012c1f66",
+      "status": "UNAPPROVED SOURCE"
+    }
+  ]
+}

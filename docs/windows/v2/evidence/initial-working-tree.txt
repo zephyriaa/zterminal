@@ -1,0 +1,31 @@
+ M .gitignore
+ M Cargo.lock
+ M Cargo.toml
+ M apps/windows-host/CMakeLists.txt
+ M apps/windows-host/src/main.cpp
+ M crates/zt-risk/src/gatekeeper.rs
+ M crates/zt-risk/src/ipc.rs
+ M crates/zt-risk/src/sizing.rs
+ M eslint.config.mjs
+ M research/desktop/requirements.txt
+ M scripts/test-python.ps1
+ M tsconfig.json
+?? .nvmrc
+?? ZTerminal.code-workspace
+?? apps/windows-host/scripts/build-winui.ps1
+?? apps/windows-host/scripts/prepare-winui-toolchain.ps1
+?? apps/windows-host/scripts/winui-build-dependencies.json
+?? apps/windows-host/src/native_chart_host.h
+?? apps/windows-host/winui/
+?? crates/zt-domain/
+?? docs/DEVELOPMENT.md
+?? docs/DEVELOPMENT_SETUP.md
+?? docs/windows/NATIVE_UI_PORT_STATUS.md
+?? docs/windows/v2/
+?? research/requirements-dev.txt
+?? scripts/check-dev.ps1
+?? scripts/dev-environment.ps1
+?? scripts/prepare-helper.ps1
+?? scripts/setup-dev.ps1
+?? scripts/start-dev.ps1
+?? scripts/stop-dev.ps1

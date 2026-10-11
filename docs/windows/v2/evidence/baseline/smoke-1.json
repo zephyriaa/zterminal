@@ -1,0 +1,12 @@
+{
+  "fixture_only": true,
+  "profile": "debug",
+  "rows": 10000,
+  "scene_bars": 2000,
+  "each_call_new_process": true,
+  "create_ms": 520.19,
+  "import_ms": 223.23,
+  "scene_ms": 134.79,
+  "save_ms": 76.0,
+  "restore_ms": 55.95
+}

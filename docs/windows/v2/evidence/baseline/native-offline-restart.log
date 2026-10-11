@@ -1,0 +1,5 @@
+PASS: fresh startup, create, save, strict import, wheel zoom, pointer pan/crosshair, save, invalid import and reload
+
+PASS: native process restart restored imported history after original source removal
+
+PASS: persisted viewport and immutable dataset verified outside the browser

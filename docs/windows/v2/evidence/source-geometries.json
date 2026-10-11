@@ -1,0 +1,6499 @@
+[
+  {
+    "view": "chart",
+    "width": 1440,
+    "height": 900,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "     ",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1440,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 38.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1120.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1154.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1188.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1222.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 194,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "16px 10px 12px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 94.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 871.5,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 871.5,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 982.5,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1007.5,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1032.5,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 194,
+          "y": 112,
+          "width": 871.5,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 988.5,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1025.5,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 163,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 199,
+          "y": 197,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 231,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 265,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 299,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 333,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 382,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 416,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 450,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 194,
+          "y": 874,
+          "width": 871.5,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      },
+      {
+        "class": "right-dock",
+        "rect": {
+          "x": 1066.5,
+          "y": 78,
+          "width": 373.5,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group context-group",
+        "rect": {
+          "x": 1066.5,
+          "y": 78,
+          "width": 373.5,
+          "height": 410.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1066.5,
+          "y": 78,
+          "width": 373.5,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1357,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1382,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1407,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "group editor-group",
+        "rect": {
+          "x": 1066.5,
+          "y": 489.5,
+          "width": 373.5,
+          "height": 410.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1066.5,
+          "y": 489.5,
+          "width": 373.5,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1357,
+          "y": 492.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1382,
+          "y": 492.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1407,
+          "y": 492.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1364,
+          "y": 535.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1398,
+          "y": 535.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 1080.5,
+          "y": 810.7999877929688,
+          "width": 89.70000457763672,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 1178.2000732421875,
+          "y": 810.7999877929688,
+          "width": 95.0250015258789,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "studio",
+    "width": 1440,
+    "height": 900,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "studio-mode     ",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1440,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 38.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1120.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1154.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1188.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1222.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 194,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "16px 10px 12px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 94.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 684.75,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 684.75,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 795.75,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 820.75,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 845.75,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 194,
+          "y": 112,
+          "width": 684.75,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 801.75,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 838.75,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 163,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 199,
+          "y": 197,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 231,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 265,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 299,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 333,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 382,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 416,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 450,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 194,
+          "y": 874,
+          "width": 684.75,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      },
+      {
+        "class": "right-dock",
+        "rect": {
+          "x": 879.75,
+          "y": 78,
+          "width": 560.25,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group editor-group",
+        "rect": {
+          "x": 879.75,
+          "y": 78,
+          "width": 560.25,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 879.75,
+          "y": 78,
+          "width": 560.25,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 10px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1355,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1380,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1405,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1362,
+          "y": 128,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1396,
+          "y": 128,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 895.75,
+          "y": 805.2000122070312,
+          "width": 89.70000457763672,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 993.4500122070312,
+          "y": 805.2000122070312,
+          "width": 95.0250015258789,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "results",
+    "width": 1440,
+    "height": 900,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": " results-mode    ",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1440,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 38.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1120.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1154.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1188.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1222.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 194,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "16px 10px 12px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 94.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 784.3500366210938,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 784.3500366210938,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 895.3500366210938,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 920.3500366210938,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 945.3500366210938,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 194,
+          "y": 112,
+          "width": 784.3500366210938,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 901.3500366210938,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 938.3500366210938,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 163,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 199,
+          "y": 197,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 231,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 265,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 299,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 333,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 382,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 416,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 450,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 194,
+          "y": 874,
+          "width": 784.3500366210938,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      },
+      {
+        "class": "right-dock",
+        "rect": {
+          "x": 979.3500366210938,
+          "y": 78,
+          "width": 460.6499938964844,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group editor-group",
+        "rect": {
+          "x": 979.3500366210938,
+          "y": 78,
+          "width": 460.6499938964844,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 979.3500366210938,
+          "y": 78,
+          "width": 460.6499938964844,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1357,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1382,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1407,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 997.3500366210938,
+          "y": 599.6000366210938,
+          "width": 128.15000915527344,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 1131.5,
+          "y": 599.6000366210938,
+          "width": 99.20000457763672,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1236.7000732421875,
+          "y": 599.6000366210938,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "preferences",
+    "width": 1440,
+    "height": 900,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "     ",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1440,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 38.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1120.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1154.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1188.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1222.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 194,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "16px 10px 12px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 94.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 871.5,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 871.5,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 982.5,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1007.5,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1032.5,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 194,
+          "y": 112,
+          "width": 871.5,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 988.5,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1025.5,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 163,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 199,
+          "y": 197,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 231,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 265,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 299,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 333,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 382,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 416,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 450,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 194,
+          "y": 874,
+          "width": 871.5,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      },
+      {
+        "class": "right-dock",
+        "rect": {
+          "x": 1066.5,
+          "y": 78,
+          "width": 373.5,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group context-group",
+        "rect": {
+          "x": 1066.5,
+          "y": 78,
+          "width": 373.5,
+          "height": 410.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1066.5,
+          "y": 78,
+          "width": 373.5,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1357,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1382,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1407,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "group editor-group",
+        "rect": {
+          "x": 1066.5,
+          "y": 489.5,
+          "width": 373.5,
+          "height": 410.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1066.5,
+          "y": 489.5,
+          "width": 373.5,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1357,
+          "y": 492.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1382,
+          "y": 492.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1407,
+          "y": 492.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1364,
+          "y": 535.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1398,
+          "y": 535.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 1080.5,
+          "y": 810.7999877929688,
+          "width": 89.70000457763672,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 1178.2000732421875,
+          "y": 810.7999877929688,
+          "width": 95.0250015258789,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      },
+      {
+        "class": "dialog",
+        "rect": {
+          "x": 330,
+          "y": 184,
+          "width": 780,
+          "height": 610
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "16px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1058.2000732421875,
+          "y": 198.40000915527344,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 910.6375122070312,
+          "y": 752.1000366210938,
+          "width": 114.4625015258789,
+          "height": 29
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 14px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 1033.0999755859375,
+          "y": 752.1000366210938,
+          "width": 54.10000228881836,
+          "height": 29
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 14px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "chart",
+    "width": 1366,
+    "height": 768,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "    compact ",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1366,
+          "height": 768
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1366,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1366,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 38.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1046.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1080.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1114.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1148.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 194,
+          "height": 690
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "16px 10px 12px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 94.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1172,
+          "height": 690
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 819.7000122070312,
+          "height": 690
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 819.7000122070312,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 930.7000122070312,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 955.7000122070312,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 980.7000122070312,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 194,
+          "y": 112,
+          "width": 819.7000122070312,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 936.7000122070312,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 973.7000122070312,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 163,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 199,
+          "y": 197,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 231,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 265,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 299,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 333,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 382,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 416,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 450,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 194,
+          "y": 742,
+          "width": 819.7000122070312,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      },
+      {
+        "class": "right-dock",
+        "rect": {
+          "x": 1014.7000122070312,
+          "y": 78,
+          "width": 351.3000183105469,
+          "height": 690
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group context-group",
+        "rect": {
+          "x": 1014.7000122070312,
+          "y": 78,
+          "width": 351.3000183105469,
+          "height": 344.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1014.7000122070312,
+          "y": 78,
+          "width": 351.3000183105469,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1283,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1308,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1333,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "group editor-group",
+        "rect": {
+          "x": 1014.7000122070312,
+          "y": 423.5,
+          "width": 351.3000183105469,
+          "height": 344.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1014.7000122070312,
+          "y": 423.5,
+          "width": 351.3000183105469,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1283,
+          "y": 426.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1308,
+          "y": 426.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1333,
+          "y": 426.1000061035156,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1290,
+          "y": 469.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1324,
+          "y": 469.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 1026.7000732421875,
+          "y": 681.7999877929688,
+          "width": 89.70000457763672,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 1124.4000244140625,
+          "y": 681.7999877929688,
+          "width": 95.0250015258789,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "chart",
+    "width": 1920,
+    "height": 1080,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "     expanded",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 32
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 32,
+          "width": 1920,
+          "height": 50
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 41.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1600.4625244140625,
+          "y": 42.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1634.4625244140625,
+          "y": 42.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1668.4625244140625,
+          "y": 42.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1702.4625244140625,
+          "y": 42.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 82,
+          "width": 194,
+          "height": 998
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "16px 10px 12px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 98.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 82,
+          "width": 1726,
+          "height": 998
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 194,
+          "y": 82,
+          "width": 1207.5,
+          "height": 998
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 82,
+          "width": 1207.5,
+          "height": 36
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1318.5,
+          "y": 85.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1343.5,
+          "y": 85.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1368.5,
+          "y": 85.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 194,
+          "y": 118,
+          "width": 1207.5,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1324.5,
+          "y": 123,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1361.5,
+          "y": 123,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 169,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 199,
+          "y": 203,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 237,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 271,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 305,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 339,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 388,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 422,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 456,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 194,
+          "y": 1054,
+          "width": 1207.5,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      },
+      {
+        "class": "right-dock",
+        "rect": {
+          "x": 1402.5,
+          "y": 82,
+          "width": 517.5,
+          "height": 998
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group context-group",
+        "rect": {
+          "x": 1402.5,
+          "y": 82,
+          "width": 517.5,
+          "height": 498.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1402.5,
+          "y": 82,
+          "width": 517.5,
+          "height": 36
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1837,
+          "y": 85.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1862,
+          "y": 85.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1887,
+          "y": 85.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "group editor-group",
+        "rect": {
+          "x": 1402.5,
+          "y": 581.5,
+          "width": 517.5,
+          "height": 498.5
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 1402.5,
+          "y": 581.5,
+          "width": 517.5,
+          "height": 36
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1837,
+          "y": 585.1000366210938,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1862,
+          "y": 585.1000366210938,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1887,
+          "y": 585.1000366210938,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1844,
+          "y": 629.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1878,
+          "y": 629.5,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 1416.5,
+          "y": 990.7999877929688,
+          "width": 89.70000457763672,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 1514.2000732421875,
+          "y": 990.7999877929688,
+          "width": 95.0250015258789,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "max",
+    "width": 1440,
+    "height": 900,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "  max-chart   ",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1440,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 38.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1120.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1154.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1188.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1222.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 194,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "16px 10px 12px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 94.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1357,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1382,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1407,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 194,
+          "y": 112,
+          "width": 1246,
+          "height": 40
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1363,
+          "y": 118,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1400,
+          "y": 118,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 165,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 199,
+          "y": 199,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 233,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 267,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 301,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 199,
+          "y": 335,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 384,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 418,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 199,
+          "y": 452,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 194,
+          "y": 874,
+          "width": 1246,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "detached",
+    "width": 1024,
+    "height": 680,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "detached-mode compact small-viewport",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 680
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1024,
+          "height": 44
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 10px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 47,
+          "y": 36.79999923706055,
+          "width": 145,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 903,
+          "y": 37.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 937,
+          "y": 37.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 971,
+          "y": 37.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 0,
+          "y": 74,
+          "width": 1024,
+          "height": 606
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 0,
+          "y": 74,
+          "width": 1024,
+          "height": 606
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 0,
+          "y": 74,
+          "width": 1024,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 941,
+          "y": 76.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 966,
+          "y": 76.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 991,
+          "y": 76.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 910.6500244140625,
+          "y": 112.0999984741211,
+          "width": 101.3499984741211,
+          "height": 22
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "9px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 0,
+          "y": 139,
+          "width": 1024,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 947,
+          "y": 144,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 984,
+          "y": 144,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 5,
+          "y": 190,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 5,
+          "y": 224,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 5,
+          "y": 258,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 5,
+          "y": 292,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 5,
+          "y": 326,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 5,
+          "y": 360,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 5,
+          "y": 409,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 5,
+          "y": 443,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 5,
+          "y": 477,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 0,
+          "y": 654,
+          "width": 1024,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "comparison",
+    "width": 1440,
+    "height": 900,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "journey-view j-full-dock",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 1440,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 16px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 81,
+          "y": 38.79999923706055,
+          "width": 208,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1120.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1154.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1188.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 1222.4625244140625,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar ",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 194,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "12px 10px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 150.1999969482422,
+          "y": 90.70000457763672,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group j-page",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 822
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 194,
+          "y": 78,
+          "width": 1246,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "button ",
+        "rect": {
+          "x": 1302.425048828125,
+          "y": 161.10000610351562,
+          "width": 99.57500457763672,
+          "height": 32
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "11px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "7px",
+        "padding": "0px 12px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button ",
+        "rect": {
+          "x": 1121.800048828125,
+          "y": 612,
+          "width": 126.9375,
+          "height": 32
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "11px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "7px",
+        "padding": "0px 12px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 1253.737548828125,
+          "y": 612,
+          "width": 107.7249984741211,
+          "height": 32
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "11px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "7px",
+        "padding": "0px 12px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "chart",
+    "width": 911,
+    "height": 512,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "compact small-viewport",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 911,
+          "height": 512
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 911,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 911,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 10px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 47,
+          "y": 38.79999923706055,
+          "width": 145,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 790,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 824,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 858,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar collapsed",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 42,
+          "height": 434
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "8px 6px 14px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 13,
+          "y": 86,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 42,
+          "y": 78,
+          "width": 869,
+          "height": 434
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group chart-group",
+        "rect": {
+          "x": 42,
+          "y": 78,
+          "width": 869,
+          "height": 434
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 42,
+          "y": 78,
+          "width": 869,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 8px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 828,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 853,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 878,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-toolbar",
+        "rect": {
+          "x": 42,
+          "y": 112,
+          "width": 869,
+          "height": 38
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 12px",
+        "background": "rgb(18, 16, 25)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 834,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 871,
+          "y": 117,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 47,
+          "y": 163,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button active",
+        "rect": {
+          "x": 47,
+          "y": 197,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(181, 162, 232, 0.067)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 47,
+          "y": 231,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 47,
+          "y": 265,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 47,
+          "y": 299,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button ",
+        "rect": {
+          "x": 47,
+          "y": 333,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 47,
+          "y": 381,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 47,
+          "y": 415,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 47,
+          "y": 449,
+          "width": 26,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "chart-footer",
+        "rect": {
+          "x": 42,
+          "y": 486,
+          "width": 869,
+          "height": 26
+        },
+        "font": "\"Geist Mono\"",
+        "size": "8px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "14px",
+        "padding": "0px 12px",
+        "background": "rgb(15, 13, 21)",
+        "blur": "none"
+      }
+    ]
+  },
+  {
+    "view": "studio",
+    "width": 683,
+    "height": 384,
+    "sourceOnly": true,
+    "geometry": [
+      {
+        "class": "studio-mode compact small-viewport",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 683,
+          "height": 384
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(9, 10, 16)",
+        "blur": "none"
+      },
+      {
+        "class": "titlebar",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 683,
+          "height": 30
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px 0px 0px 16px",
+        "background": "rgb(14, 12, 20)",
+        "blur": "none"
+      },
+      {
+        "class": "header",
+        "rect": {
+          "x": 0,
+          "y": 30,
+          "width": 683,
+          "height": 48
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "9px",
+        "padding": "0px 10px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "instrument",
+        "rect": {
+          "x": 47,
+          "y": 38.79999923706055,
+          "width": 145,
+          "height": 29.600000381469727
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "7px",
+        "gap": "10px",
+        "padding": "6px 10px",
+        "background": "rgba(255, 255, 255, 0.01)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 562,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 596,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 630,
+          "y": 39.60000228881836,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "sidebar collapsed",
+        "rect": {
+          "x": 0,
+          "y": 78,
+          "width": 42,
+          "height": 306
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "8px 6px 14px",
+        "background": "rgb(20, 17, 28)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 13,
+          "y": 86,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "dock",
+        "rect": {
+          "x": 42,
+          "y": 78,
+          "width": 641,
+          "height": 306
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "right-dock",
+        "rect": {
+          "x": 42,
+          "y": 78,
+          "width": 641,
+          "height": 306
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "1px",
+        "padding": "0px",
+        "background": "rgba(255, 255, 255, 0.03)",
+        "blur": "none"
+      },
+      {
+        "class": "group editor-group",
+        "rect": {
+          "x": 42,
+          "y": 78,
+          "width": 641,
+          "height": 306
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "normal",
+        "padding": "0px",
+        "background": "rgb(20, 17, 29)",
+        "blur": "none"
+      },
+      {
+        "class": "tabbar",
+        "rect": {
+          "x": 42,
+          "y": 78,
+          "width": 641,
+          "height": 34
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "0px",
+        "gap": "0px",
+        "padding": "0px 10px",
+        "background": "rgb(25, 21, 31)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 598,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 623,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 648,
+          "y": 80.5999984741211,
+          "width": 25,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "12px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 605,
+          "y": 128,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "icon-button",
+        "rect": {
+          "x": 639,
+          "y": 128,
+          "width": 28,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "400",
+        "radius": "6px",
+        "gap": "normal",
+        "padding": "1px 6px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button",
+        "rect": {
+          "x": 52,
+          "y": 318,
+          "width": 89.70000457763672,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgba(0, 0, 0, 0)",
+        "blur": "none"
+      },
+      {
+        "class": "button primary",
+        "rect": {
+          "x": 149.6999969482422,
+          "y": 318,
+          "width": 95.0250015258789,
+          "height": 28
+        },
+        "font": "Geist, Arial, sans-serif",
+        "size": "10px",
+        "weight": "500",
+        "radius": "6px",
+        "gap": "6px",
+        "padding": "0px 10px",
+        "background": "rgb(181, 162, 232)",
+        "blur": "none"
+      }
+    ]
+  }
+]

@@ -1,0 +1,54 @@
+.........................FFF.FF..
+======================================================================
+FAIL: test_completed_job_allows_immediate_next_run (test_helper.ProcessTests.test_completed_job_allows_immediate_next_run)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\research\desktop\test_helper.py", line 207, in test_completed_job_allows_immediate_next_run
+    self.assertEqual(first_status["stage"], "complete", first_status)
+AssertionError: 'failed' != 'complete'
+- failed
++ complete
+ : {'id': 'fa0bf02a-ff9c-458d-b8ef-8054ec64c98a', 'stage': 'failed', 'diagnostic': {'message': 'Strategy process exited with code 101 without a completed result; no result was saved', 'exitCode': 101}}
+
+======================================================================
+FAIL: test_disk_failure_never_reports_success (test_helper.ProcessTests.test_disk_failure_never_reports_success)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\research\desktop\test_helper.py", line 237, in test_disk_failure_never_reports_success
+    self.assertIn("disk full", status["diagnostic"]["message"])
+AssertionError: 'disk full' not found in 'Strategy process exited with code 101 without a completed result; no result was saved'
+
+======================================================================
+FAIL: test_indicator_job_archives_revision_and_reuses_exact_cache_key (test_helper.ProcessTests.test_indicator_job_archives_revision_and_reuses_exact_cache_key)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\research\desktop\test_helper.py", line 197, in test_indicator_job_archives_revision_and_reuses_exact_cache_key
+    self.assertEqual(first_status["stage"], "complete", first_status)
+AssertionError: 'failed' != 'complete'
+- failed
++ complete
+ : {'id': 'aec6d922-8e05-4669-a4e1-c77274c30d85', 'stage': 'failed', 'diagnostic': {'message': 'Strategy process exited with code 101 without a completed result; no result was saved', 'exitCode': 101}}
+
+======================================================================
+FAIL: test_real_child_runs_and_snapshots_input (test_helper.ProcessTests.test_real_child_runs_and_snapshots_input)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\research\desktop\test_helper.py", line 187, in test_real_child_runs_and_snapshots_input
+    self.assertEqual(status["stage"], "complete", status)
+AssertionError: 'failed' != 'complete'
+- failed
++ complete
+ : {'id': '13ccde5c-791e-4270-8f01-da62d6c77f28', 'stage': 'failed', 'diagnostic': {'message': 'Strategy process exited with code 101 without a completed result; no result was saved', 'exitCode': 101}}
+
+======================================================================
+FAIL: test_resource_limit_and_process_crash_return_failures (test_helper.ProcessTests.test_resource_limit_and_process_crash_return_failures)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\research\desktop\test_helper.py", line 227, in test_resource_limit_and_process_crash_return_failures
+    self.assertEqual(status["diagnostic"]["exitCode"], 2)
+AssertionError: 101 != 2
+
+----------------------------------------------------------------------
+Ran 33 tests in 69.104s
+
+FAILED (failures=5)

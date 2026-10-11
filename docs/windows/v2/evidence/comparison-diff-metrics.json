@@ -1,0 +1,11 @@
+{
+  "status": "NOT AN ACCEPTANCE TEST",
+  "dimensions": [
+    1440,
+    900
+  ],
+  "changedPixelsAbove16": 67655,
+  "fraction": 0.052202932098765434,
+  "masks": [],
+  "purpose": "Current Figma export versus correct saved source; designs differ in header product and details; human review required"
+}

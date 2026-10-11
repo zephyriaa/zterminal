@@ -1,0 +1,64 @@
+{
+  "sameHelperPythonSources": false,
+  "files": [
+    {
+      "path": "research\\desktop\\analytics.py",
+      "sha256": "7d78f8e7a7f8a6a4465c614167f940fd02dd5cc65e74b8b031ce203b0e57a8bc"
+    },
+    {
+      "path": "research\\desktop\\archive.py",
+      "sha256": "f4442151cb1218c0a2fbd87bcd5d78188db62b5694687740b22bacffb8c80a68"
+    },
+    {
+      "path": "research\\desktop\\child.py",
+      "sha256": "65bea9d98eae216ba0604fae3d957a0c77f7837699eb9d3dab9a40f7e553135a"
+    },
+    {
+      "path": "research\\desktop\\controller.py",
+      "sha256": "24d4d8e6dd90a03563489b546e8a73f06e86300164438be098561d3b5470ba8f"
+    },
+    {
+      "path": "research\\desktop\\engine.py",
+      "sha256": "817b0b326545535acde56a5cbce0a40916e178f2806c575c22afdc003eadf8ad"
+    },
+    {
+      "path": "research\\desktop\\process_limits.py",
+      "sha256": "b584115769b8a592c0120dab18eabc03eb5dd77d7b28f860a821c4d8a419abbc"
+    },
+    {
+      "path": "research\\desktop\\server.py",
+      "sha256": "fd962b79913a2c231a92d57472584f4805e8835dd9e4d5993122fb57ef2447fc"
+    },
+    {
+      "path": "research\\desktop\\test_child.py",
+      "sha256": "69e4e6f37736f8e3dab3a3d011859a6b6e4fc3868fd23f8cfcd55e0ed3de105e"
+    },
+    {
+      "path": "research\\desktop\\test_engine.py",
+      "sha256": "c40b095437ab792092deaf31e1e5235a76f8a77f0e3342fba6a7c8f2e255c126"
+    },
+    {
+      "path": "research\\desktop\\test_helper.py",
+      "sha256": "d1a13013b502ba4392a09184652061084b4b83fe3fe86612e096e430a0ea6139"
+    },
+    {
+      "path": "research\\desktop\\test_microstructure_contracts.py",
+      "sha256": "e5f6dc5226cb12fab30cf1feaccc583bf4d8d2e5b551ddefbd0aedce7f9d8d45"
+    },
+    {
+      "path": "research\\desktop\\test_microstructure_recorder.py",
+      "sha256": "d93481a8b11ba5daa6486d535145c184a9f42b308b94d747ec73a19a05802fca"
+    },
+    {
+      "path": "research\\desktop\\validation.py",
+      "sha256": "b49bc20c13732b921280df390c04a0fcfb3fd6b32908e31dfd78a894a2139229"
+    },
+    {
+      "path": "research\\desktop\\zterminal.py",
+      "sha256": "caa151e47423f56a8b229e3b82dbb17bf52bd9e83db60049b96a3af2d0c9fc4b"
+    }
+  ],
+  "embeddedInterpreterSha256": "4d6f5f81a4bca11191c4c7c6b43632694d0a4ce74e068619d8fdc161d469859a",
+  "embeddedPathConfig": "python312.zip\n.\nLib/site-packages\n../../research/desktop\nimport site\n",
+  "qualification": "Parent tests imported clean sources; embedded child helper search path points to original checkout, whose Python sources match the clean commit hashes exactly. Runtime reuse is not fresh runtime installation acceptance."
+}

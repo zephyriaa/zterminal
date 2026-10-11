@@ -1,0 +1,31 @@
+{
+  "version": "10.0.26200",
+  "npm": "10.9.8",
+  "cargo": "cargo 1.99.0 (5f94df478 2026-08-27)",
+  "exeBytes": 10610688,
+  "python": "Python 3.12.10",
+  "build": "26200",
+  "cpu": "13th Gen Intel(R) Core(TM) i5-1335U",
+  "node": "v22.23.2",
+  "timezone": "Asia/Baku",
+  "recordings": "off",
+  "rust": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "branch": "codex/auth-drawing-rebuild",
+  "ramBytes": 8216215552,
+  "executable": "out/windows-v2-m0/zterminal-desktop.exe",
+  "exeSha256": "68b59637bd3b08bce0b6a54d83e15d81e0d094737b52a141e55512ddd120f937",
+  "graphics": [
+    {
+      "Name": "Intel(R) UHD Graphics",
+      "DriverVersion": "32.0.101.7084",
+      "CurrentHorizontalResolution": 1920,
+      "CurrentVerticalResolution": 1080
+    }
+  ],
+  "networkQualification": "WebView network emulation offline; not OS firewall or absent-runtime installation",
+  "os": "Microsoft Windows 11 Pro",
+  "nativeCaptureQualification": "Actual WebView client screenshot 1800x1055 physical pixels; fixed 100/150/200% reference capture not performed",
+  "baselineMethod": "git archive of exact commit into new temporary directory; npm ci; locked cargo builds; no user dirty files included",
+  "date": "2026-10-11",
+  "sourceCommit": "4040781e142dd44ab1c537941935c79011467037"
+}

@@ -1,0 +1,5 @@
+{
+  "runtime": "existing .venv-research; clean test sources; dependency identity captured separately",
+  "exit": 1,
+  "status": "FAIL"
+}

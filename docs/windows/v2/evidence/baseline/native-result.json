@@ -1,0 +1,6 @@
+{
+  "transport": "Actual Tauri IPC; WebView network offline; OS process restart; separate validation storage",
+  "exit": 0,
+  "status": "PASS",
+  "recordings": "off"
+}

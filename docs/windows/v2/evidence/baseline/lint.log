@@ -1,0 +1,36 @@
+
+> nextjs_tailwind_shadcn_ts@0.2.1 lint
+> eslint .
+
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\scripts\capture-landing.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\scripts\capture-terminal.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\scripts\qa-browser-terminal.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\scripts\qa-capture.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\scripts\qa-terminal-workstation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\src\components\terminal\terminal-chart.tsx
+  213:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  247:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  287:7  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\src\components\ui\carousel.tsx
+  4:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\src\components\views\backtester-view.tsx
+  83:21  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+C:\Users\aykhank\AppData\Local\Temp\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\src\hooks\use-mobile.ts
+  4:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+✖ 11 problems (0 errors, 11 warnings)
+  0 errors and 11 warnings potentially fixable with the `--fix` option.

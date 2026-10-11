@@ -1,0 +1,5 @@
+{
+  "exit": 0,
+  "status": "PASS",
+  "runtime": "existing prepared embedded Python; clean imported test sources; child script is clean source"
+}

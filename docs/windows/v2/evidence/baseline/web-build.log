@@ -1,0 +1,74 @@
+
+> nextjs_tailwind_shadcn_ts@0.2.1 prebuild
+> node -e "try { require('child_process').execSync('npx prisma generate', {stdio:'inherit'}) } catch (e) { console.log('Prisma client already generated, proceeding...') }" && node scripts/prepare-monaco.mjs
+
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v6.19.3) to .\node_modules\@prisma\client in 190ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+
+> nextjs_tailwind_shadcn_ts@0.2.1 build
+> next build && shx cp -r .next/static .next/standalone/.next/ && shx cp -r public .next/standalone/
+
+▲ Next.js 16.3.6 (Turbopack)
+✓ Running next.config.ts took 208ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 27.9s
+  Running TypeScript ...
+  Finished TypeScript in 24.4s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/15) ...
+  Generating static pages using 11 workers (3/15)
+  Generating static pages using 11 workers (7/15)
+  Generating static pages using 11 workers (11/15)
+✓ Generating static pages using 11 workers (15/15) in 1226ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/config
+├ ƒ /api/backtest
+├ ƒ /api/bars
+├ ƒ /api/cloud/workspaces
+├ ƒ /api/connectors/rithmic
+├ ƒ /api/contracts
+├ ƒ /api/economic-calendar
+├ ƒ /api/market-data/health
+├ ƒ /api/markets
+├ ○ /api/providers
+├ ƒ /api/releases/helper
+├ ƒ /api/releases/windows
+├ ƒ /api/research-data
+├ ƒ /api/research-instrument
+├ ƒ /api/research/[...path]
+├ ƒ /api/strategy
+├ ƒ /api/user/profile
+├ ○ /desktop/launch
+├ ○ /docs
+├ ○ /docs/python-research
+├ ƒ /docs/windows/install
+├ ○ /docs/zscript
+├ ƒ /download
+├ ƒ /download/helper
+├ ƒ /download/windows
+├ ƒ /healthz
+├ ○ /hero-test
+├ ○ /research
+└ ƒ /terminal
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

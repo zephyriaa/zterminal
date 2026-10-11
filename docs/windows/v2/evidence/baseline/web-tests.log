@@ -1,0 +1,1223 @@
+
+> nextjs_tailwind_shadcn_ts@0.2.1 test
+> tsx --test tests/*.test.ts
+
+TAP version 13
+# Subtest: calculateVaR computes parametric VaR, historical VaR, and CVaR accurately
+ok 1 - calculateVaR computes parametric VaR, historical VaR, and CVaR accurately
+  ---
+  duration_ms: 2.5429
+  type: 'test'
+  ...
+# Subtest: calculateExcursion computes MAE and MFE for Long and Short trades
+ok 2 - calculateExcursion computes MAE and MFE for Long and Short trades
+  ---
+  duration_ms: 0.7202
+  type: 'test'
+  ...
+# Subtest: AdvancedRiskEngine trips circuit-breakers on drawdown and consecutive losses
+ok 3 - AdvancedRiskEngine trips circuit-breakers on drawdown and consecutive losses
+  ---
+  duration_ms: 1.2146
+  type: 'test'
+  ...
+# C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\.prisma\\client\\default.js:43
+#     throw new Error('@prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.');
+#           ^
+# Error: @prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.
+#     at new PrismaClient (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\.prisma\\client\\default.js:43:11)
+#     at createClient (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:41:18)
+#     at PrismaClientWasm (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:50:45)
+#     at Object.<anonymous> (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:52:69)
+#     at Module._compile (node:internal/modules/cjs/loader:1781:14)
+#     at Object.transformer (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\tsx\\dist\\register-C557imBs.cjs:9:3619)
+#     at Module.load (node:internal/modules/cjs/loader:1505:32)
+#     at Function._load (node:internal/modules/cjs/loader:1309:12)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+#     at Module.require (node:internal/modules/cjs/loader:1527:12)
+# Node.js v22.23.2
+# Subtest: tests\\auth-lifecycle.test.ts
+not ok 2 - tests\\auth-lifecycle.test.ts
+  ---
+  duration_ms: 4367.5564
+  type: 'test'
+  location: 'C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\tests\\auth-lifecycle.test.ts:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\.prisma\\client\\default.js:43
+#     throw new Error('@prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.');
+#           ^
+# Error: @prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.
+#     at new PrismaClient (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\.prisma\\client\\default.js:43:11)
+#     at createClient (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:41:18)
+#     at PrismaClientWasm (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:50:45)
+#     at Object.<anonymous> (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:52:69)
+#     at Module._compile (node:internal/modules/cjs/loader:1781:14)
+#     at Object.transformer (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\tsx\\dist\\register-C557imBs.cjs:9:3619)
+#     at Module.load (node:internal/modules/cjs/loader:1505:32)
+#     at Function._load (node:internal/modules/cjs/loader:1309:12)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+#     at Module.require (node:internal/modules/cjs/loader:1527:12)
+# Node.js v22.23.2
+# Subtest: tests\\auth-protocol.test.ts
+not ok 3 - tests\\auth-protocol.test.ts
+  ---
+  duration_ms: 9662.9586
+  type: 'test'
+  location: 'C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\tests\\auth-protocol.test.ts:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Big Trades buckets observed prints by time, aligned price, and aggressor side
+ok 6 - Big Trades buckets observed prints by time, aligned price, and aggressor side
+  ---
+  duration_ms: 22.2208
+  type: 'test'
+  ...
+# Subtest: Big Trades applies its notional filter after the configured aggregation window
+ok 7 - Big Trades applies its notional filter after the configured aggregation window
+  ---
+  duration_ms: 1.166
+  type: 'test'
+  ...
+# Subtest: Big Trades keeps a bounded mutable trade buffer
+ok 8 - Big Trades keeps a bounded mutable trade buffer
+  ---
+  duration_ms: 0.9592
+  type: 'test'
+  ...
+# Subtest: bridges snapshot and deletes a level through a buffered Binance delta
+ok 9 - bridges snapshot and deletes a level through a buffered Binance delta
+  ---
+  duration_ms: 9.956
+  type: 'test'
+  ...
+# Subtest: never becomes live without a bridge or across a buffered gap
+ok 10 - never becomes live without a bridge or across a buffered gap
+  ---
+  duration_ms: 0.5876
+  type: 'test'
+  ...
+# Subtest: bridges a Binance snapshot using the first depth range that covers the next update id
+ok 11 - bridges a Binance snapshot using the first depth range that covers the next update id
+  ---
+  duration_ms: 7.0941
+  type: 'test'
+  ...
+# Subtest: uses Binance pu as the authoritative post-bridge continuity identifier
+ok 12 - uses Binance pu as the authoritative post-bridge continuity identifier
+  ---
+  duration_ms: 0.9539
+  type: 'test'
+  ...
+# Subtest: does not mark a book live when no buffered diff can bridge the snapshot
+ok 13 - does not mark a book live when no buffered diff can bridge the snapshot
+  ---
+  duration_ms: 1.0446
+  type: 'test'
+  ...
+# Subtest: normalizes verified Binance historical klines without padding missing candles
+ok 14 - normalizes verified Binance historical klines without padding missing candles
+  ---
+  duration_ms: 112.964
+  type: 'test'
+  ...
+# Subtest: BinanceDepthSynchronizer holds pending snapshot and bridges when matching deltas arrive later
+ok 15 - BinanceDepthSynchronizer holds pending snapshot and bridges when matching deltas arrive later
+  ---
+  duration_ms: 4.557
+  type: 'test'
+  ...
+# Subtest: BinanceDepthSynchronizer fails if subsequent deltas jump past snapshot sequence without coverage
+ok 16 - BinanceDepthSynchronizer fails if subsequent deltas jump past snapshot sequence without coverage
+  ---
+  duration_ms: 0.5655
+  type: 'test'
+  ...
+# Subtest: normalizes chart bars by timestamp and ignores malformed rows
+ok 17 - normalizes chart bars by timestamp and ignores malformed rows
+  ---
+  duration_ms: 4.068
+  type: 'test'
+  ...
+# Subtest: returns an empty list for an empty historical response
+ok 18 - returns an empty list for an empty historical response
+  ---
+  duration_ms: 0.5221
+  type: 'test'
+  ...
+# Subtest: rejects a malformed historical response shape
+ok 19 - rejects a malformed historical response shape
+  ---
+  duration_ms: 1.2083
+  type: 'test'
+  ...
+# Subtest: chart documents isolate provider and instrument identity
+ok 20 - chart documents isolate provider and instrument identity
+  ---
+  duration_ms: 9.6736
+  type: 'test'
+  ...
+# Subtest: chart document migration persists overlay settings but never live payloads
+ok 21 - chart document migration persists overlay settings but never live payloads
+  ---
+  duration_ms: 1.4147
+  type: 'test'
+  ...
+# Subtest: chart settings migration clamps unsafe persisted values
+ok 22 - chart settings migration clamps unsafe persisted values
+  ---
+  duration_ms: 0.5863
+  type: 'test'
+  ...
+# Subtest: malformed and cross-instrument drawings are not migrated
+ok 23 - malformed and cross-instrument drawings are not migrated
+  ---
+  duration_ms: 3.47
+  type: 'test'
+  ...
+# Subtest: detects and transpiles TradingView PineScript to zterminal_research Python
+ok 24 - detects and transpiles TradingView PineScript to zterminal_research Python
+  ---
+  duration_ms: 4.0952
+  type: 'test'
+  ...
+# Subtest: detects and transpiles MultiCharts EasyLanguage to zterminal_research Python
+ok 25 - detects and transpiles MultiCharts EasyLanguage to zterminal_research Python
+  ---
+  duration_ms: 0.6549
+  type: 'test'
+  ...
+# Subtest: executes deterministic local backtest with realistic slippage and commissions
+ok 26 - executes deterministic local backtest with realistic slippage and commissions
+  ---
+  duration_ms: 8.156
+  type: 'test'
+  ...
+# Subtest: ContextAlertManager triggers only when all confluence conditions are met
+ok 27 - ContextAlertManager triggers only when all confluence conditions are met
+  ---
+  duration_ms: 2.2731
+  type: 'test'
+  ...
+# Subtest: ContextAlertManager enforces cooldown periods and allows re-trigger after expiry
+ok 28 - ContextAlertManager enforces cooldown periods and allows re-trigger after expiry
+  ---
+  duration_ms: 1.2821
+  type: 'test'
+  ...
+# Subtest: calculateReturns generates accurate percentage changes
+ok 29 - calculateReturns generates accurate percentage changes
+  ---
+  duration_ms: 1.9643
+  type: 'test'
+  ...
+# Subtest: pearsonCorrelation computes correct correlation coefficients
+ok 30 - pearsonCorrelation computes correct correlation coefficients
+  ---
+  duration_ms: 0.9162
+  type: 'test'
+  ...
+# Subtest: computeBetaMetrics computes beta, alpha and R-squared relative to benchmark
+ok 31 - computeBetaMetrics computes beta, alpha and R-squared relative to benchmark
+  ---
+  duration_ms: 0.4611
+  type: 'test'
+  ...
+# Subtest: computeRelativeStrength and generateSyntheticSpread produce valid series
+ok 32 - computeRelativeStrength and generateSyntheticSpread produce valid series
+  ---
+  duration_ms: 0.8861
+  type: 'test'
+  ...
+# Subtest: clampPanel prevents floating and minimized windows from being moved off-screen
+ok 33 - clampPanel prevents floating and minimized windows from being moved off-screen
+  ---
+  duration_ms: 2.0507
+  type: 'test'
+  ...
+# Subtest: panelBounds calculates floating panel bounds and preserves coordinates across status changes
+ok 34 - panelBounds calculates floating panel bounds and preserves coordinates across status changes
+  ---
+  duration_ms: 0.6368
+  type: 'test'
+  ...
+# Subtest: risk evaluation reduces a manual plan to its configured risk budget and remains review-only
+ok 35 - risk evaluation reduces a manual plan to its configured risk budget and remains review-only
+  ---
+  duration_ms: 3.3902
+  type: 'test'
+  ...
+# Subtest: risk evaluation rejects a directionally invalid stop
+ok 36 - risk evaluation rejects a directionally invalid stop
+  ---
+  duration_ms: 2.0617
+  type: 'test'
+  ...
+# Subtest: fixed-risk sizing returns only whole units within the selected risk budget
+ok 37 - fixed-risk sizing returns only whole units within the selected risk budget
+  ---
+  duration_ms: 3.8468
+  type: 'test'
+  ...
+# Subtest: session VWAP resets only under the caller-provided session policy
+ok 38 - session VWAP resets only under the caller-provided session policy
+  ---
+  duration_ms: 2.3135
+  type: 'test'
+  ...
+# Subtest: volume profile and regime outputs are deterministic for the same bars
+ok 39 - volume profile and regime outputs are deterministic for the same bars
+  ---
+  duration_ms: 2.0948
+  type: 'test'
+  ...
+# Subtest: structured strategies reject missing entry rules and invalid fixed sizing
+ok 40 - structured strategies reject missing entry rules and invalid fixed sizing
+  ---
+  duration_ms: 0.9422
+  type: 'test'
+  ...
+# Subtest: resampling utilities are deterministic and keep walk-forward periods purged
+ok 41 - resampling utilities are deterministic and keep walk-forward periods purged
+  ---
+  duration_ms: 3.2542
+  type: 'test'
+  ...
+# Subtest: gateway policy requires explicit production origins and bounds subscription requests
+ok 42 - gateway policy requires explicit production origins and bounds subscription requests
+  ---
+  duration_ms: 2.679
+  type: 'test'
+  ...
+# Subtest: alert evaluation returns contextual observations rather than trade instructions
+ok 43 - alert evaluation returns contextual observations rather than trade instructions
+  ---
+  duration_ms: 1.3625
+  type: 'test'
+  ...
+# Subtest: journal performance separates actual execution from theoretical outcomes
+ok 44 - journal performance separates actual execution from theoretical outcomes
+  ---
+  duration_ms: 2.7448
+  type: 'test'
+  ...
+# [zustand persist middleware] Unable to update item 'zterminal-workspace', the given storage is currently unavailable.
+# [zustand persist middleware] Unable to update item 'zterminal-workspace', the given storage is currently unavailable.
+# Subtest: market timestamps interpolate gaps and round-trip future coordinates across timeframes
+ok 45 - market timestamps interpolate gaps and round-trip future coordinates across timeframes
+  ---
+  duration_ms: 2.8403
+  type: 'test'
+  ...
+# Subtest: directed rays and extended lines share renderer/hit geometry including vertical rays
+ok 46 - directed rays and extended lines share renderer/hit geometry including vertical rays
+  ---
+  duration_ms: 6.8698
+  type: 'test'
+  ...
+# Subtest: channels, ellipses, paths, date ranges and text have semantic hit regions
+ok 47 - channels, ellipses, paths, date ranges and text have semantic hit regions
+  ---
+  duration_ms: 2.4327
+  type: 'test'
+  ...
+# Subtest: overlapping selection follows persisted z-order rather than array order
+ok 48 - overlapping selection follows persisted z-order rather than array order
+  ---
+  duration_ms: 0.8126
+  type: 'test'
+  ...
+# Subtest: weak snapping has CSS-pixel tolerance; strong mode never sees bars absent from replay data
+ok 49 - weak snapping has CSS-pixel tolerance; strong mode never sees bars absent from replay data
+  ---
+  duration_ms: 1.3002
+  type: 'test'
+  ...
+# Subtest: movement preserves geometry at the epoch boundary; advanced drawings survive serialization
+ok 50 - movement preserves geometry at the epoch boundary; advanced drawings survive serialization
+  ---
+  duration_ms: 3.6905
+  type: 'test'
+  ...
+# Subtest: history handles create, edit, delete, lock, hide, duplicate, clear and isolates chart ownership
+ok 51 - history handles create, edit, delete, lock, hide, duplicate, clear and isolates chart ownership
+  ---
+  duration_ms: 8.6388
+  type: 'test'
+  ...
+# Subtest: workspace save copies drawings into the new workspace; reload rejects corrupt and foreign drawings
+ok 52 - workspace save copies drawings into the new workspace; reload rejects corrupt and foreign drawings
+  ---
+  duration_ms: 4.9051
+  type: 'test'
+  ...
+# Subtest: cloud drawing caches follow the verified account and leave local documents intact
+ok 53 - cloud drawing caches follow the verified account and leave local documents intact
+  ---
+  duration_ms: 2.277
+  type: 'test'
+  ...
+# Subtest: 1000-drawing hit testing remains within an interactive budget
+ok 54 - 1000-drawing hit testing remains within an interactive budget
+  ---
+  duration_ms: 108.6227
+  type: 'test'
+  ...
+# Subtest: drawing sanitation preserves only the exact chart and instrument
+ok 55 - drawing sanitation preserves only the exact chart and instrument
+  ---
+  duration_ms: 4.1137
+  type: 'test'
+  ...
+# Subtest: drawing geometry hit tests lines, boxes, and handles deterministically
+ok 56 - drawing geometry hit tests lines, boxes, and handles deterministically
+  ---
+  duration_ms: 1.7216
+  type: 'test'
+  ...
+# Subtest: drawing movement and replay visibility cannot reveal future anchors
+ok 57 - drawing movement and replay visibility cannot reveal future anchors
+  ---
+  duration_ms: 4.4184
+  type: 'test'
+  ...
+# Subtest: long and short position drawings have TradingView defaults and 3-point hit testing
+ok 58 - long and short position drawings have TradingView defaults and 3-point hit testing
+  ---
+  duration_ms: 0.5052
+  type: 'test'
+  ...
+# Subtest: drawing store creates, edits, duplicates, locks, and deletes within one document
+ok 59 - drawing store creates, edits, duplicates, locks, and deletes within one document
+  ---
+  duration_ms: 15.7109
+  type: 'test'
+  ...
+# Subtest: official BLS iCalendar preserves Eastern release times across daylight saving
+ok 60 - official BLS iCalendar preserves Eastern release times across daylight saving
+  ---
+  duration_ms: 155.5351
+  type: 'test'
+  ...
+# Subtest: official BEA JSON uses supplied UTC times and deduplicates repeated dates
+ok 61 - official BEA JSON uses supplied UTC times and deduplicates repeated dates
+  ---
+  duration_ms: 3.3823
+  type: 'test'
+  ...
+# Subtest: an unavailable official feed is retried instead of caching an empty failure
+ok 62 - an unavailable official feed is retried instead of caching an empty failure
+  ---
+  duration_ms: 1.7687
+  type: 'test'
+  ...
+# Subtest: 1. CentralBankCalendarProvider normalizes authoritative rate decisions without fabricating forecasts
+ok 63 - 1. CentralBankCalendarProvider normalizes authoritative rate decisions without fabricating forecasts
+  ---
+  duration_ms: 1.8814
+  type: 'test'
+  ...
+# Subtest: 2. FredCalendarProvider gracefully reports unconfigured when key is absent
+ok 64 - 2. FredCalendarProvider gracefully reports unconfigured when key is absent
+  ---
+  duration_ms: 0.9052
+  type: 'test'
+  ...
+# Subtest: 3. UTC to workspace timezone conversion formats accurately across timezones
+ok 65 - 3. UTC to workspace timezone conversion formats accurately across timezones
+  ---
+  duration_ms: 10.2663
+  type: 'test'
+  ...
+# Subtest: 4. Daylight-saving transitions (EDT vs EST) convert correctly
+ok 66 - 4. Daylight-saving transitions (EDT vs EST) convert correctly
+  ---
+  duration_ms: 1.9954
+  type: 'test'
+  ...
+# Subtest: 5. Events crossing local midnight render under the correct local date
+ok 67 - 5. Events crossing local midnight render under the correct local date
+  ---
+  duration_ms: 6.7144
+  type: 'test'
+  ...
+# Subtest: 6. Grouping and sorting preserves chronological scheduledAt order with deterministic tie-breaking
+ok 68 - 6. Grouping and sorting preserves chronological scheduledAt order with deterministic tie-breaking
+  ---
+  duration_ms: 9.3261
+  type: 'test'
+  ...
+# Subtest: 7. Missing actual, forecast, and previous values remain strictly null without fabricating zeroes
+ok 69 - 7. Missing actual, forecast, and previous values remain strictly null without fabricating zeroes
+  ---
+  duration_ms: 1.6744
+  type: 'test'
+  ...
+# Subtest: 8. Preserves unknown impact when unverified by source
+ok 70 - 8. Preserves unknown impact when unverified by source
+  ---
+  duration_ms: 0.4107
+  type: 'test'
+  ...
+# Subtest: 9. Aggregator deduplicates events and prioritizes official authoritative sources
+ok 71 - 9. Aggregator deduplicates events and prioritizes official authoritative sources
+  ---
+  duration_ms: 1.4371
+  type: 'test'
+  ...
+# Subtest: 10. Partial provider failure does not blank other healthy providers
+ok 72 - 10. Partial provider failure does not blank other healthy providers
+  ---
+  duration_ms: 1.0277
+  type: 'test'
+  ...
+# Subtest: 11. In-memory cache returns stale data on temporary network degradation
+ok 73 - 11. In-memory cache returns stale data on temporary network degradation
+  ---
+  duration_ms: 13.6448
+  type: 'test'
+  ...
+# Subtest: 12. getNextUpcomingEvent computes countdown accurately to nearest high-impact release
+ok 74 - 12. getNextUpcomingEvent computes countdown accurately to nearest high-impact release
+  ---
+  duration_ms: 1.4784
+  type: 'test'
+  ...
+# Subtest: calculatePortfolioExposure calculates gross, net, leverage, and margin metrics accurately
+ok 75 - calculatePortfolioExposure calculates gross, net, leverage, and margin metrics accurately
+  ---
+  duration_ms: 2.3672
+  type: 'test'
+  ...
+# Subtest: calculatePortfolioExposure detects concentration risk with HHI index
+ok 76 - calculatePortfolioExposure detects concentration risk with HHI index
+  ---
+  duration_ms: 0.6213
+  type: 'test'
+  ...
+# Subtest: normalizes TradingView-style QQQX aliases to Gate.io native contract
+ok 77 - normalizes TradingView-style QQQX aliases to Gate.io native contract
+  ---
+  duration_ms: 3.9674
+  type: 'test'
+  ...
+# Subtest: rejects malformed upstream decimal values
+ok 78 - rejects malformed upstream decimal values
+  ---
+  duration_ms: 2.4537
+  type: 'test'
+  ...
+# Subtest: normalizes, deduplicates, and upserts Gate candles by timestamp
+ok 79 - normalizes, deduplicates, and upserts Gate candles by timestamp
+  ---
+  duration_ms: 12.3867
+  type: 'test'
+  ...
+# Subtest: pages and normalizes a requested Gate.io historical candle range
+ok 80 - pages and normalizes a requested Gate.io historical candle range
+  ---
+  duration_ms: 92.1492
+  type: 'test'
+  ...
+# Subtest: bridges a REST order-book snapshot with buffered deltas
+ok 81 - bridges a REST order-book snapshot with buffered deltas
+  ---
+  duration_ms: 2.7903
+  type: 'test'
+  ...
+# Subtest: detects sequence gaps and removes zero-size depth levels
+ok 82 - detects sequence gaps and removes zero-size depth levels
+  ---
+  duration_ms: 1.2429
+  type: 'test'
+  ...
+# Subtest: Black-Scholes analytical core evaluates standard benchmarks accurately
+ok 83 - Black-Scholes analytical core evaluates standard benchmarks accurately
+  ---
+  duration_ms: 2.9721
+  type: 'test'
+  ...
+# Subtest: Black-Scholes Greek engine safely handles singularities and boundaries (T -> 0, sigma <= 0)
+ok 84 - Black-Scholes Greek engine safely handles singularities and boundaries (T -> 0, sigma <= 0)
+  ---
+  duration_ms: 0.8797
+  type: 'test'
+  ...
+# Subtest: Dollar Gamma Exposure scales correctly with Open Interest and underlying price
+ok 85 - Dollar Gamma Exposure scales correctly with Open Interest and underlying price
+  ---
+  duration_ms: 0.495
+  type: 'test'
+  ...
+# Subtest: Deribit instrument parser decomposes contract names and handles valid/invalid dates
+ok 86 - Deribit instrument parser decomposes contract names and handles valid/invalid dates
+  ---
+  duration_ms: 1.1602
+  type: 'test'
+  ...
+# Subtest: GEX surface computation separates Gross Gamma from Signed Dealer GEX and finds OI walls & Gamma Flip
+ok 87 - GEX surface computation separates Gross Gamma from Signed Dealer GEX and finds OI walls & Gamma Flip
+  ---
+  duration_ms: 2.5008
+  type: 'test'
+  ...
+# Subtest: GEX surface computation handles empty contract lists without throwing
+ok 88 - GEX surface computation handles empty contract lists without throwing
+  ---
+  duration_ms: 1.1707
+  type: 'test'
+  ...
+# Subtest: legacy indicator instances migrate without changing stable identity
+ok 89 - legacy indicator instances migrate without changing stable identity
+  ---
+  duration_ms: 4.8471
+  type: 'test'
+  ...
+# Subtest: duplicate indicator settings remain structurally independent
+ok 90 - duplicate indicator settings remain structurally independent
+  ---
+  duration_ms: 2.0801
+  type: 'test'
+  ...
+# Subtest: multi-output evaluators align results to the supplied replay boundary
+ok 91 - multi-output evaluators align results to the supplied replay boundary
+  ---
+  duration_ms: 2.1217
+  type: 'test'
+  ...
+# Subtest: indicator search supports aliases, categories and misspellings
+ok 92 - indicator search supports aliases, categories and misspellings
+  ---
+  duration_ms: 7.1785
+  type: 'test'
+  ...
+# Subtest: indicator instances have separate stable identity and validated settings
+ok 93 - indicator instances have separate stable identity and validated settings
+  ---
+  duration_ms: 4.0586
+  type: 'test'
+  ...
+# Subtest: Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars
+ok 94 - Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars
+  ---
+  duration_ms: 13.0857
+  type: 'test'
+  ...
+# Subtest: Limit orders adhere to touch vs penetrate fill settings
+ok 95 - Limit orders adhere to touch vs penetrate fill settings
+  ---
+  duration_ms: 2.6774
+  type: 'test'
+  ...
+# Subtest: Trailing stop ratchets upward as price advances
+ok 96 - Trailing stop ratchets upward as price advances
+  ---
+  duration_ms: 1.8038
+  type: 'test'
+  ...
+# Subtest: Parameter optimizer sweeps grid and injects parameters cleanly
+ok 97 - Parameter optimizer sweeps grid and injects parameters cleanly
+  ---
+  duration_ms: 10.5581
+  type: 'test'
+  ...
+# Subtest: Walk-Forward Analysis calculates Walk-Forward Efficiency (WFE)
+ok 98 - Walk-Forward Analysis calculates Walk-Forward Efficiency (WFE)
+  ---
+  duration_ms: 28.9847
+  type: 'test'
+  ...
+# Subtest: Short positions ratchet trailing stop downward as price falls
+ok 99 - Short positions ratchet trailing stop downward as price falls
+  ---
+  duration_ms: 1.2779
+  type: 'test'
+  ...
+# Subtest: Commission models (flat, bps, per_contract) apply exact cost structures
+ok 100 - Commission models (flat, bps, per_contract) apply exact cost structures
+  ---
+  duration_ms: 1.8083
+  type: 'test'
+  ...
+# Subtest: Short Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars
+ok 101 - Short Bar Magnifier deterministically resolves stop vs target race conditions with sub-bars
+  ---
+  duration_ms: 1.1775
+  type: 'test'
+  ...
+# Subtest: Institutional Protocol requires a complete, retained academic citation
+ok 102 - Institutional Protocol requires a complete, retained academic citation
+  ---
+  duration_ms: 16.6328
+  type: 'test'
+  ...
+# Subtest: Institutional Protocol scope blocks filters, regimes, ranges, optimization, alternatives, and ambiguity
+ok 103 - Institutional Protocol scope blocks filters, regimes, ranges, optimization, alternatives, and ambiguity
+  ---
+  duration_ms: 3.8646
+  type: 'test'
+  ...
+# Subtest: Institutional Protocol stage transitions and generation approval enforce the workflow order
+ok 104 - Institutional Protocol stage transitions and generation approval enforce the workflow order
+  ---
+  duration_ms: 0.9583
+  type: 'test'
+  ...
+# Subtest: baseline fingerprints are deterministic and change when a protected baseline input changes
+ok 105 - baseline fingerprints are deterministic and change when a protected baseline input changes
+  ---
+  duration_ms: 0.9358
+  type: 'test'
+  ...
+# Subtest: incremental research accepts exactly one meaningful variable change
+ok 106 - incremental research accepts exactly one meaningful variable change
+  ---
+  duration_ms: 1.1643
+  type: 'test'
+  ...
+# Subtest: sample adequacy visibly flags small trade counts and reports a Wilson hit-rate interval
+ok 107 - sample adequacy visibly flags small trade counts and reports a Wilson hit-rate interval
+  ---
+  duration_ms: 0.9653
+  type: 'test'
+  ...
+# Subtest: data assessment identifies only verified native input and flags external or ambiguous requirements
+ok 108 - data assessment identifies only verified native input and flags external or ambiguous requirements
+  ---
+  duration_ms: 2.8811
+  type: 'test'
+  ...
+# Subtest: minimal generation refuses unsupported rule grammar instead of silently inventing a strategy
+ok 109 - minimal generation refuses unsupported rule grammar instead of silently inventing a strategy
+  ---
+  duration_ms: 5.1652
+  type: 'test'
+  ...
+# Subtest: incremental source transformer changes one declared supported variable and rejects unreviewed changes
+ok 110 - incremental source transformer changes one declared supported variable and rejects unreviewed changes
+  ---
+  duration_ms: 1.5575
+  type: 'test'
+  ...
+# Subtest: Binance depth synchronizer enforces strict U <= lastUpdateId + 1 sequencing
+ok 111 - Binance depth synchronizer enforces strict U <= lastUpdateId + 1 sequencing
+  ---
+  duration_ms: 3.4983
+  type: 'test'
+  ...
+# Subtest: OKX CRC32 checksum engine matches IEEE 802.3 signed 32-bit standard
+ok 112 - OKX CRC32 checksum engine matches IEEE 802.3 signed 32-bit standard
+  ---
+  duration_ms: 0.9232
+  type: 'test'
+  ...
+# Subtest: OKX depth synchronizer reconstructs books and rejects corrupted frames
+ok 113 - OKX depth synchronizer reconstructs books and rejects corrupted frames
+  ---
+  duration_ms: 1.8562
+  type: 'test'
+  ...
+# Subtest: Coinbase Advanced Trade synchronizer handles snapshot, deltas, and sequence gaps
+ok 114 - Coinbase Advanced Trade synchronizer handles snapshot, deltas, and sequence gaps
+  ---
+  duration_ms: 0.8905
+  type: 'test'
+  ...
+# Subtest: ThrottledOrderBookBuffer throttles high-frequency push updates and emits trimmed snapshots
+ok 115 - ThrottledOrderBookBuffer throttles high-frequency push updates and emits trimmed snapshots
+  ---
+  duration_ms: 56.3866
+  type: 'test'
+  ...
+# Subtest: research accepts only complete closed history and keeps input unchanged
+ok 116 - research accepts only complete closed history and keeps input unchanged
+  ---
+  duration_ms: 47.2023
+  type: 'test'
+  ...
+# Subtest: research rejects invalid costs, allocation and unsupported intervals
+ok 117 - research rejects invalid costs, allocation and unsupported intervals
+  ---
+  duration_ms: 1.2835
+  type: 'test'
+  ...
+# Subtest: source hashes are actual reproducible SHA-256
+ok 118 - source hashes are actual reproducible SHA-256
+  ---
+  duration_ms: 22.4651
+  type: 'test'
+  ...
+# Subtest: captured evidence distinguishes complete candles, gaps and unknown retrieval time
+ok 119 - captured evidence distinguishes complete candles, gaps and unknown retrieval time
+  ---
+  duration_ms: 2.8841
+  type: 'test'
+  ...
+# Subtest: calculateMarketSessions computes sessions accurately and handles DST-safe timezones
+ok 120 - calculateMarketSessions computes sessions accurately and handles DST-safe timezones
+  ---
+  duration_ms: 61.5938
+  type: 'test'
+  ...
+# Subtest: formatTimezonePill formats timezones correctly without hardcoded assumptions
+ok 121 - formatTimezonePill formats timezones correctly without hardcoded assumptions
+  ---
+  duration_ms: 2.5191
+  type: 'test'
+  ...
+# Subtest: testMappingOnPayload verifies OHLC invariants and data mapping
+ok 122 - testMappingOnPayload verifies OHLC invariants and data mapping
+  ---
+  duration_ms: 2.5857
+  type: 'test'
+  ...
+# Subtest: microstructure fixture preserves 64-bit values as strings
+ok 123 - microstructure fixture preserves 64-bit values as strings
+  ---
+  duration_ms: 2.6434
+  type: 'test'
+  ...
+# Subtest: TypeScript replay ordering agrees with the shared fixture
+ok 124 - TypeScript replay ordering agrees with the shared fixture
+  ---
+  duration_ms: 2.1283
+  type: 'test'
+  ...
+# Subtest: Bybit provider normalizes symbols and maps timeframes cleanly
+ok 125 - Bybit provider normalizes symbols and maps timeframes cleanly
+  ---
+  duration_ms: 3.4118
+  type: 'test'
+  ...
+# Subtest: Coinbase provider normalizes symbols and maps granularities
+ok 126 - Coinbase provider normalizes symbols and maps granularities
+  ---
+  duration_ms: 0.5413
+  type: 'test'
+  ...
+# Subtest: OKX provider normalizes symbols and maps bars
+ok 127 - OKX provider normalizes symbols and maps bars
+  ---
+  duration_ms: 0.4027
+  type: 'test'
+  ...
+# Subtest: Contracts catalog includes expanded crypto, equities, and commodities with alias matching
+ok 128 - Contracts catalog includes expanded crypto, equities, and commodities with alias matching
+  ---
+  duration_ms: 0.9448
+  type: 'test'
+  ...
+# Subtest: Multi-chart store manages layouts, active panes, and symbol linking
+ok 129 - Multi-chart store manages layouts, active panes, and symbol linking
+  ---
+  duration_ms: 1.4713
+  type: 'test'
+  ...
+# Subtest: MarketDataStore partitions keys correctly
+ok 130 - MarketDataStore partitions keys correctly
+  ---
+  duration_ms: 1.97
+  type: 'test'
+  ...
+# Subtest: ArtifactStore stores and retrieves JSON artifacts
+ok 131 - ArtifactStore stores and retrieves JSON artifacts
+  ---
+  duration_ms: 55.7169
+  type: 'test'
+  ...
+# Subtest: detects regular bullish CVD divergence (price lower low, CVD higher low)
+ok 132 - detects regular bullish CVD divergence (price lower low, CVD higher low)
+  ---
+  duration_ms: 2.7144
+  type: 'test'
+  ...
+# Subtest: detects diagonal footprint imbalance when ask exceeds bid ratio by 300%
+ok 133 - detects diagonal footprint imbalance when ask exceeds bid ratio by 300%
+  ---
+  duration_ms: 1.0685
+  type: 'test'
+  ...
+# Subtest: calculates CVD from exchange-reported aggressive sides with deterministic buckets
+ok 134 - calculates CVD from exchange-reported aggressive sides with deterministic buckets
+  ---
+  duration_ms: 3.6892
+  type: 'test'
+  ...
+# Subtest: filters and aggregates Time & Sales without altering its observed side or price
+ok 135 - filters and aggregates Time & Sales without altering its observed side or price
+  ---
+  duration_ms: 1.7816
+  type: 'test'
+  ...
+# Subtest: builds a footprint with price-level buy/sell volume and delta
+ok 136 - builds a footprint with price-level buy/sell volume and delta
+  ---
+  duration_ms: 1.4819
+  type: 'test'
+  ...
+# Subtest: calculates top-N book imbalance and microprice from verified L2 levels
+ok 137 - calculates top-N book imbalance and microprice from verified L2 levels
+  ---
+  duration_ms: 0.9338
+  type: 'test'
+  ...
+# Subtest: reports unavailable open interest rather than manufacturing OI delta
+ok 138 - reports unavailable open interest rather than manufacturing OI delta
+  ---
+  duration_ms: 1.7932
+  type: 'test'
+  ...
+# Subtest: emits only inspectable order-flow candidates with their exact rolling window and thresholds
+ok 139 - emits only inspectable order-flow candidates with their exact rolling window and thresholds
+  ---
+  duration_ms: 2.3373
+  type: 'test'
+  ...
+# Subtest: docked editor and report share available chart space without overlap
+ok 140 - docked editor and report share available chart space without overlap
+  ---
+  duration_ms: 3.0941
+  type: 'test'
+  ...
+# Subtest: bounds restore entirely inside the viewport, including narrow screens
+ok 141 - bounds restore entirely inside the viewport, including narrow screens
+  ---
+  duration_ms: 0.4211
+  type: 'test'
+  ...
+# Subtest: legacy layout migration reads without changing or deleting the source
+ok 142 - legacy layout migration reads without changing or deleting the source
+  ---
+  duration_ms: 0.3923
+  type: 'test'
+  ...
+# Subtest: Bybit L2 snapshot, delta, duplicate and gap handling
+ok 143 - Bybit L2 snapshot, delta, duplicate and gap handling
+  ---
+  duration_ms: 3.6808
+  type: 'test'
+  ...
+# Subtest: Coinbase level2 snapshot, delta, duplicate and gap handling
+ok 144 - Coinbase level2 snapshot, delta, duplicate and gap handling
+  ---
+  duration_ms: 1.769
+  type: 'test'
+  ...
+# Subtest: public brand keeps the official slogan and removes obsolete motion reel identifiers
+ok 145 - public brand keeps the official slogan and removes obsolete motion reel identifiers
+  ---
+  duration_ms: 98.2024
+  type: 'test'
+  ...
+# Subtest: local book preserves decimal keys, ordering, and zero deletion
+ok 146 - local book preserves decimal keys, ordering, and zero deletion
+  ---
+  duration_ms: 2.3753
+  type: 'test'
+  ...
+# Subtest: symbol normalization formats symbols accurately for each exchange
+ok 147 - symbol normalization formats symbols accurately for each exchange
+  ---
+  duration_ms: 3.4517
+  type: 'test'
+  ...
+# Subtest: Binance depth synchronizer correctly transitions from SYNCING to LIVE via snapshot bridge
+ok 148 - Binance depth synchronizer correctly transitions from SYNCING to LIVE via snapshot bridge
+  ---
+  duration_ms: 2.3933
+  type: 'test'
+  ...
+# Subtest: Binance depth synchronizer detects sequence gap and transitions to ERROR for automatic resync
+ok 149 - Binance depth synchronizer detects sequence gap and transitions to ERROR for automatic resync
+  ---
+  duration_ms: 2.5906
+  type: 'test'
+  ...
+# Subtest: PublicMarketDataProvider supports reference counting and cleanup on unmount
+ok 150 - PublicMarketDataProvider supports reference counting and cleanup on unmount
+  ---
+  duration_ms: 178.8435
+  type: 'test'
+  ...
+# Subtest: parses custom CSV candles with automatic header detection and sanitization
+ok 151 - parses custom CSV candles with automatic header detection and sanitization
+  ---
+  duration_ms: 5.4839
+  type: 'test'
+  ...
+# Subtest: handles ISO datetime strings and computes high/low envelope correctly
+ok 152 - handles ISO datetime strings and computes high/low envelope correctly
+  ---
+  duration_ms: 0.7358
+  type: 'test'
+  ...
+# Subtest: synchronizes multi-data streams with strict zero look-ahead bias
+ok 153 - synchronizes multi-data streams with strict zero look-ahead bias
+  ---
+  duration_ms: 0.5175
+  type: 'test'
+  ...
+# Subtest: computeSha256 computes accurate SHA-256 hex string
+ok 154 - computeSha256 computes accurate SHA-256 hex string
+  ---
+  duration_ms: 2.335
+  type: 'test'
+  ...
+# Subtest: isValidVersionProgression verifies semantic version ordering
+ok 155 - isValidVersionProgression verifies semantic version ordering
+  ---
+  duration_ms: 0.8783
+  type: 'test'
+  ...
+# Subtest: generateReleaseManifest constructs conforming WindowsRelease record
+ok 156 - generateReleaseManifest constructs conforming WindowsRelease record
+  ---
+  duration_ms: 12.7584
+  type: 'test'
+  ...
+# Failed to fetch remote config; preserving current cached config: Error: 503 Service Unavailable
+#     at Object.fetchConfig (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\tests\\remote-config.test.ts:67:13)
+#     at RemoteConfigService.refresh (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\config\\remote-config.ts:90:41)
+#     at TestContext.<anonymous> (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\tests\\remote-config.test.ts:75:17)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+#     at Test.postRun (node:internal/test_runner/test:1173:19)
+#     at Test.run (node:internal/test_runner/test:1101:12)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# Subtest: RemoteConfigService provides defaults and supports feature lookups
+ok 157 - RemoteConfigService provides defaults and supports feature lookups
+  ---
+  duration_ms: 2.0111
+  type: 'test'
+  ...
+# Subtest: RemoteConfigService fetches remote updates, notifies listeners, and caches by TTL
+ok 158 - RemoteConfigService fetches remote updates, notifies listeners, and caches by TTL
+  ---
+  duration_ms: 11.1073
+  type: 'test'
+  ...
+# Subtest: RemoteConfigService falls back safely to cached config if remote fetch fails
+ok 159 - RemoteConfigService falls back safely to cached config if remote fetch fails
+  ---
+  duration_ms: 4.4458
+  type: 'test'
+  ...
+# Subtest: volume profile and market regime respect replay boundary with strict zero lookahead
+ok 160 - volume profile and market regime respect replay boundary with strict zero lookahead
+  ---
+  duration_ms: 5.7212
+  type: 'test'
+  ...
+# Subtest: fresh appearance is Violet and the original blue preset keeps its colors
+ok 161 - fresh appearance is Violet and the original blue preset keeps its colors
+  ---
+  duration_ms: 3.1048
+  type: 'test'
+  ...
+# Subtest: legacy custom colors and density survive migration
+ok 162 - legacy custom colors and density survive migration
+  ---
+  duration_ms: 0.6666
+  type: 'test'
+  ...
+# Subtest: invalid saved colors and numbers cannot reach chart presentation
+ok 163 - invalid saved colors and numbers cannot reach chart presentation
+  ---
+  duration_ms: 3.6796
+  type: 'test'
+  ...
+# Subtest: TradePlanWorkspaceManager compiles multi-scenario plan with R-multiples and EV
+ok 164 - TradePlanWorkspaceManager compiles multi-scenario plan with R-multiples and EV
+  ---
+  duration_ms: 5.6187
+  type: 'test'
+  ...
+# Subtest: TradePlanWorkspaceManager enforces state machine lifecycle
+ok 165 - TradePlanWorkspaceManager enforces state machine lifecycle
+  ---
+  duration_ms: 5.9792
+  type: 'test'
+  ...
+# C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\.prisma\\client\\default.js:43
+#     throw new Error('@prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.');
+#           ^
+# Error: @prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.
+#     at new PrismaClient (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\.prisma\\client\\default.js:43:11)
+#     at createClient (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:41:18)
+#     at PrismaClientWasm (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:50:45)
+#     at Object.<anonymous> (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\src\\lib\\db.ts:52:69)
+#     at Module._compile (node:internal/modules/cjs/loader:1781:14)
+#     at Object.transformer (C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\node_modules\\tsx\\dist\\register-C557imBs.cjs:9:3619)
+#     at Module.load (node:internal/modules/cjs/loader:1505:32)
+#     at Function._load (node:internal/modules/cjs/loader:1309:12)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+#     at Module.require (node:internal/modules/cjs/loader:1527:12)
+# Node.js v22.23.2
+# Subtest: tests\\user-profile-and-auth.test.ts
+not ok 45 - tests\\user-profile-and-auth.test.ts
+  ---
+  duration_ms: 1185.7388
+  type: 'test'
+  location: 'C:\\Users\\aykhank\\AppData\\Local\\Temp\\zt-v2-baseline-72d512e986da4c11a33235d4eda02227\\tests\\user-profile-and-auth.test.ts:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: roundToTick correctly snaps floating prices to precise tick steps
+ok 167 - roundToTick correctly snaps floating prices to precise tick steps
+  ---
+  duration_ms: 1.657
+  type: 'test'
+  ...
+# Subtest: computes Fixed Range Volume Profile and identifies POC within value area
+ok 168 - computes Fixed Range Volume Profile and identifies POC within value area
+  ---
+  duration_ms: 1.608
+  type: 'test'
+  ...
+# Subtest: computes Session Volume Profiles and correctly identifies Naked POCs
+ok 169 - computes Session Volume Profiles and correctly identifies Naked POCs
+  ---
+  duration_ms: 0.9488
+  type: 'test'
+  ...
+# Subtest: BackoffCalculator calculates exponential delays with jitter and resets
+ok 170 - BackoffCalculator calculates exponential delays with jitter and resets
+  ---
+  duration_ms: 4.9456
+  type: 'test'
+  ...
+# Subtest: StreamHealthMonitor tracks telemetry, jitter, sequence gaps, and status transitions
+ok 171 - StreamHealthMonitor tracks telemetry, jitter, sequence gaps, and status transitions
+  ---
+  duration_ms: 1.0601
+  type: 'test'
+  ...
+# Subtest: MicroBurstCoalescer batches ticks and flushes correctly
+ok 172 - MicroBurstCoalescer batches ticks and flushes correctly
+  ---
+  duration_ms: 46.1313
+  type: 'test'
+  ...
+# Subtest: SubscriptionRecoveryManager preserves active channels and manifests across reconnects
+ok 173 - SubscriptionRecoveryManager preserves active channels and manifests across reconnects
+  ---
+  duration_ms: 1.4259
+  type: 'test'
+  ...
+# Subtest: Windows release publishing is disabled by default
+ok 174 - Windows release publishing is disabled by default
+  ---
+  duration_ms: 1.5221
+  type: 'test'
+  ...
+# Subtest: a malformed or unapproved Windows release cannot become a download
+ok 175 - a malformed or unapproved Windows release cannot become a download
+  ---
+  duration_ms: 2.7071
+  type: 'test'
+  ...
+# Subtest: a validated signed release projects only safe public download metadata
+ok 176 - a validated signed release projects only safe public download metadata
+  ---
+  duration_ms: 0.8067
+  type: 'test'
+  ...
+# Subtest: benchmarkBarThroughput measures processing speed and returns positive metrics
+ok 177 - benchmarkBarThroughput measures processing speed and returns positive metrics
+  ---
+  duration_ms: 5.3418
+  type: 'test'
+  ...
+# Subtest: calculateCloudCostSavings computes avoided cloud bills accurately
+ok 178 - calculateCloudCostSavings computes avoided cloud bills accurately
+  ---
+  duration_ms: 0.4862
+  type: 'test'
+  ...
+# Subtest: WorkloadMonitor accumulates workloads and calculates running cost savings
+ok 179 - WorkloadMonitor accumulates workloads and calculates running cost savings
+  ---
+  duration_ms: 1.2487
+  type: 'test'
+  ...
+# Subtest: no saved layout uses addPanel and activates the primary chart
+ok 180 - no saved layout uses addPanel and activates the primary chart
+  ---
+  duration_ms: 2.1408
+  type: 'test'
+  ...
+# Subtest: valid Dockview state restores without rebuilding
+ok 181 - valid Dockview state restores without rebuilding
+  ---
+  duration_ms: 0.4914
+  type: 'test'
+  ...
+# Subtest: malformed JSON is discarded and never passed to fromJSON
+ok 182 - malformed JSON is discarded and never passed to fromJSON
+  ---
+  duration_ms: 0.2324
+  type: 'test'
+  ...
+# Subtest: obsolete splitview is discarded and never passed to fromJSON
+ok 183 - obsolete splitview is discarded and never passed to fromJSON
+  ---
+  duration_ms: 0.1286
+  type: 'test'
+  ...
+# Subtest: missing required chart is discarded and never passed to fromJSON
+ok 184 - missing required chart is discarded and never passed to fromJSON
+  ---
+  duration_ms: 0.2021
+  type: 'test'
+  ...
+# Subtest: unknown component is discarded and never passed to fromJSON
+ok 185 - unknown component is discarded and never passed to fromJSON
+  ---
+  duration_ms: 0.1144
+  type: 'test'
+  ...
+# Subtest: schema rebuilds once after a failed restore
+ok 186 - schema rebuilds once after a failed restore
+  ---
+  duration_ms: 0.2789
+  type: 'test'
+  ...
+# Subtest: missing restored chart rebuilds once after a failed restore
+ok 187 - missing restored chart rebuilds once after a failed restore
+  ---
+  duration_ms: 0.2019
+  type: 'test'
+  ...
+# Subtest: reset discards old state, rebuilds, debounces subsequent writes and disposes
+ok 188 - reset discards old state, rebuilds, debounces subsequent writes and disposes
+  ---
+  duration_ms: 72.5871
+  type: 'test'
+  ...
+# Subtest: unavailable browser storage still initializes and resets
+ok 189 - unavailable browser storage still initializes and resets
+  ---
+  duration_ms: 1.5463
+  type: 'test'
+  ...
+1..189
+# tests 189
+# suites 0
+# pass 186
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9720.4643

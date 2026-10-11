@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "frames": 25,
+  "uniqueRows": 1769,
+  "sourceCandidates": 1711,
+  "requiredRows": 58,
+  "hashChecks": "all source/original exports and snapshot ZIP verified",
+  "approvedExceptions": 0,
+  "unclassified": 0
+}

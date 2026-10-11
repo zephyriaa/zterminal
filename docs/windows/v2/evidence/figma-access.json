@@ -1,0 +1,35 @@
+{
+  "checkedOn": "2026-10-11",
+  "fileKey": "VtIJq6WBPRJUUKtc4XvnxE",
+  "metadata": {
+    "nodeId": "33:1080",
+    "status": "PASS",
+    "type": "frame",
+    "name": "V2 / Baseline comparison / 1440px × 900px · ZTerminal Windows",
+    "dimensions": [1440, 900],
+    "observedDescendantText": ["RESULTS COMPARISON", "One change. Clear evidence.", "Baseline comparison", "Binance Futures", "Entry deviation −2.0%", "Entry deviation −1.5%", "Input differences"],
+    "qualification": "Fresh metadata result inspected before quota rejection; not a full font/component/variable audit"
+  },
+  "screenshot": {
+    "nodeId": "33:1080",
+    "status": "PASS",
+    "dimensions": [1440, 900],
+    "localExport": "figma-33-1080.png",
+    "observedContent": "Correct baseline/candidate comparison; historical wrong-diagnostics report no longer describes current contents",
+    "approval": "Pending human review"
+  },
+  "structuralInspection": {
+    "tool": "use_figma",
+    "status": "BLOCKED",
+    "reason": "Figma MCP tool call limit on Starter plan",
+    "mutationAttempted": false
+  },
+  "remainingExports": {
+    "status": "BLOCKED",
+    "reason": "Screenshot calls rejected at current Starter quota",
+    "originalExportsAvailableThisRun": 1,
+    "requiredFrames": 25,
+    "sourceScreenshotsAreOriginalFigmaExports": false
+  },
+  "decision": "Do not recreate or overwrite 33:1080. Keep its fresh correct export and saved source as review candidates; resolve Futures/Spot and visual differences explicitly."
+}
