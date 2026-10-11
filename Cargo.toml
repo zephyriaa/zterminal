@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
   "crates/zt-protocol",
+  "crates/zt-domain",
   "crates/zt-core",
   "crates/zt-storage",
   "crates/zt-adapters",
