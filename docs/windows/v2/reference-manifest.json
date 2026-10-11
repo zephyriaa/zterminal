@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-11",
-  "status": "BLOCKED \u2014 review manifest frozen, approval not granted",
+  "status": "PROVISIONAL IMPLEMENTATION AUTHORIZED; original design approval BLOCKED",
   "governing": "docs/windows/V2-PRODUCT-BUILD-PROMPT.md",
   "fileKey": "VtIJq6WBPRJUUKtc4XvnxE",
   "pageId": "3:3",
@@ -25,7 +25,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "16:1080",
@@ -44,7 +52,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "17:1080",
@@ -63,7 +79,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "18:1080",
@@ -82,7 +106,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "19:1080",
@@ -101,7 +133,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "21:1080",
@@ -120,7 +160,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "22:1080",
@@ -139,7 +187,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "20:1080",
@@ -158,7 +214,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "25:1080",
@@ -177,7 +241,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "26:1080",
@@ -196,7 +268,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "27:1080",
@@ -215,7 +295,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "28:1080",
@@ -234,7 +322,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "29:1080",
@@ -253,7 +349,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "30:1080",
@@ -272,7 +376,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "31:1080",
@@ -291,7 +403,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "32:1080",
@@ -310,7 +430,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "33:1080",
@@ -329,7 +457,16 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Fresh Figma natural export"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: details not approved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison",
+      "historicalDefect": "SUPERSEDED: fresh export is comparison; Spot/Futures and remaining details unresolved"
     },
     {
       "nodeId": "34:1080",
@@ -348,7 +485,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "35:1080",
@@ -367,7 +512,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "36:1080",
@@ -386,7 +539,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "37:1080",
@@ -405,7 +566,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "38:1080",
@@ -424,7 +593,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "39:1080",
@@ -443,7 +620,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "40:1080",
@@ -462,7 +647,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     },
     {
       "nodeId": "41:1080",
@@ -481,7 +674,15 @@
       "fonts": "Source declares real Geist/Geist Mono variable normal 100\u2013900; actual Figma style names unverified",
       "tokens": "native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below",
       "interactions": "ACTIONS.md + control-inventory.csv; prototype is design-only",
-      "approvedExceptions": []
+      "approvedExceptions": [],
+      "provenance": {
+        "source": "Saved revision-v2 source frozen in evidence/design-source.zip",
+        "export": "browser-harness rendered source capture; synthetic design example",
+        "original": "Missing natural Figma export; historical review is not approval"
+      },
+      "implementationStatus": "PROVISIONAL under EX-M1-01",
+      "originalApprovalStatus": "BLOCKED: original unavailable and unapproved",
+      "originalParityStatus": "BLOCKED: no approved product parity comparison"
     }
   ],
   "missingOrUnapproved": [
@@ -501,157 +702,188 @@
     {
       "path": "app.js",
       "bytes": 22431,
-      "sha256": "2d2e6ee77d6f00a4b1de24e9cfabeec32edb86026087edfd5297b4238b1e4028"
+      "sha256": "2d2e6ee77d6f00a4b1de24e9cfabeec32edb86026087edfd5297b4238b1e4028",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "assets/geist-mono.woff2",
       "bytes": 31288,
-      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3"
+      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "assets/geist.woff2",
       "bytes": 28356,
-      "sha256": "1b5ebfb3a01a97343ac96873e6d59a8cb285c66012b6a1ac509cb2765e995ba8"
+      "sha256": "1b5ebfb3a01a97343ac96873e6d59a8cb285c66012b6a1ac509cb2765e995ba8",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "assets/mark.png",
       "bytes": 241832,
-      "sha256": "cad7cc28ca96efe424e3786d0f25072c2a91a174ac8157f164d50b4a9a8988ca"
+      "sha256": "cad7cc28ca96efe424e3786d0f25072c2a91a174ac8157f164d50b4a9a8988ca",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "build.cjs",
       "bytes": 2193,
-      "sha256": "8cf52e2715e3ff967943d10c051600c7583393bf806401387d6a6fdfe97401b5"
+      "sha256": "8cf52e2715e3ff967943d10c051600c7583393bf806401387d6a6fdfe97401b5",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "capture-state.json",
       "bytes": 1948,
-      "sha256": "035d99f9d9007d7e9bc8c502ccf7416deaefffbd8cbb66cffdd8fc5081426738"
+      "sha256": "035d99f9d9007d7e9bc8c502ccf7416deaefffbd8cbb66cffdd8fc5081426738",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "design-gate.css",
       "bytes": 7903,
-      "sha256": "06793810576c884874de973d2677f6f24758c5450323ead8d9728a69478762d6"
+      "sha256": "06793810576c884874de973d2677f6f24758c5450323ead8d9728a69478762d6",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "design-gate.js",
       "bytes": 13727,
-      "sha256": "386f58c4e69c4205a78b154599dd11ca7f7d30431f7a40e3caa2f796ad24a2ad"
+      "sha256": "386f58c4e69c4205a78b154599dd11ca7f7d30431f7a40e3caa2f796ad24a2ad",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "figma-first-launch-proof.png",
       "bytes": 54158,
-      "sha256": "daa9a3cb4d273c8dcece5052f7bf623a981255a9f3a0d7159e25fee262b2bbb3"
+      "sha256": "daa9a3cb4d273c8dcece5052f7bf623a981255a9f3a0d7159e25fee262b2bbb3",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "figma-proof.png",
       "bytes": 52091,
-      "sha256": "5db85c557940d4d597e94aedff44791b5e24c6ee8d560fa01d8f7a0a009dfd4f"
+      "sha256": "5db85c557940d4d597e94aedff44791b5e24c6ee8d560fa01d8f7a0a009dfd4f",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "HANDOFF.md",
       "bytes": 6664,
-      "sha256": "3c247ed24c4f764423f0a838bf2547c659b61110509067ae732f39220eda57b8"
+      "sha256": "3c247ed24c4f764423f0a838bf2547c659b61110509067ae732f39220eda57b8",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "icons.json",
       "bytes": 19374,
-      "sha256": "46acddd32ec187333baf301faff95a9b71c9c80b261b2b8a981344d91a6c9990"
+      "sha256": "46acddd32ec187333baf301faff95a9b71c9c80b261b2b8a981344d91a6c9990",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "index.html",
       "bytes": 611,
-      "sha256": "457913d56c10c6c7ed96ac26d0f77a41f51b237121508adc36c1cfdb9ca4030e"
+      "sha256": "457913d56c10c6c7ed96ac26d0f77a41f51b237121508adc36c1cfdb9ca4030e",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "INTERACTION-CONTRACT.md",
       "bytes": 8040,
-      "sha256": "54152dd8275ef61e88d2a5ffb6ae0c037f97d486da097f099dd0334c25ef5570"
+      "sha256": "54152dd8275ef61e88d2a5ffb6ae0c037f97d486da097f099dd0334c25ef5570",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "journey-capture-state.json",
       "bytes": 5371,
-      "sha256": "2469a096bed6e82db68ad9b62f2ccf0eaf12aa110f958eea80cb07318278f5e5"
+      "sha256": "2469a096bed6e82db68ad9b62f2ccf0eaf12aa110f958eea80cb07318278f5e5",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "journeys.css",
       "bytes": 14661,
-      "sha256": "bca758c7554335ee7e5b6a8e7a92d83a42229e81d49b2aaff4d49b8c38481c22"
+      "sha256": "bca758c7554335ee7e5b6a8e7a92d83a42229e81d49b2aaff4d49b8c38481c22",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "journeys.js",
       "bytes": 34749,
-      "sha256": "7046fbf771e9201f9df4ccf4a42822951c23744d09374627eae7f210c375b765"
+      "sha256": "7046fbf771e9201f9df4ccf4a42822951c23744d09374627eae7f210c375b765",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "native-design-source-checks.json",
       "bytes": 3003,
-      "sha256": "68a11375260e97322cc026948daf5dbf99fca8c566f43a4a8fefa062cc3f8ab6"
+      "sha256": "68a11375260e97322cc026948daf5dbf99fca8c566f43a4a8fefa062cc3f8ab6",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "native-design-tokens.json",
       "bytes": 1661,
-      "sha256": "be2922ba1f4aef57c6bf0681501d7b11cf7e69bd7074c63d3a8029e6c23352eb"
+      "sha256": "be2922ba1f4aef57c6bf0681501d7b11cf7e69bd7074c63d3a8029e6c23352eb",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "NATIVE-IMPLEMENTATION-STATUS.md",
       "bytes": 3365,
-      "sha256": "b578c6c9690c6cf17e51cc8d1002f44a73771f4edd720b4f6d5bcb582c653005"
+      "sha256": "b578c6c9690c6cf17e51cc8d1002f44a73771f4edd720b4f6d5bcb582c653005",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "preview-comparison.png",
       "bytes": 96677,
-      "sha256": "3c6680eed57fa6a33b85135dfb17f80906e615a17522a92daa9ac46d7997b608"
+      "sha256": "3c6680eed57fa6a33b85135dfb17f80906e615a17522a92daa9ac46d7997b608",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "preview-main.png",
       "bytes": 105090,
-      "sha256": "afb2068cf431556412bb542d79d578e817cd9c5f1bd60cb68281dd837d2510ee"
+      "sha256": "afb2068cf431556412bb542d79d578e817cd9c5f1bd60cb68281dd837d2510ee",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "preview-native-compact.png",
       "bytes": 18553,
-      "sha256": "914c148e89d2fe4ef9bb4a6425dac2274650ccecc1287eec710406c08409ce48"
+      "sha256": "914c148e89d2fe4ef9bb4a6425dac2274650ccecc1287eec710406c08409ce48",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "preview-native-equity.png",
       "bytes": 76804,
-      "sha256": "f2cc6cd76f744c9cc66a7daba17214b07476a51653a7903dd9786122812a1b98"
+      "sha256": "f2cc6cd76f744c9cc66a7daba17214b07476a51653a7903dd9786122812a1b98",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "preview-native-monitors.png",
       "bytes": 83254,
-      "sha256": "44998eafbb7f2095f90ede4a83644bfcf037c53ea08f28c965354c04fd1e019a"
+      "sha256": "44998eafbb7f2095f90ede4a83644bfcf037c53ea08f28c965354c04fd1e019a",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "preview-native-trades.png",
       "bytes": 66436,
-      "sha256": "3880c6631d03e4e06f95c61b107d0958ab84b26f6575019f7e80b138197ceaa6"
+      "sha256": "3880c6631d03e4e06f95c61b107d0958ab84b26f6575019f7e80b138197ceaa6",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "README.md",
       "bytes": 1734,
-      "sha256": "c5671ef9468debb3ed1dcb9e0fa7c183ce4cb7dd0999fead8f79aa726bd66a6f"
+      "sha256": "c5671ef9468debb3ed1dcb9e0fa7c183ce4cb7dd0999fead8f79aa726bd66a6f",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "RESUME.md",
       "bytes": 4531,
-      "sha256": "28e3163495e333a74b84304764ca602c43037dbe943039601c84f0302542612a"
+      "sha256": "28e3163495e333a74b84304764ca602c43037dbe943039601c84f0302542612a",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "server.cjs",
       "bytes": 824,
-      "sha256": "6cb0d749048bce69b4ba261ad6857241d8b6cf1eb011dacc13c71083670c61a3"
+      "sha256": "6cb0d749048bce69b4ba261ad6857241d8b6cf1eb011dacc13c71083670c61a3",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "source-verification.json",
       "bytes": 1417,
-      "sha256": "40241fd8f0551cc9e3b57e4942cf0b433df0fd7b56063cbb3fbb756e2305e500"
+      "sha256": "40241fd8f0551cc9e3b57e4942cf0b433df0fd7b56063cbb3fbb756e2305e500",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     },
     {
       "path": "style.css",
       "bytes": 20181,
-      "sha256": "38026934ebe238bc9c8308657a1170118904cde0183ea234e15084cb0d64edaa"
+      "sha256": "38026934ebe238bc9c8308657a1170118904cde0183ea234e15084cb0d64edaa",
+      "status": "PROVISIONAL source lineage under EX-M1-01; not Figma approval"
     }
   ],
   "legacyRecords": [
@@ -719,7 +951,8 @@
   "sourceSnapshotArchive": {
     "path": "evidence/design-source.zip",
     "sha256": "9f417c7aa5629d995040e4485ff70671f5049eb8513a5947bc18f198e4e2a28d",
-    "purpose": "Exact original ignored source/handoff/fonts packaged for review; not an approved design"
+    "purpose": "Exact original ignored source/handoff/fonts packaged for review; not an approved design",
+    "status": "PROVISIONAL exact source baseline; not approved original"
   },
   "additionalSourceArrangements": [
     {
@@ -730,7 +963,7 @@
       "effects": "rich",
       "export": "evidence/source/source-25-equity-1440-rich.png",
       "sha256": "3fa20850bb53442441b25a4d0b3fb4cbccde96773feb746491892fab224e4614",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "trades",
@@ -740,7 +973,7 @@
       "effects": "rich",
       "export": "evidence/source/source-26-trades-1440-rich.png",
       "sha256": "739a793f78baaf8ca344ab3a50d182c74d5db6f14da9ab1e1b4ab0ddfd14f308",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "empty",
@@ -750,7 +983,7 @@
       "effects": "opaque",
       "export": "evidence/source/source-27-empty-1440-opaque.png",
       "sha256": "ee52a05589be287482141e1c94e317bf57a8c6c6e1ff6eeeb3355905deff390b",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "mixed-monitors",
@@ -760,7 +993,7 @@
       "effects": "rich",
       "export": "evidence/source/source-28-mixed-monitors-1920-rich.png",
       "sha256": "8f9e72e9ba36a4730de4c58e47dd1c45c2f26331080877374a98cd7991093829",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "design-review",
@@ -770,7 +1003,7 @@
       "effects": "rich",
       "export": "evidence/source/source-29-design-review-1440-rich.png",
       "sha256": "460a8dd97113e9ce35791cf20014533eb5fec403c8718c630b12b9f37e5fd8b8",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "chart",
@@ -780,7 +1013,7 @@
       "effects": "reduced",
       "export": "evidence/source/source-30-chart-911-reduced.png",
       "sha256": "ff86df5f1bfc9c344d3a7b31515a3e2cef8f8f0b162e591b788a42abf6846b2d",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "studio",
@@ -790,7 +1023,7 @@
       "effects": "opaque",
       "export": "evidence/source/source-31-studio-683-opaque.png",
       "sha256": "cd838a87f94a7c62067c14e2891821b55ec06689ac3f95f8927768645b87a4cb",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "configure",
@@ -800,7 +1033,7 @@
       "effects": "opaque",
       "export": "evidence/source/source-32-configure-683-opaque.png",
       "sha256": "09334f037bebcceeb0cc4603a7ffd1a8d36cded5155885268ed49018900c2d29",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "chart",
@@ -810,7 +1043,7 @@
       "effects": "reduced",
       "export": "evidence/source/source-33-chart-1440-reduced.png",
       "sha256": "ef91238cdce8516d6f323e0bfb1ad5e7879100d90f6e1da3afec1b292d2bb51e",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "chart",
@@ -820,7 +1053,7 @@
       "effects": "opaque",
       "export": "evidence/source/source-34-chart-1440-opaque.png",
       "sha256": "32326a321343477fd833a15d882820be14de5f7b426582c34ca0dd0f094d0938",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     },
     {
       "view": "detached",
@@ -830,7 +1063,21 @@
       "effects": "rich",
       "export": "evidence/source/source-35-detached-1024-rich.png",
       "sha256": "abfa86c7dc6716c0d0c894ab613f516f6e7b5f5636305a8b7a61a368012c1f66",
-      "status": "UNAPPROVED SOURCE"
+      "status": "PROVISIONAL source under EX-M1-01; original approval/parity BLOCKED"
     }
-  ]
+  ],
+  "scopedException": {
+    "id": "EX-M1-01",
+    "date": "2026-10-11",
+    "authority": "Explicit user instruction in this chat",
+    "scope": "Milestone 1 only against saved V2 source/handoff/contracts/tokens/available exports",
+    "originalMilestone0Gate": "NOT PASSED: engineering audit complete; design approval incomplete",
+    "originalFigmaParity": "BLOCKED where originals or approval absent",
+    "doesNotAuthorize": [
+      "unseen frame approval",
+      "verified 1:1 parity",
+      "later milestones",
+      "publication"
+    ]
+  }
 }

@@ -102,6 +102,8 @@ No untested live trade execution. No automatic strategy execution on open, live 
 
 ### 6. Required implementation sequence and exit gates
 
+**Scoped exception EX-M1-01, authorized 11 October 2026:** missing references block only their dependent implementation/design acceptance. Milestone 0's engineering audit is complete; its original combined acceptance gate is **not passed**, because design-reference approval remains incomplete. Milestone 1 may proceed using the saved V2 source, handoff, interaction contracts, prepared tokens and available original exports as a **provisional baseline**. This authorization does not approve unseen Figma frames or establish original-Figma parity. Report functional acceptance, provisional visual comparison and original-Figma parity separately; unavailable originals remain **Blocked**. The fresh 33:1080 comparison export supersedes the historical diagnostics defect, without approving remaining details. Resolve routine shell choices from this specification; materially different designs require Penpot review before acceptance. Research execution, import-policy changes, simulation, exports and distribution decisions gate their dependent milestones only. No publication is authorized.
+
 | Milestone | Work | Required exit evidence |
 | --- | --- | --- |
 | 0 — Baseline | Verify current slice; reconcile domain prerequisite; freeze reviewed V2 references, exceptions and full control inventory | Clean-checkout build/test baseline, dependency/migration/risk documents, approved reference manifest, action-to-test map; unresolved designs explicitly identified |

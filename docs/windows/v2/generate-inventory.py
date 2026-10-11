@@ -58,10 +58,10 @@ assign('A09','Search datasets|All datasets|Verified|Needs attention|Dataset libr
 assign('A10','Search verified markets|View provider readiness|Instrument query|Local catalog|Provider discovery|Open cached chart|Connect first|BTCUSDT\nBinance Spot|BTCUSDT')
 assign('A11','1m|5m|15m|1h|4h|1D|5D|1M|3M|6M|YTD|ALL|Go to latest')
 assign('A13','Cursor|Crosshair|Trend line|Horizontal line|Text|Measure|Magnet|Drawing visibility|Delete selected drawing')
-assign('A14','Indicators|Applied · 1|Trend|Momentum|Volatility|Volume|Search indicators|Length|Source|Offset|Line width|Apply sample settings|Indicator settings')
-assign('A15','Replay|Step back|Play replay|Step forward|1×|Exit replay|Inspect replay')
+assign('A14','Indicators|Applied Â· 1|Trend|Momentum|Volatility|Volume|Search indicators|Length|Source|Offset|Line width|Apply sample settings|Indicator settings')
+assign('A15','Replay|Step back|Play replay|Step forward|1Ã—|Exit replay|Inspect replay')
 assign('A16','Save strategy|Strategy actions|Python strategy developer|Strategy Developer|Open strategy')
-assign('A17','Configure|Dataset|Period|Commission|EMA length|Period · UTC|Entry deviation|Commission per fill|Slippage|Initial capital|Position sizing|Review configuration|Review run setup')
+assign('A17','Configure|Dataset|Period|Commission|EMA length|Period Â· UTC|Entry deviation|Commission per fill|Slippage|Initial capital|Position sizing|Review configuration|Review run setup')
 assign('A18','Run locally|Preview local run|Inspect cancellation state|Continue editing|Inspect queue|Inspect worker|Diagnostics|Back to jobs|Local run lifecycle|View failed run|Failed run diagnostics')
 assign('A19','Overview|Equity|Equity & drawdown|Trade inspection|Trades|Evidence|Assumptions & provenance|Assumptions and provenance|Job diagnostics|Inspect recorded assumptions|Open archived report|Inspect provenance|Return to overview|Back to report|Back to evidence')
 assign('A20','Compare baseline|Compare completed runs|Baseline comparison|Inspect baseline')
@@ -82,7 +82,7 @@ for si, capture in enumerate(captures):
  s=capture['scenario']
  for c in capture['controls']:
   name=c['name']; cls=c['classes']; family=exact.get(name)
-  if not name and c['action']=='reset': family='A06';name='Reset layout — MISSING accessible name in compact source'
+  if not name and c['action']=='reset': family='A06';name='Reset layout â€” MISSING accessible name in compact source'
   if c['tag']=='TR': family='A31'
   elif cls=='plot': family='A12';name='Historical plot: pan, zoom, crosshair'
   elif 'pref-slider' in cls: family='A24';name='Grid intensity (static preview slider)'
@@ -102,7 +102,7 @@ for si, capture in enumerate(captures):
    unclassified.append((s['view'],name,c['tag'])); family='A31'
   owner,pre,transition,persist,outcome=families[family]
   instance=f'S{si:02d}-C{c["index"]:03d}'
-  rows.append(dict(id=instance,reference=s['nodeId'] or 'UNAPPROVED-SOURCE',view=s['view'],size=f'{s["width"]}x{s["height"]}',effects=s['effects'],location=json.dumps(c['rect'],separators=(',',':')),accessible_name=name or 'MISSING NAME — design decision required',observed_name=c['name'],observed_tag=c['tag'],observed_disabled=c['disabled'],prototype_binding=c['action'] or c['route'] or c['timeframe'] or 'STATIC / NO HANDLER',contract=family,preconditions=pre,owner=owner,state_transition=transition,persistence=persist,success_failure=outcome,acceptance_test=f'{family}:{instance}',product_test_status='NOT RUN',approval='Pending reference/control review; synthesized names are proposed corrections, not observed AX names'))
+  rows.append(dict(id=instance,reference=s['nodeId'] or 'UNAPPROVED-SOURCE',view=s['view'],size=f'{s["width"]}x{s["height"]}',effects=s['effects'],location=json.dumps(c['rect'],separators=(',',':')),accessible_name=name or 'MISSING NAME â€” design decision required',observed_name=c['name'],observed_tag=c['tag'],observed_disabled=c['disabled'],prototype_binding=c['action'] or c['route'] or c['timeframe'] or 'STATIC / NO HANDLER',contract=family,preconditions=pre,owner=owner,state_transition=transition,persistence=persist,success_failure=outcome,acceptance_test=f'{family}:{instance}',product_test_status='NOT RUN',approval='Pending reference/control review; synthesized names are proposed corrections, not observed AX names'))
 
 required = {
  'A03':['Rename workspace','Duplicate workspace','Save workspace','Save as','Choose workspace folder'],
@@ -140,14 +140,18 @@ legacy=json.loads((SOURCE.parent/'design-system-state.json').read_text())
 (ROOT/'legacy-design-system-inventory.json').write_text(json.dumps(legacy,indent=2),encoding='utf-8')
 historical=json.loads((SOURCE/'journey-capture-state.json').read_text())
 core=json.loads((SOURCE/'capture-state.json').read_text())
-manifest=dict(schemaVersion=1,date='2026-10-11',status='BLOCKED — review manifest frozen, approval not granted',governing='docs/windows/V2-PRODUCT-BUILD-PROMPT.md',fileKey=core['fileKey'],pageId='3:3',referencePriority='Existing accepted V2 direction over earlier 35-screen draft; prepared local corrections require review',approvalAuthority='Human product/design gate; source inspection and capture completion do not grant approval',frames=[])
+manifest=dict(schemaVersion=1,date='2026-10-11',status='BLOCKED â€” review manifest frozen, approval not granted',governing='docs/windows/V2-PRODUCT-BUILD-PROMPT.md',fileKey=core['fileKey'],pageId='3:3',referencePriority='Existing accepted V2 direction over earlier 35-screen draft; prepared local corrections require review',approvalAuthority='Human product/design gate; source inspection and capture completion do not grant approval',frames=[])
 for si,capture in enumerate(captures[:25]):
  s=capture['scenario'];old=next((v for v in historical['views'] if v['nodeId']==s['nodeId']),None)
- manifest['frames'].append(dict(nodeId=s['nodeId'],view=s['view'],dimensionsDip=[s['width'],s['height']],sourceComposition='app.js + journeys.js + design-gate.js',localSourceExport='evidence/source/'+capture['screenshot'],localSourceSha256=hash_file(ROOT/'evidence/source'/capture['screenshot']),originalFigmaExport='evidence/figma-33-1080.png' if s['nodeId']=='33:1080' else None,originalFigmaSha256=hash_file(ROOT/'evidence/figma-33-1080.png') if s['nodeId']=='33:1080' else None,historicalReview=old['visualReview'] if old else ('main visually inspected' if s['nodeId']=='14:1080' else 'source reviewed; Figma individual audit not established'),currentReview='Fresh metadata + 1440x900 PNG shows correct comparison, not diagnostics; awaiting approval' if s['nodeId']=='33:1080' else 'BLOCKED: full-resolution Figma export/layer verification unavailable at quota',fonts='Source declares real Geist/Geist Mono variable normal 100–900; actual Figma style names unverified',tokens='native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below',interactions='ACTIONS.md + control-inventory.csv; prototype is design-only',approvedExceptions=[]))
+ manifest['frames'].append(dict(nodeId=s['nodeId'],view=s['view'],dimensionsDip=[s['width'],s['height']],sourceComposition='app.js + journeys.js + design-gate.js',localSourceExport='evidence/source/'+capture['screenshot'],localSourceSha256=hash_file(ROOT/'evidence/source'/capture['screenshot']),originalFigmaExport='evidence/figma-33-1080.png' if s['nodeId']=='33:1080' else None,originalFigmaSha256=hash_file(ROOT/'evidence/figma-33-1080.png') if s['nodeId']=='33:1080' else None,historicalReview=old['visualReview'] if old else ('main visually inspected' if s['nodeId']=='14:1080' else 'source reviewed; Figma individual audit not established'),currentReview='Fresh metadata + 1440x900 PNG shows correct comparison, not diagnostics; awaiting approval' if s['nodeId']=='33:1080' else 'BLOCKED: full-resolution Figma export/layer verification unavailable at quota',fonts='Source declares real Geist/Geist Mono variable normal 100â€“900; actual Figma style names unverified',tokens='native-design-tokens.json is explicitly unapproved; source token/style hashes frozen below',interactions='ACTIONS.md + control-inventory.csv; prototype is design-only',approvedExceptions=[]))
 manifest['missingOrUnapproved']=['24 original full-resolution frame exports unavailable this run','Figma node fonts/types/image fills/bounds/clipping, components/variables/prototype wiring','Earlier eight Figma compositions lack propagated local library destinations','Equity/drawdown, trade detail, empty and mixed-monitor source additions have no accepted V2 node','Rich/reduced/opaque variants, themes/density, high-DPI 911x512 and 683x384 source variants lack approval','All interaction state variants and full menu contents','Provider connection/history failures, perpetual research/funding/mark coverage and liquidation states','Editable editor/revisions, actual cancellation/retry/repair, comparison incompatibility, export failure/pickers','All preference page bodies, shortcuts, cleanup/recovery failure and accessibility review','Current comparison header says Binance Futures, saved source says Binance Spot; decide exact product identity','Prepared token capability milestone numbers conflict with governing milestones; use governing sequence']
 manifest['preparedSourceSnapshots']=[dict(path=p.relative_to(SOURCE).as_posix(),bytes=p.stat().st_size,sha256=hash_file(p)) for p in source_files]
 manifest['legacyRecords']=[dict(path='legacy/'+p.name,bytes=p.stat().st_size,sha256=hash_file(p),status='Earlier editor-first draft; not accepted V2 target; do not replay construction requests') for p in legacy_files]
 manifest['sourceSnapshotArchive']=dict(path='evidence/design-source.zip',sha256=hash_file(ROOT/'evidence/design-source.zip'),purpose='Exact original ignored source/handoff/fonts packaged for review; not an approved design')
 manifest['additionalSourceArrangements']=[dict(**c['scenario'],export='evidence/source/'+c['screenshot'],sha256=hash_file(ROOT/'evidence/source'/c['screenshot']),status='UNAPPROVED SOURCE') for c in captures[25:]]
-(ROOT/'reference-manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+# Preserve human authorization/provenance; regeneration must not erase the review ledger.
+manifest_path=ROOT/'reference-manifest.json'
+if manifest_path.exists() and json.loads(manifest_path.read_text()).get('scopedException'):
+ raise SystemExit('Reference ledger has EX-M1-01; merge regenerated candidates into it explicitly instead of overwriting authorization')
+manifest_path.write_text(json.dumps(manifest,indent=2),encoding='utf-8')
 print(json.dumps(dict(sourceCandidates=1711,totalRows=len(rows),unclassified=unclassified),ensure_ascii=True))
