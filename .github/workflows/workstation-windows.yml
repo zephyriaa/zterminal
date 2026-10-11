@@ -1,0 +1,48 @@
+name: Local Windows workstation checks
+on:
+  pull_request:
+    paths:
+      - 'apps/workstation/**'
+      - 'src-tauri/**'
+      - 'crates/**'
+      - 'src/components/terminal/observed-history-chart.tsx'
+      - 'src/lib/workstation-platform.ts'
+      - 'scripts/test-workstation*'
+      - '.github/workflows/workstation-windows.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-slice:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Require canonical domain prerequisite
+        shell: pwsh
+        run: |
+          if (-not (Test-Path crates/zt-domain/Cargo.toml)) { throw 'The adopted zt-domain baseline must be reviewed and committed before this branch can pass a clean-checkout build.' }
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Storage, integrity, conflict and restart regression
+        run: cargo test --locked --manifest-path src-tauri/workstation-core/Cargo.toml
+      - name: Build bundled executable (no installer or publication)
+        run: npm run desktop:build
+      - name: Command origin and window regression
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --release --lib
+      - name: Enforce local frontend and bounded slice
+        shell: pwsh
+        run: |
+          $config = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          if ($config.build.frontendDist -match '^https?://') { throw 'Desktop frontend must be bundled locally.' }
+          if (-not (Test-Path out/workstation/index.html)) { throw 'Bundled frontend absent.' }
+          if (-not (Test-Path src-tauri/target/release/zterminal-desktop.exe)) { throw 'Windows executable absent.' }
+          Write-Output 'Build gate passed. Native UI/offline/restart and installer checks are separate acceptance gates; no installer was produced or published.'
