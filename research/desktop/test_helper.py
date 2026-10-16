@@ -147,6 +147,31 @@ class APITests(unittest.TestCase):
         self.assertEqual(self.request("POST", "/v1/pair", {"code": self.service.code})[0], 403)
         self.assertEqual(self.request("POST", "/v1/pair", {"code": "x"}, **{"Content-Type": "text/plain"})[0], 400)
 
+    def test_expiry_consumption_rotation_and_status(self):
+        self.service.publish()
+        self.service.expires = time.monotonic() - 1
+        self.assertEqual(self.request("POST", "/v1/pair", {"code": self.service.code})[0], 403)
+        self.service.new_code()
+        status, paired = self.request("POST", "/v1/pair", {"code": self.service.code})
+        self.assertEqual(status, 200)
+        pair = json.loads((Path(self.temp.name) / "pairing.json").read_text())
+        self.assertTrue(pair["consumed"])
+        self.assertGreater(pair["lastSeen"], 0)
+        self.assertEqual(self.request("POST", "/v1/pair", {"code": self.service.code})[0], 403)
+        self.service.new_code()
+        self.assertTrue(self.service.authorized(self.origin, "Bearer " + paired["token"]))
+        pair = json.loads((Path(self.temp.name) / "pairing.json").read_text())
+        self.assertFalse(pair["consumed"])
+        self.assertFalse(pair["locked"])
+
+    def test_failed_bind_does_not_replace_pairing_metadata(self):
+        self.service.publish()
+        path = Path(self.temp.name) / "pairing.json"
+        before = path.read_bytes()
+        with self.assertRaises(OSError):
+            Server(self.server.server_address, None)
+        self.assertEqual(path.read_bytes(), before)
+
 
 class ProcessTests(unittest.TestCase):
     @classmethod
@@ -221,7 +246,10 @@ class ProcessTests(unittest.TestCase):
     def test_resource_limit_and_process_crash_return_failures(self):
         for source in ["allocation = bytearray(3_000_000_000)", "import os\nos._exit(2)"]:
             job = self.controller.create(fixture(source))
-            self.assertEqual(self.wait(job)["stage"], "failed")
+            status = self.wait(job)
+            self.assertEqual(status["stage"], "failed")
+            if source.endswith("os._exit(2)"):
+                self.assertEqual(status["diagnostic"]["exitCode"], 2)
             while self.controller.active:
                 time.sleep(.05)
         self.assertEqual(self.archive.results(), [])

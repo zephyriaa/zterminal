@@ -7,24 +7,29 @@ import { EXAMPLES } from "@/lib/local-research/examples";
 import { intervalMs } from "@/lib/local-research/dataset";
 import { getDraftStorageStatus } from "@/lib/local-research/drafts";
 const ResearchEditor = dynamic(() => import("./research-editor"), { ssr: false, loading: () => <p className="p-4 text-xs text-muted-foreground">Loading Python editor…</p> });
-type HelperRelease = { available: boolean; version?: string; reason?: string };
+type HelperRelease = { available: boolean; version?: string; reason?: string; format?: "portable-zip" | "installer"; sha256?: string; bytes?: number; failed?: boolean };
 
 function HelperConnectionPanel({ pairCode, setPairCode }: { pairCode: string; setPairCode: (value: string) => void }) {
   const state = useResearch();
   const [release, setRelease] = useState<HelperRelease | null>(null);
   const [downloadStarted, setDownloadStarted] = useState(false);
+  const [releaseAttempt, setReleaseAttempt] = useState(0);
   const connecting = state.connection === "checking";
   const code = pairCode.trim();
   const connected = state.connection === "connected";
 
   useEffect(() => {
     let active = true;
-    void fetch("/api/releases/helper", { cache: "no-store" })
-      .then(async response => ({ payload: await response.json() as HelperRelease }))
-      .then(({ payload }) => { if (active) setRelease(payload); })
-      .catch(() => { if (active) setRelease({ available: false }); });
+    setRelease(null);
+    void fetch("/api/releases/helper", { cache: "no-store", signal: AbortSignal.timeout(10000) })
+      .then(async response => {
+        const payload = await response.json() as HelperRelease;
+        if ((!response.ok && response.status !== 503) || typeof payload.available !== "boolean" || (response.status === 503 && payload.available)) throw new Error("Release request failed");
+        if (active) setRelease(payload);
+      })
+      .catch(() => { if (active) setRelease({ available: false, failed: true }); });
     return () => { active = false; };
-  }, []);
+  }, [releaseAttempt]);
 
   const connect = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,8 +55,11 @@ function HelperConnectionPanel({ pairCode, setPairCode }: { pairCode: string; se
     <div className="zt-helper-connection-header"><div><p className="zt-helper-eyebrow">LOCAL BACKTESTING</p><h2 id="helper-connection-title">{connected ? "ZTerminal Helper" : "ZTerminal Helper required"}</h2></div><div className={`zt-helper-status is-${status.tone}`} role="status" aria-live="polite"><StatusIcon size={13} aria-hidden="true" className={connecting ? "zt-helper-spin" : ""} />{status.label}</div></div>
     <p className="zt-helper-description">{connected ? "This browser session can run Python backtests on your computer." : "The Helper runs ZTerminal's local Python backtesting engine and connects it securely to this browser session."}</p>
     {connected && state.helperVersion && <p className="zt-helper-version">Helper v{state.helperVersion}</p>}
-    {!connected && <><div className="zt-helper-download-row">{release?.available ? <a className="zt-helper-download" href="/download/helper" onClick={() => setDownloadStarted(true)}><Download size={13} aria-hidden="true" />Download ZTerminal Helper</a> : <button type="button" className="zt-helper-download" disabled title="A verified ZTerminal Helper installer has not been configured for this release."><Download size={13} aria-hidden="true" />Download ZTerminal Helper for Windows</button>}<a className="zt-helper-learn" href="/docs/python-research">Learn more</a></div>{(downloadStarted || release?.available === false) && <p className="zt-helper-followup">{downloadStarted ? "After installation, open ZTerminal Helper and connect it below." : "A verified Helper installer is not configured for this release yet."}</p>}
-      <form className="zt-helper-connect-form" onSubmit={connect}><label htmlFor="helper-connection-code">Connection code<span>Open ZTerminal Helper on your computer and paste its connection code below.</span></label><div><input id="helper-connection-code" aria-describedby="helper-connection-help helper-connection-error" placeholder="Paste connection code" value={pairCode} inputMode="numeric" autoComplete="one-time-code" maxLength={32} onChange={event => setPairCode(event.target.value)} disabled={connecting} /><button type="submit" disabled={!code || connecting}>{connecting ? "Connecting…" : "Connect Helper"}</button></div><p id="helper-connection-help" className="sr-only">Connection codes are used only to pair this browser session with your local ZTerminal Helper.</p></form>
+    {!connected && <><div className="zt-helper-download-row">{release?.available ? <a className="zt-helper-download" href="/download/helper" onClick={() => setDownloadStarted(true)}><Download size={13} aria-hidden="true" />Download Helper {release.format === "portable-zip" ? "ZIP" : "for Windows"}</a> : <button type="button" className="zt-helper-download" disabled><Download size={13} aria-hidden="true" />{release === null ? "Checking Helper release…" : "Helper download unavailable"}</button>}<a className="zt-helper-learn" href="/docs/python-research">Learn more</a></div>
+      <p className="zt-helper-followup" role="status">{release === null ? "Loading Windows x64 release details…" : release.failed ? "Could not load the download. Your connection controls are still available." : !release.available ? "No Helper package is configured for this release yet." : release.format === "portable-zip" ? "Download → Extract all → Open ZTerminalResearchHelper.exe → Copy Code → Connect. Optional: Install / update for my user in the Helper." : "Download → Install / Open → Copy Code → Connect."}{downloadStarted && " Download requested; keep the complete package together."}</p>
+      {release?.available && <details className="zt-helper-followup"><summary>Unsigned preview · v{release.version} · {release.bytes ? Math.ceil(release.bytes / 1048576) + " MB" : "Windows x64"}</summary><p>No system Python or administrator rights required. Windows may warn about this unsigned application. Updates preserve your research archive.</p><p className="break-all">SHA-256: {release.sha256}</p></details>}
+      {release?.available === false && <button type="button" className="zt-helper-retry" onClick={() => setReleaseAttempt(value => value + 1)}>Retry download check</button>}
+      <form className="zt-helper-connect-form" onSubmit={connect}><label htmlFor="helper-connection-code">Connection code<span>Open ZTerminal Helper on your computer and paste its eight-digit code below.</span></label><div><input id="helper-connection-code" aria-describedby="helper-connection-help helper-connection-error" placeholder="0000 0000" value={pairCode} inputMode="numeric" autoComplete="one-time-code" maxLength={9} onChange={event => setPairCode(event.target.value.replace(/\D/g, "").slice(0, 8))} disabled={connecting} /><button type="submit" disabled={!/^\d{8}$/.test(code) || connecting}>{connecting ? "Connecting…" : "Connect Helper"}</button></div><p id="helper-connection-help" className="sr-only">Connection codes are used only to pair this browser session with your local ZTerminal Helper.</p></form>
       <button type="button" className="zt-helper-retry" onClick={() => void state.connect()} disabled={connecting}>{connecting ? "Checking connection…" : "Retry connection"}</button></>}
     <p className="zt-helper-status-detail">{status.detail}</p>{!connected && state.error && <p id="helper-connection-error" className="zt-helper-error" role="alert">{state.error}</p>}
   </section>;

@@ -3,8 +3,11 @@ import { z } from "zod";
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 const helperReleaseSchema = z.object({
-  version: z.string().regex(SEMVER_PATTERN).optional(),
+  version: z.string().regex(SEMVER_PATTERN),
   download_url: z.string().url(),
+  format: z.enum(["portable-zip", "installer"]).default("installer"),
+  sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+  bytes: z.number().int().positive(),
   platform: z.literal("windows").default("windows"),
   architecture: z.literal("x64").default("x64"),
 });
@@ -34,7 +37,8 @@ export function resolveHelperRelease(env: NodeJS.ProcessEnv = process.env): Help
     if (!parsed.success) return { available: false, reason: "HELPER_RELEASE_CONFIGURATION_INVALID" };
     const url = new URL(parsed.data.download_url);
     const path = url.pathname.toLowerCase();
-    if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase()) || ![".exe", ".msix"].some((suffix) => path.endsWith(suffix))) {
+    const extensions = parsed.data.format === "portable-zip" ? [".zip"] : [".exe", ".msix"];
+    if (url.protocol !== "https:" || url.username || url.password || url.port || url.hash || !allowedHosts.has(url.hostname.toLowerCase()) || !extensions.some((suffix) => path.endsWith(suffix))) {
       return { available: false, reason: "HELPER_RELEASE_CONFIGURATION_INVALID" };
     }
     return { available: true, release: parsed.data };

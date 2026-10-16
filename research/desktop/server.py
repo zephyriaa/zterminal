@@ -7,12 +7,16 @@ import os
 from pathlib import Path
 import platform
 import secrets
+import socket
+import sys
 import threading
 import time
 from urllib.parse import urlsplit
 
 from archive import Archive, encode
+from child import atomic
 from controller import Controller
+from engine import VERSION as ENGINE_VERSION
 
 PORT = 47321
 ORIGINS = frozenset(["https://zterminal.dpdns.org", "https://zterminal-web.zephyria-inc.workers.dev", "http://localhost:3000", "http://127.0.0.1:3000", "http://127.0.0.1:3100"])
@@ -24,39 +28,70 @@ class Service:
         self.root.mkdir(parents=True, exist_ok=True)
         self.archive = Archive(self.root / "research.sqlite3")
         self.controller = Controller(self.archive, self.root / "jobs")
-        self.pair_lock = threading.Lock()
+        self.pair_lock = threading.RLock()
+        self.consumed = False
+        self.last_seen = 0
         self.code = f"{secrets.randbelow(100_000_000):08d}"
         self.expires, self.attempts = time.monotonic() + 600, 0
         self.token_path = self.root / "paired-clients.json"
         self.tokens = json.loads(self.token_path.read_text(encoding="utf-8")) if self.token_path.exists() else {}
-        (self.root / "pairing.json").write_text(encode({"code": self.code, "expiresAt": int(time.time() * 1000) + 600_000, "pid": os.getpid(), "port": PORT}), encoding="utf-8")
+        self.expires_at = int(time.time() * 1000) + 600_000
+
+    def publish(self):
+        with self.pair_lock:
+            atomic(self.root / "pairing.json", {"code": self.code, "expiresAt": self.expires_at,
+                "consumed": self.consumed, "locked": self.attempts >= 5,
+                "lastSeen": self.last_seen, "pid": os.getpid(), "port": PORT})
+
+    def new_code(self):
+        with self.pair_lock:
+            self.code = f"{secrets.randbelow(100_000_000):08d}"
+            self.expires, self.attempts = time.monotonic() + 600, 0
+            self.expires_at = int(time.time() * 1000) + 600_000
+            self.consumed = False
+            self.publish()
 
     def pair(self, origin, code):
         with self.pair_lock:
-            if time.monotonic() > self.expires or self.attempts >= 5:
-                raise PermissionError("Pairing code expired or locked. Restart the helper to request a new code.")
+            if self.consumed or time.monotonic() > self.expires or self.attempts >= 5:
+                raise PermissionError("Pairing code consumed, expired or locked. Choose New Code in the Helper.")
             self.attempts += 1
             if not isinstance(code, str) or not secrets.compare_digest(self.code, code):
+                self.publish()
                 raise PermissionError("Incorrect pairing code")
             token = secrets.token_urlsafe(32)
             # Keep a bounded number of clients; a new pairing for this origin replaces its token.
             self.tokens[origin] = hashlib.sha256(token.encode()).hexdigest()
-            temporary = self.token_path.with_suffix(".tmp")
-            temporary.write_text(encode(self.tokens), encoding="utf-8")
-            os.replace(temporary, self.token_path)
+            atomic(self.token_path, self.tokens)
             self.expires = 0
+            self.consumed = True
+            self.last_seen = int(time.time() * 1000)
+            self.publish()
             return {"token": token, "protocol": 1, "scope": "local-research"}
 
     def authorized(self, origin, header):
         if not header or not header.startswith("Bearer "):
             return False
         expected = self.tokens.get(origin)
-        return bool(expected and secrets.compare_digest(expected, hashlib.sha256(header[7:].encode()).hexdigest()))
+        valid = bool(expected and secrets.compare_digest(expected, hashlib.sha256(header[7:].encode()).hexdigest()))
+        if valid:
+            with self.pair_lock:
+                now = int(time.time() * 1000)
+                if now - self.last_seen >= 1000:
+                    self.last_seen = now
+                    self.publish()
+        return valid
 
 
 class Server(ThreadingHTTPServer):
     daemon_threads = True
+    allow_reuse_address = False
     request_queue_size = 8
+
+    def server_bind(self):
+        if os.name == "nt":
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
     def __init__(self, address, service):
         self.service = service
@@ -159,7 +194,7 @@ class Handler(BaseHTTPRequestHandler):
             body = self.payload() if method == "POST" else {}
             identifier = parts[2] if len(parts) >= 3 else None
             if method == "GET" and route == "capabilities":
-                return self.respond(200, {"protocol": 1, "version": "1.0.0-preview.2", "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": "1.1.0", "vectorbt": "0.28.1", "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
+                return self.respond(200, {"protocol": 1, "version": "1.0.0-preview.4", "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": ENGINE_VERSION, "vectorbt": "0.28.1", "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
             if method == "POST" and route == "pair":
                 return self.respond(200, service.pair(origin, body.get("code")))
             if method == "POST" and route == "datasets":
@@ -228,11 +263,24 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default=str(Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "ZTerminal" / "ResearchPreview"))
+    parser.add_argument("--launcher", action="store_true")
     args = parser.parse_args()
     if os.name != "nt" or platform.machine().lower() not in ("amd64", "x86_64"):
         raise RuntimeError("Private preview requires Windows x64")
-    service = Service(args.data_dir)
-    server = Server(("127.0.0.1", PORT), service)
+    # Acquire the exclusive listening port before touching archives or pairing metadata.
+    server = Server(("127.0.0.1", PORT), None)
+    service = server.service = Service(args.data_dir)
+    service.publish()
+    if args.launcher:
+        def commands():
+            try:
+                for line in sys.stdin:
+                    if line.strip() == "new-code":
+                        service.new_code()
+            finally:
+                # The pipe closes even if the visible launcher crashes or is killed.
+                server.shutdown()
+        threading.Thread(target=commands, daemon=True).start()
     try:
         server.serve_forever(poll_interval=.2)
     finally:
@@ -243,3 +291,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

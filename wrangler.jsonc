@@ -3,13 +3,23 @@
   "name": "zterminal-web",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-14",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
   "workers_dev": true,
-  "routes": [{ "pattern": "zterminal.dpdns.org", "custom_domain": true }],
+  "routes": [
+    {
+      "pattern": "zterminal.dpdns.org",
+      "custom_domain": true
+    }
+  ],
   "vars": {
     "NEXTAUTH_URL": "https://zterminal.dpdns.org",
     "NEXTAUTH_URL_INTERNAL": "https://zterminal.dpdns.org",
-    "AUTH_TRUST_HOST": "true"
+    "AUTH_TRUST_HOST": "true",
+    "ZTERMINAL_HELPER_RELEASE_ALLOWED_HOSTS": "github.com",
+    "ZTERMINAL_HELPER_RELEASE_MANIFEST_JSON": "{\"format\":\"portable-zip\",\"version\":\"1.0.0-preview.4\",\"platform\":\"windows\",\"bytes\":180732441,\"download_url\":\"https://github.com/zephyriaa/zterminal/releases/download/helper-v1.0.0-preview.4/zterminal-helper-1.0.0-preview.4-windows-x64.zip\",\"architecture\":\"x64\",\"sha256\":\"e25eb7bf0c82581a963cd59101650bac733fd50b2c408377ff1048bd0a233dc0\"}"
   },
   "assets": {
     "directory": ".open-next/assets",

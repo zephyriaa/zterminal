@@ -1,10 +1,12 @@
-# ZTerminal Research Helper — free private Windows x64 preview
+# ZTerminal Research Helper — Windows x64 preview 1.0.0-preview.4
 
-This package is private and unsigned. It is not a public installer or a paid offering. Public downloads remain gated.
+This is an unsigned preview, distributed as a complete portable ZIP. It is separate from the ZTerminal Windows workstation. SHA-256 checksums establish file integrity; they do not establish a publisher signature or an independent security review.
 
-Extract the complete ZIP and open `ZTerminalResearchHelper.exe`. Choose **Install for my user** once to copy the private runtime to your local application folder and create a Start Menu shortcut. No system Python, administrator rights, cloud credentials or per-test command line is required. Open the helper from Start Menu when researching. Closing its window stops active jobs.
+Download → **Extract all** → open `ZTerminalResearchHelper.exe` → **Copy Code** → **Connect Helper** in the website's **Python Strategy** tab. Keep the runtime, app directory and license notices together. Optionally choose **Install / update for my user** to copy the complete runtime to a versioned local application folder and create a Start Menu shortcut. No system Python or administrator rights are required. Windows may warn about this unsigned application. Closing its window stops active jobs.
 
-Open ZTerminal → Research, enter the eight-digit code, and pair once. Allow the site's local-network permission if your browser requests it. Pairing is specific to the exact website origin. Codes expire after ten minutes or one successful pairing. Requesting a new code restarts the helper and cancels an active run; existing paired browsers retain their authentication.
+Open https://zterminal.dpdns.org/terminal → Python Strategy, enter the eight-digit code, and connect. Allow the site's local-network permission if your browser requests it. Pairing is specific to the exact website origin. Codes expire after ten minutes or one successful pairing, and lock after five attempts. **New Code** rotates the code without restarting the service or cancelling a run; existing paired browsers retain their authentication. “Ready” means the service is running. “Browser connected” means authenticated activity occurred within the last 15 seconds, not a permanent connection guarantee.
+
+To update, close the old Helper, extract the new complete ZIP into a fresh folder and choose **Install / update for my user**. Archives and paired-client records remain outside the versioned package folder. Previous packages are retained. A second launch reveals the existing window; close it first to switch package versions. A port-conflict error leaves the existing service and its pairing metadata alone. The Helper never kills unrelated Python processes.
 
 Python executes locally with your user permissions. Process limits are **not a secure sandbox**. Scripts can access local files and the network. Run only code you trust. No application credentials are passed into the strategy process. The API binds only to `127.0.0.1:47321`, checks exact host and origin, and requires a paired bearer token. It does not use cookies.
 
