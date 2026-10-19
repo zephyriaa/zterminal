@@ -38,7 +38,7 @@ def verify_package(package):
                 connection.close()
                 return result
 
-            assert request("GET", "capabilities")[1]["version"] == "1.0.0-preview.4"
+            assert request("GET", "capabilities")[1]["version"] == "1.1.0-preview.1"
             assert request("POST", "pair", {"code": "wrong"})[0] == 403
             status, paired = request("POST", "pair", {"code": pair["code"]})
             assert status == 200
@@ -74,11 +74,47 @@ def verify_package(package):
                         break
                     time.sleep(.1)
                 assert result["stage"] == "complete", result
+            assert "research_analyses_v1" in request("GET", "capabilities")[1]["features"]
+
+            def completed(path, body):
+                status, job = request("POST", path, body, token)
+                assert status == 202, job
+                deadline = time.monotonic()+190
+                while time.monotonic() < deadline:
+                    value = request("GET", "jobs/"+job["id"], token=token)[1]
+                    if value["stage"] in ("complete", "failed", "cancelled"): break
+                    time.sleep(.1)
+                assert value["stage"] == "complete", value
+                return value
+
+            from test_research_workflow import history
+            job = completed("jobs", history())
+            result_id = job["resultId"]
+            base = request("GET", "results/"+result_id, token=token)[1]
+            assert len(base["equity"]) == 320 and len(base["dataset"]["bars"]) == 400
+            completed("results/"+result_id+"/analyses", {"kind": "validation", "options": {"grid": {"period": [4, 5]}}})
+            selection = request("GET", "results/"+result_id+"/analyses", token=token)[1][0]
+            completed("results/"+result_id+"/analyses", {"kind": "holdout", "selectionId": selection["id"]})
+            completed("results/"+result_id+"/analyses", {"kind": "monte_carlo", "options": {"method": "stationary_daily", "simulations": 100, "seed": 42}})
+            analyses = request("GET", "results/"+result_id+"/analyses", token=token)[1]
+            assert {a["kind"] for a in analyses} == {"validation", "holdout", "monte_carlo"}
+            assert request("GET", "results/"+result_id, token=token)[1] == base
+            before = len(analyses)
+            status, cancel = request("POST", "results/"+result_id+"/analyses", {"kind": "monte_carlo", "options": {"simulations": 5000}}, token)
+            assert status == 202
+            request("DELETE", "jobs/"+cancel["id"], token=token)
+            deadline = time.monotonic()+20
+            while time.monotonic() < deadline:
+                state = request("GET", "jobs/"+cancel["id"], token=token)[1]
+                if state["stage"] in ("cancelled", "failed", "complete"): break
+                time.sleep(.1)
+            assert state["stage"] == "cancelled", state
+            assert len(request("GET", "results/"+result_id+"/analyses", token=token)[1]) == before
             process.stdin.close()  # Simulate losing the launcher, including a launcher crash.
             assert process.wait(timeout=15) == 0
             from archive import Archive
             assert Archive(root / "research.sqlite3").scripts()[0]["id"] == saved["id"]
-            print("Packaged production-origin pairing, conflict, rotation, strategy, indicator, archive and pipe-loss cleanup: PASS")
+            print("Packaged production-origin pairing, conflict, rotation, legacy/indicator/v2 execution, validation, holdout, block bootstrap, immutable archives, cancellation and pipe-loss cleanup: PASS")
         finally:
             if process.poll() is None:
                 process.kill(); process.wait(timeout=10)

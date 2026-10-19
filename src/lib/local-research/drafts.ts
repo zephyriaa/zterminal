@@ -2,6 +2,11 @@ import type { StateStorage } from "zustand/middleware";
 
 export type DraftStorageStatus = "ready" | "failed" | "conflict";
 let status: DraftStorageStatus = "ready";
+let pendingWrite: Promise<void> = Promise.resolve();
+export async function flushDraftWrites() {
+  await pendingWrite;
+  if (status !== "ready") throw new Error("Browser save was not confirmed. Export your drafts before closing this tab.");
+}
 export const getDraftStorageStatus = () => status;
 function warn(next: DraftStorageStatus) {
   status = next;
@@ -16,13 +21,16 @@ export function createDraftStorage(): StateStorage {
   function open() {
     if (!database) database = new Promise((resolve, reject) => {
       const request = indexedDB.open("zterminal-research-drafts", 1);
+      const timer = setTimeout(() => { blocked = true; warn("failed"); reject(new Error("Draft recovery timed out; saved bytes were preserved")); }, 3000);
       request.onupgradeneeded = () => request.result.createObjectStore("drafts");
       request.onsuccess = () => {
+        clearTimeout(timer);
+        if (blocked) { request.result.close(); reject(new Error("Draft recovery is paused")); return; }
         request.result.onversionchange = () => { request.result.close(); database = null; };
         resolve(request.result);
       };
-      request.onerror = () => { database = null; reject(request.error); };
-      request.onblocked = () => { blocked = true; warn("failed"); reject(new Error("Draft database upgrade blocked")); };
+      request.onerror = () => { clearTimeout(timer); database = null; reject(request.error); };
+      request.onblocked = () => { clearTimeout(timer); blocked = true; warn("failed"); reject(new Error("Draft database upgrade blocked")); };
     });
     return database;
   }
@@ -32,6 +40,7 @@ export function createDraftStorage(): StateStorage {
       const db = await open();
       await new Promise<void>((resolve, reject) => {
         const transaction = db.transaction("drafts", "readwrite");
+        const timer = setTimeout(() => { blocked = true; warn("failed"); try { transaction.abort(); } catch { /* Already completed. */ } reject(new Error("Draft write timed out")); }, 3000);
         const store = transaction.objectStore("drafts");
         const request = store.get(name);
         request.onsuccess = () => {
@@ -42,9 +51,9 @@ export function createDraftStorage(): StateStorage {
             if (value === null) store.delete(name); else store.put(value, name);
           } catch { blocked = true; warn("failed"); transaction.abort(); }
         };
-        transaction.oncomplete = () => { snapshots.set(name, value); resolve(); };
-        transaction.onerror = () => reject(transaction.error);
-        transaction.onabort = () => reject(transaction.error ?? new Error("Draft write interrupted"));
+        transaction.oncomplete = () => { clearTimeout(timer); snapshots.set(name, value); resolve(); };
+        transaction.onerror = () => { clearTimeout(timer); reject(transaction.error); };
+        transaction.onabort = () => { clearTimeout(timer); reject(transaction.error ?? new Error("Draft write interrupted")); };
       });
     } catch { blocked = true; if (status !== "conflict") warn("failed"); }
   }
@@ -54,10 +63,11 @@ export function createDraftStorage(): StateStorage {
         const db = await open();
         const value = await new Promise<string | null>((resolve, reject) => {
           const transaction = db.transaction("drafts", "readonly");
+          const timer = setTimeout(() => { blocked = true; warn("failed"); try { transaction.abort(); } catch { /* Already completed. */ } reject(new Error("Draft read timed out")); }, 3000);
           const request = transaction.objectStore("drafts").get(name);
-          transaction.oncomplete = () => resolve(request.result ?? null);
-          transaction.onerror = () => reject(transaction.error);
-          transaction.onabort = () => reject(transaction.error);
+          transaction.oncomplete = () => { clearTimeout(timer); resolve(request.result ?? null); };
+          transaction.onerror = () => { clearTimeout(timer); reject(transaction.error); };
+          transaction.onabort = () => { clearTimeout(timer); reject(transaction.error); };
         });
         if (value !== null) {
           const envelope = JSON.parse(value);
@@ -70,8 +80,8 @@ export function createDraftStorage(): StateStorage {
         return value;
       } catch (error) { blocked = true; warn("failed"); throw error; }
     },
-    setItem: (name, value) => write(name, value),
-    removeItem: name => write(name, null),
+    setItem: (name, value) => pendingWrite = pendingWrite.then(() => write(name, value)),
+    removeItem: name => pendingWrite = pendingWrite.then(() => write(name, null)),
   };
 }
 export const draftStorage = createDraftStorage();

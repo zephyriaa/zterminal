@@ -1,10 +1,12 @@
+import { sanitizeOrderFlowSettings, type OrderFlowContextSettings } from "@/lib/market/order-flow-context";
+
 export const CHART_OVERLAY_SCHEMA_VERSION = 1 as const;
 
 /**
  * Persisted chart configuration only. Live overlay payloads intentionally do
  * not belong in a chart document: they are bounded runtime state.
  */
-export type ChartOverlayKind = "big-trades" | "price-line" | "marker" | "bubble" | "range" | "heatmap" | "footprint" | "profile";
+export type ChartOverlayKind = "big-trades" | "order-flow-context" | "price-line" | "marker" | "bubble" | "range" | "heatmap" | "footprint" | "profile";
 
 export type BigTradesOverlaySettings = {
   minimumNotional: number;
@@ -18,7 +20,7 @@ export type BigTradesOverlaySettings = {
   sellColor: string;
 };
 
-export type ChartOverlaySettings = BigTradesOverlaySettings | Record<string, never>;
+export type ChartOverlaySettings = BigTradesOverlaySettings | OrderFlowContextSettings | Record<string, never>;
 
 /** A renderer capability, not a persisted user selection. */
 export interface OverlayDefinition {
@@ -52,6 +54,7 @@ export const BIG_TRADES_OVERLAY_ID = "order-flow.big-trades";
 
 export const OVERLAY_REGISTRY: readonly OverlayDefinition[] = [
   { type: "big-trades", label: "Big Trades", category: "order-flow", requires: ["trades"] },
+  { type: "order-flow-context", label: "Live order-flow context", category: "order-flow", requires: ["trades", "depth"] },
 ];
 
 export const DEFAULT_BIG_TRADES_SETTINGS: BigTradesOverlaySettings = {
@@ -104,14 +107,14 @@ export function sanitizeBigTradesSettings(value: unknown): BigTradesOverlaySetti
 export function sanitizeChartOverlay(value: unknown): ChartOverlayInstance | null {
   if (!value || typeof value !== "object") return null;
   const input = value as Partial<ChartOverlayInstance>;
-  if (typeof input.id !== "string" || !input.id || !["big-trades", "price-line", "marker", "bubble", "range", "heatmap", "footprint", "profile"].includes(String(input.type))) return null;
+  if (typeof input.id !== "string" || !input.id || !["big-trades", "order-flow-context", "price-line", "marker", "bubble", "range", "heatmap", "footprint", "profile"].includes(String(input.type))) return null;
   return {
     schemaVersion: CHART_OVERLAY_SCHEMA_VERSION,
     id: input.id.slice(0, 120),
     type: input.type as ChartOverlayKind,
     visible: input.visible !== false,
     zIndex: Math.round(finite(input.zIndex, 0, -10_000, 10_000)),
-    settings: input.type === "big-trades" ? sanitizeBigTradesSettings(input.settings) : {},
+    settings: input.type === "big-trades" ? sanitizeBigTradesSettings(input.settings) : input.type === "order-flow-context" ? sanitizeOrderFlowSettings(input.settings) : {},
   };
 }
 

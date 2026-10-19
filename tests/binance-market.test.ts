@@ -3,7 +3,7 @@ import test from "node:test";
 import { BinanceOrderBook } from "../mini-services/market-data/binance-order-book";
 import { fetchBinanceHistoricalBars } from "../src/lib/market/binance";
 
-test("bridges a Binance snapshot using the first depth range that covers the next update id", () => {
+test("bridges a Binance USD-M snapshot using the first depth range that covers its update id", () => {
   const book = new BinanceOrderBook();
   book.apply({ U: 96, u: 100, pu: 95, E: 1, b: [["99", "2"]], a: [] });
   book.apply({ U: 101, u: 108, pu: 100, E: 2, b: [["100", "3"]], a: [["101", "0"]] });
@@ -14,6 +14,7 @@ test("bridges a Binance snapshot using the first depth range that covers the nex
   assert.equal(book.lastSequence(), 116);
   assert.deepEqual(book.levels(), [
     { price: 100, size: 3, side: "buy" },
+    { price: 99, size: 2, side: "buy" },
     { price: 98, size: 1, side: "buy" },
     { price: 102, size: 4, side: "sell" },
   ]);
@@ -21,7 +22,7 @@ test("bridges a Binance snapshot using the first depth range that covers the nex
 
 test("uses Binance pu as the authoritative post-bridge continuity identifier", () => {
   const book = new BinanceOrderBook();
-  book.apply({ U: 101, u: 120, pu: 99, E: 1, b: [], a: [] });
+  book.apply({ U: 100, u: 120, pu: 99, E: 1, b: [], a: [] });
   assert.equal(book.bootstrap({ lastUpdateId: 100, bids: [["99", "1"]], asks: [["101", "1"]] }), true);
   // U can advance by a range; `pu` links this update to the previous final id.
   assert.equal(book.apply({ U: 130, u: 145, pu: 120, E: 2, b: [["99", "0"]], a: [] }), true);

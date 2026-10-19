@@ -17,7 +17,7 @@
 import { TIMEFRAME_SECONDS, type Bar, type Timeframe } from "./types";
 import { getContract, type ContractDef } from "./contracts";
 import { mulberry32, gaussian, hashString } from "./rng";
-import { sessionVolMultiplier, classifySession } from "./session";
+import { sessionVolMultiplier, classifySession, alignToTimeframe } from "./session";
 
 export const MOCK_ANCHOR_MS = Date.UTC(2024, 0, 1, 0, 0, 0); // 2024-01-01 UTC
 
@@ -41,8 +41,8 @@ export function generateBars(
 ): Bar[] {
   const c = getContract(symbol);
   const sec = TIMEFRAME_SECONDS[tf];
-  const startBucket = Math.floor(fromMs / 1000 / sec) * sec * 1000;
-  const endBucket = Math.floor(toMs / 1000 / sec) * sec * 1000;
+  const startBucket = alignToTimeframe(fromMs, tf);
+  const endBucket = alignToTimeframe(toMs, tf);
 
   const bars: Bar[] = [];
   // Per-(symbol,tf) base seed keeps the walk stable across queries.
@@ -120,7 +120,7 @@ export class MockLiveMarket {
       (sess.label === "closed" ? 0.15 : 1);
     const delta = gaussian(rng) * step;
     this.price = roundTick(Math.max(this.price + delta, this.contract.tickSize), this.contract.tickSize);
-    const side = delta >= 0 ? "buy" : "sell";
+    const side = delta >= 0 ? "buy" as const : "sell" as const;
     const qty = Math.max(1, Math.floor((this.contract.product === "equity" ? 80 : 6) * (0.3 + rng() * 2)));
     this.seq++;
     const spread = this.contract.tickSize;
@@ -137,6 +137,8 @@ export class MockLiveMarket {
         sequence: this.seq,
         price: this.price,
         quantity: qty,
+        quantityUnit: this.contract.product === "future" ? "contracts" as const : "base" as const,
+        contractMultiplier: this.contract.multiplier,
         side,
       },
       quote: {

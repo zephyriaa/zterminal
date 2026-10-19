@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { supportsCurrentResearch } from "../local-research/compatibility";
 
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
@@ -10,12 +11,15 @@ const helperReleaseSchema = z.object({
   bytes: z.number().int().positive(),
   platform: z.literal("windows").default("windows"),
   architecture: z.literal("x64").default("x64"),
+  protocol: z.number().int().positive().optional(),
+  researchSchemas: z.array(z.number().int().positive()).optional(),
+  features: z.array(z.string()).optional(),
 });
 
 export type HelperRelease = z.infer<typeof helperReleaseSchema>;
 export type HelperReleaseResolution =
   | { available: true; release: HelperRelease }
-  | { available: false; reason: "HELPER_RELEASE_NOT_CONFIGURED" | "HELPER_RELEASE_CONFIGURATION_INVALID" };
+  | { available: false; reason: "HELPER_RELEASE_NOT_CONFIGURED" | "HELPER_RELEASE_CONFIGURATION_INVALID" | "HELPER_RELEASE_INCOMPATIBLE" };
 
 /**
  * The local-research helper is a separate artifact from the desktop workstation.
@@ -47,9 +51,16 @@ export function resolveHelperRelease(env: NodeJS.ProcessEnv = process.env): Help
   }
 }
 
+/** Legacy records remain resolvable, but must not be offered as current research runtimes. */
+export function resolveResearchHelperRelease(env: NodeJS.ProcessEnv = process.env): HelperReleaseResolution {
+  const resolution = resolveHelperRelease(env);
+  if (resolution.available && !supportsCurrentResearch(resolution.release)) return { available: false, reason: "HELPER_RELEASE_INCOMPATIBLE" };
+  return resolution;
+}
+
 /** Public, credential-free release metadata for the in-terminal download action. */
 export function publicHelperRelease() {
-  const resolution = resolveHelperRelease();
+  const resolution = resolveResearchHelperRelease();
   if (!resolution.available) return resolution;
   return { available: true as const, ...resolution.release };
 }

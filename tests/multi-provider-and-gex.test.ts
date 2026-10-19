@@ -32,7 +32,7 @@ test("OKX provider normalizes symbols and maps bars", () => {
   assert.equal(OKX_BAR_MAP["1m"], "1m");
   assert.equal(OKX_BAR_MAP["5m"], "5m");
   assert.equal(OKX_BAR_MAP["1h"], "1H");
-  assert.equal(OKX_BAR_MAP["1d"], "1D");
+  assert.equal(OKX_BAR_MAP["1d"], "1Dutc");
 });
 
 test("Contracts catalog includes expanded crypto, equities, and commodities with alias matching", () => {

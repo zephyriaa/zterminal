@@ -5,9 +5,9 @@ export type BinanceSnapshot = { lastUpdateId: number; bids: [string, string][]; 
 export type BinanceBookStatus = "SYNCING" | "LIVE" | "ERROR";
 
 /**
- * USD-M diff-depth bridge: discard u <= snapshot id; first retained event must
- * cover id + 1, then each event's pu must equal the preceding u when supplied.
- * If the snapshot arrives before the stream has buffered id + 1, it is held
+ * USD-M diff-depth bridge: discard u < snapshot id; first retained event must
+ * cover the snapshot id, then each event's pu must equal the preceding u.
+ * If the snapshot arrives before the stream has buffered its id, it is held
  * as pending until arriving deltas bridge it, preventing premature sync failure.
  */
 export class BinanceDepthSynchronizer {
@@ -18,6 +18,7 @@ export class BinanceDepthSynchronizer {
   private pendingSnapshot: BinanceSnapshot | null = null;
 
   push(event: BinanceDepth) {
+    if (this.status === "ERROR") return;
     if (!Number.isInteger(event.U) || !Number.isInteger(event.u) || event.U > event.u) {
       return this.fail();
     }
@@ -30,10 +31,10 @@ export class BinanceDepthSynchronizer {
       return;
     }
     if (event.u <= this.sequence) return;
-    if (event.U > this.sequence + 1 || (event.pu !== undefined && event.pu !== this.sequence)) {
+    if (event.pu !== this.sequence) {
       return this.fail();
     }
-    this.apply(event);
+    try { this.apply(event); } catch { this.fail(); }
   }
 
   bridge(snapshot: BinanceSnapshot): boolean {
@@ -48,17 +49,17 @@ export class BinanceDepthSynchronizer {
     const lastId = snapshot.lastUpdateId;
 
     // Prune events completely superseded by snapshot
-    this.buffer = this.buffer.filter(event => event.u > lastId);
+    this.buffer = this.buffer.filter(event => event.u >= lastId);
 
-    // If buffer doesn't have any event reaching lastId + 1 yet, wait for more deltas
+    // If the stream has not reached the snapshot ID, wait for more deltas.
     const maxU = this.buffer.reduce((max, e) => Math.max(max, e.u), 0);
-    if (maxU < lastId + 1) {
+    if (maxU < lastId) {
       return false;
     }
 
-    const first = this.buffer.findIndex(event => event.U <= lastId + 1 && event.u >= lastId + 1);
+    const first = this.buffer.findIndex(event => event.U <= lastId && event.u >= lastId);
     if (first < 0) {
-      // Stream deltas arrived past lastId + 1 but no event covered lastId + 1: true sequence gap.
+      // The stream passed the snapshot without a covering event: resynchronize.
       return this.fail();
     }
 
@@ -70,8 +71,8 @@ export class BinanceDepthSynchronizer {
       const eventsToApply = this.buffer.slice(first);
       for (let i = 0; i < eventsToApply.length; i++) {
         const event = eventsToApply[i];
-        if (event.u <= sequence) continue;
-        if (i > 0 && (event.U > sequence + 1 || (event.pu !== undefined && event.pu !== sequence))) {
+        if (i > 0 && event.u <= sequence) continue;
+        if (i > 0 && event.pu !== sequence) {
           return this.fail();
         }
         for (const [p, q] of event.b) staged.apply("buy", p, q);

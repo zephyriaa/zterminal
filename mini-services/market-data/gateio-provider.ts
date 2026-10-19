@@ -8,7 +8,7 @@ import {
   type GateContract,
 } from "../../src/lib/market/gateio";
 import WebSocket from "ws";
-import type { ContractMetadata, DepthLevel, QuoteEvent, TradeEvent } from "../../src/lib/market/types";
+import type { ContractMetadata, DepthLevel, FeedHealth, QuoteEvent, TradeEvent } from "../../src/lib/market/types";
 import { GateOrderBook, type GateBookDelta, type GateBookSnapshot } from "./order-book";
 
 const BOOK_DEPTH = 100;
@@ -64,10 +64,16 @@ export class GateioFuturesProvider {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private staleTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectAttempt = 0;
+  private lastFrameAt = 0;
   private manuallyClosed = false;
   private lastEventAt = new Map<string, number>();
+  private lastDepthAt = new Map<string, number>();
+  private lastTradeAt = new Map<string, number>();
   private lastTradeSequence = new Map<string, number>();
   private lastStatus: ProviderStatus = "unavailable";
+  private rebuildingBooks = new Set<GateOrderBook>();
+  private bookRetryAttempts = new Map<string, number>();
+  private bookRetryTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   on(listener: Listener) {
     this.listeners.add(listener);
@@ -78,9 +84,32 @@ export class GateioFuturesProvider {
     return [...this.contractsBySymbol.values()];
   }
 
+  health(symbol: string): FeedHealth {
+    const book = this.books.get(symbol);
+    const lastMessageAt = this.lastEventAt.get(symbol);
+    const lastDepthAt = this.lastDepthAt.get(symbol);
+    const lastTradeAt = this.lastTradeAt.get(symbol);
+    const now = Date.now();
+    const connected = this.ws?.readyState === WebSocket.OPEN;
+    const state: FeedHealth["state"] = this.manuallyClosed || !this.symbols.has(symbol) ? "UNAVAILABLE"
+      : !connected ? "RESYNCING"
+      : lastMessageAt && now - lastMessageAt > STALE_AFTER_MS ? "STALE"
+      : !book?.isReady() ? "SYNCING"
+      : !lastDepthAt || now - lastDepthAt > STALE_AFTER_MS ? "STALE"
+      : !lastMessageAt ? "SYNCING" : "LIVE";
+    const transportState = this.manuallyClosed || !this.symbols.has(symbol) ? "UNAVAILABLE" as const : !connected ? "RESYNCING" as const : null;
+    const streams: NonNullable<FeedHealth["streams"]> = {
+      trades: { state: transportState ?? (!lastTradeAt ? "SYNCING" : now - lastTradeAt > 15000 ? "STALE" : "LIVE"), lastMessageAt: lastTradeAt },
+      depth: { state: transportState ?? (!book?.isReady() ? "SYNCING" : !lastDepthAt || now - lastDepthAt > 15000 ? "STALE" : "LIVE"), lastMessageAt: lastDepthAt, reason: !book?.isReady() ? "Waiting for a sequence-safe book" : undefined },
+    };
+    return { streams, provider: "gateio", symbol, state, updatedAt: now, lastMessageAt, lastDepthAt, depthReady: book?.isReady() ?? false,
+      latencyMs: lastMessageAt ? Math.max(0, now - lastMessageAt) : undefined, sequence: book?.lastSequence(), reconnectCount: this.reconnectAttempt,
+      reason: state === "LIVE" ? undefined : !connected ? "Upstream socket is not connected" : !book?.isReady() ? "Waiting for a sequence-safe book" : "Instrument messages or depth are not fresh" };
+  }
+
   async discoverContracts(): Promise<ContractMetadata[]> {
     const response = await fetch(`${GATEIO_REST_URL}/futures/usdt/contracts`, {
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) throw new Error(`Gate.io contract discovery failed (${response.status})`);
     const raw = await response.json();
@@ -113,9 +142,16 @@ export class GateioFuturesProvider {
   }
 
   unsubscribe(symbol: string) {
+    for (const [channel, payload] of [["futures.trades", [symbol]], ["futures.candlesticks", ["1m", symbol]], ["futures.order_book_update", [symbol, BOOK_FREQUENCY, String(BOOK_DEPTH)]], ["futures.book_ticker", [symbol]]] as const) this.send({ channel, event: "unsubscribe", payload });
     this.symbols.delete(symbol);
     this.books.delete(symbol);
+    const retry = this.bookRetryTimers.get(symbol); if (retry) clearTimeout(retry);
+    this.bookRetryTimers.delete(symbol);
+    this.bookRetryAttempts.delete(symbol);
+    this.lastTradeSequence.delete(symbol);
     this.lastEventAt.delete(symbol);
+    this.lastDepthAt.delete(symbol);
+    this.lastTradeAt.delete(symbol);
     if (!this.symbols.size) this.disconnect();
   }
 
@@ -130,7 +166,7 @@ export class GateioFuturesProvider {
     url.searchParams.set("contract", symbol);
     url.searchParams.set("interval", interval);
     url.searchParams.set("limit", String(safeLimit));
-    const response = await fetch(url, { headers: { Accept: "application/json" } });
+    const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
     if (!response.ok) throw new Error(`Gate.io candles failed (${response.status})`);
     const raw = await response.json();
     if (!Array.isArray(raw)) throw new Error("invalid Gate.io candles response");
@@ -139,32 +175,43 @@ export class GateioFuturesProvider {
 
   close() {
     this.manuallyClosed = true;
+    for (const timer of this.bookRetryTimers.values()) clearTimeout(timer);
+    this.bookRetryTimers.clear();
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.staleTimer) clearInterval(this.staleTimer);
-    this.ws?.close();
-    this.ws = null;
+    const previous = this.ws; this.ws = null;
+    previous?.close();
   }
 
   private connect() {
-    if (this.manuallyClosed) return;
+    if (this.manuallyClosed || this.ws) return;
     this.setStatus(this.reconnectAttempt ? "reconnecting" : "connecting");
     try {
-      this.ws = new WebSocket(GATEIO_WS_URL, { headers: { "X-Gate-Size-Decimal": "1" } });
-      this.ws.on("open", () => {
+      const active = this.ws = new WebSocket(GATEIO_WS_URL, { headers: { "X-Gate-Size-Decimal": "1" } });
+      active.on("open", () => {
+        if (this.ws !== active) return;
+        this.lastFrameAt = Date.now();
         this.reconnectAttempt = 0;
         this.setStatus("connecting");
         for (const symbol of this.symbols) this.subscribeSymbol(symbol);
         this.ensureStaleMonitor();
       });
-      this.ws.on("message", (data) => {
+      active.on("message", (data) => {
+        if (this.ws !== active) return;
+        this.lastFrameAt = Date.now();
         try {
           this.handleMessage(JSON.parse(data.toString()) as GateMessage);
         } catch (error) {
           this.setStatus("degraded", error instanceof Error ? error.message : "invalid upstream message");
         }
       });
-      this.ws.on("error", () => this.setStatus("degraded", "Gate.io WebSocket error"));
-      this.ws.on("close", () => {
+      active.on("pong", () => { if (this.ws === active) this.lastFrameAt = Date.now(); });
+      active.on("error", () => { if (this.ws === active) this.setStatus("degraded", "Gate.io WebSocket error"); });
+      active.on("close", () => {
+        if (this.ws !== active) return;
+        this.lastFrameAt = Date.now();
+        for (const book of this.books.values()) book.reset();
+        this.lastDepthAt.clear(); this.lastTradeAt.clear(); this.lastEventAt.clear();
         this.ws = null;
         if (!this.manuallyClosed && this.symbols.size) this.scheduleReconnect();
       });
@@ -175,8 +222,10 @@ export class GateioFuturesProvider {
   }
 
   private disconnect() {
-    this.ws?.close();
-    this.ws = null;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+    const previous = this.ws; this.ws = null;
+    previous?.close();
     if (this.staleTimer) clearInterval(this.staleTimer);
     this.staleTimer = null;
     this.setStatus("unavailable", "no active symbol subscriptions");
@@ -218,7 +267,7 @@ export class GateioFuturesProvider {
     if (message.channel === "futures.trades" && message.event === "update") this.handleTrades(message.result);
     if (message.channel === "futures.order_book_update" && message.event === "update") this.handleBookDelta(message.result);
     if (message.channel === "futures.book_ticker" && message.event === "update") this.handleBookTicker(message.result);
-    if (message.channel === "futures.pong") this.setStatus("live");
+    // Heartbeats confirm transport only; instrument health is derived from data.
   }
 
   private handleTrades(result: unknown) {
@@ -234,14 +283,14 @@ export class GateioFuturesProvider {
       const url = new URL(`${GATEIO_REST_URL}/futures/usdt/trades`);
       url.searchParams.set("contract", symbol);
       url.searchParams.set("limit", "100");
-      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
       if (!response.ok) throw new Error(`Gate.io trade bootstrap failed (${response.status})`);
       const raw = await response.json();
       if (!Array.isArray(raw)) throw new Error("invalid Gate.io trade bootstrap response");
       // Gate returns newest-first history; emit chronological order for CVD.
       for (const value of raw.slice().reverse()) {
         const normalized = this.normalizeTrade(value);
-        if (normalized && this.symbols.has(normalized.symbol)) this.publishTrade(normalized);
+        if (normalized && this.symbols.has(normalized.symbol)) this.publishTrade({ ...normalized, conditions: [...(normalized.conditions ?? []), "rest-bootstrap"] });
       }
     } catch (error) {
       this.setStatus("degraded", error instanceof Error ? error.message : "trade bootstrap failed");
@@ -252,12 +301,15 @@ export class GateioFuturesProvider {
     const trade = asRecord(raw);
     if (!trade || typeof trade.contract !== "string") return null;
     const signedSize = parseGateDecimal(trade.size, "trade size");
+    const price = parseGateDecimal(trade.price, "trade price");
+    if (signedSize === 0 || price <= 0) return null;
     const id = Number(trade.id);
     const upstreamTime = Number(trade.create_time_ms ?? trade.create_time ?? 0);
     // Some REST deployments label the field create_time_ms but return seconds;
     // normalize defensively without changing genuine millisecond timestamps.
     const timestamp = upstreamTime < 10_000_000_000 ? upstreamTime * 1_000 : upstreamTime;
     if (!Number.isFinite(timestamp) || !Number.isFinite(id)) throw new Error("invalid Gate.io trade timestamp or id");
+    const contract = this.contractsBySymbol.get(trade.contract);
     return {
       type: "trade",
       provider: "gateio",
@@ -266,8 +318,10 @@ export class GateioFuturesProvider {
       exchange: "GATEIO",
       timestamp,
       sequence: id,
-      price: parseGateDecimal(trade.price, "trade price"),
+      price,
       quantity: Math.abs(signedSize),
+      quantityUnit: "contracts",
+      contractMultiplier: contract?.verified ? contract.multiplier : undefined,
       // Gate documents positive size as a buyer-initiated trade and negative as seller-initiated.
       side: signedSize >= 0 ? "buy" : "sell",
       conditions: trade.is_internal ? ["internal"] : undefined,
@@ -278,9 +332,9 @@ export class GateioFuturesProvider {
     const previous = this.lastTradeSequence.get(trade.symbol) ?? -1;
     if (trade.sequence <= previous) return;
     this.lastTradeSequence.set(trade.symbol, trade.sequence);
-    this.touch(trade.symbol);
+    if (!trade.conditions?.includes("rest-bootstrap")) { this.lastTradeAt.set(trade.symbol, Date.now()); this.touch(trade.symbol); }
     this.emit({ type: "trade", data: trade });
-    this.setStatus("live");
+    if (!trade.conditions?.includes("rest-bootstrap") && this.books.get(trade.symbol)?.isReady()) this.setStatus("live");
   }
 
   private handleBookTicker(result: unknown) {
@@ -316,7 +370,13 @@ export class GateioFuturesProvider {
     };
     const book = this.books.get(raw.s);
     if (!book) return;
-    const applied = book.apply(delta);
+    let applied: boolean;
+    try { applied = book.apply(delta); } catch (error) {
+      book.reset();
+      this.setStatus("degraded", error instanceof Error ? error.message : "Invalid depth update", raw.s);
+      void this.rebuildBook(raw.s);
+      return;
+    }
     if (!applied) {
       this.setStatus("stale", "order-book sequence gap; resynchronizing");
       void this.rebuildBook(raw.s);
@@ -328,32 +388,51 @@ export class GateioFuturesProvider {
 
   private async rebuildBook(symbol: string) {
     const book = this.books.get(symbol);
-    if (!book) return;
+    if (!book || this.rebuildingBooks.has(book)) return;
+    this.rebuildingBooks.add(book);
+    const connection = this.ws;
     try {
       const url = new URL(`${GATEIO_REST_URL}/futures/usdt/order_book`);
       url.searchParams.set("contract", symbol);
       url.searchParams.set("limit", String(BOOK_DEPTH));
       url.searchParams.set("with_id", "true");
-      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
       if (!response.ok) throw new Error(`Gate.io order-book snapshot failed (${response.status})`);
       const snapshot = (await response.json()) as GateBookSnapshot;
       if (!Number.isInteger(snapshot.id) || !Array.isArray(snapshot.bids) || !Array.isArray(snapshot.asks)) {
         throw new Error("invalid Gate.io order-book snapshot");
       }
+      if (this.books.get(symbol) !== book || !this.symbols.has(symbol) || this.ws !== connection) return;
       if (!book.bootstrap(snapshot)) {
         // A snapshot that cannot bridge buffered deltas is unsafe; retry once asynchronously.
-        setTimeout(() => void this.rebuildBook(symbol), 250);
+        this.scheduleBookRebuild(symbol, book);
         return;
       }
+      this.bookRetryAttempts.delete(symbol);
       this.touch(symbol);
       this.publishBook(symbol, book, Date.now());
       this.setStatus("live");
     } catch (error) {
+      if (this.books.get(symbol) !== book || this.ws !== connection) return;
       this.setStatus("degraded", error instanceof Error ? error.message : "order-book recovery failed");
-    }
+      this.scheduleBookRebuild(symbol, book);
+    } finally { this.rebuildingBooks.delete(book); }
+  }
+
+  private scheduleBookRebuild(symbol: string, book: GateOrderBook) {
+    if (this.books.get(symbol) !== book || this.bookRetryTimers.has(symbol)) return;
+    const attempt = (this.bookRetryAttempts.get(symbol) ?? 0) + 1;
+    this.bookRetryAttempts.set(symbol, attempt);
+    const delay = Math.round(Math.min(15000, 500 * 2 ** Math.min(attempt, 5)) * (0.75 + Math.random() * 0.5));
+    this.bookRetryTimers.set(symbol, setTimeout(() => {
+      this.bookRetryTimers.delete(symbol);
+      if (this.books.get(symbol) === book) void this.rebuildBook(symbol);
+    }, delay));
   }
 
   private publishBook(symbol: string, book: GateOrderBook, timestamp: number) {
+    this.lastDepthAt.set(symbol, Date.now());
+    this.setStatus("live");
     const levels = book.levels(BOOK_DEPTH);
     this.emit({ type: "depth", symbol, sequence: book.lastSequence(), timestamp, levels });
     const top = book.bestQuote();
@@ -381,6 +460,7 @@ export class GateioFuturesProvider {
   private ensureStaleMonitor() {
     if (this.staleTimer) return;
     this.staleTimer = setInterval(() => {
+        if (this.ws?.readyState === WebSocket.OPEN) { if (Date.now() - this.lastFrameAt > 30000) this.ws.terminate(); else this.ws.ping(); }
       for (const symbol of this.symbols) {
         const last = this.lastEventAt.get(symbol) ?? 0;
         if (!last || Date.now() - last > STALE_AFTER_MS) {

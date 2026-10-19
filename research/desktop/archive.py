@@ -8,7 +8,7 @@ import math
 from contextlib import contextmanager
 from pathlib import Path
 import rfc8785
-from validation import validate
+from validation import validate, input_record
 
 
 def encode(value):
@@ -31,6 +31,9 @@ class Archive:
                 CREATE TABLE IF NOT EXISTS datasets(hash TEXT PRIMARY KEY, manifest TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS results(id TEXT PRIMARY KEY, name TEXT NOT NULL, created INTEGER NOT NULL, dataset_hash TEXT NOT NULL REFERENCES datasets(hash), envelope TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, status TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS research_analyses(id TEXT PRIMARY KEY, parent_id TEXT NOT NULL REFERENCES results(id), parent_hash TEXT NOT NULL, kind TEXT NOT NULL, created INTEGER NOT NULL, envelope TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS holdout_accesses(id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, selection_id TEXT NOT NULL, created INTEGER NOT NULL);
+                CREATE TABLE IF NOT EXISTS holdout_import_bounds(fingerprint TEXT PRIMARY KEY, missing_count INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS legacy(id TEXT PRIMARY KEY, payload TEXT NOT NULL, imported INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS artifacts(id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('strategy','indicator')), name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', source TEXT NOT NULL, revision INTEGER NOT NULL, updated INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS artifact_revisions(artifact_id TEXT NOT NULL, revision INTEGER NOT NULL, kind TEXT NOT NULL, source TEXT NOT NULL, hash TEXT NOT NULL, metadata TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(artifact_id, revision));
@@ -151,6 +154,11 @@ class Archive:
             revision = db.execute("SELECT hash FROM artifact_revisions WHERE artifact_id=? AND revision=? AND kind='indicator'", (artifact["id"], artifact["revision"])).fetchone()
             if not revision or revision["hash"] != result.get("sourceHash"):
                 raise ValueError("Indicator source does not match its immutable archived revision")
+            if "input" in result:
+                captured = result["input"]
+                retained = result.get("dataset")
+                if not isinstance(captured, dict) or not isinstance(retained, dict) or digest(captured) != result["inputHash"] or captured.get("artifactId") != artifact["id"] or captured.get("revision") != artifact["revision"] or captured.get("sourceHash") != result["sourceHash"] or captured.get("dataset") != {key: retained.get(key) for key in ("version", "provider", "product", "symbol", "timeframe", "from", "to", "hash")} or retained != dataset:
+                    raise ValueError("Indicator input or dataset identity mismatch")
             if dataset is not None:
                 if dataset.get("hash") != result["datasetHash"]:
                     raise ValueError("Indicator dataset provenance mismatch")
@@ -192,7 +200,7 @@ class Archive:
             raise ValueError("Unsupported or incomplete result envelope")
         if result.get("sourceHash") != hashlib.sha256(result["source"].encode()).hexdigest():
             raise ValueError("Source hash mismatch")
-        request = {key: result[key] for key in ("name", "source", "config", "params", "dataset")}
+        request = input_record(result)
         validate(request)  # Only data validation; never compile or import retained source.
         if result.get("inputHash") != digest(request):
             raise ValueError("Captured input hash mismatch")
@@ -206,14 +214,15 @@ class Archive:
         if result.get("resultHash") != digest(unsigned):
             raise ValueError("Result hash mismatch")
         dataset = result["dataset"]
-        if dataset.get("version") != 1 or not isinstance(dataset.get("bars"), list) or len(dataset["bars"]) > 100_000:
+        if dataset.get("version") not in (1, 2) or not isinstance(dataset.get("bars"), list) or len(dataset["bars"]) > 100_000:
             raise ValueError("Invalid dataset envelope")
         if dataset["hash"] != digest([[b[k] for k in ["t", "o", "h", "l", "c", "v"]] for b in dataset["bars"]]):
             raise ValueError("Dataset hash mismatch")
         for key in ("equity", "trades", "assumptions", "logs", "monthly", "drawdowns", "observations"):
             if not isinstance(result.get(key), list):
                 raise ValueError(f"Invalid {key}")
-        if len(result["equity"]) != len(dataset["bars"]):
+        expected_equity = int(len(dataset["bars"])*.8) if result.get("researchSchema") == 2 and result["config"].get("reserveHoldout") else len(dataset["bars"])
+        if len(result["equity"]) != expected_equity:
             raise ValueError("Equity must align with the retained dataset")
         for point, bar in zip(result["equity"], dataset["bars"]):
             if point.get("time") != bar["t"] or any(not numeric(point.get(k)) for k in ("equity", "drawdown", "benchmark")):
@@ -260,6 +269,142 @@ class Archive:
             if any(not numeric(analysis.get(k)) for k in ("seed", "observations", "initialCapital", "probabilityOfLoss")):
                 raise ValueError("Invalid bootstrap metadata")
         encode(result)  # Reject NaN/infinity and non-JSON values.
+        if result.get("researchSchema") == 2:
+            Archive.validate_research_evidence(result)
+
+    @staticmethod
+    def validate_research_evidence(result):
+        if result["config"].get("executionModel") != "synthetic_next_open_v2": raise ValueError("Research schema does not match execution model")
+        expected = digest({k: v for k, v in result.items() if k not in ("id", "createdAt", "evidenceHash", "resultHash", "monteCarlo")})
+        if result.get("evidenceHash") != expected: raise ValueError("Deterministic evidence hash mismatch")
+        accounts = result.get("accounts")
+        if not isinstance(accounts, list) or len(accounts) != len(result["equity"]): raise ValueError("Missing account ledger")
+        def close(a, b): return math.isclose(a, b, rel_tol=1e-10, abs_tol=1e-7)
+        for state, point in zip(accounts, result["equity"]):
+            if state["time"] != point["time"] or not close(state["equity"], point["equity"]): raise ValueError("Account/equity alignment mismatch")
+            if not close(state["cash"]+state["reservedCapital"]+state["unrealizedPnl"], state["equity"]): raise ValueError("Cash reconciliation failed")
+            if not close(result["config"]["initialCapital"]+state["realizedPnl"]+state["unrealizedPnl"]-state["fees"], state["equity"]): raise ValueError("P&L reconciliation failed")
+        orders, fills = result.get("orders"), result.get("fills")
+        if not isinstance(orders, list) or not isinstance(fills, list): raise ValueError("Missing orders/fills")
+        by_id = {order["id"]: order for order in orders}
+        if len(by_id) != len(orders): raise ValueError("Duplicate order identity")
+        for fill in fills:
+            order = by_id.get(fill["orderId"])
+            if not order or order["status"] != "filled" or fill["price"] <= 0 or fill["fee"] < 0: raise ValueError("Invalid fill")
+            if fill["reason"] != "split_boundary" and (fill["decisionTime"] is None or fill["decisionTime"] >= fill["eligibleTime"]): raise ValueError("Execution predates eligible information")
+        if not close(sum(fill["fee"] for fill in fills), accounts[-1]["fees"]): raise ValueError("Fill fees do not reconcile")
+        if not close(sum(t["pnl"] for t in result["trades"]), accounts[-1]["equity"]-result["config"]["initialCapital"]): raise ValueError("Trade P&L does not reconcile")
+
+    def analyses(self, parent_id):
+        with self.connect() as db:
+            return [json.loads(row[0]) for row in db.execute("SELECT envelope FROM research_analyses WHERE parent_id=? ORDER BY created,id", (parent_id,))]
+
+    def analysis(self, identifier):
+        with self.connect() as db:
+            row = db.execute("SELECT envelope FROM research_analyses WHERE id=?", (identifier,)).fetchone()
+            if row is None: raise KeyError("Research analysis not found")
+            return json.loads(row[0])
+
+    def holdout_access(self, parent, selection):
+        bounds = selection["payload"]["splits"]["holdout"]
+        bars = parent["dataset"]["bars"][bounds[0]:bounds[1]]
+        fingerprint = digest({"provider": parent["dataset"]["provider"], "symbol": parent["dataset"]["symbol"], "product": parent["dataset"]["product"], "timeframe": parent["dataset"]["timeframe"], "from": bars[0]["t"], "to": bars[-1]["t"]})
+        identifier, created = str(uuid.uuid4()), int(time.time()*1000)
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("INSERT INTO holdout_accesses VALUES(?,?,?,?)", (identifier, fingerprint, selection["id"], created))
+            count = db.execute("SELECT count(*) FROM holdout_accesses WHERE fingerprint=?", (fingerprint,)).fetchone()[0]
+            imported = db.execute("SELECT missing_count FROM holdout_import_bounds WHERE fingerprint=?", (fingerprint,)).fetchone()
+            count += imported[0] if imported else 0
+        return {"id": identifier, "fingerprint": fingerprint, "count": count, "requestedAt": created, "note": "Requests include failed/cancelled attempts; local history cannot certify external holdout use."}
+
+    def holdout_usage(self, parent_id):
+        with self.connect() as db:
+            return [dict(row) for row in db.execute("SELECT a.id,a.fingerprint,a.created,a.selection_id AS selectionId,(SELECT count(*) FROM holdout_accesses b WHERE b.fingerprint=a.fingerprint)+coalesce((SELECT missing_count FROM holdout_import_bounds WHERE fingerprint=a.fingerprint),0) AS count FROM holdout_accesses a JOIN research_analyses s ON a.selection_id=s.id WHERE s.parent_id=? ORDER BY a.created", (parent_id,))]
+
+    @staticmethod
+    def validate_analysis(analysis, parent):
+        if not isinstance(analysis, dict) or analysis.get("version") != 1 or analysis.get("kind") not in ("validation", "holdout", "monte_carlo", "assessment"):
+            raise ValueError("Invalid research analysis")
+        if analysis.get("hash") != digest({k: v for k, v in analysis.items() if k != "hash"}): raise ValueError("Analysis hash mismatch")
+        if analysis.get("parentId") != parent["id"] or analysis.get("parentHash") != parent["resultHash"]: raise ValueError("Analysis parent hash mismatch")
+        if not isinstance(analysis.get("payload"), dict) or not isinstance(analysis.get("id"), str) or type(analysis.get("createdAt")) is not int: raise ValueError("Invalid analysis envelope")
+        payload = analysis["payload"]
+        def number(value): return type(value) in (int, float) and math.isfinite(value)
+        def summary(value):
+            if not isinstance(value, dict) or any(not number(value.get(key)) for key in ("netReturn", "maxDrawdown")) or value.get("excessReturn") is not None and not number(value["excessReturn"]): raise ValueError("Invalid evaluation summary")
+            if type(value.get("closedTrades")) is not int or value["closedTrades"] < 0: raise ValueError("Invalid closed-trade count")
+            for key in ("dailyReturns", "benchmarkDailyReturns"):
+                points = value.get(key)
+                if not isinstance(points, list) or len(points) > 100000 or any(not isinstance(p, dict) or type(p.get("time")) is not int or not number(p.get("return")) for p in points): raise ValueError("Invalid daily return evidence")
+        def assessment(value):
+            labels = ("Insufficient evidence", "No convincing edge detected", "Promising but fragile", "Promising out-of-sample evidence; forward validation required")
+            if not isinstance(value, dict) or value.get("label") not in labels or not isinstance(value.get("text"), str) or not isinstance(value.get("policyVersion"), str) or not isinstance(value.get("reasons"), list) or any(not isinstance(r, str) for r in value["reasons"]): raise ValueError("Invalid assessment evidence")
+        if analysis["kind"] == "validation":
+            if not isinstance(payload.get("selectedParams"), dict) or not isinstance(payload.get("splits"), dict) or not isinstance(payload.get("trials"), list): raise ValueError("Invalid frozen selection")
+            for name in ("training", "validation", "holdout"):
+                bounds = payload["splits"].get(name)
+                if not isinstance(bounds, list) or len(bounds) != 2 or any(type(x) is not int for x in bounds) or not 0 <= bounds[0] < bounds[1] <= len(parent["dataset"]["bars"]): raise ValueError("Invalid split bounds")
+            summary(payload.get("validation"))
+            folds = payload.get("walkForward")
+            if not isinstance(folds, list) or len(folds) != 3: raise ValueError("Invalid walk-forward evidence")
+            for fold in folds: summary(fold.get("result"))
+            if not isinstance(payload.get("stress"), dict) or set(payload["stress"]) != {"doubleCosts", "extraBarDelay"}: raise ValueError("Invalid stress evidence")
+            for value in payload["stress"].values(): summary(value)
+            if not isinstance(payload.get("neighbors"), list) or not isinstance(payload.get("causality"), dict) or payload["causality"].get("status") not in ("failed", "passed_sampled_checks"): raise ValueError("Invalid robustness evidence")
+        elif analysis["kind"] == "holdout":
+            summary(payload.get("result")); summary(payload.get("outOfSample")); assessment(payload.get("assessment"))
+            if not isinstance(payload.get("selectionId"), str) or not isinstance(payload.get("selectionHash"), str) or not isinstance(payload.get("access"), dict) or type(payload["access"].get("count")) is not int or payload["access"]["count"] < 1: raise ValueError("Invalid holdout provenance")
+        elif analysis["kind"] == "monte_carlo":
+            if payload.get("method") not in ("stationary_daily", "iid_trades", "trade_permutation") or type(payload.get("simulations")) is not int or not 100 <= payload["simulations"] <= 5000: raise ValueError("Invalid simulation metadata")
+            for key in ("lossFrequency", "drawdownThresholdFrequency", "drawdownThreshold"):
+                if not number(payload.get(key)) or not 0 <= payload[key] <= 1: raise ValueError("Invalid conditional frequency")
+            for key in ("endingEquity", "maxDrawdowns"):
+                if not isinstance(payload.get(key), list) or len(payload[key]) != payload["simulations"] or any(not number(x) for x in payload[key]): raise ValueError("Invalid simulation distribution")
+            bands = payload.get("bands")
+            if not isinstance(bands, list) or not 2 <= len(bands) <= 400 or any(not isinstance(p, dict) or any(not number(p.get(k)) for k in ("step", "lower", "median", "upper")) for p in bands): raise ValueError("Invalid simulation paths")
+            if not isinstance(payload.get("limitations"), str): raise ValueError("Missing simulation limitations")
+        else: assessment(payload)
+        encode(analysis)
+
+    def import_bundle(self, bundle):
+        parent, analyses = bundle["result"], bundle["analyses"]
+        self.validate_result(parent)
+        if not isinstance(analyses, list) or len(analyses) > 1000: raise ValueError("Invalid analysis bundle")
+        for analysis in analyses: self.validate_analysis(analysis, parent)
+        dataset = parent["dataset"]
+        key = digest({k: v for k, v in dataset.items() if k != "bars"})
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            existing = db.execute("SELECT envelope FROM results WHERE id=?", (parent["id"],)).fetchone()
+            if existing and json.loads(existing[0]) != parent: raise ValueError("Conflicting imported result identity")
+            db.execute("INSERT OR IGNORE INTO datasets VALUES(?,?)", (key, encode(dataset)))
+            db.execute("INSERT OR IGNORE INTO results VALUES(?,?,?,?,?)", (parent["id"], parent["name"], parent["createdAt"], key, encode(parent)))
+            for analysis in analyses:
+                existing = db.execute("SELECT envelope FROM research_analyses WHERE id=?", (analysis["id"],)).fetchone()
+                if existing and json.loads(existing[0]) != analysis: raise ValueError("Conflicting imported analysis identity")
+                db.execute("INSERT OR IGNORE INTO research_analyses VALUES(?,?,?,?,?,?)", (analysis["id"], parent["id"], parent["resultHash"], analysis["kind"], analysis["createdAt"], encode(analysis)))
+            # Imported access history is a lower bound; it cannot erase local requests.
+            usage_records = bundle.get("holdoutUsage", [])
+            for usage in usage_records:
+                selection_id = usage.get("selectionId", "imported")
+                if isinstance(usage.get("id"), str) and isinstance(usage.get("fingerprint"), str) and type(usage.get("created")) is int:
+                    db.execute("INSERT OR IGNORE INTO holdout_accesses VALUES(?,?,?,?)", (usage["id"], usage["fingerprint"], selection_id, usage["created"]))
+            for usage in usage_records:
+                if type(usage.get("count")) is int and usage["count"] > 0:
+                    local_count = db.execute("SELECT count(*) FROM holdout_accesses WHERE fingerprint=?", (usage["fingerprint"],)).fetchone()[0]
+                    missing = max(0, usage["count"]-local_count)
+                    db.execute("INSERT INTO holdout_import_bounds VALUES(?,?) ON CONFLICT(fingerprint) DO UPDATE SET missing_count=max(missing_count,excluded.missing_count)", (usage["fingerprint"], missing))
+        return parent["id"]
+
+    def save_analysis(self, analysis, job_id=None):
+        parent = self.result(analysis["parentId"])
+        self.validate_analysis(analysis, parent)
+        encoded = encode(analysis)
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("INSERT INTO research_analyses VALUES(?,?,?,?,?,?)", (analysis["id"], analysis["parentId"], analysis["parentHash"], analysis["kind"], analysis["createdAt"], encoded))
+            if job_id: db.execute("INSERT OR REPLACE INTO jobs VALUES(?,?)", (job_id, encode({"id": job_id, "stage": "complete", "resultId": parent["id"], "analysisId": analysis["id"], "resultKind": "analysis"})))
 
     def save_result(self, result, job_id=None):
         self.validate_result(result)

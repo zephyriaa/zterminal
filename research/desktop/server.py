@@ -194,7 +194,7 @@ class Handler(BaseHTTPRequestHandler):
             body = self.payload() if method == "POST" else {}
             identifier = parts[2] if len(parts) >= 3 else None
             if method == "GET" and route == "capabilities":
-                return self.respond(200, {"protocol": 1, "version": "1.0.0-preview.4", "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": ENGINE_VERSION, "vectorbt": "0.28.1", "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
+                return self.respond(200, {"protocol": 1, "version": "1.1.0-preview.1", "features": ["synthetic_next_open_v2", "research_analyses_v1", "indicator_dataset_v2"], "researchSchemas": [1, 2], "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": ENGINE_VERSION, "vectorbt": "0.28.1", "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
             if method == "POST" and route == "pair":
                 return self.respond(200, service.pair(origin, body.get("code")))
             if method == "POST" and route == "datasets":
@@ -225,14 +225,30 @@ class Handler(BaseHTTPRequestHandler):
                 if method == "DELETE" and identifier:
                     return self.respond(200, service.controller.cancel(identifier))
             if route == "results":
+                if method == "GET" and identifier and len(parts) == 4 and parts[3] == "holdout-usage":
+                    return self.respond(200, archive.holdout_usage(identifier))
+                if identifier and len(parts) == 4 and parts[3] == "analyses":
+                    if method == "GET": return self.respond(200, archive.analyses(identifier))
+                    if method == "POST":
+                        parent = archive.result(identifier)
+                        kind = body.get("kind")
+                        request = {"operation": "research_analysis", "kind": kind, "result": parent, "options": body.get("options", {})}
+                        if kind == "holdout":
+                            selection = archive.analysis(body.get("selectionId", ""))
+                            if selection["parentHash"] != parent["resultHash"] or selection["kind"] != "validation": raise ValueError("Selection does not match run")
+                            request.update(selection=selection, access=archive.holdout_access(parent, selection))
+                        return self.respond(202, service.controller.create(request))
                 if method == "GET":
                     return self.respond(200, archive.result(identifier) if identifier else archive.results())
                 if method == "POST" and not identifier:
+                    if body.get("kind") == "research_bundle":
+                        return self.respond(201, {"id": archive.import_bundle(body)})
                     # Import never evaluates retained source. Only canonical v1 envelopes are accepted.
                     archive.save_result(body)
                     return self.respond(201, {"id": body["id"]})
                 if method == "POST" and identifier and len(parts) == 4 and parts[3] == "monte-carlo":
-                    return self.respond(202, service.controller.create({"operation": "monte_carlo", "result": archive.result(identifier), "simulations": body.get("simulations", 1000), "seed": body.get("seed", 42)}))
+                    parent = archive.result(identifier)
+                    return self.respond(202, service.controller.create({"operation": "monte_carlo", "result": parent, "simulations": body.get("simulations", 1000), "seed": body.get("seed", 42)}))
             if route == "evaluations" and method == "GET" and identifier:
                 return self.respond(200, archive.indicator_evaluation(identifier))
             if route == "legacy":

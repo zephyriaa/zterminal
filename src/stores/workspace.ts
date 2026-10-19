@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
-import type { DataStatus, Environment, ProviderId } from "@/lib/market/types";
+import { MARKET_PROVIDERS, type MarketProvider, type DataStatus, type Environment, type ProviderId } from "@/lib/market/types";
 import { useChartDocuments } from "@/stores/chart-documents";
 import { workspaceChartDocuments } from "@/lib/chart/workspace-snapshot";
 import type { ChartDocument } from "@/lib/chart/contracts";
@@ -36,6 +36,8 @@ export interface SavedWorkspace {
 }
 
 interface WorkspaceState {
+  marketProvider: MarketProvider;
+  setMarketProvider: (provider: MarketProvider) => void;
   activeWorkspaceId: string;
   activeView: ViewId;
   setView: (v: ViewId) => void;
@@ -81,11 +83,11 @@ interface WorkspaceState {
 const P0_DEFAULT_SYMBOL = "BTCUSDT";
 const P0_TIMEFRAMES = new Set(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]);
 
-type PersistedWorkspace = Partial<Pick<WorkspaceState, "activeWorkspaceId" | "sidebarCollapsed" | "symbol" | "timeframe" | "timezone" | "workspaces">>;
+type PersistedWorkspace = Partial<Pick<WorkspaceState, "marketProvider" | "activeWorkspaceId" | "sidebarCollapsed" | "symbol" | "timeframe" | "timezone" | "workspaces">>;
 
 const SUPPORTED_TIMEZONES = new Set<ChartTimezone>(["America/New_York", "UTC", "Europe/London", "Asia/Tokyo", "Asia/Dubai", "local"]);
 
-function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
+export function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
   const persisted = (value ?? {}) as PersistedWorkspace;
   const timeframe = typeof persisted.timeframe === "string" && P0_TIMEFRAMES.has(persisted.timeframe)
     ? persisted.timeframe
@@ -97,18 +99,20 @@ function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
       ? persisted.workspaces.map((workspace) => ({
         ...workspace,
         view: ["orderflow", "gex"].includes(workspace.view as string) ? "chart" : workspace.view,
-        symbol: P0_DEFAULT_SYMBOL,
+        symbol: typeof workspace.symbol === "string" ? workspace.symbol : P0_DEFAULT_SYMBOL,
         timeframe: P0_TIMEFRAMES.has(workspace.timeframe) ? workspace.timeframe : "5m",
         timezone: SUPPORTED_TIMEZONES.has(workspace.timezone as ChartTimezone) ? workspace.timezone : timezone,
       }))
     : [];
   const activeWorkspaceId = typeof persisted.activeWorkspaceId === "string" && (persisted.activeWorkspaceId === "local-default" || workspaces.some(workspace => workspace.id === persisted.activeWorkspaceId)) ? persisted.activeWorkspaceId : "local-default";
-  return { ...persisted, activeWorkspaceId, symbol: P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
+  return { ...persisted, marketProvider: MARKET_PROVIDERS.includes(persisted.marketProvider as MarketProvider) ? persisted.marketProvider : "gateio", activeWorkspaceId, symbol: typeof persisted.symbol === "string" ? persisted.symbol : P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
 }
 
 export const useWorkspace = create<WorkspaceState>()(
   persist(
     (set, get) => ({
+      marketProvider: "gateio",
+      setMarketProvider: (marketProvider) => set({ marketProvider, connection: { state: "connecting", provider: marketProvider, environment: marketProvider === "mock" ? "simulation" : "live", dataStatus: "DISCONNECTED" } }),
       activeWorkspaceId: "local-default",
       activeView: "chart",
       setView: (v) => set({ activeView: v }),
@@ -204,6 +208,7 @@ export const useWorkspace = create<WorkspaceState>()(
       version: 5,
       migrate: (persistedState) => migratePersistedWorkspace(persistedState),
       partialize: (s) => ({
+        marketProvider: s.marketProvider,
         activeWorkspaceId: s.activeWorkspaceId,
         sidebarCollapsed: s.sidebarCollapsed,
         symbol: s.symbol,

@@ -5,6 +5,17 @@ import pandas as pd
 
 VERSION = "1.0.0"
 
+def daily_returns(equity, initial, from_ms, to_ms):
+    """Complete UTC daily account returns, including the initial-capital boundary."""
+    daily = equity.resample("1D").last().dropna()
+    returns = daily.pct_change(fill_method=None)
+    if from_ms % 86_400_000 == 0 and len(returns):
+        returns.iloc[0] = daily.iloc[0] / initial - 1
+    start = pd.Timestamp(from_ms, unit="ms", tz="UTC").ceil("D")
+    end = pd.Timestamp(to_ms, unit="ms", tz="UTC").floor("D")
+    returns = returns[(returns.index >= start) & (returns.index < end)].dropna()
+    return [{"time": int(t.value // 1_000_000), "return": float(value)} for t, value in returns.items() if math.isfinite(value)]
+
 def metric(value, reason="Undefined for this sample"):
     return {"value": float(value)} if value is not None and math.isfinite(float(value)) else {"value": None, "reason": reason}
 

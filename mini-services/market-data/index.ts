@@ -40,26 +40,15 @@ const providerEventCounts = { trade: 0, quote: 0, depth: 0, derivatives: 0, liqu
 
 function feedHealth(symbol: string): FeedHealth {
   if (PROVIDER_MODE === "binance" && binance) return binance.health(symbol);
-  const state: FeedHealth["state"] = PROVIDER_MODE === "mock"
-    ? "LIVE"
-    : providerStatus === "live"
-      ? "LIVE"
-      : providerStatus === "stale"
-        ? "STALE"
-        : providerStatus === "degraded"
-          ? "DEGRADED"
-          : providerStatus === "reconnecting"
-            ? "RESYNCING"
-            : providerStatus === "unavailable"
-              ? "UNAVAILABLE"
-              : "DISCONNECTED";
-  return { provider: PROVIDER_MODE, symbol, state, updatedAt: Date.now(), reason: providerReason };
+  if (PROVIDER_MODE === "gateio" && gateio) return gateio.health(symbol);
+  return { provider: "mock", symbol, state: "LIVE", updatedAt: Date.now(), reason: "Explicit simulation; not a live exchange feed" };
 }
 
 function healthPayload() {
   const activeSymbols = [...subscriptions.keys()];
   return {
     ok: true,
+    dataStatus: PROVIDER_MODE === "mock" ? "SIMULATED" : providerStatus === "unavailable" ? "UNAVAILABLE" : !activeSymbols.length ? "DISCONNECTED" : activeSymbols.every(symbol => feedHealth(symbol).state === "LIVE") ? "LIVE" : activeSymbols.some(symbol => feedHealth(symbol).state === "STALE") ? "STALE" : "DEGRADED",
     provider: PROVIDER_MODE,
     state: providerStatus,
     reason: providerReason,
@@ -109,8 +98,9 @@ const httpServer = createServer((request, response) => {
 
 const io = new Server(httpServer, {
   path: "/socket.io",
+  addTrailingSlash: false,
   cors: { origin: ALLOWED_ORIGINS, methods: ["GET", "POST"] },
-  pingTimeout: 60_000,
+  pingTimeout: 20_000,
   pingInterval: 25_000,
 });
 
@@ -175,7 +165,7 @@ function handleGateEvent(event: GateEvent) {
   }
   if (event.type === "trade") publishToSubscribers(event.data.symbol, "trade", event.data);
   if (event.type === "quote") publishToSubscribers(event.data.symbol, "quote", event.data);
-  if (event.type === "depth") publishToSubscribers(event.symbol, "depth", event);
+  if (event.type === "depth") publishToSubscribers(event.symbol, "depth", { ...event, provider: "gateio", environment: "live" });
 }
 
 gateio?.on(handleGateEvent);
@@ -194,7 +184,7 @@ function handleBinanceEvent(event: BinanceEvent) {
   }
   if (event.type === "trade") publishToSubscribers(event.data.symbol, "trade", event.data);
   if (event.type === "quote") publishToSubscribers(event.data.symbol, "quote", event.data);
-  if (event.type === "depth") publishToSubscribers(event.symbol, "depth", event);
+  if (event.type === "depth") publishToSubscribers(event.symbol, "depth", { ...event, provider: "binance", environment: "live" });
   if (event.type === "derivatives") publishToSubscribers(event.data.symbol, "derivatives", event.data);
   if (event.type === "liquidation") publishToSubscribers(event.data.symbol, "liquidation", event.data);
 }
@@ -281,17 +271,18 @@ io.on("connection", (socket) => {
   socket.emit("contracts", liveContracts);
   emitStatus(socket.id);
 
-  socket.on("subscribe", async (message: { symbol?: string; types?: string[] }, acknowledge?: (result: unknown) => void) => {
+  socket.on("subscribe", async (message: { symbol?: string; types?: string[]; provider?: string }, acknowledge?: (result: unknown) => void) => {
     const client = clientSubscriptions.get(socket.id);
+    if (!client || (message?.provider && message.provider !== PROVIDER_MODE)) { acknowledge?.({ ok: false, error: "Selected venue is not served by this gateway" }); return; }
+    const symbol = typeof message?.symbol === "string" ? normalizeSymbol(message.symbol) : null;
     const request = validateSubscriptionRequest(message ?? {}, {
-      activeSubscriptionCount: client?.size ?? 0,
+      activeSubscriptionCount: client.size - (symbol && client.has(symbol) ? 1 : 0),
       maximumSubscriptions: MAX_SUBSCRIPTIONS_PER_CLIENT,
     });
     if (!request.ok) {
       acknowledge?.({ ok: false, error: request.error });
       return;
     }
-    const symbol = normalizeSymbol(message?.symbol ?? "");
     if (!symbol) {
       acknowledge?.({ ok: false, error: "unsupported symbol" });
       return;
@@ -307,10 +298,16 @@ io.on("connection", (socket) => {
     interested.add(socket.id);
     try {
       if (firstSubscriber) await startSymbol(symbol);
+      if (!socket.connected || client.get(symbol)?.types !== types) {
+        if (!subscriptions.get(symbol)?.size) stopSymbol(symbol);
+        return;
+      }
       socket.emit("subscribed", { ok: true, symbol, provider: PROVIDER_MODE });
       emitFeedHealth(symbol, socket.id);
       acknowledge?.({ ok: true, symbol, provider: PROVIDER_MODE });
     } catch (error) {
+      client.delete(symbol); interested.delete(socket.id);
+      if (!interested.size) { subscriptions.delete(symbol); stopSymbol(symbol); }
       providerStatus = "degraded";
       providerReason = error instanceof Error ? error.message : "provider subscription failed";
       emitStatus();
@@ -319,7 +316,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("health", (message: { symbol?: string }, acknowledge?: (result: unknown) => void) => {
-    const symbol = normalizeSymbol(message?.symbol ?? "");
+    const symbol = typeof message?.symbol === "string" ? normalizeSymbol(message.symbol) : null;
     if (!symbol) {
       acknowledge?.({ ok: false, error: "unsupported symbol" });
       return;
@@ -328,7 +325,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("unsubscribe", (message: { symbol?: string }) => {
-    const symbol = normalizeSymbol(message?.symbol ?? "");
+    const symbol = typeof message?.symbol === "string" ? normalizeSymbol(message.symbol) : null;
     if (!symbol) return;
     clientSubscriptions.get(socket.id)?.delete(symbol);
     const interested = subscriptions.get(symbol);
@@ -353,13 +350,17 @@ io.on("connection", (socket) => {
   });
 });
 
+const healthTimer = setInterval(() => { for (const symbol of subscriptions.keys()) emitFeedHealth(symbol); }, 2000);
+
 httpServer.listen(PORT, () => {
-  console.log(`[market-data] socket.io listening on ${PORT} (${PROVIDER_MODE.toUpperCase()})`);
+  console.log(`[market-data] socket.io listening on ${(httpServer.address() as { port: number }).port} (${PROVIDER_MODE.toUpperCase()})`);
   emitStatus();
   void bootLiveProvider();
 });
 
 function shutdown() {
+  clearInterval(healthTimer);
+  io.close();
   if (bootRetryTimer) clearTimeout(bootRetryTimer);
   for (const symbol of mockStates.keys()) stopMockSymbol(symbol);
   gateio?.close();
