@@ -221,7 +221,8 @@ class Archive:
         for key in ("equity", "trades", "assumptions", "logs", "monthly", "drawdowns", "observations"):
             if not isinstance(result.get(key), list):
                 raise ValueError(f"Invalid {key}")
-        expected_equity = int(len(dataset["bars"])*.8) if result.get("researchSchema") == 2 and result["config"].get("reserveHoldout") else len(dataset["bars"])
+        prefix = sum(b["t"] < result["config"].get("evaluationFrom", result["config"]["from"]) for b in dataset["bars"])
+        expected_equity = prefix+int((len(dataset["bars"])-prefix)*.8) if result.get("researchSchema") == 2 and result["config"].get("reserveHoldout") else len(dataset["bars"])
         if len(result["equity"]) != expected_equity:
             raise ValueError("Equity must align with the retained dataset")
         for point, bar in zip(result["equity"], dataset["bars"]):
@@ -283,7 +284,10 @@ class Archive:
         for state, point in zip(accounts, result["equity"]):
             if state["time"] != point["time"] or not close(state["equity"], point["equity"]): raise ValueError("Account/equity alignment mismatch")
             if not close(state["cash"]+state["reservedCapital"]+state["unrealizedPnl"], state["equity"]): raise ValueError("Cash reconciliation failed")
-            if not close(result["config"]["initialCapital"]+state["realizedPnl"]+state["unrealizedPnl"]-state["fees"], state["equity"]): raise ValueError("P&L reconciliation failed")
+            if not close(result["config"]["initialCapital"]+state["realizedPnl"]+state["unrealizedPnl"]-state["fees"]-state.get("fundingPaid", 0), state["equity"]): raise ValueError("P&L reconciliation failed")
+        funding = result.get("funding", [])
+        if not isinstance(funding, list) or any(not isinstance(e, dict) or not isinstance(e.get("payment"), (int, float)) or not math.isfinite(e["payment"]) for e in funding): raise ValueError("Invalid funding payment ledger")
+        if not close(sum(e["payment"] for e in funding), accounts[-1].get("fundingPaid", 0)): raise ValueError("Funding payments do not reconcile")
         orders, fills = result.get("orders"), result.get("fills")
         if not isinstance(orders, list) or not isinstance(fills, list): raise ValueError("Missing orders/fills")
         by_id = {order["id"]: order for order in orders}
@@ -324,7 +328,7 @@ class Archive:
 
     @staticmethod
     def validate_analysis(analysis, parent):
-        if not isinstance(analysis, dict) or analysis.get("version") != 1 or analysis.get("kind") not in ("validation", "holdout", "monte_carlo", "assessment"):
+        if not isinstance(analysis, dict) or analysis.get("version") != 1 or analysis.get("kind") not in ("validation", "holdout", "monte_carlo", "assessment", "health"):
             raise ValueError("Invalid research analysis")
         if analysis.get("hash") != digest({k: v for k, v in analysis.items() if k != "hash"}): raise ValueError("Analysis hash mismatch")
         if analysis.get("parentId") != parent["id"] or analysis.get("parentHash") != parent["resultHash"]: raise ValueError("Analysis parent hash mismatch")
@@ -340,7 +344,16 @@ class Archive:
         def assessment(value):
             labels = ("Insufficient evidence", "No convincing edge detected", "Promising but fragile", "Promising out-of-sample evidence; forward validation required")
             if not isinstance(value, dict) or value.get("label") not in labels or not isinstance(value.get("text"), str) or not isinstance(value.get("policyVersion"), str) or not isinstance(value.get("reasons"), list) or any(not isinstance(r, str) for r in value["reasons"]): raise ValueError("Invalid assessment evidence")
-        if analysis["kind"] == "validation":
+        if analysis["kind"] == "health":
+            if payload.get("risk") not in ("Low", "Medium", "High", "Insufficient evidence") or payload.get("calibratedProbability") is not False or payload.get("holdoutEvaluated") is not False: raise ValueError("Invalid strategy health claims")
+            if payload.get("score") is not None and (not number(payload["score"]) or not 0 <= payload["score"] <= 100): raise ValueError("Invalid health score")
+            if not isinstance(payload.get("reasons"), list) or any(not isinstance(r, str) for r in payload["reasons"]) or not isinstance(payload.get("walkForward"), list): raise ValueError("Invalid health evidence")
+            for fold in payload["walkForward"]:
+                if not isinstance(fold, dict): raise ValueError("Invalid walk-forward fold")
+                summary(fold["result"])
+                train, test = fold.get("train"), fold.get("test")
+                if not isinstance(train, list) or not isinstance(test, list) or len(train) != 2 or len(test) != 2 or any(type(x) is not int for x in train+test) or not 0 <= train[0] < train[1] <= test[0] < test[1] <= len(parent["dataset"]["bars"]): raise ValueError("Invalid walk-forward split")
+        elif analysis["kind"] == "validation":
             if not isinstance(payload.get("selectedParams"), dict) or not isinstance(payload.get("splits"), dict) or not isinstance(payload.get("trials"), list): raise ValueError("Invalid frozen selection")
             for name in ("training", "validation", "holdout"):
                 bounds = payload["splits"].get(name)

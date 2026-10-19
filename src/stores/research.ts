@@ -3,10 +3,11 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { draftStorage, flushDraftWrites } from "@/lib/local-research/drafts";
 import { EXAMPLES } from "@/lib/local-research/examples";
-import { defaultResearchConfig, type Dataset, type Diagnostic, type IndicatorEvaluationResult, type ResearchAnalysis, type ResearchConfig, type ResearchJob, type ResearchResult, type ScriptRecord } from "@/lib/local-research/contracts";
+import { defaultResearchConfig, type Dataset, type Diagnostic, type IndicatorEvaluationResult, type ResearchAnalysis, type ResearchConfig, type ResearchJob, type ResearchResult, type ScriptRecord, type ScriptInspection, type ResearchInstrument } from "@/lib/local-research/contracts";
 import { capabilities, helper, HelperError, pairHelper } from "@/lib/local-research/client";
 import { supportsCurrentResearch } from "@/lib/local-research/compatibility";
-import { validateConfig, validateResearchDataset } from "@/lib/local-research/dataset";
+import { intervalMs, validateConfig, validateResearchDataset } from "@/lib/local-research/dataset";
+import { publicResearchInstrument, publicResearchHistory, researchRangeIssue } from "@/lib/local-research/market-data";
 
 import { useStudies } from "./studies";
 import { createPythonStudy } from "@/lib/indicator-library";
@@ -20,7 +21,9 @@ type State = {
   drafts: Record<string, ScriptRecord>; activeId: string; config: ResearchConfig; params: Record<string, number | string | boolean>; minimap: boolean;
   connection: Connection; helperVersion: string | null; error: string; diagnostic: Diagnostic | null; job: ResearchJob | null; result: ResearchResult | null; indicatorResults: Record<string, IndicatorEvaluationResult>; archived: { id: string; name: string; created: number }[]; chartResult: ResearchResult | null; selectedTrade: string | null;
   capturedScript: { id: string; source: string } | null;
-  instrument: { provider: string; symbol: string; multiplier: number; quantityStep: number; tickSize: number; minimumQuantity: number; minimumNotional: number; verifiedAt: number } | null;
+  instrument: ResearchInstrument | null; instrumentError: string; verifyingInstrument: boolean;
+  inspection: ScriptInspection | null; inspectionError: string; inspecting: boolean;
+  inspectScript: () => Promise<ScriptInspection | null>;
   verifyInstrument: () => Promise<void>;
   reportTab: "Overview" | "Performance" | "Trades" | "Risk" | "Monte Carlo" | "Logs" | "Validation" | "Execution assumptions";
   setSource: (source: string) => void; configure: (patch: Partial<ResearchConfig>) => void; selectScript: (id: string) => void; createScript: (name?: string, source?: string, kind?: "strategy" | "indicator") => void;
@@ -49,18 +52,41 @@ export const useResearch = create<State>()(persist((set, get) => ({
   },
   drafts: { [initial.id]: initial }, activeId: initial.id, config: defaultResearchConfig(), params: {}, minimap: false,
   connection: "unchecked", helperVersion: null, error: "", diagnostic: null, job: null, result: null, indicatorResults: {}, archived: [], chartResult: null, selectedTrade: null, reportTab: "Overview",
-  capturedScript: null, instrument: null,
+  capturedScript: null, instrument: null, instrumentError: "", verifyingInstrument: false,
+  inspection: null, inspectionError: "", inspecting: false,
+  inspectScript: async () => {
+    if (!get().helperFeatures.includes("script_inspection_v1")) return null;
+    const script = get().drafts[get().activeId], source = script.source, params = structuredClone(get().params);
+    const matches = () => get().activeId === script.id && get().drafts[script.id]?.source === source && JSON.stringify(get().params) === JSON.stringify(params);
+    set({ inspecting: true });
+    try {
+      const inspection = await helper.inspect(source, params);
+      if (!matches()) return null;
+      set({ inspection, inspectionError: "", inspecting: false });
+      return inspection;
+    } catch (error) {
+      if (matches()) set({ inspection: null, inspecting: false, inspectionError: (error as Error).message, diagnostic: error instanceof HelperError ? error.diagnostic ?? null : null });
+      return null;
+    }
+  },
   verifyInstrument: async () => {
     const { provider, symbol } = get().config;
+    set({ verifyingInstrument: true, instrumentError: "" });
     try {
-      const response = await fetch(`/api/research-instrument?${new URLSearchParams({ provider, symbol })}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      if (get().config.provider === provider && get().config.symbol === symbol) set(s => ({ instrument: data, config: { ...s.config, symbol: data.symbol, multiplier: data.multiplier, quantityStep: data.quantityStep, tickSize: data.tickSize, minimumQuantity: data.minimumQuantity, minimumNotional: data.minimumNotional }, error: "" }));
-    } catch (error) { if (get().config.provider === provider && get().config.symbol === symbol) set({ instrument: null, error: (error as Error).message }); }
+      let data: ResearchInstrument;
+      if (get().connection === "connected" && get().helperFeatures.includes("local_market_data_v1")) data = await helper.instrument(provider, symbol);
+      else {
+        try {
+          const response = await fetch(`/api/research-instrument?${new URLSearchParams({ provider, symbol })}`, { signal: AbortSignal.timeout(15_000) });
+          if (!response.ok) throw new Error("Edge metadata unavailable");
+          data = await response.json();
+        } catch { data = await publicResearchInstrument(provider, symbol); }
+      }
+      if (get().config.provider === provider && get().config.symbol === symbol) set(s => ({ instrument: data, verifyingInstrument: false, instrumentError: "", config: { ...s.config, symbol: data.symbol, multiplier: data.multiplier, quantityStep: data.quantityStep, tickSize: data.tickSize, minimumQuantity: data.minimumQuantity, minimumNotional: data.minimumNotional } }));
+    } catch (error) { if (get().config.provider === provider && get().config.symbol === symbol) set({ instrument: null, verifyingInstrument: false, instrumentError: (error as Error).message }); }
   },
   setSource: source => set(s => ({ drafts: { ...s.drafts, [s.activeId]: { ...s.drafts[s.activeId], source, updatedAt: Date.now() } } })),
-  configure: patch => set(s => ({ config: { ...s.config, ...patch } })),
+  configure: patch => set(s => ({ config: { ...s.config, ...patch }, ...(patch.provider && patch.provider !== s.config.provider || patch.symbol && patch.symbol !== s.config.symbol ? { instrument: null, instrumentError: "" } : {}) })),
   selectScript: activeId => { if (get().drafts[activeId]) set({ activeId, diagnostic: null }); },
   createScript: (name = "Untitled", source, kind = "strategy") => {
     const id = crypto.randomUUID();
@@ -128,26 +154,63 @@ export const useResearch = create<State>()(persist((set, get) => ({
     set({ job: { id: "preparing", stage: "validating" }, capturedScript: { id: script.id, source: script.source }, diagnostic: null, error: "" });
     try {
       validateConfig(config);
-      const instrument = get().instrument;
+      const modern = get().helperFeatures.includes("adaptive_execution_v1");
+      if (!modern) Object.assign(config, { autoWarmup: false, autoValidation: false, guardrails: false, impactModel: "fixed", exchangeProfile: "custom", fundingMode: "none" });
+      let instrument = get().instrument;
+      if (!instrument || instrument.provider !== config.provider || instrument.symbol !== config.symbol) {
+        await get().verifyInstrument();
+        if (signal.aborted || generation !== jobGeneration) return;
+        instrument = get().instrument;
+        if (!instrument) throw new Error(get().instrumentError || "Instrument verification failed. Retry metadata preparation or select another venue.");
+        Object.assign(config, { symbol: instrument.symbol, multiplier: instrument.multiplier, quantityStep: instrument.quantityStep, tickSize: instrument.tickSize, minimumQuantity: instrument.minimumQuantity, minimumNotional: instrument.minimumNotional });
+      }
       if (!instrument || instrument.provider !== config.provider || instrument.symbol !== config.symbol || instrument.multiplier !== config.multiplier || instrument.quantityStep !== config.quantityStep || config.executionModel === "synthetic_next_open_v2" && (instrument.tickSize !== config.tickSize || instrument.minimumQuantity !== config.minimumQuantity || instrument.minimumNotional !== config.minimumNotional)) throw new Error("Verify instrument units before running this configuration.");
       if (!script.source.trim()) throw new Error(`Write a Python ${script.kind === "indicator" ? "indicator" : "strategy"} before running.`);
       if (script.kind === "indicator" && (script.revision < 1 || script.source !== script.savedSource)) throw new Error("Save the current indicator source before previewing it so the evaluation references an immutable revision.");
       const caps = await capabilities();
       if (!supportsCurrentResearch(caps)) throw new HelperError("Update and reconnect the Windows x64 Helper: this workbench requires research schema 2, analyses and dataset-bound Python indicators.", "incompatible");
       if (signal.aborted || generation !== jobGeneration) return;
+      let resolvedParams = params;
+      if (modern && script.kind !== "indicator") {
+        const inspected = await helper.inspect(script.source, params, signal);
+        if (config.guardrails && inspected.diagnostics.length) { set({ diagnostic: inspected.diagnostics[0] }); throw new Error(inspected.diagnostics[0].message); }
+        const required = Object.entries(inspected.parameters).filter(([key, spec]) => spec.required && inspected.resolvedParams[key] === undefined).map(([key]) => key);
+        if (required.length) throw new Error(`Set required parameters: ${required.join(", ")}.`);
+        resolvedParams = inspected.resolvedParams;
+        if (config.autoWarmup) {
+          if (inspected.warnings.some(w => w.includes("unresolved")) && !config.warmupBars) throw new Error("A dynamic indicator lookback could not be resolved. Set manual warm-up bars before running.");
+          const warmup = Math.max(config.warmupBars ?? 0, inspected.warmupBars, config.impactModel === "atr_volume_v1" ? 21 : 0);
+          config.evaluationFrom = config.from;
+          config.from -= warmup*intervalMs(config.timeframe);
+          config.warmupBars = warmup;
+        }
+        const profile = inspected.profiles[config.exchangeProfile ?? "custom"];
+        if (profile?.unavailable || profile?.provider && profile.provider !== config.provider) throw new Error("Choose an exchange profile matching this market.");
+        const rate = config.exchangeProfile === "gate_public" ? instrument.takerFeeBps : profile?.takerBps;
+        if (config.exchangeProfile !== "custom" && rate != null) config.feeBps = rate;
+      }
       set({ job: { id: "preparing", stage: "loading_data" } });
       const query = new URLSearchParams({ provider: config.provider, symbol: config.symbol, timeframe: config.timeframe, from: String(config.from), to: String(config.to) });
       let dataset = await helper.dataset(config);
       if (signal.aborted || generation !== jobGeneration) return;
       if (!dataset) {
-        const response = await fetch(`/api/research-data?${query}`, { signal, cache: "no-store" });
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error ?? "Historical data unavailable.");
-        dataset = payload as Dataset;
+        const rangeIssue = researchRangeIssue(config);
+        if (rangeIssue) throw new Error(rangeIssue);
+        if (get().helperFeatures.includes("local_market_data_v1")) dataset = await helper.history(config, signal);
+        else {
+          try {
+            const response = await fetch(`/api/research-data?${query}`, { signal, cache: "no-store" });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error ?? "Historical data unavailable.");
+            dataset = payload as Dataset;
+          } catch (error) { if (signal.aborted) throw error; dataset = await publicResearchHistory(config, signal); }
+        }
       }
       dataset = await validateResearchDataset(dataset, config);
       if (signal.aborted || generation !== jobGeneration) return;
-      const job = script.kind === "indicator" ? await helper.evaluateIndicator({ operation: "indicator", name: script.name, source: script.source, config, dataset, params, artifact: { id: script.id, kind: "indicator", revision: script.revision, name: script.name }, outputs: {} }) : await helper.run({ name: script.name, source: script.source, config, dataset, params, instrument });
+      const fundingData = config.fundingMode === "historical" ? await helper.funding(config, signal) : undefined;
+      if (signal.aborted || generation !== jobGeneration) return;
+      const job = script.kind === "indicator" ? await helper.evaluateIndicator({ operation: "indicator", name: script.name, source: script.source, config, dataset, params, artifact: { id: script.id, kind: "indicator", revision: script.revision, name: script.name }, outputs: {} }) : await helper.run({ name: script.name, source: script.source, config, dataset, params: resolvedParams, instrument, ...(fundingData ? { fundingData } : {}) });
       created = job;
       if (generation !== jobGeneration) {
         await cancelSupersededJob(job.id);
@@ -161,7 +224,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
       if (generation !== jobGeneration) return;
       if ((!signal.aborted || created) && error instanceof HelperError && error.code !== "request_failed") set({ connection: error.code, helperVersion: null, helperFeatures: [] });
       if (signal.aborted && created) { set({ job: created, error: "Cancellation could not be confirmed. Reconnect to recover the job's canonical status." }); return; }
-      set({ job: { id: get().job?.id ?? "preparing", stage: signal.aborted ? "cancelled" : "failed" }, error: signal.aborted ? "" : (error as Error).message });
+      set({ job: { id: get().job?.id ?? "preparing", stage: signal.aborted ? "cancelled" : "failed" }, ...(error instanceof HelperError && error.diagnostic ? { diagnostic: error.diagnostic } : {}), error: signal.aborted ? "" : (error as Error).message });
     } finally { if (generation === jobGeneration) abort = null; }
   },
   rerunIndicator: async (artifactId, params) => {
@@ -241,6 +304,7 @@ async function watch(id: string, selection: number) {
             useResearch.setState({ result, archived, analyses, holdoutUsage, chartResult: result, selectedTrade: null });
             // A report is a result artifact, never a placeholder opened at run start.
             window.dispatchEvent(new Event("zterminal:open-backtester"));
+            if (job.resultKind !== "analysis" && result.config.autoValidation && useResearch.getState().helperFeatures.includes("strategy_health_v1")) await useResearch.getState().researchAnalyze("health");
           }
         }
         if (job.stage === "failed") { const active = useResearch.getState().drafts[useResearch.getState().activeId]; useResearch.setState({ error: job.diagnostic?.message ?? `${active?.kind === "indicator" ? "Custom indicator" : "Strategy"} failed. No result was substituted.` }); }

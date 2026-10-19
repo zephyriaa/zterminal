@@ -1,4 +1,4 @@
-# ZTerminal Research Helper — Windows x64 preview 1.1.0-preview.1
+# ZTerminal Research Helper — Windows x64 preview 1.2.0-preview.1
 
 This is an unsigned preview, distributed as a complete portable ZIP. It is separate from the ZTerminal Windows workstation. SHA-256 checksums establish file integrity; they do not establish a publisher signature or an independent security review.
 
@@ -11,6 +11,12 @@ To update, close the old Helper, extract the new complete ZIP into a fresh folde
 Python executes locally with your user permissions. Process limits are **not a secure sandbox**. Scripts can access local files and the network. Run only code you trust. No application credentials are passed into the strategy process. The API binds only to `127.0.0.1:47321`, checks exact host and origin, and requires a paired bearer token. It does not use cookies.
 
 ## Research contract
+
+The workbench discovers literal `CONFIG` values, SDK parameter declarations, and `params.get` defaults through Python AST inspection. Required `params['key']` values need an explicit input. Automatic warm-up resolves supported indicator windows and fetches context before the selected start; exponential indicators target a residual seed weight below one millionth. Unresolved windows require a manual minimum.
+
+ATR/volume execution uses only prior completed candles and limits order participation to 0.1%, 1%, or 5% of prior average volume. This is a recorded scenario, not calibrated historical order-book execution. Market orders use taker fees. Gate contract fees are captured from public metadata; Binance presets are labeled reference scenarios rather than verified account fees. Coinbase is unavailable until its product and account rules are supported. Optional funding uses recorded settlements; Gate marks use the prior closed candle as an explicit proxy.
+
+Known future shifts, centered windows, backfills and forward positional indexing return source locations. Sampled prefix checks add a runtime check; neither certifies arbitrary Python as causal. Automatic health analysis uses chronological folds and seeded Monte Carlo without consuming the reserved final holdout. Its score is a diagnostic heuristic, not a calibrated probability of overfitting; sparse runs show insufficient evidence. Previous experiments, selection bias and survivorship cannot be inferred from one script.
 
 Define `strategy(data, params)` returning `zt.Strategy(entries, exits, short_entries=None, short_exits=None, plots={})`. `data` is a UTC-indexed pandas DataFrame with `open`, `high`, `low`, `close`, `volume`. Signals must be aligned boolean Series without missing values. Named plots must be aligned numeric Series. Import `zterminal as zt`; `ema`, `sma`, `rsi`, `crossover`, and `crossunder` are available. Bundled vectorbt can also produce signals. Unsupported languages and outputs fail explicitly.
 

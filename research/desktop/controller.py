@@ -36,7 +36,7 @@ class Controller:
         captured = encode(request)
         if len(captured.encode()) > 32_000_000:
             raise ValueError("Request exceeds 32 MB")
-        if request.get("operation") == "research_analysis" and request.get("kind") not in ("validation", "holdout", "monte_carlo", "assessment"):
+        if request.get("operation") == "research_analysis" and request.get("kind") not in ("validation", "holdout", "monte_carlo", "assessment", "health"):
             raise ValueError("Unsupported research analysis")
         if request.get("operation") == "indicator":
             validate(request)

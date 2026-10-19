@@ -22,8 +22,10 @@ import zterminal as zt
 import analytics
 
 from validation import validate, digest, input_record, INDICATOR_ENGINE_VERSION
+from script_inspection import compile_strategy
+from execution_models import validate_execution, liquidity_inputs, impact_bps, PARTICIPATION
 
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 INDICATOR_VERSION = INDICATOR_ENGINE_VERSION
 
 class BoundedLog(io.StringIO):
@@ -33,7 +35,7 @@ class BoundedLog(io.StringIO):
         return len(value)
 
 
-def simulate(frame, signals, config, evidence=None):
+def simulate(frame, signals, config, evidence=None, funding_data=None):
     """One-position account; v2 reserves notional for both synthetic directions."""
     le, lx, se, sx = (s.to_numpy(dtype=bool) for s in signals)
     modern = config.get("executionModel") == "synthetic_next_open_v2"
@@ -48,9 +50,21 @@ def simulate(frame, signals, config, evidence=None):
     delay = config.get("executionDelayBars", 1)
     warmup = config.get("warmupBars", 0)
     evaluation_from = config.get("evaluationFrom", config["from"])
+    dynamic = modern and config.get("impactModel") == "atr_volume_v1"
+    atrs, volumes = liquidity_inputs(frame) if dynamic else (None, None)
+    current_slip, current_participation = slip, 0.0
+    funding_events = iter((funding_data or {}).get("events", []))
+    pending_funding = next(funding_events, None)
+    funding_paid, funding_ledger = D(0), []
 
-    def price(base, buy):
-        adjusted = base * (1 + (slip + spread) * (1 if buy else -1))
+    def price(base, buy, i, quantity):
+        nonlocal current_slip, current_participation
+        if dynamic:
+            bps, current_participation = impact_bps(float(base), float(quantity), float(multiplier), float(atrs.iloc[i]), float(volumes.iloc[i]), config["provider"])
+            current_slip = D(bps)/10000
+        else:
+            current_slip, current_participation = slip, 0.0
+        adjusted = base * (1 + (current_slip + spread) * (1 if buy else -1))
         return (adjusted / tick).to_integral_value(rounding=ROUND_CEILING if buy else ROUND_FLOOR) * tick if tick else adjusted
 
     def record(i, side, action, status, reason, quantity=D(0), base=None, execution=None, cost=D(0), requested=None):
@@ -64,9 +78,9 @@ def simulate(frame, signals, config, evidence=None):
         if status == "filled":
             buy = (side == "long") == (action == "entry")
             sign = 1 if buy else -1
-            slip_adjustment, spread_adjustment = base*slip*sign, base*spread*sign
+            slip_adjustment, spread_adjustment = base*current_slip*sign, base*spread*sign
             fills.append({**order, "orderId": order["id"], "basePrice": float(base), "price": float(execution), "fee": float(cost),
-                          "slippageBps": float(slip * 10000), "spreadBps": float(spread * 20000), "tickSize": float(tick),
+                          "slippageBps": float(current_slip * 10000), "participation": current_participation, "impactModel": config.get("impactModel", "fixed"), "spreadBps": float(spread * 20000), "tickSize": float(tick),
                           "priceAdjustment": float(execution - base), "multiplier": float(multiplier),
                           "slippageCost": float(abs(slip_adjustment)*quantity*multiplier), "spreadCost": float(abs(spread_adjustment)*quantity*multiplier),
                           "tickRoundingCost": float(abs(execution-base-slip_adjustment-spread_adjustment)*quantity*multiplier)})
@@ -74,10 +88,10 @@ def simulate(frame, signals, config, evidence=None):
     def close(i, base, reason):
         nonlocal cash, reserved, realized, fees, position
         direction = 1 if position["side"] == "long" else -1
-        execution = price(base, direction == -1)
+        execution = price(base, direction == -1, i, position["quantity"])
         exit_fee = execution * position["quantity"] * multiplier * fee_rate
         gross = direction * (execution - position["price"]) * position["quantity"] * multiplier
-        pnl = gross - position["fee"] - exit_fee
+        pnl = gross - position["fee"] - exit_fee - position.get("funding", D(0))
         cash += reserved + gross - exit_fee
         reserved = D(0)
         realized += gross
@@ -90,9 +104,26 @@ def simulate(frame, signals, config, evidence=None):
         record(i, position["side"], "exit", "filled", reason, position["quantity"], base, execution, exit_fee)
         position = None
 
+    def settle_funding(until):
+        nonlocal pending_funding, cash, funding_paid
+        while pending_funding is not None and pending_funding["time"] <= until:
+            event = pending_funding
+            if position and event["time"] > position["time"]:
+                interval_ms = int((frame.index[1].value-frame.index[0].value)//1_000_000)
+                proxy_index = frame.index.searchsorted(pd.Timestamp(event["time"]-interval_ms, unit="ms", tz="UTC"), side="right")-1
+                if "markPrice" not in event and proxy_index < 0: raise ValueError("Funding mark proxy needs an earlier completed candle")
+                funding_mark = D(event["markPrice"]) if "markPrice" in event else D(frame.close.iloc[proxy_index])
+                payment = position["quantity"]*multiplier*funding_mark*D(event["rate"])*(1 if position["side"] == "long" else -1)
+                cash -= payment
+                funding_paid += payment
+                position["funding"] = position.get("funding", D(0))+payment
+                funding_ledger.append({"time": event["time"], "rate": event["rate"], "markPrice": float(funding_mark), "payment": float(payment), "side": position["side"]})
+            pending_funding = next(funding_events, None)
+
     for i, row in enumerate(frame.itertuples()):
         base, mark = D(row.open), D(row.close)
         now = int(frame.index[i].value // 1_000_000)
+        settle_funding(now)
         eligible = i - delay >= warmup and i >= delay and int(frame.index[i-delay].value // 1_000_000) >= evaluation_from
         if position and eligible and (lx[i] if position["side"] == "long" else sx[i]):
             close(i, base, "strategy_signal")
@@ -107,13 +138,23 @@ def simulate(frame, signals, config, evidence=None):
             if position:
                 record(i, side, "entry", "ignored", "position_already_open_no_pyramiding_or_reversal")
                 continue
-            execution = price(base, side == "long")
+            budget = max(D(0), cash) * D(config["allocation"])
+            estimate = budget / (base * multiplier * (1 + fee_rate))
+            if dynamic:
+                volume = float(volumes.iloc[i])
+                if not math.isfinite(volume) or volume <= 0: raise ValueError("Impact needs 20 prior positive-volume candles; enable automatic warm-up")
+                cap = D(volume) * D(PARTICIPATION[config.get("liquidityTier", "small")]) / (1 if config["provider"] == "gateio" else multiplier)
+                estimate = min(estimate, cap)
+            quantity = (estimate / step).to_integral_value(rounding=ROUND_FLOOR) * step
+            execution = price(base, side == "long", i, quantity)
             if execution <= 0:
                 record(i, side, "entry", "rejected", "nonpositive_execution_price")
                 continue
             budget = max(D(0), cash) * D(config["allocation"])
             raw_quantity = budget / (execution * multiplier * (1 + fee_rate))
+            if dynamic: raw_quantity = min(raw_quantity, estimate)
             quantity = (raw_quantity / step).to_integral_value(rounding=ROUND_FLOOR) * step
+            execution = price(base, side == "long", i, quantity)
             notional = quantity * execution * multiplier
             entry_fee = notional * fee_rate
             if quantity < D(config.get("minimumQuantity", step)) or quantity <= 0 or notional < D(config.get("minimumNotional", 0)) or cash <= 0 or notional + entry_fee > cash:
@@ -126,6 +167,10 @@ def simulate(frame, signals, config, evidence=None):
             fees += entry_fee
             position = {"side": side, "time": now, "price": execution, "quantity": quantity, "fee": entry_fee, "account": account}
             record(i, side, "entry", "filled", "strategy_signal", quantity, base, execution, entry_fee, raw_quantity)
+        # Include settlements inside this candle, including the final candle.
+        # Exact next-open settlements belong before the next bar's orders.
+        interval_ms = int((frame.index[1].value-frame.index[0].value)//1_000_000)
+        settle_funding(now + interval_ms - 1)
         if position:
             exposure += 1
             if config.get("closeAtEnd") and i == len(frame) - 1:
@@ -134,20 +179,21 @@ def simulate(frame, signals, config, evidence=None):
         equity = cash + reserved + unrealized
         equity_values.append(float(equity))
         states.append({"time": now, "cash": float(cash), "reservedCapital": float(reserved), "holdings": float(position["quantity"] * (1 if position["side"] == "long" else -1)) if position else 0,
-                       "realizedPnl": float(realized), "unrealizedPnl": float(unrealized), "fees": float(fees), "equity": float(equity)})
+                       "realizedPnl": float(realized), "unrealizedPnl": float(unrealized), "fees": float(fees), "fundingPaid": float(funding_paid), "equity": float(equity)})
     if position:
         mark = D(frame.close.iloc[-1])
-        pnl = (1 if position["side"] == "long" else -1) * (mark - position["price"]) * position["quantity"] * multiplier - position["fee"]
+        pnl = (1 if position["side"] == "long" else -1) * (mark - position["price"]) * position["quantity"] * multiplier - position["fee"] - position.get("funding", D(0))
         entry_value = reserved + position["fee"]
         trades.append({"id": str(len(trades)), "side": position["side"], "entryTime": position["time"], "exitTime": None,
                        "entryPrice": float(position["price"]), "exitPrice": float(mark), "quantity": float(position["quantity"]), "pnl": float(pnl),
                        "return": float(pnl / entry_value), "accountReturn": float(pnl / position["account"]) if position["account"] > 0 else None,
                        "fees": float(position["fee"]), "status": "open"})
     if evidence is not None:
-        evidence.update(accounts=states, orders=orders, fills=fills)
+        evidence.update(accounts=states, orders=orders, fills=fills, funding=funding_ledger)
     equity = pd.Series(equity_values, index=frame.index, dtype=float)
     if not np.isfinite(equity.to_numpy()).all(): raise ValueError("Simulation produced non-finite equity")
-    return equity, trades, exposure / len(frame)
+    scored_bars = int((frame.index >= pd.Timestamp(evaluation_from, unit="ms", tz="UTC")).sum())
+    return equity, trades, exposure / max(1, scored_bars)
 
 
 def resolve_parameters(declared, supplied):
@@ -164,12 +210,20 @@ def resolve_parameters(declared, supplied):
     return resolved
 
 
+def strategy_parameters(namespace, supplied, inspected):
+    declared = namespace.get("PARAMETERS", {})
+    if declared and set(supplied)-set(inspected["parameters"]): raise ValueError("Undeclared strategy parameters")
+    params = resolve_parameters(declared, {k: v for k, v in supplied.items() if k in declared} if declared else supplied)
+    return {**inspected["resolvedParams"], **params}
+
+
 def execute(request, stage=lambda value: None):
     stage("validating")
     interval = validate(request)
-    code = compile(request["source"], "strategy.py", "exec")
+    code, inspected = compile_strategy(request["source"], request.get("params", {}), request["config"].get("guardrails", False))
     stage("loading_data")
     config, dataset = request["config"], request["dataset"]
+    if config.get("executionModel") == "synthetic_next_open_v2": validate_execution(config, request.get("instrument", {}))
     if config.get("executionModel") == "synthetic_next_open_v2":
         seed = config.get("strategySeed", 42)
         random.seed(seed)
@@ -179,7 +233,8 @@ def execute(request, stage=lambda value: None):
     # A stable numeric dtype avoids recompiling vectorbt kernels for integer OHLC fixtures.
     frame = frame.astype("float64")
     if config.get("executionModel") == "synthetic_next_open_v2" and config.get("reserveHoldout"):
-        frame = frame.iloc[:int(len(frame)*.8)]
+        prefix = int(frame.index.searchsorted(pd.Timestamp(config.get("evaluationFrom", config["from"]), unit="ms", tz="UTC")))
+        frame = frame.iloc[:prefix+int((len(frame)-prefix)*.8)]
         if len(frame) < 2: raise ValueError("Reserve holdout requires more history")
     effective_to = int(frame.index[-1].value // 1_000_000) + interval
     # Retain engine-owned values: user code may mutate only its own copy.
@@ -190,8 +245,7 @@ def execute(request, stage=lambda value: None):
         exec(code, namespace)
         if not callable(namespace.get("strategy")):
             raise ValueError("Define strategy(data, params) returning zterminal.Strategy")
-        declared = namespace.get("PARAMETERS", {})
-        params = resolve_parameters(declared, request.get("params", {}))
+        params = strategy_parameters(namespace, request.get("params", {}), inspected)
         strategy = namespace["strategy"](frame.copy(deep=True), params)
     if not isinstance(strategy, zt.Strategy):
         raise TypeError("Unsupported output: strategy must return zterminal.Strategy; no strategy is substituted")
@@ -225,7 +279,11 @@ def execute(request, stage=lambda value: None):
     # All signals move one full bar. Final-bar signals have no manufactured fill.
     shifted = [s.shift(config.get("executionDelayBars", 1), fill_value=False) for s in (le, lx, se, sx)]
     evidence = {}
-    equity, trades, exposure = simulate(frame, shifted, config, evidence)
+    if config.get("guardrails") and len(frame) >= 6:
+        from research_analysis import prefix_checks
+        checked = prefix_checks({"source": request["source"], "config": config, "params": params, "dataset": {**dataset, "bars": dataset["bars"][:len(frame)]}}, lambda _value: None)
+        if checked["status"] == "failed": raise ValueError("Future-dependent strategy output detected at sampled historical prefixes. Remove full-sample/future calculations before running.")
+    equity, trades, exposure = simulate(frame, shifted, config, evidence, request.get("fundingData"))
     evaluation_from = config.get("evaluationFrom", config["from"])
     scoring_equity = equity[equity.index >= pd.Timestamp(evaluation_from, unit="ms", tz="UTC")]
     metrics, _, drawdowns, monthly, observations = analytics.report(scoring_equity, config["initialCapital"], trades, evaluation_from, effective_to, exposure)
@@ -247,6 +305,12 @@ def execute(request, stage=lambda value: None):
         if config.get("closeAtEnd"):
             sell = (d(frame.close.iloc[-1])*(1-costs)/tick).to_integral_value(rounding=ROUND_FLOOR)*tick
             benchmark.iloc[-1] = float(cash_left+quantity*sell*mult*(1-rate))
+    if config.get("impactModel") == "atr_volume_v1" or config.get("fundingMode") == "historical":
+        first = max(config.get("warmupBars", 0)+config.get("executionDelayBars", 1), int(frame.index.searchsorted(pd.Timestamp(evaluation_from, unit="ms", tz="UTC")))+config.get("executionDelayBars", 1))
+        entry = pd.Series(False, index=frame.index)
+        if first < len(frame): entry.iloc[first] = True
+        flat = pd.Series(False, index=frame.index)
+        benchmark, _, _ = simulate(frame, (entry, flat, flat, flat), {**config, "allocation": 1}, funding_data=request.get("fundingData"))
     result = {"version": 1, "id": str(uuid.uuid4()), "createdAt": int(time.time() * 1000),
               "name": str(request.get("name", "Untitled"))[:120], "source": request["source"],
               "sourceHash": hashlib.sha256(request["source"].encode()).hexdigest(), "inputHash": digest(input_record(request)),
@@ -264,6 +328,8 @@ def execute(request, stage=lambda value: None):
                               "Benchmark is passive price return from the first open, before costs.",
                               "Risk ratios use complete UTC daily returns, a 365-day crypto calendar and zero risk-free/target return.",
                               "User code can introduce look-ahead bias; the engine shifts signals but cannot validate the logic of arbitrary Python."]}
+    if "fundingData" in request: result["fundingData"] = request["fundingData"]
+    if config.get("guardrails") or config.get("autoWarmup"): result["scriptInspection"] = inspected
     if dataset.get("version") == 2:
         result["context"] = request["context"]
         result["assumptions"].extend([
@@ -276,7 +342,7 @@ def execute(request, stage=lambda value: None):
         if "instrument" in request: result["instrument"] = request["instrument"]
         result["dailyReturns"] = analytics.daily_returns(scoring_equity, config["initialCapital"], evaluation_from, effective_to)
         result["benchmarkDailyReturns"] = analytics.daily_returns(benchmark.loc[scoring_equity.index], config["initialCapital"], evaluation_from, effective_to)
-        result["engine"]["helper"] = "1.1.0-preview.1"
+        result["engine"]["helper"] = "1.2.0-preview.1"
         result["quality"] = {"status": "complete", "requestedBars": len(frame), "actualBars": len(frame), "findings": [], "actualFrom": int(frame.index[0].value // 1_000_000), "actualTo": config["to"], "executionTo": effective_to, "holdoutReserved": bool(config.get("reserveHoldout"))}
         result["assumptions"] = ["Synthetic unlevered long/short OHLCV research; provider perpetual prices do not model perpetual execution.",
             "Free cash plus reserved entry notional plus unrealized P&L equals equity; short proceeds are unavailable.",
@@ -290,6 +356,15 @@ def execute(request, stage=lambda value: None):
                        fees=analytics.metric(evidence["accounts"][-1]["fees"]), turnover=analytics.metric(sum(fill["price"] * fill["quantity"] * config["multiplier"] for fill in evidence["fills"]) / config["initialCapital"]))
         for key in ("slippageCost", "spreadCost", "tickRoundingCost"):
             metrics[key] = analytics.metric(sum(fill[key] for fill in evidence["fills"]))
+        if config.get("impactModel") == "atr_volume_v1":
+            result["assumptions"] = [a.replace("all capital to buy-and-hold", "up to all capital at the first eligible open to buy-and-hold, respecting the same participation cap") for a in result["assumptions"]]
+            result["assumptions"].append("ATR/volume square-root impact uses only prior completed candles; coefficient 0.5 is a scenario assumption, not calibrated millisecond liquidity. Entry participation cap: "+str(PARTICIPATION[config.get("liquidityTier", "small")])+" of trailing mean volume. Existing exits are not capped.")
+        if config.get("fundingMode") == "historical":
+            result["assumptions"] = [a.replace("borrowing, funding or liquidation", "borrowing or liquidation") for a in result["assumptions"]]
+            result["assumptions"].append("Recorded funding is charged to positions held before settlement. Gate marks use a prior closed-candle proxy. Historical fee-tier changes, liquidation and margin are not modeled.")
+            metrics["fundingCost"] = analytics.metric(float(sum(e["payment"] for e in evidence["funding"])))
+        if config.get("autoWarmup"):
+            result["assumptions"].append("Warm-up precedes the scored start and cannot trade. Recognized exponential seed weight is bounded by 1e-6; arbitrary Python lookbacks cannot be inferred completely.")
         from research_analysis import assess
         result["assessment"] = assess(result)
         result["evidenceHash"] = digest({k: v for k, v in result.items() if k not in ("id", "createdAt")})

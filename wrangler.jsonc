@@ -19,7 +19,7 @@
     "NEXTAUTH_URL_INTERNAL": "https://zterminal.dpdns.org",
     "AUTH_TRUST_HOST": "true",
     "ZTERMINAL_HELPER_RELEASE_ALLOWED_HOSTS": "github.com",
-    "ZTERMINAL_HELPER_RELEASE_MANIFEST_JSON": "{\"version\":\"1.1.0-preview.1\",\"format\":\"portable-zip\",\"platform\":\"windows\",\"architecture\":\"x64\",\"protocol\":1,\"researchSchemas\":[1,2],\"features\":[\"synthetic_next_open_v2\",\"research_analyses_v1\",\"indicator_dataset_v2\"],\"sha256\":\"9d0c509683d34614207a9c46e6f600b38b2f8d05f2d4d86232b687ee0ad610a9\",\"bytes\":180295527,\"download_url\":\"https://github.com/zephyriaa/zterminal/releases/download/helper-v1.1.0-preview.1/zterminal-helper-1.1.0-preview.1-windows-x64.zip\"}"
+    "ZTERMINAL_HELPER_RELEASE_MANIFEST_JSON": "{\"version\":\"1.2.0-preview.1\",\"format\":\"portable-zip\",\"platform\":\"windows\",\"architecture\":\"x64\",\"protocol\":1,\"researchSchemas\":[1,2],\"features\":[\"synthetic_next_open_v2\",\"research_analyses_v1\",\"indicator_dataset_v2\",\"script_inspection_v1\",\"local_market_data_v1\",\"adaptive_execution_v1\",\"strategy_health_v1\"],\"sha256\":\"4b6e0e82acbf11489846a928db75ee98fb115ba9187b0cec60b8c3be192cbc40\",\"bytes\":177966673,\"download_url\":\"https://github.com/zephyriaa/zterminal/releases/download/helper-v1.2.0-preview.1/zterminal-helper-1.2.0-preview.1-windows-x64.zip\"}"
   },
   "assets": {
     "directory": ".open-next/assets",

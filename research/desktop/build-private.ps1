@@ -1,4 +1,4 @@
-param([string]$RuntimePath = "out/research-runtime", [string]$OutputPath = "out/zterminal-helper-1.1.0-preview.1-windows-x64")
+param([string]$RuntimePath = "out/research-runtime", [string]$OutputPath = "out/zterminal-helper-1.2.0-preview.1-windows-x64")
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $runtimeRoot = [IO.Path]::GetFullPath((Join-Path $repoRoot $RuntimePath))
@@ -14,7 +14,7 @@ New-Item -ItemType Directory -Path (Join-Path $packageRoot 'app') -Force | Out-N
 & robocopy.exe $runtimeRoot (Join-Path $packageRoot 'runtime') /E /MT:8 /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD __pycache__ /XF *.pyc
 if ($LASTEXITCODE -ge 8) { throw "Runtime copy failed with robocopy exit code $LASTEXITCODE." }
 # Keep native-workstation research entry points out of the browser Helper package.
-@('analytics.py', 'archive.py', 'child.py', 'controller.py', 'engine.py', 'research_analysis.py', 'process_limits.py', 'server.py', 'validation.py', 'zterminal.py') | ForEach-Object { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $_) -Destination (Join-Path $packageRoot 'app') }
+@('analytics.py', 'archive.py', 'child.py', 'controller.py', 'engine.py', 'research_analysis.py', 'script_inspection.py', 'research_market.py', 'execution_models.py', 'process_limits.py', 'server.py', 'validation.py', 'zterminal.py') | ForEach-Object { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $_) -Destination (Join-Path $packageRoot 'app') }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'requirements.lock'), (Join-Path $PSScriptRoot 'README.md'), (Join-Path $PSScriptRoot 'LICENSE.txt'), (Join-Path $PSScriptRoot 'THIRD-PARTY-NOTICES.md'), (Join-Path $PSScriptRoot 'VECTORBT-LICENSE.md') -Destination $packageRoot
 New-Item -ItemType Directory -Path (Join-Path $packageRoot 'docs/licenses') -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $repoRoot 'docs/licenses/MIT-legacy.txt') -Destination (Join-Path $packageRoot 'docs/licenses')

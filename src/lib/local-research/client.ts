@@ -1,7 +1,7 @@
-import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest, type ResearchAnalysis } from "./contracts";
+import { HELPER_URL, RESEARCH_PROTOCOL, type CodeArtifact, type Dataset, type IndicatorEvaluationRequest, type IndicatorEvaluationResult, type ResearchConfig, type ScriptRecord, type ResearchJob, type ResearchResult, type RunRequest, type ResearchAnalysis, type ScriptInspection, type ResearchInstrument, type FundingData, type Diagnostic } from "./contracts";
 
 export class HelperError extends Error {
-  constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed") { super(message); }
+  constructor(message: string, public code: "unavailable" | "permission_denied" | "unpaired" | "invalid_code" | "incompatible" | "request_failed", public diagnostic?: Diagnostic) { super(message); }
 }
 const RETIRED_TOKEN_KEY = "zterminal.local-research.token.v1";
 let memoryToken: string | null = null;
@@ -23,11 +23,11 @@ export async function helperRequest<T>(path: string, method = "GET", body?: unkn
     } catch (permissionError) { if (permissionError instanceof HelperError) throw permissionError; }
     throw new HelperError("Cannot reach the local helper. Start ZTerminal Research Helper on this Windows computer. If it is running, check this site's local network permission.", "unavailable");
   }
-  const payload = await response.json().catch(() => ({})) as { error?: string };
+  const payload = await response.json().catch(() => ({})) as { error?: string; diagnostic?: Diagnostic };
   if (!response.ok) {
     if (path === "pair" && [400, 401, 403].includes(response.status)) throw new HelperError("That connection code is invalid or expired. Open ZTerminal Helper and copy a new code.", "invalid_code");
     if ([401, 403].includes(response.status)) throw new HelperError("ZTerminal Helper needs to be paired with this browser session.", "unpaired");
-    throw new HelperError(typeof payload.error === "string" ? payload.error.slice(0, 2000) : "ZTerminal Helper could not complete that request. Check its logs and retry.", "request_failed");
+    throw new HelperError(typeof payload.error === "string" ? payload.error.slice(0, 2000) : "ZTerminal Helper could not complete that request. Check its logs and retry.", "request_failed", payload.diagnostic);
   }
   return payload as T;
 }
@@ -42,6 +42,10 @@ export async function pairHelper(code: string) {
   memoryToken = result.token;
 }
 export const helper = {
+  inspect: (source: string, params: Record<string, number | string | boolean>, signal?: AbortSignal) => helperRequest<ScriptInspection>("inspect", "POST", { source, params }, signal),
+  instrument: (provider: string, symbol: string, signal?: AbortSignal) => helperRequest<ResearchInstrument>("market-data", "POST", { action: "instrument", provider, symbol }, signal),
+  history: (config: ResearchConfig, signal?: AbortSignal) => helperRequest<Dataset>("market-data", "POST", { action: "history", provider: config.provider, symbol: config.symbol, timeframe: config.timeframe, from: config.from, to: config.to }, signal ? AbortSignal.any([signal, AbortSignal.timeout(200_000)]) : AbortSignal.timeout(200_000)),
+  funding: (config: ResearchConfig, signal?: AbortSignal) => helperRequest<FundingData>("market-data", "POST", { action: "funding", provider: config.provider, symbol: config.symbol, timeframe: config.timeframe, from: config.from, to: config.to }, signal ? AbortSignal.any([signal, AbortSignal.timeout(200_000)]) : AbortSignal.timeout(200_000)),
   holdoutUsage: (id: string) => helperRequest<{ id: string; fingerprint: string; created: number; count: number }[]>(`results/${encodeURIComponent(id)}/holdout-usage`),
   analyses: (id: string) => helperRequest<ResearchAnalysis[]>(`results/${encodeURIComponent(id)}/analyses`),
   researchAnalysis: (id: string, kind: ResearchAnalysis["kind"], options: Record<string, unknown> = {}, selectionId?: string) => helperRequest<ResearchJob>(`results/${encodeURIComponent(id)}/analyses`, "POST", { kind, options, selectionId }),
