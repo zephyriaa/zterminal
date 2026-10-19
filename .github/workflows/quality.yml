@@ -31,6 +31,8 @@ jobs:
           rm -f /tmp/zterminal-ci.db
           npx prisma migrate deploy
       - name: Run automated tests
+        env:
+          DATABASE_URL: file:/tmp/zterminal-ci.db
         run: npm test
       - name: Typecheck
         run: npm run typecheck

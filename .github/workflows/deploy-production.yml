@@ -37,7 +37,14 @@ jobs:
       - name: Run TypeScript typecheck
         run: npm run typecheck
 
+      - name: Prepare isolated test database
+        env:
+          DATABASE_URL: file:/tmp/zterminal-release-ci.db
+        run: npx prisma migrate deploy
+
       - name: Run Node test suite
+        env:
+          DATABASE_URL: file:/tmp/zterminal-release-ci.db
         run: npm test
 
       - name: Install Python dependencies
