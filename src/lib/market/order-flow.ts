@@ -1,7 +1,8 @@
 import type { DepthLevel, DerivativesEvent, TradeEvent } from "./types";
+import { tradeNotional } from "./trade-units";
 
 /** Every UI metric and event produced by this module should disclose this identifier. */
-export const ORDER_FLOW_CALCULATION_VERSION = "p0.1.0";
+export const ORDER_FLOW_CALCULATION_VERSION = "p0.1.1";
 
 export type TradeSideFilter = "buy" | "sell" | "all";
 
@@ -96,12 +97,27 @@ export type ResearchEventOptions = {
   tickSize: number;
 };
 
+export function validateObservedTrades(trades: readonly TradeEvent[]) {
+  if (trades.some(trade => ![trade.timestamp, trade.price, trade.quantity].every(Number.isFinite) || trade.timestamp < 0 || trade.price <= 0 || trade.quantity <= 0 || !["buy", "sell"].includes(trade.side))) throw new Error("Invalid observed trade; order-flow calculation is unavailable.");
+}
+
 function chronological(trades: readonly TradeEvent[]) {
+  validateObservedTrades(trades);
   return [...trades].sort((a, b) => a.timestamp - b.timestamp || (a.sequence ?? 0) - (b.sequence ?? 0));
+}
+
+function validateDepth(depth: readonly DepthLevel[]) {
+  if (depth.some(level => !Number.isFinite(level.price) || level.price <= 0 || !Number.isFinite(level.size) || level.size < 0 || !["buy", "sell"].includes(level.side))) throw new Error("Invalid observed depth; order-flow calculation is unavailable.");
 }
 
 function quantity(trade: TradeEvent) {
   return Number.isFinite(trade.quantity) && trade.quantity > 0 ? trade.quantity : 0;
+}
+
+function notional(trade: TradeEvent) {
+  const value = tradeNotional(trade);
+  if (value == null) throw new Error("Quote notional is unavailable without verified quantity units and contract multiplier.");
+  return value;
 }
 
 function stablePriceBin(price: number, tickSize: number) {
@@ -120,7 +136,7 @@ export function buildTradeTape(trades: readonly TradeEvent[], options: TradeTape
   const minimumNotional = Math.max(0, options.minimumNotional ?? 0);
   const aggregationWindowMs = Math.max(0, options.aggregationWindowMs ?? 0);
   const rows = chronological(trades)
-    .filter((trade) => (side === "all" || trade.side === side) && quantity(trade) >= minimumQuantity && trade.price * quantity(trade) >= minimumNotional);
+    .filter((trade) => (side === "all" || trade.side === side) && quantity(trade) >= minimumQuantity && notional(trade) >= minimumNotional);
 
   if (!aggregationWindowMs) {
     return rows.map((trade) => ({
@@ -128,7 +144,7 @@ export function buildTradeTape(trades: readonly TradeEvent[], options: TradeTape
       side: trade.side,
       price: trade.price,
       quantity: quantity(trade),
-      notional: trade.price * quantity(trade),
+      notional: notional(trade),
       count: 1,
       firstSequence: trade.sequence,
       lastSequence: trade.sequence,
@@ -142,7 +158,7 @@ export function buildTradeTape(trades: readonly TradeEvent[], options: TradeTape
     const prior = grouped.get(key);
     if (prior) {
       prior.quantity += quantity(trade);
-      prior.notional += trade.price * quantity(trade);
+      prior.notional += notional(trade);
       prior.count += 1;
       prior.lastSequence = trade.sequence;
     } else {
@@ -151,7 +167,7 @@ export function buildTradeTape(trades: readonly TradeEvent[], options: TradeTape
         side: trade.side,
         price: trade.price,
         quantity: quantity(trade),
-        notional: trade.price * quantity(trade),
+        notional: notional(trade),
         count: 1,
         firstSequence: trade.sequence,
         lastSequence: trade.sequence,
@@ -234,20 +250,22 @@ export function buildFootprint(trades: readonly TradeEvent[], tickSize: number, 
 
 /** `(bid depth - ask depth) / (bid depth + ask depth)` across the requested nearest levels. */
 export function calculateBookImbalance(depth: readonly DepthLevel[], window = 5): BookImbalance {
+  validateDepth(depth);
   const levelCount = Math.max(1, Math.floor(window));
   const bids = depth.filter((level) => level.side === "buy").sort((a, b) => b.price - a.price).slice(0, levelCount);
   const asks = depth.filter((level) => level.side === "sell").sort((a, b) => a.price - b.price).slice(0, levelCount);
   const bidDepth = bids.reduce((total, level) => total + Math.max(0, level.size), 0);
   const askDepth = asks.reduce((total, level) => total + Math.max(0, level.size), 0);
   const denominator = bidDepth + askDepth;
-  return { value: denominator > 0 ? (bidDepth - askDepth) / denominator : null, bidDepth, askDepth, window: levelCount };
+  return { value: bidDepth > 0 && askDepth > 0 && bids[0].price < asks[0].price && denominator > 0 ? (bidDepth - askDepth) / denominator : null, bidDepth, askDepth, window: levelCount };
 }
 
 /** `ask × bid size/(bid size + ask size) + bid × ask size/(bid size + ask size)` from the top of verified L2. */
 export function calculateMicroprice(depth: readonly DepthLevel[]): Microprice {
+  validateDepth(depth);
   const bestBid = depth.filter((level) => level.side === "buy" && level.size > 0).sort((a, b) => b.price - a.price)[0];
   const bestAsk = depth.filter((level) => level.side === "sell" && level.size > 0).sort((a, b) => a.price - b.price)[0];
-  if (!bestBid || !bestAsk || bestBid.size + bestAsk.size <= 0) return { value: null };
+  if (!bestBid || !bestAsk || bestBid.price >= bestAsk.price || bestBid.size + bestAsk.size <= 0) return { value: null };
   return {
     value: bestAsk.price * (bestBid.size / (bestBid.size + bestAsk.size)) + bestBid.price * (bestAsk.size / (bestBid.size + bestAsk.size)),
     bestBid: { price: bestBid.price, size: bestBid.size },
@@ -292,14 +310,14 @@ export function detectResearchEvents(trades: readonly TradeEvent[], options: Res
   const priceRange = Math.max(...prices) - Math.min(...prices);
   const levels = new Set(active.map((trade) => stablePriceBin(trade.price, options.tickSize))).size;
   const delta = buyVolume - sellVolume;
-  const notional = active.reduce((sum, trade) => sum + trade.price * quantity(trade), 0);
+  const quoteNotional = active.reduce((sum, trade) => sum + notional(trade), 0);
   const source = {
     providerSequences: active.map((trade) => trade.sequence).filter((sequence): sequence is number => typeof sequence === "number"),
     tradeCount: active.length,
     rollingWindow: { from: now - windowMs, to: now, milliseconds: windowMs },
   };
   const thresholds = { minimumVolume, dominance, minimumLevels, maxAbsorptionRangeTicks, tickSize: options.tickSize };
-  const metrics = { buyVolume, sellVolume, delta, priceRange, notional };
+  const metrics = { buyVolume, sellVolume, delta, priceRange, notional: quoteNotional };
   const events: ResearchEvent[] = [];
   if (levels >= minimumLevels) {
     events.push({

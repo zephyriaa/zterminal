@@ -2,6 +2,7 @@ import copy
 import hashlib
 import http.client
 import json
+import sys
 from pathlib import Path
 import tempfile
 import threading
@@ -18,6 +19,22 @@ from test_engine import fixture
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_legacy_bootstrap_annotation_keeps_captured_inputs_and_valid_export_hash(self):
+        from analytics import monte_carlo
+        request = fixture()
+        request["source"] = request["source"].replace("zt.Strategy(i == 0, i == 2)", "zt.Strategy((i == 0) | (i == 2), (i == 1) | (i == 3))")
+        original = execute(request)
+        self.assertEqual(len(original["trades"]), 2)
+        self.archive.save_result(original)
+        changed = self.archive.save_monte_carlo(original["id"], monte_carlo(original, 100, 42))
+        for key in ("source", "sourceHash", "inputHash", "config", "dataset", "params", "trades", "equity"):
+            self.assertEqual(changed[key], original[key])
+        Archive.validate_result(changed)
+        self.assertEqual(changed["resultHash"], original["resultHash"])
+        other = Archive(Path(self.temp.name) / "legacy-import.sqlite3")
+        other.save_result(json.loads(encode(changed)))
+        self.assertEqual(other.result(changed["id"]), changed)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.path = Path(self.temp.name) / "archive.sqlite3"
@@ -100,6 +117,16 @@ class ArchiveTests(unittest.TestCase):
         self.archive.import_legacy(old)
         self.assertEqual(len(self.archive.legacy()), 1)
         self.assertEqual(self.archive.legacy()[0]["payload"], old)
+
+
+class InterpreterTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "win32", "Windows redirector policy")
+    def test_venv_is_rejected_before_creating_jobs(self):
+        with tempfile.TemporaryDirectory() as folder, patch("sys.prefix", sys.base_prefix + "-venv"):
+            root = Path(folder) / "jobs"
+            with self.assertRaisesRegex(RuntimeError, "out/research-runtime/python.exe"):
+                Controller(None, root)
+            self.assertFalse(root.exists())
 
 
 class APITests(unittest.TestCase):
@@ -234,6 +261,42 @@ class ProcessTests(unittest.TestCase):
         second_status = self.wait(second)
         self.assertEqual(second_status["stage"], "complete", second_status)
 
+    def test_status_read_sharing_violation_keeps_job_running(self):
+        read_text = Path.read_text
+        injected = []
+        def read(path, *args, **kwargs):
+            if path.name == "status.json" and not injected:
+                injected.append(True)
+                error = PermissionError(13, "status replacement in progress")
+                error.winerror = 32
+                raise error
+            return read_text(path, *args, **kwargs)
+        with patch.object(Path, "read_text", read):
+            completed = self.wait(self.controller.create(fixture("import time\nimport zterminal as zt\ndef strategy(data, params):\n    time.sleep(.5)\n    return zt.Strategy(data.close < 0, data.close < 0)")))
+        self.assertTrue(injected)
+        self.assertEqual(completed["stage"], "complete", completed)
+
+    def test_indicator_cache_binds_market_outputs_and_validates_data_before_reuse(self):
+        source = "import zterminal as zt\nPARAMETERS={'length':zt.input.integer(2,min=1,max=20)}\ndef calculate(data, params):\n    return {'ema':zt.ema(data.close,params['length'])}"
+        artifact = self.archive.save_artifact({"kind": "indicator", "name": "Bound EMA", "source": source})
+        request = fixture(source)
+        request.update(operation="indicator", artifact={"id": artifact["id"], "kind": "indicator", "revision": artifact["revision"]}, outputs={})
+        first = self.wait(self.controller.create(request))
+        self.assertEqual(first["stage"], "complete", first)
+        self.assertEqual(self.controller.create(request)["resultId"], first["resultId"])
+        other = copy.deepcopy(request)
+        for value in (other["config"], other["dataset"]): value["symbol"] = "ETH_USDT"
+        second = self.wait(self.controller.create(other))
+        self.assertEqual(second["stage"], "complete", second)
+        self.assertNotEqual(second["resultId"], first["resultId"])
+        other["outputs"] = {"ema": {"plot": "histogram"}}
+        styled = self.wait(self.controller.create(other))
+        self.assertNotEqual(styled["resultId"], second["resultId"])
+        self.assertEqual(self.archive.indicator_evaluation(styled["resultId"])["outputs"]["ema"]["plot"], "histogram")
+        altered = copy.deepcopy(request); altered["dataset"]["bars"][0]["c"] += .1
+        with self.assertRaisesRegex(ValueError, "SHA-256"):
+            self.controller.create(altered)
+
     def test_one_job_and_cancellation(self):
         request = fixture("while True:\n    pass")
         job = self.controller.create(request)
@@ -260,6 +323,27 @@ class ProcessTests(unittest.TestCase):
             status = self.wait(job)
         self.assertEqual(status["stage"], "failed")
         self.assertIn("disk full", status["diagnostic"]["message"])
+        self.assertEqual(self.archive.results(), [])
+
+    def test_cancel_before_archive_commit_does_not_publish_result(self):
+        save = self.archive.save_job
+        def cancel_at_commit(job):
+            save(job)
+            if job["stage"] == "saving_result":
+                self.controller.cancel(job["id"])
+        with patch.object(self.archive, "save_job", side_effect=cancel_at_commit):
+            status = self.wait(self.controller.create(fixture()))
+        self.assertEqual(status["stage"], "cancelled", status)
+        self.assertEqual(self.archive.results(), [])
+
+    def test_wall_timeout_and_child_process_limit_never_archive_success(self):
+        self.controller.timeout = .05
+        status = self.wait(self.controller.create(fixture("while True:\n    pass")))
+        self.assertEqual(status["stage"], "failed", status)
+        self.assertIn("wall-clock limit", status["diagnostic"]["message"])
+        self.controller.timeout = 180
+        status = self.wait(self.controller.create(fixture("import subprocess, sys\nsubprocess.run([sys.executable, '-c', 'raise SystemExit(0)'], check=True)")))
+        self.assertEqual(status["stage"], "failed", status)
         self.assertEqual(self.archive.results(), [])
 
 

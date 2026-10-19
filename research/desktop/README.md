@@ -1,4 +1,4 @@
-# ZTerminal Research Helper — Windows x64 preview 1.0.0-preview.4
+# ZTerminal Research Helper — Windows x64 preview 1.1.0-preview.1
 
 This is an unsigned preview, distributed as a complete portable ZIP. It is separate from the ZTerminal Windows workstation. SHA-256 checksums establish file integrity; they do not establish a publisher signature or an independent security review.
 
@@ -26,6 +26,44 @@ Use CPython **3.12.10 Windows x64 embedded ZIP** from `https://www.python.org/ft
 
 Run `out/research-runtime/python.exe -m unittest discover -s research/desktop -p "test_*.py" -v`. Build with `powershell -ExecutionPolicy Bypass -File research/desktop/build-private.ps1`. The build verifies Python/vectorbt versions, includes dependency license metadata, compiles the GUI launcher, records file hashes, and produces an ignored private ZIP. It does not upload or publish it.
 
+For a source service, run `out/research-runtime/python.exe -B research/desktop/server.py` (use `--data-dir` for a disposable test archive). Windows venv redirectors need a second Python process and are rejected before supervised jobs are created; the one-process, memory and CPU limits remain in force. `.venv-research` is for the separate research API tests, not the browser Helper supervisor.
+
 Standard SDK strategies avoid per-run vectorbt portfolio compilation. A cached two-year hourly example is measured separately from data download and first initialization. Strategies that import vectorbt directly can still compile kernels on first use. Jobs have a 180-second wall limit, 120-second CPU limit, 2 GB memory limit and one-process Windows Job Object. Only one job runs at a time. A stopped process or disk failure cannot create a successful result.
+
+## Synthetic research extension
+
+The browser selects `synthetic_next_open_v2` with `researchSchema: 2` results.
+Legacy and native CSV/spot contracts remain supported. Synthetic long/short
+entries reserve notional, and cash + reserved capital + unrealized P&L = equity.
+Decimal sizing, adverse tick rounding, minimum sizes, spread separate from
+slippage, per-fill fees and explanatory order/fill ledgers are retained. Stops,
+targets, limits, margin, funding, borrowing and liquidation remain unsupported.
+
+By default the last 20% is reserved before user Python runs. Dataset coverage and
+executed coverage are shown separately. Training-only bounded-grid selection,
+chronological validation and expanding walk-forward folds freeze the parameter
+selection before an explicit final-holdout request. All holdout requests count,
+including failed/cancelled ones. Unreserved earlier backtests expose the holdout.
+
+Research artifacts are immutable, separately hashed records linked to the base
+result. The `/v1/results/:id/analyses` endpoint supports validation, holdout and
+Monte Carlo jobs. JSON research bundles retain these artifacts with the source
+and dataset and import without executing Python. The legacy IID endpoint remains
+available for old clients.
+
+Research-analysis jobs permit 1800 seconds wall, 1200 seconds CPU, 2 GB memory and
+one process. Limits include 100 grid combinations, two million evaluated bars and
+ten million sampled observations including block-length sensitivity. Progress
+and cancellation use the existing job lifecycle. These are resource limits, not
+a secure sandbox. Complete semantics and assessment rules are documented at
+`/docs/python-research` and in the implementation ledger. MultiCharts comparison,
+publisher signing and public deployment have not been performed.
+
+Saved Python indicator evaluations retain their dataset and bind cache identity to
+the saved artifact revision, source, supplied parameters, output definitions and
+exact market/range/candle identity. Current web clients require the
+`indicator_dataset_v2` capability. Older evaluations remain readable, but must be
+evaluated again before chart reuse. A saved evaluation displays only against
+matching captured candles; changing the chart does not recalculate Python.
 
 Keep the complete package and its license notices together. See THIRD-PARTY-NOTICES.md and VECTORBT-LICENSE.md.

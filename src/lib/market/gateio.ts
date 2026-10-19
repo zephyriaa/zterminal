@@ -1,3 +1,5 @@
+import { alignToTimeframe } from "./session";
+import { normalizeChartBars } from "./chart-data";
 import { z } from "zod";
 import { TIMEFRAME_SECONDS, type Bar, type ContractMetadata, type Timeframe } from "./types";
 
@@ -10,7 +12,6 @@ export const GATEIO_DEFAULT_SYMBOL = "BTC_USDT";
 const ALIASES: Record<string, string> = {
   BTC_USDT: "BTC_USDT",
   BTCUSDT: "BTC_USDT",
-  "BINANCE:BTCUSDT": "BTC_USDT",
   QQQX_USDT: "QQQX_USDT",
   QQQXUSDT: "QQQX_USDT",
   "QQQXUSDT.P": "QQQX_USDT",
@@ -23,6 +24,7 @@ export function normalizeGateioSymbol(input: string | null | undefined): string 
   if (!input) return null;
   const normalized = input.trim().toUpperCase();
   if (ALIASES[normalized]) return ALIASES[normalized];
+  if (/^[A-Z0-9]+-USDT$/.test(normalized)) return normalized.replace("-", "_");
   if (/^[A-Z0-9]+USDT$/.test(normalized)) return `${normalized.slice(0, -4)}_USDT`;
   return /^[A-Z0-9]+_USDT$/.test(normalized) ? normalized : null;
 }
@@ -53,6 +55,7 @@ export const GateContractSchema = z.object({
   order_size_max: z.union([z.string(), z.number()]).optional(),
   in_delisting: z.boolean().optional(),
   delisting_time: z.number().optional(),
+  enable_decimal: z.boolean().optional(),
 });
 
 export type GateContract = z.infer<typeof GateContractSchema>;
@@ -77,6 +80,8 @@ export function gateContractToMetadata(contract: GateContract): ContractMetadata
     session: "crypto",
     supportsDepth: true,
     supportsMBO: false,
+    quantityStep: contract.enable_decimal ? undefined : 1,
+    verified: contract.quanto_multiplier != null && contract.order_price_round != null,
   };
 }
 
@@ -98,19 +103,13 @@ export function gateCandleToBar(raw: unknown): Bar {
     h: parseGateDecimal(candle.h, "candle high"),
     l: parseGateDecimal(candle.l, "candle low"),
     c: parseGateDecimal(candle.c, "candle close"),
-    v: Math.abs(parseGateDecimal(candle.v, "candle volume")),
+    v: parseGateDecimal(candle.v, "candle volume"),
   };
 }
 
 /** Stable timestamp sort with duplicate timestamps replaced by the latest bar. */
 export function normalizeBars(bars: Bar[]): Bar[] {
-  const byTime = new Map<number, Bar>();
-  for (const bar of bars) {
-    if (Number.isFinite(bar.t) && [bar.o, bar.h, bar.l, bar.c, bar.v].every(Number.isFinite)) {
-      byTime.set(bar.t, bar);
-    }
-  }
-  return [...byTime.values()].sort((a, b) => a.t - b.t);
+  return normalizeChartBars(bars);
 }
 
 export function upsertBar(bars: Bar[], next: Bar, maxBars = 2_000): Bar[] {
@@ -137,13 +136,13 @@ export async function fetchGateioHistoricalBars(
 ): Promise<Bar[]> {
   const symbol = normalizeGateioSymbol(inputSymbol);
   if (!symbol) throw new Error(`unsupported Gate.io USDT perpetual symbol: ${inputSymbol}`);
-  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs >= toMs) {
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) {
     throw new Error("invalid historical candle range");
   }
 
   const intervalMs = TIMEFRAME_SECONDS[timeframe] * 1_000;
   const output: Bar[] = [];
-  let cursor = Math.floor(fromMs / intervalMs) * intervalMs;
+  let cursor = alignToTimeframe(fromMs, timeframe);
   let pages = 0;
 
   while (cursor <= toMs) {
@@ -155,10 +154,10 @@ export async function fetchGateioHistoricalBars(
     url.searchParams.set("contract", symbol);
     url.searchParams.set("interval", timeframe);
     url.searchParams.set("from", String(Math.floor(cursor / 1_000)));
-    url.searchParams.set("to", String(Math.floor(pageEnd / 1_000)));
+    url.searchParams.set("to", String(Math.floor((pageEnd === cursor ? pageEnd + intervalMs - 1 : pageEnd) / 1_000)));
 
     const response = await fetcher(url, { headers: { Accept: "application/json" }, cache: "no-store" });
-    if (!response.ok) throw new Error(`Gate.io historical candles failed (${response.status})`);
+    if (!response.ok) throw new Error(`Gate.io historical range unavailable (${response.status}); the venue limits retained candle history. Adjust the range or select another venue explicitly.`);
     const raw = await response.json();
     if (!Array.isArray(raw)) throw new Error("invalid Gate.io historical candle response");
     output.push(...raw.map(gateCandleToBar));

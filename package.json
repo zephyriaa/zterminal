@@ -5,9 +5,9 @@
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build && shx cp -r .next/static .next/standalone/.next/ && shx cp -r public .next/standalone/",
-    "build:production": "prisma generate --schema=prisma/schema.postgresql.prisma && next build && shx cp -r .next/static .next/standalone/.next/ && shx cp -r public .next/standalone/",
-    "cf:build": "prisma generate --schema=prisma/schema.postgresql.prisma && opennextjs-cloudflare build",
+    "build": "next build && shx cp -r .next/static .next/standalone/.next/ && shx cp -r public .next/standalone/ && node scripts/verify-monaco.mjs .next/standalone/public",
+    "build:production": "prisma generate --schema=prisma/schema.postgresql.prisma && node scripts/prepare-monaco.mjs && next build && shx cp -r .next/static .next/standalone/.next/ && shx cp -r public .next/standalone/ && node scripts/verify-monaco.mjs .next/standalone/public",
+    "cf:build": "prisma generate --schema=prisma/schema.postgresql.prisma && opennextjs-cloudflare build && node scripts/verify-monaco.mjs .open-next/assets",
     "cf:deploy": "npm run cf:build && opennextjs-cloudflare deploy",
     "start": "NODE_ENV=production node .next/standalone/server.js",
     "start:production": "bash scripts/start-production.sh",

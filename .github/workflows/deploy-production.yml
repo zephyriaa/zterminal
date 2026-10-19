@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "npm"
 
       - name: Setup Python 3.12
@@ -31,11 +31,14 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Generate Prisma client
+        run: npm run db:generate
+
       - name: Run TypeScript typecheck
         run: npm run typecheck
 
       - name: Run Node test suite
-        run: npm test
+        run: node --import tsx --test --test-concurrency=4 tests/*.test.ts
 
       - name: Install Python dependencies
         run: |
@@ -64,7 +67,7 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "npm"
 
       - name: Install dependencies
@@ -84,26 +87,3 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
           command: deploy --config wrangler.jsonc
-
-  deploy-backend-vps:
-    name: Update Backend Compute (OCI / VPS)
-    needs: test-and-build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Deploy to Remote Compute via SSH
-        if: ${{ env.SSH_HOST != '' }}
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER || 'ubuntu' }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script: |
-            cd ~/zterminal || git clone https://github.com/zephyriaa/zterminal.git ~/zterminal && cd ~/zterminal
-            git pull origin main
-            docker compose -f infrastructure/docker-compose.production.yml pull || true
-            docker compose -f infrastructure/docker-compose.production.yml up -d --build
-            curl -f http://localhost:8000/health || exit 1

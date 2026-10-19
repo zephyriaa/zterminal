@@ -12,7 +12,7 @@ export type ChartScaleMode = "normal" | "logarithmic" | "percentage";
 export interface InstrumentKey {
   provider: ProviderId;
   exchange: Exchange;
-  product: "perpetual" | "future" | "spot";
+  product: "perpetual" | "future" | "spot" | "equity" | "index";
   nativeSymbol: string;
 }
 
@@ -202,6 +202,7 @@ export interface IndicatorInstanceV2 {
   id: string;
   definitionId?: string;
   artifactId?: string;
+  artifactRevision?: number;
   name: string;
   inputs: Record<string, number | string | boolean>;
   outputs: IndicatorOutputStyle[];

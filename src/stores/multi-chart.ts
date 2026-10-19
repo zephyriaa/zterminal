@@ -49,7 +49,7 @@ export const useMultiChart = create<MultiChartState>()(
       syncSymbol: false,
       panes: DEFAULT_PANES,
 
-      setLayout: (layout) => set({ layout }),
+      setLayout: (layout) => set(state => ({ layout, activePaneIndex: state.activePaneIndex < (layout === "1" ? 1 : layout === "3" ? 3 : layout === "4" ? 4 : 2) ? state.activePaneIndex : 0 })),
 
       setActivePaneIndex: (activePaneIndex) => set({ activePaneIndex }),
 

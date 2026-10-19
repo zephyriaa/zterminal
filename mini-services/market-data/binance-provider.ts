@@ -86,6 +86,8 @@ export class BinanceFuturesProvider {
   private books = new Map<string, BinanceOrderBook>();
   private contractsBySymbol = new Map<string, ContractMetadata>();
   private lastEventAt = new Map<string, number>();
+  private lastDepthAt = new Map<string, number>();
+  private lastTradeAt = new Map<string, number>();
   private lastTradeSequence = new Map<string, number>();
   private lastDerivative = new Map<string, BinanceDerivativeEvent>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -93,8 +95,9 @@ export class BinanceFuturesProvider {
   private derivativesTimer: ReturnType<typeof setInterval> | null = null;
   private bookRetryTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private bookRetryAttempts = new Map<string, number>();
-  private rebuildingBooks = new Set<string>();
+  private rebuildingBooks = new Set<BinanceOrderBook>();
   private reconnectAttempt = 0;
+  private lastFrameAt = 0;
   private manuallyClosed = false;
   private lastStatus: ProviderStatus = "unavailable";
   private lastReason: string | undefined;
@@ -109,39 +112,31 @@ export class BinanceFuturesProvider {
     return [...this.contractsBySymbol.values()];
   }
 
-  /** A read-only, per-symbol provenance snapshot for downstream UI and health checks. */
   health(symbol: string): FeedHealth {
-    const normalized = symbol.toUpperCase();
-    const book = this.books.get(normalized);
-    const lastMessageAt = this.lastEventAt.get(normalized);
-    const state = this.lastStatus === "unavailable"
-      ? "UNAVAILABLE"
-      : this.lastStatus === "degraded"
-        ? "DEGRADED"
-        : this.lastStatus === "stale"
-          ? "STALE"
-          : this.lastStatus === "reconnecting"
-            ? "RESYNCING"
-            : book && !book.isReady()
-              ? "SYNCING"
-              : this.lastStatus === "live"
-                ? "LIVE"
-                : "DISCONNECTED";
-    return {
-      provider: "binance",
-      symbol: normalized,
-      state,
-      updatedAt: Date.now(),
-      lastMessageAt,
-      latencyMs: lastMessageAt ? Math.max(0, Date.now() - lastMessageAt) : undefined,
-      sequence: book?.lastSequence() ?? this.lastTradeSequence.get(normalized),
-      reconnectCount: this.reconnectAttempt,
-      reason: this.lastReason,
+    const book = this.books.get(symbol);
+    const lastMessageAt = this.lastEventAt.get(symbol);
+    const lastDepthAt = this.lastDepthAt.get(symbol);
+    const lastTradeAt = this.lastTradeAt.get(symbol);
+    const now = Date.now();
+    const connected = this.ws?.readyState === WebSocket.OPEN;
+    const state: FeedHealth["state"] = this.manuallyClosed || !this.symbols.has(symbol) ? "UNAVAILABLE"
+      : !connected ? "RESYNCING"
+      : lastMessageAt && now - lastMessageAt > STALE_AFTER_MS ? "STALE"
+      : !book?.isReady() ? "SYNCING"
+      : !lastDepthAt || now - lastDepthAt > STALE_AFTER_MS ? "STALE"
+      : !lastMessageAt ? "SYNCING" : "LIVE";
+    const transportState = this.manuallyClosed || !this.symbols.has(symbol) ? "UNAVAILABLE" as const : !connected ? "RESYNCING" as const : null;
+    const streams: NonNullable<FeedHealth["streams"]> = {
+      trades: { state: transportState ?? (!lastTradeAt ? "SYNCING" : now - lastTradeAt > 15000 ? "STALE" : "LIVE"), lastMessageAt: lastTradeAt },
+      depth: { state: transportState ?? (!book?.isReady() ? "SYNCING" : !lastDepthAt || now - lastDepthAt > 15000 ? "STALE" : "LIVE"), lastMessageAt: lastDepthAt, reason: !book?.isReady() ? "Waiting for a sequence-safe book" : undefined },
     };
+    return { streams, provider: "binance", symbol, state, updatedAt: now, lastMessageAt, lastDepthAt, depthReady: book?.isReady() ?? false,
+      latencyMs: lastMessageAt ? Math.max(0, now - lastMessageAt) : undefined, sequence: book?.lastSequence(), reconnectCount: this.reconnectAttempt,
+      reason: state === "LIVE" ? undefined : !connected ? "Upstream socket is not connected" : !book?.isReady() ? "Waiting for a sequence-safe book" : "Instrument messages or depth are not fresh" };
   }
 
   async discoverContracts() {
-    const response = await fetch(`${BINANCE_REST_URL}/fapi/v1/exchangeInfo`, { headers: { Accept: "application/json" } });
+    const response = await fetch(`${BINANCE_REST_URL}/fapi/v1/exchangeInfo`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
     if (!response.ok) throw new Error(`Binance exchange information failed (${response.status})`);
     const payload = asRecord(await response.json());
     const symbols = Array.isArray(payload?.symbols) ? payload.symbols : null;
@@ -173,8 +168,9 @@ export class BinanceFuturesProvider {
         session: "crypto",
         supportsDepth: true,
         supportsMBO: false,
+        quantityStep: lotSize,
+        verified: Boolean(lotFilter) && quoteAsset === "USDT",
       });
-      void lotSize; // retained as documented adapter metadata when canonical contract gains lot size.
     }
     const contracts = this.contracts();
     this.emit({ type: "contracts", contracts });
@@ -194,16 +190,20 @@ export class BinanceFuturesProvider {
 
   unsubscribe(symbol: string) {
     const normalized = symbol.toUpperCase();
+    const stream = normalized.toLowerCase();
+    this.send({ method: "UNSUBSCRIBE", params: [`${stream}@depth@100ms`, `${stream}@trade`, `${stream}@bookTicker`, `${stream}@markPrice@1s`, `${stream}@forceOrder`], id: ++this.requestId });
     this.symbols.delete(normalized);
     this.books.delete(normalized);
     this.lastEventAt.delete(normalized);
+    this.lastDepthAt.delete(normalized);
+    this.lastTradeAt.delete(normalized);
     this.lastTradeSequence.delete(normalized);
     this.lastDerivative.delete(normalized);
     const retryTimer = this.bookRetryTimers.get(normalized);
     if (retryTimer) clearTimeout(retryTimer);
     this.bookRetryTimers.delete(normalized);
     this.bookRetryAttempts.delete(normalized);
-    this.rebuildingBooks.delete(normalized);
+
     if (!this.symbols.size) this.disconnect();
   }
 
@@ -215,36 +215,47 @@ export class BinanceFuturesProvider {
     for (const retryTimer of this.bookRetryTimers.values()) clearTimeout(retryTimer);
     this.bookRetryTimers.clear();
     this.rebuildingBooks.clear();
-    this.ws?.close();
-    this.ws = null;
+    const previous = this.ws; this.ws = null;
+    previous?.close();
   }
 
   private connect() {
     if (this.manuallyClosed || this.ws) return;
     this.setStatus(this.reconnectAttempt ? "reconnecting" : "connecting");
-    this.ws = new WebSocket(BINANCE_WS_URL);
-    this.ws.on("open", () => {
+    const active = this.ws = new WebSocket(BINANCE_WS_URL);
+    active.on("open", () => {
+      if (this.ws !== active) return;
+      this.lastFrameAt = Date.now();
       this.reconnectAttempt = 0;
       for (const symbol of this.symbols) this.subscribeSymbol(symbol);
       this.ensureTimers();
     });
-    this.ws.on("message", (data) => {
+    active.on("message", (data) => {
+      if (this.ws !== active) return;
+      this.lastFrameAt = Date.now();
       try {
         this.handleMessage(JSON.parse(data.toString()) as RawRecord);
       } catch (error) {
         this.setStatus("degraded", error instanceof Error ? error.message : "invalid Binance upstream message");
       }
     });
-    this.ws.on("error", () => this.setStatus("degraded", "Binance WebSocket error"));
-    this.ws.on("close", () => {
+    active.on("pong", () => { if (this.ws === active) this.lastFrameAt = Date.now(); });
+    active.on("error", () => { if (this.ws === active) this.setStatus("degraded", "Binance WebSocket error"); });
+    active.on("close", () => {
+      if (this.ws !== active) return;
+      this.lastFrameAt = Date.now();
+      for (const book of this.books.values()) book.reset();
+      this.lastDepthAt.clear(); this.lastTradeAt.clear(); this.lastEventAt.clear();
       this.ws = null;
       if (!this.manuallyClosed && this.symbols.size) this.scheduleReconnect();
     });
   }
 
   private disconnect() {
-    this.ws?.close();
-    this.ws = null;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+    const previous = this.ws; this.ws = null;
+    previous?.close();
     if (this.staleTimer) clearInterval(this.staleTimer);
     if (this.derivativesTimer) clearInterval(this.derivativesTimer);
     this.staleTimer = null;
@@ -309,7 +320,13 @@ export class BinanceFuturesProvider {
     };
     const book = this.books.get(symbol);
     if (!book) return;
-    const applied = book.apply(delta);
+    let applied: boolean;
+    try { applied = book.apply(delta); } catch (error) {
+      book.reset();
+      this.setStatus("degraded", error instanceof Error ? error.message : "Invalid depth update", symbol);
+      void this.rebuildBook(symbol);
+      return;
+    }
     if (!applied) {
       this.setStatus("stale", "Binance order-book sequence gap; resynchronizing", symbol);
       void this.rebuildBook(symbol);
@@ -324,8 +341,10 @@ export class BinanceFuturesProvider {
     if (!this.symbols.has(symbol)) return;
     const sequence = decimal(message.t ?? message.a, "trade id");
     if (sequence <= (this.lastTradeSequence.get(symbol) ?? -1)) return;
-    this.lastTradeSequence.set(symbol, sequence);
-    const buyerIsMaker = message.m === true;
+    const price = decimal(message.p, "trade price"), quantity = decimal(message.q, "trade quantity");
+    if (price <= 0 || quantity <= 0) return;
+    if (typeof message.m !== "boolean") throw new Error("Binance trade aggressor flag is unavailable");
+    const buyerIsMaker = message.m;
     const trade: TradeEvent = {
       type: "trade",
       provider: "binance",
@@ -334,12 +353,15 @@ export class BinanceFuturesProvider {
       exchange: "BINANCE",
       timestamp: decimal(message.T ?? message.E, "trade time"),
       sequence,
-      price: decimal(message.p, "trade price"),
-      quantity: decimal(message.q, "trade quantity"),
+      price,
+      quantity,
+      quantityUnit: "base",
       // Binance's `m` is buyer-is-maker; when true the seller initiated the market trade.
       side: buyerIsMaker ? "sell" : "buy",
       conditions: ["raw-trade", buyerIsMaker ? "buyer-maker" : "seller-maker"],
     };
+    this.lastTradeSequence.set(symbol, sequence);
+    this.lastTradeAt.set(symbol, Date.now());
     this.touch(symbol);
     this.emit({ type: "trade", data: trade });
     // Trade-tape availability cannot certify the L2 feed. Keep the provider
@@ -419,26 +441,28 @@ export class BinanceFuturesProvider {
 
   private scheduleBookRebuild(symbol: string) {
     if (!this.symbols.has(symbol) || this.bookRetryTimers.has(symbol)) return;
+    const expected = this.books.get(symbol);
     const attempt = (this.bookRetryAttempts.get(symbol) ?? 0) + 1;
     this.bookRetryAttempts.set(symbol, attempt);
     const capped = Math.min(15_000, 500 * 2 ** Math.min(attempt, 5));
     const delay = Math.round(capped * (0.75 + Math.random() * 0.5));
     const timer = setTimeout(() => {
       this.bookRetryTimers.delete(symbol);
-      void this.rebuildBook(symbol);
+      if (this.books.get(symbol) === expected) void this.rebuildBook(symbol);
     }, delay);
     this.bookRetryTimers.set(symbol, timer);
   }
 
   private async rebuildBook(symbol: string) {
     const book = this.books.get(symbol);
-    if (!book || this.rebuildingBooks.has(symbol)) return;
-    this.rebuildingBooks.add(symbol);
+    if (!book || this.rebuildingBooks.has(book)) return;
+    this.rebuildingBooks.add(book);
+    const connection = this.ws;
     try {
       const url = new URL(`${BINANCE_REST_URL}/fapi/v1/depth`);
       url.searchParams.set("symbol", symbol);
       url.searchParams.set("limit", String(BOOK_DEPTH));
-      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
       if (!response.ok) throw new Error(`Binance order-book snapshot failed (${response.status})`);
       const raw = asRecord(await response.json());
       const snapshot: BinanceBookSnapshot = {
@@ -446,8 +470,9 @@ export class BinanceFuturesProvider {
         bids: Array.isArray(raw?.bids) ? raw.bids as [string, string][] : [],
         asks: Array.isArray(raw?.asks) ? raw.asks as [string, string][] : [],
       };
+      if (this.books.get(symbol) !== book || !this.symbols.has(symbol) || this.ws !== connection) return;
       if (!book.bootstrap(snapshot)) {
-        // Diffs may not yet cover snapshot + 1; retain the buffered stream and retry.
+        // Diffs may not yet cover the snapshot ID; retain the stream and retry.
         this.scheduleBookRebuild(symbol);
         return;
       }
@@ -456,10 +481,11 @@ export class BinanceFuturesProvider {
       this.publishBook(symbol, book, Date.now());
       this.setStatus("live");
     } catch (error) {
+      if (this.books.get(symbol) !== book || this.ws !== connection) return;
       this.setStatus("degraded", error instanceof Error ? error.message : "Binance order-book recovery failed", symbol);
       this.scheduleBookRebuild(symbol);
     } finally {
-      this.rebuildingBooks.delete(symbol);
+      this.rebuildingBooks.delete(book);
     }
   }
 
@@ -467,7 +493,7 @@ export class BinanceFuturesProvider {
     try {
       const url = new URL(`${BINANCE_REST_URL}/fapi/v1/openInterest`);
       url.searchParams.set("symbol", symbol);
-      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
       if (!response.ok) throw new Error(`Binance open interest failed (${response.status})`);
       const payload = asRecord(await response.json());
       const previous = this.lastDerivative.get(symbol);
@@ -511,6 +537,8 @@ export class BinanceFuturesProvider {
   }
 
   private publishBook(symbol: string, book: BinanceOrderBook, timestamp: number) {
+    this.lastDepthAt.set(symbol, Date.now());
+    this.setStatus("live");
     const levels = book.levels(BOOK_DEPTH) as DepthLevel[];
     this.emit({ type: "depth", symbol, sequence: book.lastSequence(), timestamp, levels });
     const top = book.bestQuote();
@@ -525,6 +553,7 @@ export class BinanceFuturesProvider {
   private ensureTimers() {
     if (!this.staleTimer) {
       this.staleTimer = setInterval(() => {
+        if (this.ws?.readyState === WebSocket.OPEN) { if (Date.now() - this.lastFrameAt > 30000) this.ws.terminate(); else this.ws.ping(); }
         for (const symbol of this.symbols) {
           const last = this.lastEventAt.get(symbol) ?? 0;
           if (!last || Date.now() - last > STALE_AFTER_MS) this.setStatus("stale", `no ${symbol} event for ${STALE_AFTER_MS / 1000}s`, symbol);

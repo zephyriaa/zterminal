@@ -43,6 +43,7 @@ export class GateOrderBook {
   private pending: GateBookDelta[] = [];
   private sequence = 0;
   private ready = false;
+  private snapshot: GateBookSnapshot | null = null;
 
   isReady() {
     return this.ready;
@@ -58,21 +59,27 @@ export class GateOrderBook {
     this.pending = [];
     this.sequence = 0;
     this.ready = false;
+    this.snapshot = null;
   }
 
   buffer(delta: GateBookDelta) {
-    if (!Number.isInteger(delta.U) || !Number.isInteger(delta.u) || delta.U > delta.u) {
+    if (!Number.isSafeInteger(delta.U) || !Number.isSafeInteger(delta.u) || delta.U < 0 || delta.U > delta.u) {
+      this.reset();
       throw new Error("invalid Gate.io book sequence");
     }
+    if (this.pending.length >= 2_000) { this.reset(); throw new Error("Gate.io book bootstrap overflow; resynchronize"); }
     this.pending.push(delta);
-    if (this.pending.length > 2_000) this.pending.splice(0, this.pending.length - 2_000);
   }
 
   bootstrap(snapshot: GateBookSnapshot): boolean {
+    try {
+    if (!Number.isSafeInteger(snapshot.id) || snapshot.id < 0) throw new Error("invalid Gate.io snapshot sequence");
+    this.snapshot = snapshot;
     this.bids.clear();
     this.asks.clear();
     this.applyLevels(this.bids, snapshot.bids);
     this.applyLevels(this.asks, snapshot.asks);
+    this.assertUncrossed();
     this.sequence = snapshot.id;
     this.ready = false;
 
@@ -86,6 +93,7 @@ export class GateOrderBook {
     // Mark ready before applying the bridged range so `apply` validates each
     // delta against the snapshot sequence instead of re-buffering it.
     this.ready = true;
+    this.snapshot = null;
     for (const delta of deltas) {
       if (!this.apply(delta)) {
         this.ready = false;
@@ -93,30 +101,39 @@ export class GateOrderBook {
       }
     }
     return true;
+    } catch (error) { this.reset(); throw error; }
   }
 
   apply(delta: GateBookDelta): boolean {
-    if (!this.ready) {
-      this.buffer(delta);
-      return true;
-    }
+    try {
+    if (!Number.isSafeInteger(delta.u) || delta.u < 0 || !delta.full && (!Number.isSafeInteger(delta.U) || delta.U < 0 || delta.U > delta.u)) throw new Error("invalid Gate.io book sequence");
     if (delta.full) {
-      this.bids.clear();
-      this.asks.clear();
+      if (this.ready && delta.u < this.sequence) return true;
+      this.reset();
       this.applyLevels(this.bids, delta.b);
       this.applyLevels(this.asks, delta.a);
+      this.assertUncrossed();
       this.sequence = delta.u;
+      this.ready = true;
+      return true;
+    }
+    if (!this.ready) {
+      this.buffer(delta);
+      if (this.snapshot) this.bootstrap(this.snapshot);
       return true;
     }
     if (delta.u <= this.sequence) return true; // duplicate/old update
-    if (delta.U > this.sequence + 1) return false; // sequence gap
+    if (delta.U > this.sequence + 1) { this.reset(); this.buffer(delta); return false; } // sequence gap
     this.applyLevels(this.bids, delta.b);
     this.applyLevels(this.asks, delta.a);
+    this.assertUncrossed();
     this.sequence = delta.u;
     return true;
+    } catch (error) { this.reset(); throw error; }
   }
 
   levels(limit = 100): NormalizedBookLevel[] {
+    if (!this.ready) return [];
     const bids = [...this.bids.entries()]
       .sort(([a], [b]) => b - a)
       .slice(0, limit)
@@ -129,6 +146,7 @@ export class GateOrderBook {
   }
 
   bestQuote() {
+    if (!this.ready) return null;
     const bid = [...this.bids.entries()].sort(([a], [b]) => b - a)[0];
     const ask = [...this.asks.entries()].sort(([a], [b]) => a - b)[0];
     if (!bid || !ask) return null;
@@ -149,8 +167,13 @@ export class GateOrderBook {
       }
       const price = decimal(rawPrice);
       const size = decimal(rawSize);
+      if (price <= 0 || size < 0) throw new Error("invalid Gate.io book price or size");
       if (size === 0) target.delete(price);
-      else target.set(price, Math.abs(size));
+      else target.set(price, size);
     }
+  }
+
+  private assertUncrossed() {
+    if (Math.max(...this.bids.keys()) >= Math.min(...this.asks.keys())) throw new Error("crossed Gate.io order book");
   }
 }

@@ -1,0 +1,19 @@
+{
+  "version": "1.1.0-preview.1",
+  "format": "portable-zip",
+  "platform": "windows",
+  "architecture": "x64",
+  "protocol": 1,
+  "researchSchemas": [
+    1,
+    2
+  ],
+  "features": [
+    "synthetic_next_open_v2",
+    "research_analyses_v1",
+    "indicator_dataset_v2"
+  ],
+  "sha256": "9d0c509683d34614207a9c46e6f600b38b2f8d05f2d4d86232b687ee0ad610a9",
+  "bytes": 180295527,
+  "download_url": "https://github.com/zephyriaa/zterminal/releases/download/helper-v1.1.0-preview.1/zterminal-helper-1.1.0-preview.1-windows-x64.zip"
+}

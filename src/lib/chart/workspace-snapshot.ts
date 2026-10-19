@@ -11,7 +11,7 @@ export function workspaceChartDocuments(values: unknown, workspaceId: string): C
     if (typeof input.chartId !== "string" || input.chartId.length > 100 || !instrument ||
       !["mock", "binance", "gateio", "bybit", "mexc", "okx", "coinbase", "deribit", "rithmic-test", "rithmic-prod", "databento"].includes(instrument.provider) ||
       !["CME", "CBOT", "COMEX", "NYMEX", "NASDAQ", "NYSE", "ICE", "GATEIO", "BINANCE", "BYBIT", "OKX", "MEXC", "COINBASE", "DERIBIT"].includes(instrument.exchange) ||
-      !["perpetual", "future", "spot"].includes(instrument.product) ||
+      !["perpetual", "future", "spot", "equity", "index"].includes(instrument.product) ||
       typeof instrument.nativeSymbol !== "string" || !/^[A-Z0-9._:-]{1,40}$/.test(instrument.nativeSymbol) ||
       !["1m", "5m", "15m", "30m", "1h", "4h", "1d"].includes(input.timeframe) ||
       (typeof input.schemaVersion === "number" && input.schemaVersion > CHART_DOCUMENT_SCHEMA_VERSION)) continue;

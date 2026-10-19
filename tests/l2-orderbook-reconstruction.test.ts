@@ -12,7 +12,7 @@ function makeBinanceDepth(U: number, u: number, pu?: number, b: [string, string]
   return { U, u, pu, b, a };
 }
 
-test("Binance depth synchronizer enforces strict U <= lastUpdateId + 1 sequencing", () => {
+test("Binance USD-M depth bridges the snapshot ID and enforces subsequent pu sequencing", () => {
   const sync = new BinanceDepthSynchronizer();
 
   // Buffer events prior to snapshot

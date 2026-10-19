@@ -38,6 +38,10 @@ jobs:
         run: npm run lint
       - name: Build web application
         run: npm run build
+      - name: Assemble Cloudflare Worker
+        run: npm run cf:build
+        env:
+          DATABASE_URL: postgresql://build:placeholder@127.0.0.1:5432/build
       - name: Enforce high-severity production dependency threshold
         run: npm audit --omit=dev --audit-level=high || true
       - name: Capture production dependency audit

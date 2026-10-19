@@ -1,6 +1,8 @@
 import type { Coordinate, IPrimitivePaneRenderer, IPrimitivePaneView, ISeriesPrimitive, PrimitiveHoveredItem, SeriesAttachedParameter, Time } from "lightweight-charts";
 import type { BigTradesOverlaySettings } from "./contracts";
 import type { BigTradeCluster } from "./big-trades";
+import { alignToTimeframe } from "@/lib/market/session";
+import type { Timeframe } from "@/lib/market/types";
 
 type ProjectedCluster = BigTradeCluster & { x: Coordinate; y: Coordinate; radius: number; color: string; opacity: number };
 
@@ -42,6 +44,7 @@ export class BigTradesPrimitive implements ISeriesPrimitive<Time> {
   private clusters: BigTradeCluster[] = [];
   private projected: ProjectedCluster[] = [];
   private settings: BigTradesOverlaySettings | null = null;
+  private timeframe: Timeframe = "1m";
   private hoveredId: string | null = null;
   private readonly view = new BigTradesView(() => this.projected);
 
@@ -51,9 +54,10 @@ export class BigTradesPrimitive implements ISeriesPrimitive<Time> {
   detached() { this.attachedState = null; this.projected = []; this.publishHover(null); }
   paneViews() { return [this.view]; }
 
-  setClusters(clusters: readonly BigTradeCluster[], settings: BigTradesOverlaySettings | null) {
+  setClusters(clusters: readonly BigTradeCluster[], settings: BigTradesOverlaySettings | null, timeframe: Timeframe) {
     this.clusters = settings ? [...clusters].slice(-settings.maxVisible) : [];
     this.settings = settings;
+    this.timeframe = timeframe;
     this.updateAllViews();
     if (!settings || (this.hoveredId && !this.projected.some(cluster => cluster.id === this.hoveredId))) this.publishHover(null);
     this.attachedState?.requestUpdate();
@@ -66,7 +70,7 @@ export class BigTradesPrimitive implements ISeriesPrimitive<Time> {
     const max = Math.max(1, ...this.clusters.map(cluster => scale === "quantity" ? cluster.quantity : cluster.notional));
     const opacity = this.settings.opacity;
     this.projected = this.clusters.map(cluster => {
-      const x = chart.timeScale().timeToCoordinate((cluster.timestamp / 1000) as Time);
+      const x = chart.timeScale().timeToCoordinate((alignToTimeframe(cluster.timestamp, this.timeframe) / 1000) as Time);
       const y = series.priceToCoordinate(cluster.price);
       if (x == null || y == null) return null;
       const amount = scale === "quantity" ? cluster.quantity : cluster.notional;

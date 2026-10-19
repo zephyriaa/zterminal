@@ -6,6 +6,10 @@ export type ResearchProvider = "gateio" | "binance";
 export type ResearchStage = "validating" | "loading_data" | "running_strategy" | "calculating_report" | "saving_result" | "complete" | "failed" | "cancelled";
 export interface Diagnostic { message: string; line?: number; column?: number; detail?: string; }
 export interface ResearchConfig {
+  executionModel?: "synthetic_next_open_v2";
+  spreadBps?: number; tickSize?: number; minimumQuantity?: number; minimumNotional?: number;
+  warmupBars?: number; executionDelayBars?: number; reserveHoldout?: boolean;
+  strategySeed?: number;
   provider: ResearchProvider; symbol: string; timeframe: string;
   from: number; to: number; initialCapital: number;
   feeBps: number; slippageBps: number; allocation: number;
@@ -74,6 +78,7 @@ export interface EventRunRequestV2 {
   params: Record<string, number | string | boolean>;
 }
 export interface ScriptRecord {
+  localSavedSource?: string;
   id: string; name: string; source: string; savedSource: string;
   updatedAt: number; revision: number; kind?: "strategy" | "indicator"; description?: string;
 }
@@ -82,6 +87,9 @@ export interface IndicatorEvaluationResult {
   version: 1; kind: "indicator_evaluation"; id: string; createdAt: number;
   artifact: { id: string; revision: number; name: string };
   sourceHash: string; datasetHash: string; inputHash: string; resultHash: string;
+  /** Legacy evaluations remain readable, but lack enough identity for chart reuse. */
+  dataset?: Dataset;
+  input?: { artifactId: string; revision: number; sourceHash: string; params: Record<string, number | string | boolean>; dataset: Pick<Dataset, "version" | "provider" | "product" | "symbol" | "timeframe" | "from" | "to" | "hash">; outputs: Record<string, unknown>; engine: string };
   params: Record<string, number | string | boolean>;
   parameters: Record<string, { kind: "integer" | "number" | "boolean" | "string"; default: number | string | boolean; minimum: number | null; maximum: number | null }>;
   outputs: Record<string, { plot: "line" | "histogram" | "area" | "marker" | "level" | "background"; points: { time: number; value: number }[] }>;
@@ -102,6 +110,17 @@ export interface MonteCarloResult {
   probabilityOfLoss: number; initialCapital: number;
 }
 export interface ResearchResult {
+  resolvedParams?: Record<string, number | string | boolean>;
+  seeds?: { pythonRandom: number; numpyLegacy: number; limitation: string };
+  instrument?: RunRequest["instrument"];
+  researchSchema?: 2; evidenceHash?: string;
+  assessment?: { policyVersion: string; label: string; text: string; reasons: string[] };
+  accounts?: { time: number; cash: number; reservedCapital: number; holdings: number; realizedPnl: number; unrealizedPnl: number; fees: number; equity: number }[];
+  orders?: { id: string; side: string; action: string; type: string; status: string; reason: string; decisionTime: number | null; eligibleTime: number; quantity: number }[];
+  fills?: { orderId: string; decisionTime: number; eligibleTime: number; side: string; action: string; quantity: number; basePrice: number; price: number; priceAdjustment: number; fee: number; slippageBps: number; spreadBps: number; tickSize: number; reason: string }[];
+  dailyReturns?: { time: number; return: number }[];
+  benchmarkDailyReturns?: { time: number; return: number }[];
+  quality?: { actualFrom: number; actualTo: number; executionTo: number; holdoutReserved: boolean; findings: string[] };
   version: 1; id: string; createdAt: number; name: string; source: string;
   sourceHash: string; inputHash: string; resultHash: string;
   engine: { engine?: string; python: string; vectorbt: string; sdk: string; analytics: string };
@@ -113,13 +132,20 @@ export interface ResearchResult {
   observations: string[]; logs: string[]; monteCarlo?: MonteCarloResult;
 }
 export interface ResearchJob {
-  id: string; stage: ResearchStage; diagnostic?: Diagnostic; resultId?: string; resultKind?: "strategy" | "indicator";
+  id: string; stage: ResearchStage; diagnostic?: Diagnostic; resultId?: string; resultKind?: "strategy" | "indicator" | "analysis";
+  analysisId?: string; completed?: number; total?: number; message?: string;
 }
-export interface RunRequest { name: string; source: string; config: ResearchConfig; dataset: Dataset; params: Record<string, number | string | boolean>; }
+export interface ResearchAnalysis {
+  version: 1; id: string; createdAt: number; kind: "validation" | "holdout" | "monte_carlo" | "assessment";
+  parentId: string; parentHash: string; hash: string; analysisVersion: string;
+  payload: Record<string, unknown>;
+}
+export interface RunRequest { name: string; source: string; config: ResearchConfig; dataset: Dataset; params: Record<string, number | string | boolean>; instrument?: { provider: string; symbol: string; multiplier: number; quantityStep: number; tickSize: number; minimumQuantity: number; minimumNotional: number; verifiedAt: number }; }
 export interface IndicatorEvaluationRequest extends RunRequest { operation: "indicator"; artifact: { id: string; kind: "indicator"; revision: number; name: string }; outputs: Record<string, { plot: IndicatorEvaluationResult["outputs"][string]["plot"] }> }
 
 export function defaultResearchConfig(now = Date.now()): ResearchConfig {
   const to = Math.floor(now / 3_600_000) * 3_600_000;
   return { provider: "gateio", symbol: "BTC_USDT", timeframe: "1h", from: to - 90 * 86_400_000, to,
-    initialCapital: 10_000, feeBps: 10, slippageBps: 5, allocation: 0.1, direction: "long", multiplier: 1, quantityStep: 0.000001 };
+    initialCapital: 10_000, feeBps: 10, slippageBps: 5, allocation: 0.1, direction: "long", multiplier: 1, quantityStep: 0.000001,
+    executionModel: "synthetic_next_open_v2", spreadBps: 0, tickSize: 0.01, minimumQuantity: 0.000001, minimumNotional: 0, warmupBars: 0, executionDelayBars: 1, reserveHoldout: true, strategySeed: 42 };
 }

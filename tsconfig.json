@@ -40,6 +40,12 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "artifacts",
+    ".venv-*",
+    "out",
+    "target",
+    "research/core/target",
+    "src-tauri/target"
   ]
 }

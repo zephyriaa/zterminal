@@ -121,6 +121,7 @@ export function buildVolumeProfile(
 
   const pocIndex = levels.reduce((best, level, index) => level.volume > levels[best].volume ? index : best, 0);
   const totalVolume = levels.reduce((sum, level) => sum + level.volume, 0);
+  if (totalVolume === 0) return { pointOfControl: null, valueAreaHigh: null, valueAreaLow: null, levels };
   let accumulated = levels[pocIndex].volume;
   let lowIndex = pocIndex;
   let highIndex = pocIndex;

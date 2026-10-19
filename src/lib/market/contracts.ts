@@ -7,6 +7,7 @@
  * the SIMULATED mock provider for synthetic data generation.
  */
 import type { ContractMetadata, SessionId } from "./types";
+import { normalizeGateioSymbol } from "./gateio";
 
 export interface ContractDef extends ContractMetadata {
   basePrice: number;     // reference level (mock only)
@@ -271,28 +272,34 @@ export const CONTRACTS: Record<string, ContractDef> = {
 };
 
 const runtimeContracts = new Map<string, ContractDef>();
+const contractListeners = new Set<() => void>();
+export const subscribeContracts = (listener: () => void) => { contractListeners.add(listener); return () => { contractListeners.delete(listener); }; };
 
 /** Registers contracts emitted by the active provider adapter after schema validation. */
 export function registerRuntimeContracts(contracts: ContractMetadata[]) {
   for (const contract of contracts) {
-    if (!contract?.symbol || !Number.isFinite(contract.tickSize) || contract.tickSize <= 0) continue;
-    runtimeContracts.set(contract.symbol.toUpperCase(), {
+    if (!contract?.symbol || contract.verified !== true || !Number.isFinite(contract.tickSize) || contract.tickSize <= 0 || !Number.isFinite(contract.multiplier) || contract.multiplier <= 0) continue;
+    runtimeContracts.set(`${contract.exchange}:${contract.symbol.toUpperCase().replace(/-SWAP$/, "").replace(/[_-]/g, "")}`, {
       ...contract,
       basePrice: 100,
       dailyVolPct: 0.03,
     });
   }
+  for (const listener of contractListeners) listener();
 }
 
-export function getContract(symbol: string): ContractDef {
+export function getContract(symbol: string, provider?: string): ContractDef {
   const s = symbol.toUpperCase().trim();
-  const direct = runtimeContracts.get(s) ?? CONTRACTS[s];
+  const native = normalizeGateioSymbol(s);
+  if (!native && !/^[A-Z0-9]+(?:[_-][A-Z0-9]+)*$/.test(s)) throw new Error(`Unknown or unsupported instrument: ${symbol}`);
+  const stripped = (native ?? s).replace(/-SWAP$/, "").replace(/[_-]/g, "");
+  const runtime = provider ? runtimeContracts.get(`${provider.toUpperCase()}:${stripped}`) : [...runtimeContracts.values()].find(contract => contract.symbol.replace(/[_-]/g, "") === stripped);
+  const direct = provider ? runtime ?? CONTRACTS[s] : CONTRACTS[s] ?? CONTRACTS[stripped] ?? runtime;
   if (direct) return direct;
   // Handle alias normalizations like BTC_USDT -> BTCUSDT
-  const stripped = s.replace(/[^A-Z0-9]/g, "");
-  const strippedMatch = runtimeContracts.get(stripped) ?? CONTRACTS[stripped];
+  const strippedMatch = CONTRACTS[stripped];
   if (strippedMatch) return strippedMatch;
-  return CONTRACTS.BTCUSDT;
+  throw new Error(`Unknown or unsupported instrument: ${symbol}`);
 }
 
 export function listContracts(): ContractDef[] {
@@ -304,6 +311,11 @@ export function formatSymbol(symbol: string): string {
   if (symbol.includes("_")) return symbol.replace("_", " / ");
   if (symbol.endsWith("USDT")) return `${symbol.slice(0, -4)} / USDT`;
   return symbol;
+}
+
+export function pricePrecision(tickSize: number): number {
+  const [coefficient, exponent = "0"] = String(tickSize).split("e");
+  return Math.max(0, (coefficient.split(".")[1]?.length ?? 0) - Number(exponent));
 }
 
 /**

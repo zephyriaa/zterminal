@@ -52,14 +52,15 @@ function summarize(returns: number[], totalBars: number, fast: number, slow: num
 }
 
 export function BacktesterView() {
-  const { symbol, timeframe, connection } = useWorkspace();
+  const { symbol, timeframe } = useWorkspace();
   const [bars, setBars] = useState<Bar[]>([]); const [state, setState] = useState<RunState>("idle"); const [error, setError] = useState<string | null>(null); const [result, setResult] = useState<Result | null>(null); const [fast, setFast] = useState("20"); const [slow, setSlow] = useState("50"); const [riskPct, setRiskPct] = useState("1");
-  const provider: ProviderId = connection.provider === "binance" ? "binance" : "gateio";
+  const provider: ProviderId = useWorkspace(state => state.marketProvider);
 
   async function loadAndRun() {
     setState("loading"); setError(null);
     try {
-      const nextBars = await fetchBarsDeduplicated(provider, symbol, timeframe as Timeframe, Date.now(), 1000);
+      const history = await fetchBarsDeduplicated(provider, symbol, timeframe as Timeframe, Date.now(), 1000);
+      const nextBars = history.bars;
       if (!Array.isArray(nextBars) || nextBars.length === 0) throw new Error("Historical data unavailable");
       const fastPeriod = Math.max(1, Math.min(200, Number(fast) || 20)); const slowPeriod = Math.max(2, Math.min(400, Number(slow) || 50));
       if (fastPeriod >= slowPeriod) throw new Error("Fast EMA must be smaller than slow EMA.");

@@ -6,7 +6,7 @@ import { useResearch } from "@/stores/research";
 import { useTerminalAppearance } from "@/stores/terminal-appearance";
 loader.config({ paths: { vs: "/vendor/monaco-0.55.1/vs" } });
 
-export default function ResearchEditor() {
+export default function ResearchEditor({ onReady }: { onReady?: () => void }) {
   const script = useResearch(s => s.drafts[s.activeId]);
   const minimap = useResearch(s => s.minimap);
   const diagnostic = useResearch(s => s.diagnostic);
@@ -34,6 +34,7 @@ export default function ResearchEditor() {
     if (diagnostic?.line && matches) instance.current?.revealLineInCenter(diagnostic.line);
   }, [diagnostic, script.id, script.source, captured]);
   const mount: OnMount = (editor, monaco) => {
+    onReady?.();
     instance.current = editor; api.current = monaco;
     disposables.current.push(editor.addAction({ id: "zterminal.run", label: "Run strategy or indicator", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter], run: () => { void useResearch.getState().run(); } }));
     disposables.current.push(editor.addAction({ id: "zterminal.save", label: "Save artifact", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS], run: () => { void useResearch.getState().save(); } }));
