@@ -11,7 +11,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 class ResearchLauncher : Form {
-    const string Version = "1.1.0-preview.1";
+    const string Version = "1.2.0-preview.1";
     static readonly int RevealMessage = RegisterWindowMessage("ZTerminal.ResearchHelper.Reveal");
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int RegisterWindowMessage(string message);
     [DllImport("user32.dll")] static extern bool PostMessage(IntPtr window, int message, IntPtr w, IntPtr l);

@@ -19,6 +19,6 @@ export function researchEvidence(result: ResearchResult) {
     freshness: retrievalKnown
       ? `Retrieved ${new Date(retrievedAt!).toISOString()}. Historical snapshot; cached reuse does not refresh this timestamp.`
       : "Retrieval time unknown: this archive does not establish data freshness.",
-    limitations: "OHLCV only: candle completeness does not certify provider accuracy or intrabar trades/depth. Funding, liquidation, leveraged margin and market impact are not modeled.",
+    limitations: `OHLCV only: candle completeness does not certify provider accuracy or intrabar trades/depth. Liquidation and leveraged margin are not modeled. ${config.impactModel === "atr_volume_v1" ? "Market impact uses a prior-candle ATR/volume scenario, not historical order-book execution." : "Market impact is not modeled."} ${config.fundingMode === "historical" ? "Funding uses captured historical settlements; see the run assumptions for mark-price limitations." : "Funding is not modeled."}`,
   };
 }

@@ -1051,6 +1051,33 @@ html.lenis, html.lenis body {
 .zt-chart-toolbar { display:flex; min-height:35px; flex:0 0 35px; align-items:center; gap:5px; padding:0 9px; overflow-x:auto; border-bottom:1px solid rgba(139,155,192,.14); background:rgba(10,15,27,.82); scrollbar-width:none; }
 .zt-chart-toolbar::-webkit-scrollbar { display:none; }
 .zt-chart-toolbar:has(.zt-chart-toolbar-menu) { overflow:visible; position:relative; z-index:50; }
+
+.zt-research-body { display:grid; grid-template-columns:minmax(0,1fr) 320px; min-height:0; flex:1; }
+.zt-research-main { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:auto; }
+.zt-research-main .zt-research-editor { min-height:350px; flex:1 0 350px; }
+.zt-research-settings { min-width:0; overflow:auto; border-left:1px solid #35313f; background:#14121c; padding-bottom:20px; }
+.zt-research-settings h2 { font-size:15px; font-weight:600; padding:14px 12px; border-bottom:1px solid #35313f; }
+.zt-research-settings h3 { font-size:12px; font-weight:600; color:#e5def0; margin:5px 0 12px; }
+.zt-research-settings .zt-research-config { padding:12px; }
+.zt-research-settings .zt-research-form-grid { grid-template-columns:minmax(0,1fr); gap:10px; }
+.zt-research-settings label { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#d3ccdf; margin:10px 0; }
+.zt-research-settings .zt-research-check { flex-direction:row; align-items:center; gap:8px; line-height:1.5; }
+.zt-research-settings .zt-research-config p,.zt-research-settings .zt-method-note { font-size:12px; line-height:1.6; color:#bdb3cc; overflow-wrap:anywhere; }
+.zt-research-settings .zt-method-note { padding:12px; }
+.zt-research-settings .zt-research-config summary { font-size:12px; line-height:1.6; margin:12px 0; }
+.zt-research-settings [role=alert] { color:#ffc0c9; }
+.zt-research-periods,.zt-research-tier-labels { display:flex; justify-content:space-between; gap:6px; }
+.zt-research-tier-labels { color:#bdb3cc; font-size:11px; margin-top:-5px; }
+.zt-research-settings input[type=range] { width:100%; accent-color:#b5a2e8; cursor:pointer; }
+.zt-research-settings :is(input,select,textarea,button):focus-visible { outline:2px solid #b5a2e8; outline-offset:2px; }
+.zt-research-main .zt-helper-connection:has(.is-connected) { padding:10px; }
+.zt-research-main .zt-helper-connection:has(.is-connected) .zt-helper-description { display:none; }
+.zt-research-health { margin:10px; padding:14px; border:1px solid #55486b; line-height:1.6; }
+.zt-research-health h2 { font-size:15px; font-weight:600; color:#e5def0; }
+.zt-research-health p { color:#bdb3cc; margin:6px 0; }
+.zt-research-workbench { container-type:inline-size; }
+@container (max-width:850px) { .zt-research-body { display:flex; flex-direction:column; overflow:auto; } .zt-research-main { overflow:visible; flex-shrink:0; } .zt-research-settings { overflow:visible; border-left:0; border-top:1px solid #35313f; } .zt-research-settings .zt-research-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@container (max-width:480px) { .zt-research-settings .zt-research-form-grid { grid-template-columns:minmax(0,1fr); } }
 .zt-chart-contract { flex:0 0 auto; color:#c6d2e8; font-family:var(--font-geist-mono, ui-monospace, monospace); font-size:9px; font-weight:700; white-space:nowrap; }
 .zt-chart-contract small { margin-left:5px; color:#71819e; font-size:7.5px; font-weight:600; letter-spacing:.1em; }
 .zt-chart-timeframes { display:flex; flex:0 0 auto; gap:2px; }

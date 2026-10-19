@@ -73,6 +73,9 @@ class ResearchRunner:
         try:
             request = {"name": self.parent["name"], "source": self.parent["source"], "config": cfg, "dataset": dataset, "params": params}
             if "instrument" in self.parent: request["instrument"] = self.parent["instrument"]
+            if cfg.get("fundingMode") == "historical":
+                events = [e for e in self.parent["fundingData"]["events"] if cfg["from"] <= e["time"] < cfg["to"]]
+                request["fundingData"] = {**self.parent["fundingData"], "from": cfg["from"], "to": cfg["to"], "events": events, "hash": digest(events)}
             result = execute(request)
             data = summary(result)
             trial.update(status="complete", netReturn=data["netReturn"], evidenceHash=data["evidenceHash"])
@@ -113,7 +116,8 @@ def prefix_checks(parent, stage):
     """Compare strategy signals/plots, not fills, at sampled data prefixes."""
     import contextlib
     import zterminal as zt
-    from engine import BoundedLog, resolve_parameters
+    from engine import BoundedLog, strategy_parameters
+    from script_inspection import compile_strategy
     bars = parent["dataset"]["bars"]
     frame = pd.DataFrame(bars).rename(columns={"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"})
     frame.index = pd.to_datetime(frame.pop("t"), unit="ms", utc=True)
@@ -124,8 +128,9 @@ def prefix_checks(parent, stage):
         np.random.seed(seed)
         namespace = {"__name__": "zterminal_user_strategy", "__file__": "strategy.py"}
         with contextlib.redirect_stdout(BoundedLog()), contextlib.redirect_stderr(BoundedLog()):
-            exec(compile(parent["source"], "strategy.py", "exec"), namespace)
-            output = namespace["strategy"](data.copy(), resolve_parameters(namespace.get("PARAMETERS", {}), parent["params"]))
+            code, inspected = compile_strategy(parent["source"], parent["params"], False)
+            exec(code, namespace)
+            output = namespace["strategy"](data.copy(), strategy_parameters(namespace, parent["params"], inspected))
         if not isinstance(output, zt.Strategy): raise ValueError("Unsupported strategy output")
         return {**{k: getattr(output, k) for k in ("entries", "exits", "short_entries", "short_exits")}, **{f"plot:{k}": v for k, v in output.plots.items()}}
     full = evaluate(frame)
@@ -143,7 +148,8 @@ def prefix_checks(parent, stage):
 
 def validate_strategy(parent, options, stage):
     n = len(parent["dataset"]["bars"])
-    a, b = int(n * .6), int(n * .8)
+    prefix = sum(bar["t"] < parent["config"].get("evaluationFrom", parent["config"]["from"]) for bar in parent["dataset"]["bars"])
+    a, b = prefix+int((n-prefix)*.6), prefix+int((n-prefix)*.8)
     if a < 4 or b-a < 2 or n-b < 2: raise ValueError("History is too short for chronological validation")
     horizon, embargo = options.get("outcomeHorizonBars", 0), options.get("embargoBars", 0)
     if type(horizon) is not int or type(embargo) is not int or not 0 <= horizon <= 10000 or not horizon <= embargo <= 10000:
@@ -151,16 +157,16 @@ def validate_strategy(parent, options, stage):
     runner = ResearchRunner(parent, stage)
     runner.bars = b + max(2, b//3) + max(2, b*2//3)
     candidates = candidates_for(parent, options.get("grid", {}))
-    selected = runner.select(0, a-embargo, candidates)
+    selected = runner.select(prefix, a-embargo, candidates)
     validation = runner.run(a, b, selected, label="validation fixed parameters")
     folds = []
-    edges = [int(b*.5 + b*.5*i/3) for i in range(4)]
+    edges = [prefix+int((b-prefix)*.5 + (b-prefix)*.5*i/3) for i in range(4)]
     for i in range(3):
-        params = runner.select(0, edges[i]-embargo, candidates)
-        folds.append({"train": [0, edges[i]-embargo], "test": [edges[i], edges[i+1]], "params": params,
+        params = runner.select(prefix, edges[i]-embargo, candidates)
+        folds.append({"train": [prefix, edges[i]-embargo], "test": [edges[i], edges[i+1]], "params": params,
                       "result": runner.run(edges[i], edges[i+1], params, label=f"walk-forward {i+1}")})
     costs = parent["config"]
-    stress = {"doubleCosts": runner.run(a, b, selected, {k: costs.get(k, 0)*2 for k in ("feeBps", "slippageBps", "spreadBps")}, "double costs"),
+    stress = {"doubleCosts": runner.run(a, b, selected, {k: costs.get(k, 0)*2 for k in ("feeBps", "slippageBps", "spreadBps")}, "double fees/spread; ATR impact unchanged" if costs.get("impactModel") == "atr_volume_v1" else "double costs"),
               "extraBarDelay": runner.run(a, b, selected, {"executionDelayBars": costs.get("executionDelayBars", 1)+1}, "extra bar delay")}
     neighbors = []
     for key, value in sorted(selected.items()):
@@ -179,7 +185,7 @@ def validate_strategy(parent, options, stage):
     development["dataset"]["bars"] = development["dataset"]["bars"][:b]
     development["params"] = selected
     causality = prefix_checks(development, stage)
-    payload = {"splits": {"training": [0, a-embargo], "validation": [a, b], "holdout": [b, n]}, "embargoBars": embargo,
+    payload = {"splits": {"training": [prefix, a-embargo], "validation": [a, b], "holdout": [b, n]}, "embargoBars": embargo,
                "outcomeHorizonBars": horizon, "objective": "training_net_return_desc_then_canonical_params", "grid": options.get("grid", {}),
                "selectedParams": selected, "validation": validation, "walkForward": folds, "stress": stress,
                "neighbors": neighbors, "subperiods": periods, "causality": causality, "trials": runner.trials,
@@ -345,14 +351,50 @@ def assess(parent, validation=None, holdout_record=None):
     text = f"{label}. Historical profitability: the original run returned {historical:.2%} after its modeled fees, spread and slippage. That captured evaluation result is descriptive and does not by itself establish repeatability. {evidence} "
     text += "Repeatability and benchmark-relative evidence are screened separately using chronological validation, expanding walk-forward folds, a frozen final holdout, cost and execution-delay stress, parameter neighbors and concentration. "
     text += (reasons[0] if reasons else "All disclosed screening gates passed.") + " "
-    text += "Remaining uncertainty: these are conservative, versioned screening rules, not a calibrated probability of alpha or future profitability. The passive price benchmark does not establish risk-adjusted alpha. Synthetic OHLCV execution omits funding, borrowing, margin, liquidation, market impact and order-book behavior. Prefix checks sample only a few cutoffs and cannot certify arbitrary Python against look-ahead bias or external data access. Known local trials do not reveal all prior strategy selection. PBO and Deflated Sharpe are not reported because complete selection-history inputs are unavailable. Forward paper observation with the frozen strategy and realistic execution costs is required before drawing stronger conclusions."
+    text += "Remaining uncertainty: these are conservative, versioned screening rules, not a calibrated probability of alpha or future profitability. The passive price benchmark does not establish risk-adjusted alpha. Synthetic OHLCV execution omits borrowing, margin, liquidation and order-book behavior. Funding and impact are included only when captured in the run configuration, with the limitations in its assumptions. Prefix checks sample only a few cutoffs and cannot certify arbitrary Python against look-ahead bias or external data access. Known local trials do not reveal all prior strategy selection. PBO and Deflated Sharpe are not reported because complete selection-history inputs are unavailable. Forward paper observation with the frozen strategy and realistic execution costs is required before drawing stronger conclusions."
     return {"policyVersion": VERSION, "label": label, "reasons": reasons, "text": text, "screeningNotCalibration": True}
+
+
+def automatic_health(parent, stage):
+    """A disclosed diagnostic screen; never a probability that a strategy will work."""
+    reasons, validation, simulation = [], None, None
+    try:
+        validation = validate_strategy(parent, {}, stage)["payload"]
+    except (ValueError, TypeError) as error:
+        reasons.append("Walk-forward unavailable: " + str(error))
+    closed = [t for t in parent["trades"] if t["status"] == "closed"]
+    method = "stationary_daily" if len(parent.get("dailyReturns", [])) >= 60 else "iid_trades"
+    try:
+        simulation = simulate_returns(parent, {"method": method, "simulations": 500, "seed": parent["config"].get("strategySeed", 42)}, stage)
+    except (ValueError, TypeError) as error:
+        reasons.append("Monte Carlo unavailable: " + str(error))
+    risk, score = "Insufficient evidence", None
+    if validation is not None and simulation is not None and len(closed) >= 30:
+        folds = validation["walkForward"]
+        positive = sum(f["result"]["netReturn"] > 0 for f in folds)
+        score = 100 - (3-positive)*20
+        if validation["causality"]["status"] == "failed": score = 0; reasons.append("Prefix outputs depend on future data")
+        if validation["stress"]["doubleCosts"]["netReturn"] <= 0: score -= 20; reasons.append("Validation loses its edge under doubled fees and configured friction; ATR impact is unchanged")
+        if validation["stress"]["extraBarDelay"]["netReturn"] <= 0: score -= 15; reasons.append("Validation loses its edge with one extra bar of delay")
+        if simulation["lossFrequency"] >= .5: score -= 20; reasons.append("At least half of the modeled resampled paths finish below initial capital")
+        score = max(0, score)
+        risk = "Low" if score >= 85 and len(closed) >= 100 else "Medium" if score >= 60 else "High"
+        reasons.insert(0, f"{positive}/3 chronological validation folds have positive modeled net return")
+    elif len(closed) < 30:
+        reasons.append(f"Only {len(closed)} closed trades; at least 30 are required for this screen")
+    payload = {"policy": "diagnostic-screen-v1", "risk": risk, "score": score, "reasons": reasons,
+               "walkForward": validation["walkForward"] if validation else [], "causality": validation["causality"] if validation else None,
+               "monteCarlo": simulation, "monteCarloMethod": method, "closedTrades": len(closed),
+               "holdoutEvaluated": False, "calibratedProbability": False,
+               "limitations": "Heuristic screening, not a probability of overfitting or profitability. Unknown prior trials and selection/survivorship bias are not observable. These checks never evaluate the final 20%; it is only an untouched holdout if the base run also reserved it. IID trade paths assume independence when fewer than 60 complete days are available."}
+    return artifact(parent, "health", payload)
 
 
 def execute_analysis(request, stage):
     parent, options = request["result"], request.get("options", {})
     if parent.get("researchSchema") != 2: raise ValueError("Rerun with a compatible Helper and synthetic execution schema before research analysis")
     kind = request["kind"]
+    if kind == "health": return automatic_health(parent, stage)
     if kind == "validation": return validate_strategy(parent, options, stage)
     if kind == "holdout": return holdout(parent, request["selection"], request["access"], stage)
     if kind == "monte_carlo": return monte_carlo(parent, options, stage)

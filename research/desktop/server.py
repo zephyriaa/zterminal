@@ -17,6 +17,9 @@ from archive import Archive, encode
 from child import atomic
 from controller import Controller
 from engine import VERSION as ENGINE_VERSION
+from script_inspection import inspect_script
+from execution_models import PROFILES
+import research_market
 
 PORT = 47321
 ORIGINS = frozenset(["https://zterminal.dpdns.org", "https://zterminal-web.zephyria-inc.workers.dev", "http://localhost:3000", "http://127.0.0.1:3000", "http://127.0.0.1:3100"])
@@ -194,11 +197,17 @@ class Handler(BaseHTTPRequestHandler):
             body = self.payload() if method == "POST" else {}
             identifier = parts[2] if len(parts) >= 3 else None
             if method == "GET" and route == "capabilities":
-                return self.respond(200, {"protocol": 1, "version": "1.1.0-preview.1", "features": ["synthetic_next_open_v2", "research_analyses_v1", "indicator_dataset_v2"], "researchSchemas": [1, 2], "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": ENGINE_VERSION, "vectorbt": "0.28.1", "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
+                return self.respond(200, {"protocol": 1, "version": "1.2.0-preview.1", "features": ["synthetic_next_open_v2", "research_analyses_v1", "indicator_dataset_v2", "script_inspection_v1", "local_market_data_v1", "adaptive_execution_v1", "strategy_health_v1"], "researchSchemas": [1, 2], "platform": "windows-x64", "scope": "local-research", "python": platform.python_version(), "sdk": "1.0.0", "engine": ENGINE_VERSION, "vectorbt": "0.28.1", "activeJob": service.controller.active["id"] if service.controller.active else None, "execution": "local-user-permissions", "maxBars": 100000})
             if method == "POST" and route == "pair":
                 return self.respond(200, service.pair(origin, body.get("code")))
             if method == "POST" and route == "datasets":
                 return self.respond(200, archive.find_dataset(body))
+            if method == "POST" and route == "inspect":
+                return self.respond(200, {**inspect_script(body.get("source"), body.get("params")), "profiles": PROFILES})
+            if method == "POST" and route == "market-data":
+                action = body.get("action")
+                if action not in ("instrument", "history", "funding"): raise ValueError("Unsupported market preparation action")
+                return self.respond(200, getattr(research_market, action)(body))
             if route == "scripts":
                 if method == "GET":
                     return self.respond(200, archive.revisions(identifier) if identifier else archive.scripts())
@@ -261,6 +270,8 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(403, {"error": str(error), "code": "pairing_required"})
         except KeyError as error:
             self.respond(404, {"error": str(error)})
+        except SyntaxError as error:
+            self.respond(400, {"error": str(error), "diagnostic": {"message": error.msg, "line": error.lineno, "column": error.offset}})
         except (ValueError, TypeError) as error:
             self.respond(400, {"error": str(error)})
         except Exception:

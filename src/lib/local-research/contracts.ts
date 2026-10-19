@@ -6,6 +6,11 @@ export type ResearchProvider = "gateio" | "binance";
 export type ResearchStage = "validating" | "loading_data" | "running_strategy" | "calculating_report" | "saving_result" | "complete" | "failed" | "cancelled";
 export interface Diagnostic { message: string; line?: number; column?: number; detail?: string; }
 export interface ResearchConfig {
+  autoWarmup?: boolean; guardrails?: boolean; autoValidation?: boolean;
+  evaluationFrom?: number;
+  impactModel?: "fixed" | "atr_volume_v1";
+  liquidityTier?: "small" | "medium" | "institutional";
+  exchangeProfile?: string; fundingMode?: "none" | "historical";
   executionModel?: "synthetic_next_open_v2";
   spreadBps?: number; tickSize?: number; minimumQuantity?: number; minimumNotional?: number;
   warmupBars?: number; executionDelayBars?: number; reserveHoldout?: boolean;
@@ -15,6 +20,18 @@ export interface ResearchConfig {
   feeBps: number; slippageBps: number; allocation: number;
   direction: "long" | "both"; multiplier: number; quantityStep: number;
 }
+export interface ResearchInstrument {
+  provider: string; symbol: string; multiplier: number; quantityStep: number; tickSize: number; minimumQuantity: number; minimumNotional: number; verifiedAt: number;
+  makerFeeBps?: number; takerFeeBps?: number; source?: string; volumeUnit?: string;
+}
+export interface ScriptInspection {
+  parameters: Record<string, { kind: "integer" | "number" | "boolean" | "string"; default: number | string | boolean | null; minimum: number | null; maximum: number | null; required: boolean }>;
+  resolvedParams: Record<string, number | string | boolean>; warmupBars: number;
+  lookbacks: { line: number; indicator: string; lookback: number | null; warmupBars: number }[];
+  diagnostics: Diagnostic[]; warnings: string[]; policy: string;
+  profiles: Record<string, { label: string; provider: string | null; makerBps: number | null; takerBps: number | null; source: string; unavailable?: string }>;
+}
+export interface FundingData { provider: string; symbol: string; from: number; to: number; events: { time: number; rate: number; markPrice?: number }[]; retrievedAt: number; markPolicy: string; hash: string; }
 export interface Dataset {
   version: 1; provider: ResearchProvider; product: "perpetual";
   symbol: string; timeframe: string; from: number; to: number;
@@ -110,6 +127,7 @@ export interface MonteCarloResult {
   probabilityOfLoss: number; initialCapital: number;
 }
 export interface ResearchResult {
+  scriptInspection?: ScriptInspection; fundingData?: FundingData;
   resolvedParams?: Record<string, number | string | boolean>;
   seeds?: { pythonRandom: number; numpyLegacy: number; limitation: string };
   instrument?: RunRequest["instrument"];
@@ -136,16 +154,16 @@ export interface ResearchJob {
   analysisId?: string; completed?: number; total?: number; message?: string;
 }
 export interface ResearchAnalysis {
-  version: 1; id: string; createdAt: number; kind: "validation" | "holdout" | "monte_carlo" | "assessment";
+  version: 1; id: string; createdAt: number; kind: "validation" | "holdout" | "monte_carlo" | "assessment" | "health";
   parentId: string; parentHash: string; hash: string; analysisVersion: string;
   payload: Record<string, unknown>;
 }
-export interface RunRequest { name: string; source: string; config: ResearchConfig; dataset: Dataset; params: Record<string, number | string | boolean>; instrument?: { provider: string; symbol: string; multiplier: number; quantityStep: number; tickSize: number; minimumQuantity: number; minimumNotional: number; verifiedAt: number }; }
+export interface RunRequest { name: string; source: string; config: ResearchConfig; dataset: Dataset; params: Record<string, number | string | boolean>; instrument?: ResearchInstrument; fundingData?: FundingData; }
 export interface IndicatorEvaluationRequest extends RunRequest { operation: "indicator"; artifact: { id: string; kind: "indicator"; revision: number; name: string }; outputs: Record<string, { plot: IndicatorEvaluationResult["outputs"][string]["plot"] }> }
 
 export function defaultResearchConfig(now = Date.now()): ResearchConfig {
   const to = Math.floor(now / 3_600_000) * 3_600_000;
   return { provider: "gateio", symbol: "BTC_USDT", timeframe: "1h", from: to - 90 * 86_400_000, to,
     initialCapital: 10_000, feeBps: 10, slippageBps: 5, allocation: 0.1, direction: "long", multiplier: 1, quantityStep: 0.000001,
-    executionModel: "synthetic_next_open_v2", spreadBps: 0, tickSize: 0.01, minimumQuantity: 0.000001, minimumNotional: 0, warmupBars: 0, executionDelayBars: 1, reserveHoldout: true, strategySeed: 42 };
+    executionModel: "synthetic_next_open_v2", spreadBps: 0, tickSize: 0.01, minimumQuantity: 0.000001, minimumNotional: 0, warmupBars: 0, executionDelayBars: 1, reserveHoldout: true, strategySeed: 42, autoWarmup: true, guardrails: true, autoValidation: true, impactModel: "atr_volume_v1", liquidityTier: "small", exchangeProfile: "custom", fundingMode: "none" };
 }

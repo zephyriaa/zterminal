@@ -29,6 +29,7 @@ def input_record(request):
     if request["dataset"].get("version") == 2:
         captured["context"] = request["context"]
     if "instrument" in request: captured["instrument"] = request["instrument"]
+    if "fundingData" in request: captured["fundingData"] = request["fundingData"]
     return captured
 
 
@@ -113,6 +114,23 @@ def validate(request):
         raise ValueError("Range must contain complete closed candles aligned to the timeframe")
     if (dataset.get("version") == 1 and dataset.get("product") != "perpetual") or any(dataset[k] != config[k] for k in ["provider", "symbol", "timeframe", "from", "to"]):
         raise ValueError("Dataset manifest does not match the run configuration")
+    if "evaluationFrom" in config and (type(config["evaluationFrom"]) is not int or not start <= config["evaluationFrom"] < end or config["evaluationFrom"] % interval): raise ValueError("Invalid scored start after warm-up")
+    for key in ("autoWarmup", "autoValidation", "guardrails"):
+        if key in config and type(config[key]) is not bool: raise ValueError(f"Invalid {key}")
+    if config.get("fundingMode") == "historical":
+        funding = request.get("fundingData", {})
+        if not isinstance(funding, dict) or any(funding.get(k) != config[k] for k in ("provider", "symbol", "from", "to")): raise ValueError("Funding history does not match the captured market and range")
+        events = funding.get("events")
+        if not isinstance(events, list) or len(events) > 100000 or funding.get("hash") != digest(events): raise ValueError("Invalid funding history hash")
+        previous = start-1
+        for event in events:
+            if not isinstance(event, dict) or type(event.get("time")) is not int or not previous < event["time"] < end: raise ValueError("Unordered, duplicate or out-of-range funding event")
+            previous = event["time"]
+            rate = event.get("rate")
+            if type(rate) not in (int, float) or not math.isfinite(rate) or abs(rate) > 1: raise ValueError("Invalid funding rate")
+            if "markPrice" in event and (type(event["markPrice"]) not in (int, float) or not math.isfinite(event["markPrice"]) or event["markPrice"] <= 0): raise ValueError("Invalid funding mark")
+        if end-start >= 8*3600000 and (not events or events[0]["time"]-start > 8*3600000 or end-events[-1]["time"] > 8*3600000 or any(b["time"]-a["time"] > 8*3600000 for a, b in zip(events, events[1:]))): raise ValueError("Incomplete historical funding schedule")
+    elif "fundingData" in request: raise ValueError("Funding history requires the explicit historical funding model")
     bars = dataset["bars"]
     if "retrievedAt" in dataset:
         retrieved = dataset["retrievedAt"]
