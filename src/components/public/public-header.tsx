@@ -162,7 +162,7 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
           </div>
 
           <Link
-            href="/terminal?account=signin"
+            href="/workspaces?account=signin"
             className={styles.accountCapsule}
             title="Open ZTerminal account"
             aria-label="Open ZTerminal account and Google sign-in"

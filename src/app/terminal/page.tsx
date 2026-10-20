@@ -1,17 +1,7 @@
-import { connection } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions, googleSignInConfigured } from "@/lib/auth";
-import { FloatingWorkstationShell } from "@/components/terminal/floating-workstation-shell";
-import { ZTerminalSessionProvider } from "@/components/auth/session-provider";
-import { sessionAvailabilityProbe } from "@/lib/auth-session";
+import { redirect } from "next/navigation";
 
-export default async function TerminalPage() {
-  await connection();
-  const probe = sessionAvailabilityProbe(authOptions);
-  const session = googleSignInConfigured ? await getServerSession(probe.options) : null;
-  return (
-    <ZTerminalSessionProvider session={session} initialError={probe.failed()}>
-      <FloatingWorkstationShell />
-    </ZTerminalSessionProvider>
-  );
+export default async function TerminalEntry({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const source = await searchParams, params = new URLSearchParams();
+  for (const key of ["account", "error"]) if (typeof source[key] === "string") params.set(key, source[key]);
+  redirect(`/workspaces${params.size ? `?${params}` : ""}`);
 }

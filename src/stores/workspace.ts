@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { isWorkspaceRoute, legacyWorkspaceStorage } from "@/lib/workspaces/route-storage";
 import { useCloudSyncStatus } from "@/stores/cloud-sync-status";
 import { MARKET_PROVIDERS, type MarketProvider, type DataStatus, type Environment, type ProviderId } from "@/lib/market/types";
 import { useChartDocuments } from "@/stores/chart-documents";
@@ -153,6 +154,7 @@ export const useWorkspace = create<WorkspaceState>()(
           ? "local-default" : state.activeWorkspaceId,
       })),
       saveWorkspace: (name) => {
+        if (isWorkspaceRoute()) { window.dispatchEvent(new CustomEvent("zterminal:duplicate-workspace", { detail: { name } })); return; }
         const s = get();
         const ws: SavedWorkspace = {
           id: crypto.randomUUID(),
@@ -185,6 +187,7 @@ export const useWorkspace = create<WorkspaceState>()(
           });
       },
       loadWorkspace: (id) => {
+        if (isWorkspaceRoute()) { window.open(`/workspaces/${encodeURIComponent(id)}`, "_blank", "noopener"); return; }
         const ws = [...get().workspaces, ...get().cloudWorkspaces].find((w) => w.id === id);
         if (!ws) return;
         useChartDocuments.getState().restoreDocuments(ws.id, ws.chartDocuments ?? []);
@@ -205,6 +208,7 @@ export const useWorkspace = create<WorkspaceState>()(
     }),
     {
       name: "zterminal-workspace",
+      storage: createJSONStorage(() => legacyWorkspaceStorage),
       version: 5,
       migrate: (persistedState) => migratePersistedWorkspace(persistedState),
       partialize: (s) => ({

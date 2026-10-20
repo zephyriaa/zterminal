@@ -1,4 +1,20 @@
 import type { StateStorage } from "zustand/middleware";
+import { isWorkspaceRoute } from "@/lib/workspaces/route-storage";
+
+/** Independent script edits can merge; competing edits to the same script must remain a conflict. */
+export function mergeDraftEnvelopes(base: string | null, incoming: string, latest: string | null): string {
+  const before = base ? JSON.parse(base) : { version: 1, state: { drafts: {} } };
+  const next = JSON.parse(incoming), current = latest ? JSON.parse(latest) : { version: 1, state: { drafts: {} } };
+  if ([before, next, current].some(value => value.version !== 1 || !value.state?.drafts)) throw new Error("Incompatible draft library");
+  const drafts = { ...current.state.drafts };
+  for (const id of new Set([...Object.keys(before.state.drafts), ...Object.keys(next.state.drafts)])) {
+    const was = JSON.stringify(before.state.drafts[id]), changed = JSON.stringify(next.state.drafts[id]), now = JSON.stringify(current.state.drafts[id]);
+    if (was === changed) continue;
+    if (now !== was && now !== changed) throw new Error("This script changed in another tab");
+    if (next.state.drafts[id]) drafts[id] = next.state.drafts[id]; else delete drafts[id];
+  }
+  return JSON.stringify({ ...current, state: { ...current.state, ...next.state, drafts } });
+}
 
 export type DraftStorageStatus = "ready" | "failed" | "conflict";
 let status: DraftStorageStatus = "ready";
@@ -36,6 +52,7 @@ export function createDraftStorage(): StateStorage {
   }
   async function write(name: string, value: string | null) {
     if (blocked) return;
+    const submitted = value;
     try {
       const db = await open();
       await new Promise<void>((resolve, reject) => {
@@ -44,14 +61,18 @@ export function createDraftStorage(): StateStorage {
         const store = transaction.objectStore("drafts");
         const request = store.get(name);
         request.onsuccess = () => {
-          if (blocked || !snapshots.has(name) || (request.result ?? null) !== snapshots.get(name)) {
+          if (!blocked && snapshots.has(name) && value !== null && isWorkspaceRoute()) {
+            try { value = mergeDraftEnvelopes(snapshots.get(name) ?? null, value, request.result ?? null); }
+            catch { blocked = true; warn("conflict"); transaction.abort(); return; }
+          }
+          if (blocked || !snapshots.has(name) || (value === null || !isWorkspaceRoute()) && (request.result ?? null) !== snapshots.get(name)) {
             blocked = true; warn("conflict"); transaction.abort(); return;
           }
           try {
             if (value === null) store.delete(name); else store.put(value, name);
           } catch { blocked = true; warn("failed"); transaction.abort(); }
         };
-        transaction.oncomplete = () => { clearTimeout(timer); snapshots.set(name, value); resolve(); };
+        transaction.oncomplete = () => { clearTimeout(timer); snapshots.set(name, submitted); resolve(); };
         transaction.onerror = () => { clearTimeout(timer); reject(transaction.error); };
         transaction.onabort = () => { clearTimeout(timer); reject(transaction.error ?? new Error("Draft write interrupted")); };
       });

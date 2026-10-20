@@ -17,7 +17,7 @@ export function CapabilitySections() {
             <div><dt>Market context</dt><dd>Provider, contract and feed state remain visible.</dd></div>
             <div><dt>A workspace that stays yours</dt><dd>Save layouts and return to your research.</dd></div>
           </dl>
-          <Link href="/terminal" className={styles.textLink}>Explore the workspace<span aria-hidden="true">↗</span></Link>
+          <Link href="/workspaces" className={styles.textLink}>Explore the workspace<span aria-hidden="true">↗</span></Link>
         </div>
         <div className={styles.capabilityVisual}><ProductFigure capture={captures.canvas} /></div>
       </article>
@@ -54,7 +54,7 @@ export function EcosystemSection() {
           <p>Inspect markets and develop ideas in the browser. Python research runs through the paired local Helper on your machine.</p>
         </div>
         <div className={styles.platforms}>
-          <div className={styles.platform}><span className={styles.platformIcon} aria-hidden="true">◎</span><div><h3>ZTerminal Web</h3><p>Open the research workspace in your browser.</p><Link href="/terminal" className={styles.textLink}>Open ZTerminal<span aria-hidden="true">↗</span></Link></div><span className={styles.platformStatus}>Available</span></div>
+          <div className={styles.platform}><span className={styles.platformIcon} aria-hidden="true">◎</span><div><h3>ZTerminal Web</h3><p>Open the research workspace in your browser.</p><Link href="/workspaces" className={styles.textLink}>Open ZTerminal<span aria-hidden="true">↗</span></Link></div><span className={styles.platformStatus}>Available</span></div>
           <div className={styles.platform}><svg className={styles.platformIcon} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5 11 4.4v7H3Zm10-1.4L21 3v8.4h-8ZM3 13h8v7L3 18.8Zm10 0h8v8.5L13 20.4Z" /></svg><div><h3>ZTerminal Windows</h3><p>A native workstation in development.</p><Link href="/download" className={styles.textLink}>View release status<span aria-hidden="true">↗</span></Link></div><span className={styles.platformStatus}>In development</span></div>
         </div>
       </div>
@@ -68,7 +68,7 @@ export function FinalCTA() {
       <p className={styles.eyebrow}>Begin with a question</p>
       <h2 id="final-heading">Research, <em>with context.</em></h2>
       <p>Follow the market. Test the idea. Understand the evidence.</p>
-      <div className={styles.actions}><Link href="/terminal" className={styles.primaryButton}>Open ZTerminal<span aria-hidden="true">↗</span></Link><Link href="/docs" className={styles.textLink}>Read the documentation<span aria-hidden="true">↗</span></Link></div>
+      <div className={styles.actions}><Link href="/workspaces" className={styles.primaryButton}>Open ZTerminal<span aria-hidden="true">↗</span></Link><Link href="/docs" className={styles.textLink}>Read the documentation<span aria-hidden="true">↗</span></Link></div>
     </section>
   );
 }

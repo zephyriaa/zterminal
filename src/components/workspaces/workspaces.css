@@ -1,0 +1,36 @@
+.ws-account,.ws-toolbar,.ws-banner,.ws-recovery { font-family:var(--font-geist-sans),sans-serif; }
+.ws-account { position:relative; font-size:13px; }
+.ws-account button,.ws-account summary { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; min-height:36px; border:1px solid #35313f; border-radius:6px; background:#1b1923; color:#ddd7e6; cursor:pointer; }
+.ws-account summary { list-style:none; }
+.ws-account summary::-webkit-details-marker { display:none; }
+.ws-account-menu { position:absolute; right:0; top:44px; z-index:40; display:grid; gap:12px; padding:16px; min-width:220px; background:#211b2a; border:1px solid #55445f; border-radius:6px; box-shadow:0 8px 24px #0006; }
+.ws-account-menu span { color:#c6bcd3; overflow-wrap:anywhere; }
+.ws-account p[role=alert] { position:absolute; right:0; z-index:45; width:260px; padding:12px; background:#211b2a; border:1px solid #73505a; color:#ffbdc9; }
+.ws-account :focus-visible { outline:2px solid #b79be8; outline-offset:3px; }
+.ws-runtime { height:100dvh; display:flex; flex-direction:column; min-width:0; background:#111017; color:#ddd7e6; }
+.ws-toolbar { display:flex; align-items:center; gap:16px; min-height:46px; padding:6px 14px; border-bottom:1px solid #35313f; font-size:12px; flex-shrink:0; flex-wrap:wrap; }
+.ws-toolbar a,.ws-toolbar button { display:inline-flex; align-items:center; gap:6px; background:none; border:1px solid #35313f; border-radius:4px; color:#ddd7e6; padding:5px 9px; cursor:pointer; text-decoration:none; min-height:30px; }
+.ws-toolbar a:hover,.ws-toolbar button:hover { background:#2a2435; }
+.ws-toolbar :focus-visible,.ws-recovery :focus-visible { outline:2px solid #b79be8; outline-offset:3px; }
+.ws-toolbar strong { max-width:30ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+.ws-save-status { color:#bdb3cc; font-size:11px; }
+.ws-toolbar-actions { display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap; }
+.ws-canvas { flex:1; min-height:0; min-width:0; overflow:hidden; }
+.ws-canvas .zt-reference-terminal { height:100%; }
+.ws-add-panel { position:relative; font-size:12px; }
+.ws-add-panel summary { display:flex; align-items:center; gap:6px; cursor:pointer; padding:7px 10px; border:1px solid #55445f; border-radius:4px; list-style:none; white-space:nowrap; }
+.ws-add-panel summary::-webkit-details-marker { display:none; }
+.ws-add-panel > div { position:absolute; top:40px; right:0; width:220px; padding:5px; border:1px solid #55445f; border-radius:6px; background:#211b2a; box-shadow:0 8px 24px #0006; z-index:100; }
+.ws-add-panel button { display:block; width:100%; padding:9px 10px; text-align:left; border:0; border-radius:3px; cursor:pointer; }
+.ws-add-panel button:hover { background:#3b2b4e; }
+.ws-canvas[aria-readonly=true] { opacity:.72; }
+.ws-banner { padding:9px 16px; font-size:12px; line-height:1.6; background:#251d32; border-bottom:1px solid #574265; color:#e7d2ff; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.ws-banner button { border:1px solid #735984; color:#eee0ff; padding:4px 9px; background:#30223e; border-radius:4px; cursor:pointer; }
+.ws-banner[role=alert] { color:#ffc4d1; background:#291b25; }
+.ws-recovery { min-height:100dvh; padding:80px 24px; max-width:720px; margin:auto; color:#ddd7e6; line-height:1.7; }
+.ws-recovery h1 { font-size:28px; font-weight:600; margin-bottom:16px; }
+.ws-recovery p { margin-bottom:22px; color:#c6bcd3; }
+.ws-recovery a,.ws-recovery button { display:inline-flex; gap:8px; align-items:center; border:1px solid #5b466d; background:#21182d; color:#d8befa; padding:9px 14px; border-radius:6px; text-decoration:none; margin-right:12px; cursor:pointer; }
+.ws-recovery label { display:grid; gap:8px; margin:24px 0; }
+.ws-recovery select { background:#1b1923; border:1px solid #55445f; border-radius:4px; padding:10px; max-width:320px; }
+@media(max-width:760px) { .ws-toolbar { gap:8px; padding:6px 8px; } .ws-toolbar strong { max-width:20ch; } .ws-save-status { order:3; width:100%; } .ws-toolbar-actions { gap:5px; } }

@@ -19,7 +19,7 @@ export function LandingHero() {
         <h1 id="hero-heading" className={styles.heroTitle}><span>See Further.</span><em>Guess Less.</em></h1>
         <p className={styles.heroLead}>Charts, Python strategies, backtesting and analysis.<br className={styles.desktopBreak} /> One local-first workspace for the entire research loop.</p>
         <div className={styles.actions}>
-          <Link href="/terminal" className={styles.primaryButton}>Open ZTerminal<span aria-hidden="true">↗</span></Link>
+          <Link href="/workspaces" className={styles.primaryButton}>Open ZTerminal<span aria-hidden="true">↗</span></Link>
           <a href="#research-loop" className={styles.textLink}>Explore the workflow<span aria-hidden="true">↓</span></a>
         </div>
         <p className={styles.heroNote}>Web terminal available<span aria-hidden="true">/</span>Python runs on your machine</p>

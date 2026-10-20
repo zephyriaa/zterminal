@@ -2,12 +2,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { ChartType } from "@/lib/chart/contracts";
 import type { Timeframe } from "@/lib/market/types";
+import { legacyWorkspaceStorage } from "@/lib/workspaces/route-storage";
 
-const serverStorage = {
-  getItem: () => null,
-  setItem: () => undefined,
-  removeItem: () => undefined,
-};
 
 export type MultiChartLayout = "1" | "2h" | "2v" | "3" | "4";
 
@@ -96,7 +92,7 @@ export const useMultiChart = create<MultiChartState>()(
     {
       name: "zterminal.multi-chart.v1",
       version: 1,
-      storage: createJSONStorage(() => (typeof localStorage === "undefined" ? serverStorage : localStorage)),
+      storage: createJSONStorage(() => legacyWorkspaceStorage),
       skipHydration: true,
     }
   )

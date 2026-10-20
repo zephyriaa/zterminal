@@ -44,7 +44,7 @@ export function PublicFooter() {
                 <Link href="/download">Windows workstation</Link>
               </li>
               <li>
-                <Link href="/terminal">Open Web Terminal ↗</Link>
+                <Link href="/workspaces">Open Web Terminal ↗</Link>
               </li>
             </ul>
           </div>

@@ -1,10 +1,10 @@
 "use client";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { legacyWorkspaceStorage } from "@/lib/workspaces/route-storage";
 import { createStudy, INDICATOR_LIBRARY, migrateStudy, resetStudy, validateStudy, type IndicatorInstance } from "@/lib/indicator-library";
 
 type State = { instances: IndicatorInstance[]; favorites: string[]; recent: string[]; add: (id: string) => void; addExternal: (study: IndicatorInstance) => void; update: (study: IndicatorInstance) => void; remove: (id: string) => void; duplicate: (id: string) => void; reset: (id: string) => void; replaceInstances: (instances: IndicatorInstance[]) => void; toggleFavorite: (id: string) => void };
-const serverStorage = { getItem: () => null, setItem: () => undefined, removeItem: () => undefined };
 const defaults = () => [createStudy("vwap", "default-vwap"), createStudy("ema20", "default-ema20"), createStudy("volume", "default-volume")];
 
 export const useStudies = create<State>()(persist((set) => ({
@@ -17,7 +17,7 @@ export const useStudies = create<State>()(persist((set) => ({
   reset: id => set(state => ({ instances: state.instances.map(item => item.id === id ? { ...resetStudy(item), name: item.name } : item) })),
   replaceInstances: instances => set({ instances: instances.map(migrateStudy).filter((item): item is IndicatorInstance => item !== null).slice(0, 50) }),
   toggleFavorite: id => set(state => ({ favorites: state.favorites.includes(id) ? state.favorites.filter(item => item !== id) : [...state.favorites, id] })),
-}), { name: "zterminal.studies", version: 2, storage: createJSONStorage(() => typeof localStorage === "undefined" ? serverStorage : localStorage), skipHydration: true, partialize: ({ instances, favorites, recent }) => ({ instances, favorites, recent }), merge: (saved, current) => {
+}), { name: "zterminal.studies", version: 2, storage: createJSONStorage(() => legacyWorkspaceStorage), skipHydration: true, partialize: ({ instances, favorites, recent }) => ({ instances, favorites, recent }), merge: (saved, current) => {
   const state = saved as Partial<State> | undefined; if (!state || !Array.isArray(state.instances)) return current; const ids = new Set<string>();
   const instances = state.instances.map(migrateStudy).filter((item): item is IndicatorInstance => { if (!item || ids.has(item.id)) return false; try { validateStudy(item); ids.add(item.id); return true; } catch { return false; } }).slice(0, 50);
   const supported = (items: unknown) => Array.isArray(items) ? items.filter(id => typeof id === "string" && (id.startsWith("python:") || INDICATOR_LIBRARY.some(item => item.id === id))).slice(0, 20) : [];
