@@ -1,0 +1,965 @@
+[
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 5,
+    "snippet": "Undocumented color #292433 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#292433",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 5,
+    "snippet": "Undocumented color #77668b is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#77668b",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 8,
+    "snippet": "Undocumented color #2b2634 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#2b2634",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 9,
+    "snippet": "Undocumented color #eee8f5 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#eee8f5",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 14,
+    "snippet": "Undocumented color #f0ebf7 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#f0ebf7",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 16,
+    "snippet": "Undocumented color #1a1128 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#1a1128",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 17,
+    "snippet": "Undocumented color #c6aff0 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#c6aff0",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 19,
+    "snippet": "Undocumented color #d4bdf8 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#d4bdf8",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 20,
+    "snippet": "Undocumented color #73505a is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#73505a",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 20,
+    "snippet": "Undocumented color #ffbdc9 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#ffbdc9",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 25,
+    "snippet": "Undocumented color #b0a4bd is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#b0a4bd",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 28,
+    "snippet": "Undocumented color #b0a4bd is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#b0a4bd",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 30,
+    "snippet": "border-radius: 8px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "8px",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 31,
+    "snippet": "Undocumented color #8b739f is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#8b739f",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 33,
+    "snippet": "Undocumented color #c6b5de is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#c6b5de",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 35,
+    "snippet": "Undocumented color #eee8f5 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#eee8f5",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 37,
+    "snippet": "Undocumented color #d4bdf8 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#d4bdf8",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 39,
+    "snippet": "Undocumented color #786d85 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#786d85",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 40,
+    "snippet": "Undocumented color #b0a4bd is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#b0a4bd",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 43,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "4px",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 45,
+    "snippet": "Undocumented color #2b2435 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#2b2435",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 46,
+    "snippet": "Undocumented color #4d405a is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#4d405a",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 46,
+    "snippet": "Undocumented color #211b2a is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#211b2a",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 46,
+    "snippet": "Undocumented color #0006 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#0006",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 48,
+    "snippet": "Undocumented color #3d3449 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#3d3449",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 48,
+    "snippet": "border-radius: 8px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "8px",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 50,
+    "snippet": "Undocumented color #eee8f5 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#eee8f5",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 52,
+    "snippet": "border-radius: 8px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "8px",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 54,
+    "snippet": "Undocumented color #eee8f5 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#eee8f5",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 57,
+    "snippet": "border-radius: 7px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "7px",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 62,
+    "snippet": "Undocumented color #251d32 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#251d32",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 65,
+    "snippet": "Undocumented color #c6bcd3 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#c6bcd3",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 72,
+    "snippet": "Undocumented color #2b2634 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#2b2634",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 72,
+    "snippet": "Undocumented color #b0a4bd is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#b0a4bd",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 74,
+    "snippet": "Undocumented color #55445f is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#55445f",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 74,
+    "snippet": "border-radius: 8px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "8px",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 75,
+    "snippet": "Undocumented color #0009 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#0009",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 77,
+    "snippet": "Undocumented color #c6bcd3 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#c6bcd3",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 79,
+    "snippet": "Undocumented color #713343 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#713343",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 79,
+    "snippet": "Undocumented color #aa5b70 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#aa5b70",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\dashboard.module.css",
+    "line": 79,
+    "snippet": "Undocumented color #ffe2e9 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#ffe2e9",
+    "importedBy": [
+      "dashboard.tsx"
+    ]
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 5,
+    "snippet": "Undocumented color #211b2a is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#211b2a"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 5,
+    "snippet": "Undocumented color #55445f is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#55445f"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 5,
+    "snippet": "Undocumented color #0006 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#0006"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 6,
+    "snippet": "Undocumented color #c6bcd3 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#c6bcd3"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 7,
+    "snippet": "Undocumented color #73505a is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#73505a"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 7,
+    "snippet": "Undocumented color #ffbdc9 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#ffbdc9"
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 11,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "4px"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 12,
+    "snippet": "Undocumented color #2a2435 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#2a2435"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 20,
+    "snippet": "Undocumented color #55445f is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#55445f"
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 20,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "4px"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 22,
+    "snippet": "Undocumented color #211b2a is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#211b2a"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 22,
+    "snippet": "Undocumented color #0006 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#0006"
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 23,
+    "snippet": "border-radius: 3px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "3px"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 24,
+    "snippet": "Undocumented color #3b2b4e is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#3b2b4e"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 26,
+    "snippet": "Undocumented color #251d32 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#251d32"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 26,
+    "snippet": "Undocumented color #574265 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#574265"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 26,
+    "snippet": "Undocumented color #e7d2ff is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#e7d2ff"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 27,
+    "snippet": "Undocumented color #735984 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#735984"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 27,
+    "snippet": "Undocumented color #eee0ff is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#eee0ff"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 27,
+    "snippet": "Undocumented color #30223e is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#30223e"
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 27,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "4px"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 28,
+    "snippet": "Undocumented color #ffc4d1 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#ffc4d1"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 28,
+    "snippet": "Undocumented color #291b25 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#291b25"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 31,
+    "snippet": "Undocumented color #c6bcd3 is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#c6bcd3"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 32,
+    "snippet": "Undocumented color #5b466d is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#5b466d"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 32,
+    "snippet": "Undocumented color #21182d is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#21182d"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 32,
+    "snippet": "Undocumented color #d8befa is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#d8befa"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 34,
+    "snippet": "Undocumented color #55445f is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "#55445f"
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\aykhank\\.codex\\worktrees\\workspace-dashboard\\ZT\\src\\components\\workspaces\\workspaces.css",
+    "line": 34,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale",
+    "advisory": true,
+    "ignoreValue": "4px"
+  }
+]

@@ -6,10 +6,10 @@ import { CHART_DOCUMENT_SCHEMA_VERSION, createChartDocument, defaultDrawingStyle
 import { sanitizeChartOverlay, type ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import type { Timeframe } from "@/lib/market/types";
 import { workspaceChartDocuments } from "@/lib/chart/workspace-snapshot";
+import { legacyWorkspaceStorage } from "@/lib/workspaces/route-storage";
 
 type DocumentSeed = { workspaceId?: string; chartId?: string; instrument: InstrumentKey; timeframe: Timeframe; settings?: Partial<ChartSettingsV2> };
 type DrawingPatch = Omit<Partial<DrawingObject>, "id" | "instrument" | "chartId" | "schemaVersion" | "style"> & { style?: Partial<DrawingStyle> };
-const serverStorage = { getItem: () => null, setItem: () => undefined, removeItem: () => undefined };
 type State = {
   documents: Record<string, ChartDocument>;
   workspaceOwners: Record<string, string>;
@@ -194,7 +194,7 @@ export const useChartDocuments = create<State>()(persist((set, get) => ({
   name: "zterminal.chart-documents",
   version: 5,
   migrate: saved => saved,
-  storage: createJSONStorage(() => typeof localStorage === "undefined" ? serverStorage : localStorage),
+  storage: createJSONStorage(() => legacyWorkspaceStorage),
   skipHydration: true,
   partialize: state => ({ documents: state.documents, workspaceOwners: state.workspaceOwners }),
   merge: (saved, current) => {

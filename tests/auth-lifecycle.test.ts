@@ -8,7 +8,7 @@ import { resolveAuthRuntime } from "../src/lib/auth-runtime";
 import { readVerifiedSession, sessionAvailabilityProbe } from "../src/lib/auth-session";
 
 test("auth redirects reject external origins, scheme-relative URLs and credentials", () => {
-  for (const input of ["https://evil.test", "//evil.test", "javascript:alert(1)", "https://user:pass@zterminal.test/terminal"]) assert.equal(safeAuthRedirect(input, "https://zterminal.test"), "https://zterminal.test/terminal");
+  for (const input of ["https://evil.test", "//evil.test", "javascript:alert(1)", "https://user:pass@zterminal.test/terminal"]) assert.equal(safeAuthRedirect(input, "https://zterminal.test"), "https://zterminal.test/workspaces");
   assert.equal(safeAuthRedirect("/terminal?account=profile", "https://zterminal.test"), "https://zterminal.test/terminal?account=profile");
 });
 

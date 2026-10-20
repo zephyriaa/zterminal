@@ -8,6 +8,7 @@ import { OrderbookPanel } from "./orderbook-panel";
 import { GexSurfacePanel } from "./gex-surface-panel";
 import { useWorkspaceDock } from "./workspace-dock-controller";
 import { initializeWorkspace, persistWorkspace, PANEL_DEFINITIONS, isDockPanelId, type DockPanelId } from "@/lib/workspace-dock-layout";
+import { useWorkspaceDockSession } from "@/components/workspaces/session-context";
 const loading = () => <p className="p-4 text-xs" role="status">Opening tool…</p>;
 const Research = dynamic(() => import("../research-report").then(m => m.ResearchReport), { loading });
 const Strategy = dynamic(() => import("../research-workbench").then(m => m.ResearchWorkbench), { loading });
@@ -28,6 +29,7 @@ const storage = {
   removeItem: (key: string) => window.localStorage.removeItem(key),
 };
 export function WorkspaceDock() {
+  const session = useWorkspaceDockSession();
   const { attach, setActivePanelId } = useWorkspaceDock();
   const dispose = useRef<(() => void) | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -50,7 +52,7 @@ export function WorkspaceDock() {
     };
     dispose.current = cleanup;
     try {
-      initializeWorkspace(api, storage);
+      initializeWorkspace(api, session ?? storage, session?.starter);
       if (narrow.matches) api.getPanel("chart")?.api.setActive();
       fit();
       activeListener = api.onDidActivePanelChange(({ panel }) => {
@@ -59,7 +61,7 @@ export function WorkspaceDock() {
         if (narrow.matches) fit();
       });
       setActivePanelId(api.activePanel && isDockPanelId(api.activePanel.id) ? api.activePanel.id : null);
-      persistence = persistWorkspace(api, storage);
+      persistence = persistWorkspace(api, session ?? storage, session ? 0 : 250, session?.starter);
       const openPanel = (id: DockPanelId) => {
         try {
           let panel = api.getPanel(id);
@@ -80,7 +82,7 @@ export function WorkspaceDock() {
       cleanup(); dispose.current = null;
       setError(cause instanceof Error ? cause : new Error("Unable to initialize workspace"));
     }
-  }, [attach, setActivePanelId]);
+  }, [attach, setActivePanelId, session]);
   useEffect(() => () => { dispose.current?.(); dispose.current = null; }, []);
   if (error) throw error;
   return <div className="zt-workspace-dock" data-testid="workspace-dock" data-ready={ready}><DockviewReact components={components} onReady={onReady} className="dockview-theme-dark" /></div>;

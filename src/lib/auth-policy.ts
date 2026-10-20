@@ -4,8 +4,8 @@ export function safeAuthRedirect(url: string, baseUrl: string) {
   try {
     const target = new URL(url, base);
     if (target.origin === base.origin && !target.username && !target.password) return target.href;
-  } catch { /* Fall back to the public terminal on malformed input. */ }
-  return new URL("/terminal", base).href;
+  } catch { /* Fall back to the workspace chooser on malformed input. */ }
+  return new URL("/workspaces", base).href;
 }
 
 export function googleIdentityVerified(account: { provider?: string; providerAccountId?: string } | null, profile: unknown) {

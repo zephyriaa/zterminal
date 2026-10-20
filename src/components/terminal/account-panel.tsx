@@ -133,7 +133,7 @@ export function AccountPanel({
     setSigningIn(true);
     setAuthError(null);
     try {
-      const result = await signIn("google", { callbackUrl: "/terminal" });
+      const result = await signIn("google", { callbackUrl: window.location.pathname.startsWith("/workspaces/") ? window.location.pathname : "/workspaces" });
       if (result?.error) throw new Error(result.error);
     } catch {
       setAuthError("We couldn't start Google sign-in. Please try again.");
@@ -144,7 +144,7 @@ export function AccountPanel({
   const handleSignOut = async () => {
     setSigningOut(true); setAuthError(null);
     try {
-      await signOut({ callbackUrl: "/terminal", redirect: false });
+      await signOut({ callbackUrl: "/workspaces", redirect: false });
       const remaining = await updateSession();
       if (remaining) setAuthError("Sign-out could not be completed. Please try again.");
     } catch { setAuthError("Sign-out is temporarily unavailable. Please try again."); }

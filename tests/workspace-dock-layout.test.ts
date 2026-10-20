@@ -12,7 +12,7 @@ const savedLayout = {
       { type: "leaf", data: { views: ["research", "strategy"], activeView: "research", id: "3" }, size: 429 },
     ], size: 374 },
   ], size: 858 }, width: 1246, height: 858, orientation: "HORIZONTAL" },
-  panels: Object.fromEntries(REQUIRED_PANELS.map(id => [id, { id, contentComponent: PANEL_DEFINITIONS[id].component, title: PANEL_DEFINITIONS[id].title }])), activeGroup: "1",
+  panels: Object.fromEntries((["chart", "orderbook", "research", "strategy"] as const).map(id => [id, { id, contentComponent: PANEL_DEFINITIONS[id].component, title: PANEL_DEFINITIONS[id].title }])), activeGroup: "1",
 };
 
 function harness(saved?: string, restoreFailure = false, omitChartOnRestore = false) {
@@ -36,17 +36,34 @@ function harness(saved?: string, restoreFailure = false, omitChartOnRestore = fa
 }
 test("no saved layout uses addPanel and activates the primary chart", () => {
   const h = harness(); initializeWorkspace(h.api, h.storage);
-  assert.deepEqual(h.calls.filter(call => call.startsWith("add:")), REQUIRED_PANELS.map(id => `add:${id}`));
+  assert.deepEqual(h.calls.filter(call => call.startsWith("add:")), ["add:chart", "add:orderbook", "add:research", "add:strategy"]);
   assert.equal(h.calls.at(-1), "active:chart"); assert.ok(!h.calls.includes("restore"));
+});
+
+for (const [starter, panels] of [["chart", ["chart"]], ["orderflow", ["chart", "orderbook"]], ["research", ["chart", "strategy"]]] as const) test(`${starter} starter opens only its requested panels`, () => {
+  const h = harness(); initializeWorkspace(h.api, h.storage, starter);
+  assert.deepEqual(h.calls.filter(call => call.startsWith("add:")), panels.map(id => `add:${id}`));
+  assert.deepEqual(REQUIRED_PANELS,[]);
 });
 test("valid Dockview state restores without rebuilding", () => {
   const h = harness(JSON.stringify(savedLayout)); initializeWorkspace(h.api, h.storage);
   assert.deepEqual(h.calls, ["restore"]);
 });
+test("managed layouts retain invalid saved bytes until an explicit reset", () => {
+  const h = harness("{");
+  assert.throws(() => initializeWorkspace(h.api, h.storage, "chart"), /Reset its layout explicitly/);
+  assert.equal(h.values.get(WORKSPACE_LAYOUT_KEY), "{");
+  assert.ok(!h.calls.some(call => call.startsWith("add:")));
+});
+test("managed layouts restore intentionally closed panels without reopening them", () => {
+  const h = harness(JSON.stringify({ ...savedLayout, panels: { strategy: savedLayout.panels.strategy } }));
+  initializeWorkspace(h.api, h.storage, "research");
+  assert.deepEqual(h.calls, ["restore"]);
+});
 for (const [name, saved] of [
   ["malformed JSON", "{"],
   ["obsolete splitview", JSON.stringify({ grid: { root: { type: "splitview", views: [] } } })],
-  ["missing required chart", JSON.stringify({ ...savedLayout, panels: { ...savedLayout.panels, chart: undefined } })],
+  ["invalid panel map", JSON.stringify({ ...savedLayout, panels: { chart: { id: "different", contentComponent: "chart" } } })],
   ["unknown component", JSON.stringify({ ...savedLayout, panels: { ...savedLayout.panels, chart: { id: "chart", contentComponent: "missing" } } })],
 ] as const) test(`${name} is discarded and never passed to fromJSON`, () => {
   const h = harness(saved); initializeWorkspace(h.api, h.storage);

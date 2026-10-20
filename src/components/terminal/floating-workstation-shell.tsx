@@ -7,6 +7,7 @@ import {
   Code2,
   Search,
   Settings2,
+  Plus,
 } from "lucide-react";
 import { InstrumentPicker } from "./instrument-picker";
 import { WorkspaceDockProvider, useWorkspaceDock } from "./docking/workspace-dock-controller";
@@ -24,17 +25,20 @@ import { cn } from "@/lib/utils";
 import { DynamicWorkspaceDock } from "./docking";
 import { TerminalAppearanceBridge } from "./terminal-appearance-bridge";
 import { useTerminalAppearance } from "@/stores/terminal-appearance";
+import { PANEL_DEFINITIONS, WORKSPACE_LAYOUT_KEY, type DockPanelId } from "@/lib/workspace-dock-layout";
+import { useWorkspaceDockSession } from "@/components/workspaces/session-context";
 
 /**
  * The public terminal uses one reference-led windowed workstation. Existing P0
  * chart and stream components remain inside it, so visual restoration never
  * substitutes an archived client or simulated market state.
  */
-export function FloatingWorkstationShell() {
-  return <TerminalErrorBoundary><WorkspaceDockProvider><Workstation /></WorkspaceDockProvider></TerminalErrorBoundary>;
+export function FloatingWorkstationShell({ managed = false, name }: { managed?: boolean; name?: string }) {
+  const session = useWorkspaceDockSession();
+  return <TerminalErrorBoundary resetLayout={session ? () => session.removeItem(WORKSPACE_LAYOUT_KEY) : undefined}><WorkspaceDockProvider><Workstation managed={managed} name={name} /></WorkspaceDockProvider></TerminalErrorBoundary>;
 }
 
-function Workstation() {
+function Workstation({ managed, name }: { managed: boolean; name?: string }) {
   const dock = useWorkspaceDock();
   const { data: session, status } = useSession();
   const authHealth = useAuthHealth();
@@ -72,7 +76,7 @@ function Workstation() {
 
   return (
     <div data-terminal-material={material} className="zt-reference-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
-      <TerminalAppearanceBridge /><CloudSyncBridge /><CommandPalette />
+      <TerminalAppearanceBridge />{!managed && <CloudSyncBridge />}<CommandPalette />
       <header className="zt-reference-header" aria-label="Terminal header">
         <button type="button" className="zt-reference-mark" onClick={() => dock.focusPanel("chart")} aria-label="Focus chart workspace" title="Chart workspace">
           <Image src="/brand/zterminal-mark-v2.png" alt="" width={24} height={24} priority />
@@ -80,8 +84,9 @@ function Workstation() {
         <MobileResearchMenu />
         <span className="zt-header-separator" aria-hidden="true" />
         <InstrumentPicker />
-        <div className="zt-workspace-label hidden lg:block"><b>RESEARCH WORKSPACE</b><span>Write / backtest / inspect</span></div>
+        <div className="zt-workspace-label hidden lg:block"><b>{name ?? "RESEARCH WORKSPACE"}</b><span>Write / backtest / inspect</span></div>
         <div className="ml-auto flex items-center gap-1.5">
+          {managed && <details className="ws-add-panel"><summary><Plus size={15} />Add panel</summary><div>{Object.entries(PANEL_DEFINITIONS).map(([id, panel]) => <button key={id} onClick={event => { dock.openPanel(id as DockPanelId); event.currentTarget.closest("details")?.removeAttribute("open"); }}>{panel.title}</button>)}</div></details>}
           <button type="button" className="zt-header-icon" onClick={() => dock.openPanel("calendar")} aria-label="Open economic calendar" title="Economic calendar"><CalendarDays /></button>
           <button type="button" className="zt-header-icon" onClick={() => dock.openPanel("strategy")} aria-label="Open Python strategy developer" title="Python strategy developer"><Code2 /></button>
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><Search /></button>

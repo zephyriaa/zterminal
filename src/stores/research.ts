@@ -1,6 +1,7 @@
 "use client";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { isWorkspaceRoute } from "@/lib/workspaces/route-storage";
 import { draftStorage, flushDraftWrites } from "@/lib/local-research/drafts";
 import { EXAMPLES } from "@/lib/local-research/examples";
 import { defaultResearchConfig, type Dataset, type Diagnostic, type IndicatorEvaluationResult, type ResearchAnalysis, type ResearchConfig, type ResearchJob, type ResearchResult, type ScriptRecord, type ScriptInspection, type ResearchInstrument } from "@/lib/local-research/contracts";
@@ -259,7 +260,7 @@ export const useResearch = create<State>()(persist((set, get) => ({
     finally { if (generation === jobGeneration) abort = null; }
   },
 }), { name: "research-drafts-v1", version: 1, storage: createJSONStorage(() => draftStorage), skipHydration: true,
-  partialize: ({ drafts, activeId, config, params, minimap }) => ({ drafts, activeId, config, params, minimap }),
+  partialize: ({ drafts, activeId, config, params, minimap }) => ({ drafts, ...(!isWorkspaceRoute() ? { activeId, config, params, minimap } : {}) }),
   merge: (saved, current) => {
     const data = saved as Partial<State> | undefined;
     if (!data?.drafts || typeof data.drafts !== "object") return current;

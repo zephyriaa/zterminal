@@ -1,0 +1,816 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-20T05:13:39.810883+00:00",
+  "title": "Design System: ZTerminal",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Background",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Foreground",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Secondary",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Accent",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "control-hover": {
+        "role": "neutral",
+        "displayName": "Control Hover",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "border-hover": {
+        "role": "neutral",
+        "displayName": "Border Hover",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "heading": {
+        "role": "neutral",
+        "displayName": "Heading",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "page-heading": {
+        "role": "neutral",
+        "displayName": "Page Heading",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Accent Ink",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Accent Hover",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "link": {
+        "role": "primary",
+        "displayName": "Link",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "error-border": {
+        "role": "neutral",
+        "displayName": "Error Border",
+        "tonalRamp": [
+          "#291b25",
+          "#713343",
+          "#73505a",
+          "#aa5b70",
+          "#ffbdc9",
+          "#ffc4d1",
+          "#ffe2e9",
+          "#eee8f5"
+        ]
+      },
+      "error-text": {
+        "role": "neutral",
+        "displayName": "Error Text",
+        "tonalRamp": [
+          "#291b25",
+          "#713343",
+          "#73505a",
+          "#aa5b70",
+          "#ffbdc9",
+          "#ffc4d1",
+          "#ffe2e9",
+          "#eee8f5"
+        ]
+      },
+      "metadata": {
+        "role": "neutral",
+        "displayName": "Metadata",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "search-surface": {
+        "role": "neutral",
+        "displayName": "Search Surface",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "card-surface": {
+        "role": "neutral",
+        "displayName": "Card Surface",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "border-focus": {
+        "role": "neutral",
+        "displayName": "Border Focus",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "icon": {
+        "role": "neutral",
+        "displayName": "Icon",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "separator": {
+        "role": "neutral",
+        "displayName": "Separator",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "menu-hover": {
+        "role": "neutral",
+        "displayName": "Menu Hover",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "menu-border": {
+        "role": "neutral",
+        "displayName": "Menu Border",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "menu-surface": {
+        "role": "neutral",
+        "displayName": "Menu Surface",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "shadow": {
+        "role": "neutral",
+        "displayName": "Shadow",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "empty-border": {
+        "role": "neutral",
+        "displayName": "Empty Border",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "selected-surface": {
+        "role": "neutral",
+        "displayName": "Selected Surface",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "label": {
+        "role": "neutral",
+        "displayName": "Label",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "dialog-border": {
+        "role": "neutral",
+        "displayName": "Dialog Border",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "backdrop": {
+        "role": "neutral",
+        "displayName": "Backdrop",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "danger-surface": {
+        "role": "neutral",
+        "displayName": "Danger Surface",
+        "tonalRamp": [
+          "#291b25",
+          "#713343",
+          "#73505a",
+          "#aa5b70",
+          "#ffbdc9",
+          "#ffc4d1",
+          "#ffe2e9",
+          "#eee8f5"
+        ]
+      },
+      "danger-border": {
+        "role": "neutral",
+        "displayName": "Danger Border",
+        "tonalRamp": [
+          "#291b25",
+          "#713343",
+          "#73505a",
+          "#aa5b70",
+          "#ffbdc9",
+          "#ffc4d1",
+          "#ffe2e9",
+          "#eee8f5"
+        ]
+      },
+      "danger-text": {
+        "role": "neutral",
+        "displayName": "Danger Text",
+        "tonalRamp": [
+          "#291b25",
+          "#713343",
+          "#73505a",
+          "#aa5b70",
+          "#ffbdc9",
+          "#ffc4d1",
+          "#ffe2e9",
+          "#eee8f5"
+        ]
+      },
+      "toolbar-hover": {
+        "role": "neutral",
+        "displayName": "Toolbar Hover",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "panel-option-hover": {
+        "role": "neutral",
+        "displayName": "Panel Option Hover",
+        "tonalRamp": [
+          "#111017",
+          "#16131e",
+          "#18151f",
+          "#1b1923",
+          "#211b2a",
+          "#292433",
+          "#35313f",
+          "#ddd7e6"
+        ]
+      },
+      "banner-border": {
+        "role": "neutral",
+        "displayName": "Banner Border",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "banner-text": {
+        "role": "neutral",
+        "displayName": "Banner Text",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "banner-action-border": {
+        "role": "neutral",
+        "displayName": "Banner Action Border",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "banner-action-text": {
+        "role": "neutral",
+        "displayName": "Banner Action Text",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "banner-action-surface": {
+        "role": "neutral",
+        "displayName": "Banner Action Surface",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "alert-text": {
+        "role": "neutral",
+        "displayName": "Alert Text",
+        "tonalRamp": [
+          "#291b25",
+          "#713343",
+          "#73505a",
+          "#aa5b70",
+          "#ffbdc9",
+          "#ffc4d1",
+          "#ffe2e9",
+          "#eee8f5"
+        ]
+      },
+      "alert-surface": {
+        "role": "neutral",
+        "displayName": "Alert Surface",
+        "tonalRamp": [
+          "#291b25",
+          "#713343",
+          "#73505a",
+          "#aa5b70",
+          "#ffbdc9",
+          "#ffc4d1",
+          "#ffe2e9",
+          "#eee8f5"
+        ]
+      },
+      "recovery-border": {
+        "role": "neutral",
+        "displayName": "Recovery Border",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "recovery-surface": {
+        "role": "neutral",
+        "displayName": "Recovery Surface",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      },
+      "recovery-text": {
+        "role": "primary",
+        "displayName": "Recovery Text",
+        "tonalRamp": [
+          "#1a1128",
+          "#251d32",
+          "#30223e",
+          "#574265",
+          "#8b739f",
+          "#b79be8",
+          "#d4bdf8",
+          "#eee0ff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Workspace typography role from the implemented CSS."
+      },
+      "headline-mobile": {
+        "displayName": "Headline Mobile",
+        "purpose": "Workspace typography role from the implemented CSS."
+      },
+      "card-title": {
+        "displayName": "Card Title",
+        "purpose": "Workspace typography role from the implemented CSS."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Workspace typography role from the implemented CSS."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Workspace typography role from the implemented CSS."
+      },
+      "market": {
+        "displayName": "Market",
+        "purpose": "Workspace typography role from the implemented CSS."
+      }
+    },
+    "shadows": [
+      {
+        "name": "workspace-menu",
+        "value": "0 8px 24px #0006",
+        "purpose": "Workspace action, account and add-panel menus."
+      },
+      {
+        "name": "terminal-glass",
+        "value": "0 10px 28px rgba(0, 0, 0, .31)",
+        "purpose": "Existing terminal material only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "workspace-feedback",
+        "value": "background 150ms, border-color 150ms",
+        "purpose": "Workspace button feedback; disabled under reduced motion."
+      },
+      {
+        "name": "terminal-feedback",
+        "value": "120ms cubic-bezier(.2, 0, .2, 1)",
+        "purpose": "Existing terminal state feedback."
+      },
+      {
+        "name": "terminal-menu",
+        "value": "160ms",
+        "purpose": "Existing terminal surface entry."
+      },
+      {
+        "name": "terminal-dialog",
+        "value": "180ms",
+        "purpose": "Existing terminal dialog entry."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "workspace-mobile",
+        "value": "760px"
+      },
+      {
+        "name": "terminal-compact",
+        "value": "900px"
+      },
+      {
+        "name": "terminal-account-compact",
+        "value": "639px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Workspace create action.",
+      "html": "<button class=\"ds-primary\">Create workspace</button>",
+      "css": ".ds-primary{font-family:var(--font-geist-sans),sans-serif;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid #35313f;border-radius:6px;cursor:pointer;transition:background 150ms,border-color 150ms;background:#b79be8;border-color:#b79be8;color:#1a1128;font-weight:600}.ds-primary:hover{background:#c6aff0;border-color:#c6aff0}.ds-primary:focus-visible{outline:2px solid #b79be8;outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Quiet workspace action.",
+      "html": "<button class=\"ds-secondary\">Duplicate</button>",
+      "css": ".ds-secondary{font-family:var(--font-geist-sans),sans-serif;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid #35313f;border-radius:6px;cursor:pointer;transition:background 150ms,border-color 150ms;background:#1b1923;color:#ddd7e6}.ds-secondary:hover{background:#292433;border-color:#77668b}.ds-secondary:focus-visible{outline:2px solid #b79be8;outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}"
+    },
+    {
+      "name": "Workspace field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Inline create or rename field.",
+      "html": "<input class=\"ds-field\" aria-label=\"Workspace name\" placeholder=\"Workspace name\">",
+      "css": ".ds-field{font-family:var(--font-geist-sans),sans-serif;font-size:14px;padding:10px;border:1px solid #35313f;border-radius:6px;background:#1b1923;color:#ddd7e6}.ds-field::placeholder{color:#b0a4bd}.ds-field:focus-visible{outline:2px solid #b79be8;outline-offset:4px;}"
+    },
+    {
+      "name": "Workspace return navigation",
+      "kind": "nav",
+      "refersTo": "workspace-navigation",
+      "description": "Compact wrapper navigation.",
+      "html": "<a class=\"ds-nav\" href=\"#workspaces\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m12 19-7-7 7-7M5 12h14\"/></svg>Workspaces</a>",
+      "css": ".ds-nav{font-family:var(--font-geist-sans),sans-serif;font-size:14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:5px 9px;border:1px solid #35313f;border-radius:4px;background:none;color:#ddd7e6;text-decoration:none}.ds-nav:hover{background:#2a2435}.ds-nav:focus-visible{outline:2px solid #b79be8;outline-offset:4px;}"
+    },
+    {
+      "name": "Saved workspace card",
+      "kind": "card",
+      "refersTo": "workspace-card",
+      "description": "Saved work with real name, metadata and storage state; sample labels only.",
+      "html": "<article class=\"ds-card\"><span>Chart</span><h2><a href=\"#workspace\">Saved workspace</a></h2><p>gateio \u00b7 BTCUSDT \u00b7 5m</p><small>On this device</small></article>",
+      "css": ".ds-card{font-family:var(--font-geist-sans),sans-serif;font-size:14px;min-height:196px;padding:20px;border:1px solid #35313f;border-radius:8px;background:#18151f;color:#ddd7e6}.ds-card span,.ds-card small{font-size:12px;color:#bdb3cc}.ds-card h2{font-size:18px;font-weight:600;line-height:1.4;margin:24px 0 10px}.ds-card a{color:#eee8f5;text-decoration:none}.ds-card a:hover{color:#d4bdf8}.ds-card:focus-within{border-color:#8b739f}.ds-card a:focus-visible{outline:2px solid #b79be8;outline-offset:4px;}.ds-card p{font:11px/1.7 var(--font-geist-mono),monospace;color:#bdb3cc;margin-bottom:30px}"
+    },
+    {
+      "name": "Selected starter",
+      "kind": "custom",
+      "refersTo": "starter-selected",
+      "description": "Checked starter choice combines radio, fill and border.",
+      "html": "<label class=\"ds-starter\"><input type=\"radio\" name=\"ds-starter\" checked><strong>Chart</strong><span>A chart workspace</span></label>",
+      "css": ".ds-starter{font-family:var(--font-geist-sans),sans-serif;font-size:14px;position:relative;display:flex;flex-direction:column;gap:12px;padding:20px;border:1px solid #b79be8;border-radius:7px;background:#251d32;color:#ddd7e6;cursor:pointer}.ds-starter strong{font-weight:600}.ds-starter span{font-size:12px;line-height:1.6;color:#bdb3cc}.ds-starter input{position:absolute;top:19px;right:18px;accent-color:#b79be8}.ds-starter:has(:focus-visible){outline:2px solid #b79be8;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Existing Dark Research Workbench",
+    "overview": "Extend the incumbent near-black and violet ZTerminal identity with a calm entry surface. Pale text, hairline borders, Lucide line icons and compact controls keep saved work legible. This records the implemented web workspace extension; it does not replace the terminal appearance system or prescribe the public homepage.\n\nThe dashboard uses opaque surfaces. The terminal retains its existing configurable violet material, stationary glass chrome and opaque chart/editor areas. These are scoped expressions of the same research application, rather than a new global theme.",
+    "keyCharacteristics": [
+      "Near-black surfaces with restrained violet actions.",
+      "Hairline controls and modest, role-specific corners.",
+      "Geist for workspace reading; Geist Mono for market metadata.",
+      "Explicit state and recovery text with Lucide icons."
+    ],
+    "rules": [
+      {
+        "name": "The Scoped Palette Rule",
+        "body": "Use the workspace palette for workspace entry and wrapper controls. Keep terminal appearance variables and market semantic colors in their existing scope.",
+        "section": "colors"
+      },
+      {
+        "name": "The Loaded Face Rule",
+        "body": "Apply the bundled Geist CSS variable to the reading surface; loading a font variable alone does not apply a font family.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Entry Rule",
+        "body": "Dashboard cards and controls stay opaque and flat; menus may cast the existing soft shadow. Terminal glass remains terminal-scoped.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use actual saved names, metadata and explicit state labels in workspace cards.",
+      "Do use Lucide SVG icons and visible violet keyboard focus on workspace controls.",
+      "Do keep workspace font and palette rules scoped; preserve chart semantics and terminal appearance settings.",
+      "Do retain reduced-motion handling and the existing terminal transparency fallback."
+    ],
+    "donts": [
+      "Don't add decorative glass, gradients or fabricated chart previews to the dashboard.",
+      "Don't infer a global ban on glass or gradients from the opaque dashboard; the incumbent terminal uses both.",
+      "Don't invent a status color or success claim for unavailable or unsynchronized work.",
+      "Don't treat every literal shade as an independent brand accent or copy every contextual color into a new screen."
+    ]
+  }
+}
