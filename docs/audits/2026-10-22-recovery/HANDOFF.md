@@ -3,6 +3,12 @@
 The earlier pause was revoked by the user asking to continue. The implementation
 and current acceptance evidence are summarized in [STATUS.md](STATUS.md).
 
+Publication continuation supersedes the local-only release statements below:
+PR #14 merged, its Next/OpenNext runtime failure was rolled back, and PR #15
+contains the manifest compatibility fix plus a verified workerd smoke gate.
+See STATUS.md and DEPLOYMENT.md. The user now authorizes publishing validated
+changes on every development pass; preserve all remaining acceptance boundaries.
+
 - Worktree: `C:/Users/aykhank/.codex/worktrees/audit-recovery/ZT`, branch
   `codex/audit-recovery`, based on origin/main e5f7f4d1.
 - Original `C:/Users/aykhank/Desktop/Others/Projects/ZT` is dirty and preserved.

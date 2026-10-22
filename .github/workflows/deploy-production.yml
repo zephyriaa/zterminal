@@ -29,7 +29,7 @@ jobs:
           cache: "pip"
 
       - name: Install Node dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Generate Prisma client
         run: npm run db:generate
@@ -78,7 +78,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Build frontend for Cloudflare
         run: npm run cf:build
@@ -86,6 +86,9 @@ jobs:
           # The build generates a PostgreSQL client; no live connection is made.
           DATABASE_URL: "postgresql://build:placeholder@127.0.0.1:5432/build"
           NODE_ENV: production
+
+      - name: Smoke test built Cloudflare Worker
+        run: npm run cf:smoke
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v4
