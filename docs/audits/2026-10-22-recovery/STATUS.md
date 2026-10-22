@@ -1,8 +1,19 @@
 # Audit recovery checkpoint — 22 October 2026
 
-Implementation branch: `codex/audit-recovery`, isolated from the original dirty
-checkout. No deployment, push, production configuration change or real trade.
+Historical local implementation checkpoint: `codex/audit-recovery`, isolated from
+the original dirty checkout. The checks below preceded publication; no real trade.
 The original 1,070 source files and Git index match their preservation baseline.
+
+Publication continuation: PR #14 merged as `8ab71bd0`. Its successful deployment
+failed at runtime because OpenNext 1.20.6 did not inline Next 16.4's preview-props
+manifest. Production was rolled back to working Worker version
+`e62ced6b-c899-4ca6-b7cb-87ac3d1f8373`. PR #15 pins OpenNext 1.20.13 and enforces
+actual local workerd requests before deployment. The same smoke check failed
+against the old bundle with the exact exception and passed against the repaired
+bundle for auth capabilities, dashboard, workspace and example report. This
+supersedes the earlier adapter-build-only acceptance; live acceptance still
+requires checking the deployed version in a browser. Production dependency audit
+after the repair remains zero critical/high/moderate and two low findings.
 
 ## Changes
 
@@ -59,7 +70,8 @@ The original 1,070 source files and Git index match their preservation baseline.
 - The 252 older assertions remain separately recorded; grouped reconciliation does
   not mark each historical assertion individually retested. See RECONCILIATION.md.
 - Native Win32/Direct3D/WinUI, research lineage, recording and broader optional
-  capabilities remain later gates. Exact candidate release requires approval.
+  capabilities remain later gates. The user authorized publishing verified changes
+  on each development pass on 22 October; later scope limits or pauses take precedence.
 
 ## Evidence locations
 
