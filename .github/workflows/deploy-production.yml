@@ -29,7 +29,7 @@ jobs:
           cache: "pip"
 
       - name: Install Node dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Generate Prisma client
         run: npm run db:generate
@@ -78,7 +78,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Build frontend for Cloudflare
         run: npm run cf:build
