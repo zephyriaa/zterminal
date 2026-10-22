@@ -28,7 +28,7 @@ an assertion that this branch has been deployed.
 - Python runs in the paired local Windows Helper, not the Worker. Preserve the
   exact origin allowlist and unsigned-preview disclosure. Build the package from
   `research/desktop/build-private.ps1` using the pinned embedded runtime.
-- Release only a verified exact candidate after user approval. No production
+- The user authorized publishing validated implementation changes on each development pass on 22 October 2026. Release only a verified exact candidate through the existing workflow, unless a later request limits or pauses the task. No production
   secrets, DNS, hosting account or Worker was changed by this recovery work.
 
 Gate the release on browser feed/history recovery, workspace source portability,
