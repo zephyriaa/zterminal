@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { io, type Socket } from "socket.io-client";
+import { PublicMarketDataProvider, type StreamEvent } from "@/lib/market/public-stream";
 import type { DataStatus, DepthEvent, DepthLevel, DerivativesEvent, FeedHealth, LiquidationEvent, ProviderId, QuoteEvent, TradeEvent } from "@/lib/market/types";
 import { acceptsStreamEvent, freshFeedHealth, gatewayMatches, streamSymbol, type GatewayState } from "@/lib/market/provenance";
 import { CONTRACTS } from "@/lib/market/contracts";
@@ -11,6 +12,9 @@ import { acquireOrderFlowSession, type OrderFlowSession } from "@/lib/market/ord
 type StreamState = "connected" | "connecting" | "reconnecting" | "stale" | "degraded" | "unavailable" | "disconnected";
 const streamTypes = ["trade", "quote", "depth", "derivatives", "liquidation"] as const;
 let socket: Socket | null = null;
+let directFeed: PublicMarketDataProvider | null = null;
+let stopDirectState: (() => void) | null = null;
+const directSubscriptions = new Map<string, () => void>();
 const subscribedKeys = new Set<string>();
 let removeNetworkWatch: (() => void) | null = null;
 let stopSelectionWatch: (() => void) | null = null;
@@ -34,8 +38,8 @@ function allSymbols() {
 }
 
 function gatewayView(gateway: GatewayState, provider: ProviderId): { state: StreamState; dataStatus: DataStatus; reason?: string } {
-  if (!gateway.provider) return { state: gateway.state === "unavailable" ? "unavailable" : "connecting", dataStatus: gateway.dataStatus ?? "DISCONNECTED", reason: gateway.reason ?? "Waiting for gateway venue identity" };
-  if (!gatewayMatches(provider, gateway)) return { state: "unavailable", dataStatus: "UNAVAILABLE", reason: `Selected ${provider}; gateway serves ${gateway.provider} (${gateway.environment ?? "unknown"}). No other venue or simulation is substituted.` };
+  if (!gateway.provider) return { state: gateway.state === "unavailable" ? "unavailable" : "connecting", dataStatus: gateway.dataStatus ?? "DISCONNECTED", reason: gateway.reason ?? "Waiting for transport venue identity" };
+  if (!gatewayMatches(provider, gateway)) return { state: "unavailable", dataStatus: "UNAVAILABLE", reason: `Selected ${provider}; transport serves ${gateway.provider} (${gateway.environment ?? "unknown"}). No other venue or simulation is substituted.` };
   const state = gateway.state === "live" || gateway.state === "connected" || (provider === "mock" && gateway.state === "simulated") ? "connected" : ["connecting", "reconnecting", "stale", "degraded", "unavailable"].includes(gateway.state ?? "") ? gateway.state as StreamState : "disconnected";
   return { state, dataStatus: gateway.dataStatus ?? "DISCONNECTED", reason: gateway.reason };
 }
@@ -52,31 +56,73 @@ function subscribeSymbol(key: string) {
   const provider = useWorkspace.getState().marketProvider;
   if (!subscribedKeys.has(key) && key.startsWith(`${provider}:`) && gatewayMatches(provider, latestGatewayState)) {
     subscribedKeys.add(key);
-    socket?.emit("subscribe", { symbol: key.slice(key.indexOf(":") + 1), provider, types: streamTypes });
+    const symbol = key.slice(key.indexOf(":") + 1);
+    if (directFeed) {
+      directSubscriptions.set(key, directFeed.subscribe(symbol, event => {
+        if (useWorkspace.getState().marketProvider !== provider || event.provider !== provider) return;
+        if (!("type" in event)) { for (const listener of healthSubscribers.get(key) ?? []) listener(event); return; }
+        if (!acceptsStreamEvent(provider, latestGatewayState, event, selectionSince)) return;
+        const dispatch = (value: StreamEvent) => {
+          switch (value.type) {
+            case "trade": for (const listener of tradeSubscribers.get(key) ?? []) listener(value); break;
+            case "quote": for (const listener of quoteSubscribers.get(key) ?? []) listener(value); break;
+            case "depth": for (const listener of depthSubscribers.get(key) ?? []) listener(value); break;
+            case "derivatives": for (const listener of derivativesSubscribers.get(key) ?? []) listener(value); break;
+            case "liquidation": for (const listener of liquidationSubscribers.get(key) ?? []) listener(value); break;
+          }
+        };
+        dispatch(event);
+      }));
+    } else socket?.emit("subscribe", { symbol, provider, types: streamTypes });
   }
 }
 
 function releaseSocket() {
-  if (allSymbols().size || stateSubscribers.size || !socket) return;
+  if (allSymbols().size || stateSubscribers.size) return;
   stopSelectionWatch?.(); stopSelectionWatch = null;
   removeNetworkWatch?.(); removeNetworkWatch = null; subscribedKeys.clear();
-  socket.removeAllListeners(); socket.disconnect(); socket = null;
+  for (const remove of directSubscriptions.values()) remove(); directSubscriptions.clear();
+  stopDirectState?.(); stopDirectState = null; directFeed = null;
+  socket?.removeAllListeners(); socket?.disconnect(); socket = null;
   generation++;
   useWorkspace.getState().setConnection({ state: "disconnected", dataStatus: "DISCONNECTED" });
   latestGatewayState = { state: "connecting", dataStatus: "DISCONNECTED" };
 }
 
-function ensureSocket(): Socket {
-  if (socket) return socket;
-  const local = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  socket = io(process.env.NEXT_PUBLIC_MARKET_GATEWAY_URL || (local ? `${window.location.protocol}//${window.location.hostname}:3003` : undefined), { path: "/socket.io", addTrailingSlash: false, transports: ["websocket"], timeout: 8000, reconnection: true, reconnectionAttempts: 8, reconnectionDelay: 1000, reconnectionDelayMax: 30000 });
-  stopSelectionWatch = useWorkspace.subscribe((state, previous) => {
+function ensureSocket(): Socket | null {
+  if (socket || directFeed) return socket;
+  stopSelectionWatch ??= useWorkspace.subscribe((state, previous) => {
     if (state.marketProvider === previous.marketProvider) return;
     selectionSince = Date.now(); generation++;
-    for (const key of allSymbols()) socket?.emit("unsubscribe", { symbol: key.slice(key.indexOf(":") + 1) });
+    if (socket && (process.env.NEXT_PUBLIC_MARKET_TRANSPORT === "gateway" || !["gateio", "binance"].includes(state.marketProvider))) {
+      for (const key of allSymbols()) socket.emit("unsubscribe", { symbol: key.slice(key.indexOf(":") + 1) });
+      subscribedKeys.clear(); publishState(latestGatewayState);
+      return;
+    }
+    for (const remove of directSubscriptions.values()) remove(); directSubscriptions.clear();
+    stopDirectState?.(); stopDirectState = null; directFeed = null;
+    removeNetworkWatch?.(); removeNetworkWatch = null;
+    socket?.removeAllListeners(); socket?.disconnect(); socket = null;
     subscribedKeys.clear();
-    publishState(latestGatewayState);
+    latestGatewayState = { state: "connecting", dataStatus: "DISCONNECTED" };
+    ensureSocket();
+    for (const key of allSymbols()) subscribeSymbol(key);
   });
+  const provider = useWorkspace.getState().marketProvider;
+  if (process.env.NEXT_PUBLIC_MARKET_TRANSPORT !== "gateway" && (provider === "gateio" || provider === "binance")) {
+    selectionSince = Date.now();
+    directFeed = new PublicMarketDataProvider(provider);
+    stopDirectState = directFeed.onState(state => publishState(state));
+    if (typeof window !== "undefined") {
+      const online = () => directFeed?.reconnect(), offline = () => directFeed?.disconnect();
+      const visible = () => { if (!document.hidden && navigator.onLine) online(); };
+      window.addEventListener("online", online); window.addEventListener("offline", offline); document.addEventListener("visibilitychange", visible);
+      removeNetworkWatch = () => { window.removeEventListener("online", online); window.removeEventListener("offline", offline); document.removeEventListener("visibilitychange", visible); };
+    }
+    return null;
+  }
+  const local = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  socket = io(process.env.NEXT_PUBLIC_MARKET_GATEWAY_URL || (local ? `${window.location.protocol}//${window.location.hostname}:3003` : undefined), { path: "/socket.io", addTrailingSlash: false, transports: ["websocket"], timeout: 8000, reconnection: true, reconnectionAttempts: 8, reconnectionDelay: 1000, reconnectionDelayMax: 30000 });
   socket.on("connect", () => {
     subscribedKeys.clear(); selectionSince = Date.now();
     publishState({ state: "connecting", provider: undefined, environment: undefined, dataStatus: "DISCONNECTED", reason: undefined });
@@ -128,11 +174,11 @@ function subscribeSet<T>(map: Map<string, Set<(value: T) => void>>, key: string,
   return () => {
     if (removed) return; removed = true;
     current.delete(guarded); if (!current.size) map.delete(key);
-    if (!allSymbols().has(key)) { subscribedKeys.delete(key); socket?.emit("unsubscribe", { symbol: key.slice(key.indexOf(":") + 1) }); }
+    if (!allSymbols().has(key)) { directSubscriptions.get(key)?.(); directSubscriptions.delete(key); subscribedKeys.delete(key); socket?.emit("unsubscribe", { symbol: key.slice(key.indexOf(":") + 1) }); }
   };
 }
 
-/** Overlays share the same gateway and follow the canonical workspace venue. */
+/** Overlays share the selected transport and canonical workspace venue. */
 export function subscribeMarketTrades(symbol: string, listener: (trade: TradeEvent) => void) {
   const bind = () => {
     ensureSocket();
@@ -153,7 +199,7 @@ export interface MarketStream {
   observation?: ReturnType<OrderFlowSession["getSnapshot"]>;
   derivatives: DerivativesEvent | null; derivativesHistory: DerivativesEvent[]; liquidations: LiquidationEvent[];
   health: FeedHealth | null; state: StreamState; dataStatus: DataStatus; provider: ProviderId;
-  effectiveProvider?: ProviderId; gatewayProvider?: ProviderId; environment: "live" | "simulation";
+  transport?: "direct" | "gateway"; effectiveProvider?: ProviderId; gatewayProvider?: ProviderId; environment: "live" | "simulation";
   nativeSymbol: string | null; canonicalSymbol: string | null; product: "future" | "perpetual" | "equity" | "index" | null; integrity: "simulated" | "provider-stream" | "unavailable"; sourceTimestamp?: number; retrievedAt?: number; reason?: string;
 }
 
@@ -221,7 +267,8 @@ export function useMarketStream(symbol: string, options?: { trades?: number; dep
     const requestHealth = () => {
       setNow(Date.now());
       if (!active || epoch !== generation || !gatewayMatches(provider, latestGatewayState)) return;
-      activeSocket.timeout(3000).emit("health", { symbol: native }, (error: Error | null, result: { ok?: boolean; health?: FeedHealth }) => {
+      if (directFeed) { receiveHealth(directFeed.health(native)); return; }
+      activeSocket?.timeout(3000).emit("health", { symbol: native }, (error: Error | null, result: { ok?: boolean; health?: FeedHealth }) => {
         if (error) return;
         const h = result?.health;
         if (active && epoch === generation && result?.ok && h?.provider === provider && typeof h.symbol === "string" && streamSymbol(h.symbol, provider) === native && Number.isFinite(h.updatedAt) && h.updatedAt >= selectionSince) receiveHealth(h);
@@ -248,8 +295,8 @@ export function useMarketStream(symbol: string, options?: { trades?: number; dep
     tradeStatus: tradesReady ? provider === "mock" ? "SIMULATED" : "LIVE" : "UNAVAILABLE", depthStatus: depthReady ? provider === "mock" ? "SIMULATED" : "LIVE" : "UNAVAILABLE", observations: current ? observations : null, observation: current && observations ? observation : undefined,
     derivatives: ready ? derivatives : null, derivativesHistory: ready ? derivativesHistory : [], liquidations: ready ? liquidations : [],
     health: current ? health : null, state, dataStatus, provider,
-    effectiveProvider: tradesReady || depthReady ? gateway.provider : undefined, gatewayProvider: gateway.provider, environment: provider === "mock" ? "simulation" : "live",
+    transport: directFeed ? "direct" : "gateway", effectiveProvider: tradesReady || depthReady ? gateway.provider : undefined, gatewayProvider: directFeed ? undefined : gateway.provider, environment: provider === "mock" ? "simulation" : "live",
     product: provider === "mock" ? CONTRACTS[symbol.toUpperCase()]?.product ?? null : native ? "perpetual" : null, nativeSymbol: native, canonicalSymbol: native?.replace(/-SWAP$/, "").replace(/[_-]/g, "") ?? null, integrity: ready ? provider === "mock" ? "simulated" : "provider-stream" : "unavailable", sourceTimestamp: ready ? Math.max(observedTrades.at(-1)?.timestamp ?? 0, quote?.timestamp ?? 0) || undefined : undefined, retrievedAt: current ? health?.updatedAt : undefined,
-    reason: !native ? "No supported native instrument mapping" : view.reason ?? health?.reason ?? (!ready ? "Waiting for matching instrument data and health" : undefined),
+    reason: !native ? "No supported native instrument mapping" : ready ? health?.reason : health?.reason ?? view.reason ?? (!ready ? "Waiting for matching instrument data and health" : undefined),
   } satisfies MarketStream;
 }

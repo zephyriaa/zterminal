@@ -5,7 +5,7 @@ import { PublicMarketDataProvider } from "../src/lib/market/public-stream";
 function harness(provider: "bybit" | "coinbase", symbol: string) {
   const instance: any = new PublicMarketDataProvider(provider);
   const events: any[] = [];
-  instance.listeners.set(symbol, new Set([(event: any) => events.push(event)]));
+  instance.listeners.set(symbol, new Set([(event: any) => { if ("type" in event) events.push(event); }]));
   return { instance, events };
 }
 

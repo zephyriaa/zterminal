@@ -7,14 +7,16 @@ import { ArrowUpRight, ChartCandlestick, Check, Cloud, Code2, Copy, Ellipsis, La
 import { STARTERS, copyWorkspace, newWorkspace, type WorkspaceRecord, type WorkspaceStarter, type WorkspaceSummary, type WorkspaceSnapshot } from "@/lib/workspaces/model";
 import { createWorkspace, getMigrationBackup, getWorkspace, listLocalWorkspaces, migrateLegacyWorkspaces, updateWorkspace } from "@/lib/workspaces/storage";
 import { cloudWorkspaceSummaries, fetchCloudWorkspace, removeCloudWorkspace, saveCloudWorkspace } from "@/lib/workspaces/cloud";
+import { createWorkspaceBackup, prepareWorkspaceImport } from "@/lib/workspaces/backup";
+import { draftStorage, flushDraftWrites } from "@/lib/local-research/drafts";
 import { editClosedWorkspace } from "@/lib/workspaces/edit-lock";
 import { WorkspaceAccount } from "./account";
 import styles from "./dashboard.module.css";
 
 const starterIcons = { chart: ChartCandlestick, orderflow: Layers3, research: Code2 };
-function exportBackup(data: unknown) {
+function exportBackup(data: unknown, filename = "zterminal-workspace-recovery.json") {
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-  const link = document.createElement("a"); link.href = url; link.download = "zterminal-workspace-recovery.json"; link.click(); URL.revokeObjectURL(url);
+  const link = document.createElement("a"); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url);
 }
 export function WorkspaceDashboard() {
   const { data: session } = useSession(), ownerId = (session?.user as { id?: string } | undefined)?.id ?? null;
@@ -85,13 +87,22 @@ export function WorkspaceDashboard() {
     }
     setRenaming(null);
   }));
+  const backupWorkspace = (item: WorkspaceSummary) => action(async () => {
+    const record = await localRecord(item);
+    await flushDraftWrites();
+    const stored = await draftStorage.getItem("research-drafts-v1");
+    const library = stored ? JSON.parse(stored).state?.drafts ?? {} : {};
+    const backup = createWorkspaceBackup(record.snapshot, { ...record.importedDrafts, ...library });
+    exportBackup(backup, `zterminal-workspace-${item.id}.json`);
+    if (backup.missingDraftIds.length) setError("Workspace exported with missing Python source. The backup lists the unavailable artifacts; keep your Helper archive separately.");
+  });
   const visible = items.filter(item => `${item.name} ${item.symbol} ${STARTERS[item.starter]?.name ?? ""}`.toLowerCase().includes(query.toLowerCase())).sort((a, b) => sort === "name" ? a.name.localeCompare(b.name) : Math.max(b.lastOpenedAt, b.updatedAt)-Math.max(a.lastOpenedAt, a.updatedAt));
 
   return <div className={styles.page}>
-    <header className={styles.header}><Link href="/" className={styles.brand}><Image src="/brand/zterminal-mark-v2.png" width={26} height={26} alt="" />ZTerminal</Link><div className={styles.headerRight}><Link href="/docs">Help</Link><WorkspaceAccount /></div></header>
+    <header className={styles.header}><Link href="/" className={styles.brand}><Image src="/brand/zterminal-mark-v2.png" width={26} height={26} alt="" />ZTerminal</Link><div className={styles.headerRight}><Link href="/research/example">Example report</Link><Link href="/docs">Help</Link><WorkspaceAccount /></div></header>
     <main className={styles.main}>
       <div className={styles.heading}><div><h1>Workspaces</h1><p>Your charts, tools and research. Ready when you are.</p></div><button className={styles.primary} onClick={() => { setCreating(value => !value); setCreated(null); }}>{creating ? <X size={17} /> : <Plus size={17} />}{creating ? "Cancel" : "Create workspace"}</button></div>
-      <div className={styles.notice} role="status"><Monitor size={15} /><span>{cloudStatus}. Local workspaces do not require an account.</span></div>
+      <div className={styles.notice} role="status"><Monitor size={15} /><span>{cloudStatus}. Local workspaces do not require an account. Back up before clearing browser data.</span></div>
       {error && <div role="alert" className={styles.error}>{error} <button onClick={() => void refresh()}>Retry</button></div>}
       {skipped > 0 && <p className={styles.error}>{skipped} older workspace entries could not be imported. Their original data is preserved. <button onClick={() => void getMigrationBackup().then(exportBackup)}>Export recovery data</button></p>}
       {created && <p className={styles.notice}>Workspace created. <a href={`/workspaces/${created}`} target="_blank" rel="noopener noreferrer">Open workspace <ArrowUpRight size={14} /></a></p>}
@@ -101,9 +112,19 @@ export function WorkspaceDashboard() {
         <div className={styles.fields}><label>Workspace name<input autoFocus required maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. BTC research" /></label><label>Venue<select value={provider} onChange={e => setProvider(e.target.value as "gateio" | "binance")}><option value="gateio">Gate · USDT perpetual</option><option value="binance">Binance · USDT perpetual</option></select></label><label>Market<input required pattern="[A-Z0-9]{3,40}" value={symbol} maxLength={40} onChange={e => setSymbol(e.target.value.toUpperCase())} /></label><label>Timeframe<select value={timeframe} onChange={e => setTimeframe(e.target.value as WorkspaceSnapshot["timeframe"])}>{["1m", "5m", "15m", "30m", "1h", "4h", "1d"].map(tf => <option key={tf}>{tf}</option>)}</select></label></div>
         <div className={styles.createFooter}><span>Saved on this device. Opens in a new tab.</span><button className={styles.primary} disabled={busy || !name.trim()} type="submit">{busy ? "Creating…" : "Create and open"}<ArrowUpRight size={16} /></button></div>
       </form>}
+      <div className={styles.notice}><label>Import workspace <input type="file" accept=".json,application/json" disabled={busy} onChange={event => {
+        const file = event.target.files?.[0]; event.target.value = "";
+        if (!file) return;
+        void action(async () => {
+          if (file.size > 8000000) throw new Error("Choose a workspace backup up to 8 MB.");
+          const imported = prepareWorkspaceImport(JSON.parse(await file.text()));
+          await createWorkspace(imported.snapshot, imported.drafts); setCreated(imported.snapshot.id);
+          if (imported.missingDraftIds.length) setError("Imported workspace has missing Python source, as listed in its backup. Existing work was preserved.");
+        });
+      }} /></label></div>
       <div className={styles.tools}><label className={styles.search}><Search size={18} /><input aria-label="Search workspaces" placeholder="Search workspaces" value={query} onChange={e => setQuery(e.target.value)} /></label><label className={styles.sort}>Sort by<select value={sort} onChange={e => setSort(e.target.value)}><option value="recent">Recent activity</option><option value="name">Name</option></select></label><span className={styles.count}>{items.length} {items.length === 1 ? "workspace" : "workspaces"}</span></div>
       {loading ? <div className={styles.loading} aria-label="Loading workspaces" /> : !visible.length ? <section className={styles.empty}><Layers3 size={32} /><h2>{query ? "No matching workspaces" : "A clear place to begin"}</h2><p>{query ? "Try another name or market." : "Create your first workspace, choose a starter, and make it your own."}</p>{!query && !creating && <button className={styles.primary} onClick={() => setCreating(true)}><Plus size={17} />Create workspace</button>}</section> : <div className={styles.grid}>{visible.map(item => { const Icon = starterIcons[item.starter] ?? ChartCandlestick; return <article key={item.id} className={styles.card}>
-        <div className={styles.cardTop}><Icon size={21} /><span>{STARTERS[item.starter]?.name ?? "Workspace"}</span><details className={styles.menu} onClick={event => { if ((event.target as HTMLElement).closest("button")) event.currentTarget.open = false; }}><summary aria-label={`Actions for ${item.name}`}><Ellipsis size={19} /></summary><div><button disabled={busy} onClick={() => { setRenaming(item.id); setRename(item.name); }}>Rename</button><button disabled={busy} onClick={() => void action(async () => { const record = await localRecord(item); await createWorkspace(copyWorkspace(record.snapshot)); })}><Copy size={14} />Duplicate</button><button disabled={busy} onClick={() => setDeleting(item)}><Trash2 size={14} />Delete</button></div></details></div>
+        <div className={styles.cardTop}><Icon size={21} /><span>{STARTERS[item.starter]?.name ?? "Workspace"}</span><details className={styles.menu} onClick={event => { if ((event.target as HTMLElement).closest("button")) event.currentTarget.open = false; }}><summary aria-label={`Actions for ${item.name}`}><Ellipsis size={19} /></summary><div><button disabled={busy} onClick={() => { setRenaming(item.id); setRename(item.name); }}>Rename</button><button disabled={busy} onClick={() => void action(async () => { const record = await localRecord(item); await createWorkspace(copyWorkspace(record.snapshot), record.importedDrafts); })}><Copy size={14} />Duplicate</button><button disabled={busy} onClick={() => void backupWorkspace(item)}>Export saved workspace</button><button disabled={busy} onClick={() => setDeleting(item)}><Trash2 size={14} />Delete</button></div></details></div>
         {renaming === item.id ? <form className={styles.rename} onSubmit={event => { event.preventDefault(); void renameWorkspace(item); }}><input aria-label="Workspace name" autoFocus required maxLength={80} value={rename} onChange={e => setRename(e.target.value)} /><button disabled={busy || !rename.trim()} type="submit">Save</button><button type="button" onClick={() => setRenaming(null)}>Cancel</button></form> : <h2><a href={`/workspaces/${item.id}`} target="_blank" rel="noopener noreferrer">{item.name}<ArrowUpRight size={16} /></a></h2>}
         <p className={styles.market}>{item.marketProvider ?? "Choose original venue"} <span>·</span> {item.symbol} <span>·</span> {item.timeframe}</p>
         <div className={styles.cardBottom}><span>{item.ownerId ? <Cloud size={14} /> : <Monitor size={14} />}{item.ownerId ? item.dirty ? "Changes pending sync" : "Account workspace" : "On this device"}</span><time dateTime={new Date(item.lastOpenedAt || item.updatedAt).toISOString()}>{new Date(item.lastOpenedAt || item.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div>

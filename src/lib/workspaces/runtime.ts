@@ -36,8 +36,8 @@ export async function restoreWorkspaceRuntime(record: WorkspaceRecord) {
   await recoverResearchDrafts();
   const config = s.research ? s.research.config as unknown as ResearchConfig : defaultResearchConfig();
   validateConfig(config);
-  const drafts = useResearch.getState().drafts;
-  useResearch.setState({ config, params: s.research?.params ?? {}, minimap: s.research?.minimap ?? false, activeId: s.research?.activeId && drafts[s.research.activeId] ? s.research.activeId : Object.keys(drafts)[0], chartResult: null, result: null, selectedTrade: null, instrument: null, diagnostic: null });
+  const drafts = { ...record.importedDrafts, ...useResearch.getState().drafts };
+  useResearch.setState({ drafts, config, params: s.research?.params ?? {}, minimap: s.research?.minimap ?? false, activeId: s.research?.activeId && drafts[s.research.activeId] ? s.research.activeId : Object.keys(drafts)[0], chartResult: null, result: null, selectedTrade: null, instrument: null, diagnostic: null });
 }
 
 export function workspaceRuntime(initial: WorkspaceRecord, owns: () => boolean, report: (state: WorkspaceSaveState) => void) {
@@ -128,7 +128,7 @@ export function workspaceRuntime(initial: WorkspaceRecord, owns: () => boolean, 
     dock: { starter: initial.snapshot.starter, getItem: () => layout === null ? null : JSON.stringify(layout), setItem: (_key: string, value: string) => { layout = JSON.parse(value); schedule(); }, removeItem: () => { layout = null; schedule(); } },
     flush,
     async flushAll() { await flush(); if (syncing) await syncing; },
-    async copy(name?: string) { const snapshot = paused || !owns() ? (await getWorkspace(record.snapshot.id))?.snapshot ?? record.snapshot : capture(); const next = copyWorkspace(snapshot, name); await createWorkspace(next); return next.id; },
+    async copy(name?: string) { const snapshot = paused || !owns() ? (await getWorkspace(record.snapshot.id))?.snapshot ?? record.snapshot : capture(); const next = copyWorkspace(snapshot, name); await createWorkspace(next, { ...record.importedDrafts, ...useResearch.getState().drafts }); return next.id; },
     setOwner(id: string | null) { owner = id; if (id && record.ownerId === id) void sync(); },
     async enableCloud(id: string) {
       await flush();

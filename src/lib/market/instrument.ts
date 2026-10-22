@@ -3,16 +3,16 @@ import { BINANCE_FUTURES_REST_URL } from "./binance";
 import type { ContractMetadata } from "./types";
 
 /** Only verified USDT perpetual identities are admitted to the terminal history path. */
-export async function fetchInstrument(provider: string, input: string, signal?: AbortSignal): Promise<ContractMetadata> {
+export async function fetchInstrument(provider: string, input: string, signal?: AbortSignal, fetcher: (input: string | URL, init?: RequestInit) => Promise<Response> = fetch): Promise<ContractMetadata> {
   if (input.includes(":") && !input.toUpperCase().startsWith(`${provider.toUpperCase()}:`)) throw new Error("Instrument alias belongs to a different venue");
   const gate = normalizeGateioSymbol(input);
   if (!gate) throw new Error(`Unsupported perpetual instrument: ${input}`);
   const canonical = gate.replace("_", "");
-  const options = { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000), cache: "no-store" as const, headers: { Accept: "application/json", "X-Gate-Size-Decimal": "1" } };
+  const options = { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000), cache: "no-store" as const, headers: { Accept: "application/json" } };
   let symbol = canonical, multiplier = 1, tickSize: number, quantityStep: number | undefined;
   let exchange: ContractMetadata["exchange"];
   if (provider === "gateio") {
-    const response = await fetch(`${GATEIO_REST_URL}/futures/usdt/contracts/${gate}`, options);
+    const response = await fetcher(`${GATEIO_REST_URL}/futures/usdt/contracts/${gate}`, options);
     if (!response.ok) throw new Error(`Gate.io instrument unavailable (${response.status})`);
     const raw = await response.json();
     if (raw.name !== gate || raw.in_delisting) throw new Error("Unavailable Gate.io contract");
@@ -22,7 +22,7 @@ export async function fetchInstrument(provider: string, input: string, signal?: 
     // Decimal support and minimum size do not establish a quantity increment.
     quantityStep = raw.enable_decimal ? undefined : 1;
   } else if (provider === "binance") {
-    const response = await fetch(`${BINANCE_FUTURES_REST_URL}/fapi/v1/exchangeInfo`, options);
+    const response = await fetcher(`${BINANCE_FUTURES_REST_URL}/fapi/v1/exchangeInfo`, options);
     if (!response.ok) throw new Error(`Binance instrument unavailable (${response.status})`);
     const raw = await response.json();
     const contract = raw.symbols?.find((item: { symbol: string }) => item.symbol === canonical);
@@ -31,7 +31,7 @@ export async function fetchInstrument(provider: string, input: string, signal?: 
     tickSize = Number(contract.filters?.find((f: { filterType: string }) => f.filterType === "PRICE_FILTER")?.tickSize);
     quantityStep = Number(contract.filters?.find((f: { filterType: string }) => f.filterType === "LOT_SIZE")?.stepSize);
   } else if (provider === "bybit") {
-    const response = await fetch(`https://api.bybit.com/v5/market/instruments-info?category=linear&symbol=${canonical}`, options);
+    const response = await fetcher(`https://api.bybit.com/v5/market/instruments-info?category=linear&symbol=${canonical}`, options);
     if (!response.ok) throw new Error(`Bybit instrument unavailable (${response.status})`);
     const raw = await response.json();
     const contract = raw.result?.list?.find((item: { symbol: string }) => item.symbol === canonical);
@@ -39,7 +39,7 @@ export async function fetchInstrument(provider: string, input: string, signal?: 
     exchange = "BYBIT"; tickSize = Number(contract.priceFilter?.tickSize); quantityStep = Number(contract.lotSizeFilter?.qtyStep);
   } else if (provider === "okx") {
     symbol = `${gate.replace("_", "-")}-SWAP`;
-    const response = await fetch(`https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId=${symbol}`, options);
+    const response = await fetcher(`https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId=${symbol}`, options);
     if (!response.ok) throw new Error(`OKX instrument unavailable (${response.status})`);
     const raw = await response.json();
     const contract = raw.data?.find((item: { instId: string }) => item.instId === symbol);

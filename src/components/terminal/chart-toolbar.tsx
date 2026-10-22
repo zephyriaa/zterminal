@@ -16,6 +16,7 @@ import {
 import type { ChartType } from "@/lib/chart/contracts";
 import type { Timeframe } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { MultiChartLayout } from "@/stores/multi-chart";
 
 const TIMEFRAMES: { value: Timeframe; label: string }[] = [
@@ -120,9 +121,9 @@ export function ChartToolbar(props: Props) {
         <>
           <div className="zt-chart-price relative">
             <b>{props.price}</b>
-            <button
+            <Popover open={showProviderMenu} onOpenChange={setShowProviderMenu}>
+            <PopoverTrigger asChild><button
               type="button"
-              onClick={() => setShowProviderMenu((v) => !v)}
               ref={providerButtonRef}
               aria-expanded={showProviderMenu}
               className={cn(
@@ -133,13 +134,8 @@ export function ChartToolbar(props: Props) {
             >
               <span>{props.providerLabel}</span>
               <span className="text-[8px] opacity-70">▼</span>
-            </button>
-
-            {showProviderMenu && (
-              <div
-                className="zt-chart-toolbar-menu absolute top-full left-0 mt-1 z-50 bg-[#0d1117] border border-[#30363d] rounded shadow-xl py-1 min-w-[130px]"
-                onMouseLeave={() => setShowProviderMenu(false)}
-              >
+            </button></PopoverTrigger>
+            <PopoverContent align="start" className="zt-chart-toolbar-menu w-auto min-w-[130px] p-1">
                 <div className="px-2 py-0.5 text-[9px] text-[#8b949e] border-b border-[#21262d] uppercase tracking-wider font-semibold">
                   Free Providers
                 </div>
@@ -164,8 +160,7 @@ export function ChartToolbar(props: Props) {
                     )}
                   </button>
                 ))}
-              </div>
-            )}
+            </PopoverContent></Popover>
           </div>
 
           <span
@@ -183,9 +178,9 @@ export function ChartToolbar(props: Props) {
         {/* Multi-Chart Grid Switcher */}
         {props.onLayoutChange && (
           <div className="relative">
-            <button
+            <Popover open={showLayoutMenu} onOpenChange={setShowLayoutMenu}>
+            <PopoverTrigger asChild><button
               type="button"
-              onClick={() => setShowLayoutMenu((v) => !v)}
               ref={layoutButtonRef}
               aria-expanded={showLayoutMenu}
               className={cn(
@@ -200,13 +195,8 @@ export function ChartToolbar(props: Props) {
               {currentLayout === "3" && <Grid2X2 className="h-3 w-3" />}
               {currentLayout === "4" && <Grid2X2 className="h-3 w-3" />}
               <span className="text-[9px] uppercase font-mono">{currentLayout}</span>
-            </button>
-
-            {showLayoutMenu && (
-              <div
-                className="zt-chart-toolbar-menu absolute right-0 top-full mt-1 z-50 bg-[#0d1117] border border-[#30363d] rounded shadow-xl py-1 min-w-[140px]"
-                onMouseLeave={() => setShowLayoutMenu(false)}
-              >
+            </button></PopoverTrigger>
+            <PopoverContent align="end" className="zt-chart-toolbar-menu w-auto min-w-[140px] p-1">
                 <div className="px-2 py-0.5 text-[9px] text-[#8b949e] border-b border-[#21262d] uppercase tracking-wider font-semibold">
                   Multi-Chart Grid
                 </div>
@@ -280,8 +270,7 @@ export function ChartToolbar(props: Props) {
                   <Grid2X2 className="h-3 w-3" />
                   <span>4 Charts (2x2 Quad)</span>
                 </button>
-              </div>
-            )}
+            </PopoverContent></Popover>
           </div>
         )}
 

@@ -7,3 +7,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Release workflow
+
+For ZTerminal implementation work, the user has requested that validated changes
+be published and made live each time. After the relevant checks pass, publish the
+changes through the existing GitHub and Cloudflare production workflow and verify
+the deployed user journey. Report the deployed commit and verification limits.
+This standing preference does not override a later pause, planning-only scope or
+explicit restriction, and does not authorize paid services, real trades or changes
+to unrelated work. Preserve dirty checkouts and never claim deployment from a
+local build alone.

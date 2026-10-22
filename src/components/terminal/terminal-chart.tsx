@@ -254,7 +254,7 @@ export function TerminalChart({
         const to = Date.now();
         const barsCount = 600;
         const historicalProvider = provider ?? "gateio";
-        const result = await fetchBarsDeduplicated(historicalProvider, symbol, timeframe, to, barsCount, controller.signal);
+        const result = await fetchBarsDeduplicated(historicalProvider, symbol, timeframe, to, barsCount, controller.signal, true);
         if (cancelled) return;
         setHistory(result); setHistoryIdentity(historyKey);
         setBars(result.bars);

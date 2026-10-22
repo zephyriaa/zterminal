@@ -22,6 +22,30 @@ schema, or mock exists.
 | 12. Windows distribution | Planned | Track B workstation and Helper signed-release compatibility. |
 | 13. Reliability and release QA | Planned | End-to-end recovery, security, performance, native, and browser gates. |
 
+## Active audit recovery track — 22 October 2026
+
+The GLM audit recovery is the current repair track, alongside the longer-term
+institutional design above. It extends existing workspace, chart and Helper
+contracts; it does not authorize replacing them with speculative V2 systems.
+The original audit statements are historical inputs, not current acceptance.
+
+| Repair slice | Current evidence | Remaining gate |
+| --- | --- | --- |
+| Preservation and audit reconciliation | Isolated `codex/audit-recovery`; original file/index baseline; eight audit inputs and historical assertions retained | Map each assertion to current journey evidence |
+| Direct Gate/Binance feeds | Local browser observed both venues LIVE, source-matched history and provider switching; readiness regressions covered | Final assembled browser recovery and offline acceptance |
+| Workspace portability | Versioned backup/import with Python source, fresh IDs and no inherited cloud ownership; focused tests pass | Fresh-profile export/import/reload and duplicate-source journey |
+| Python research access | Actual engine-generated synthetic example with source, dataset and hashes; Helper runtime tests passed with six skips | Native launcher/install journey; packaged service browser pair/run/report/export payload passed locally |
+| Design | Existing root DESIGN.md and PRODUCT.md already document graphite/violet workspace identity | Final responsive, focus, contrast and error-state verification |
+| Exposed order flow | Existing shared book/trade calculations retained | Independent input/output reconciliation and browser acceptance |
+| Security and release | Free public feeds and local Helper boundaries documented | Adapter build, exact candidate approval, authenticated cloud and package checks |
+
+See [the recovery evidence](audits/2026-10-22-recovery/STATUS.md) and
+[resume handoff](audits/2026-10-22-recovery/HANDOFF.md). Local tests and browser
+observations do not certify deployment. The unsigned Helper remains a preview;
+trusted signing, seven/thirty-day reliability observations, authoritative replay
+and native Windows acceptance remain separate gates. No paid service, persistent
+hosted feed gateway or hosted Python is required by this repair track.
+
 ## Phase 0 acceptance evidence
 
 Implemented in the active Phase 0 slice:

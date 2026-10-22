@@ -5,6 +5,8 @@ import { registerRuntimeContracts } from "./contracts";
 import { normalizeGateioSymbol } from "./gateio";
 import { chartHistoryRange, normalizeChartBars } from "./chart-data";
 import { alignToTimeframe } from "./session";
+import { cachedChartHistory, cacheChartHistory } from "./bar-cache";
+import { fetchPublicBars } from "./public-data";
 import { FREE_TIER_CONFIG } from "../config/free-tier-policy";
 
 const memoryCache = new Map<string, { expiresAt: number; result: BarsResult }>();
@@ -18,9 +20,10 @@ export async function fetchBarsDeduplicated(
   toMs: number,
   barsCount = 600,
   signal?: AbortSignal,
+  allowOlderHistory = false,
 ): Promise<BarsResult> {
   signal?.throwIfAborted();
-  const key = `history-range-v3:${provider}:${symbol.toUpperCase()}:${timeframe}:${barsCount}:${toMs}`;
+  const key = `history-range-v3:${provider}:${symbol.toUpperCase()}:${timeframe}:${barsCount}:${toMs}:${allowOlderHistory}`;
   const cached = memoryCache.get(key);
   if (cached && Date.now() < cached.expiresAt) {
     registerRuntimeContracts([cached.result.contract]);
@@ -30,6 +33,20 @@ export async function fetchBarsDeduplicated(
   if (!pending) {
     pending = (async (): Promise<BarsResult> => {
       try {
+        if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_MARKET_TRANSPORT !== "gateway" && (provider === "gateio" || provider === "binance")) {
+          let result: BarsResult;
+          try {
+            result = await fetchPublicBars(provider, symbol, timeframe, toMs, barsCount);
+            void cacheChartHistory(result).catch(() => {});
+          } catch (error) {
+            const saved = await cachedChartHistory(provider, symbol, timeframe, toMs, barsCount, allowOlderHistory);
+            if (!saved) throw error;
+            return { ...saved, reason: `Saved provider history; current download unavailable. ${error instanceof Error ? error.message : "Retry when online."}` };
+          }
+          memoryCache.set(key, { expiresAt: Date.now() + FREE_TIER_CONFIG.client.barsMemoryCacheTtlMs, result });
+          if (memoryCache.size > 50) memoryCache.delete(memoryCache.keys().next().value!);
+          return result;
+        }
         const url = `/api/bars?provider=${encodeURIComponent(provider)}&symbol=${encodeURIComponent(symbol)}&tf=${timeframe}&to=${toMs}&bars=${barsCount}`;
         // A caller cancelling must not cancel another consumer of this shared request.
         const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(20_000) });

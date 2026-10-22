@@ -48,6 +48,8 @@ test("history A -> B -> A rejects a cancelled A response and retains B venue/sta
 });
 
 test("actual shared gateway subscription filters venues, normalizes aliases and disposes on A -> B -> A", async () => {
+  const transport = process.env.NEXT_PUBLIC_MARKET_TRANSPORT;
+  process.env.NEXT_PUBLIC_MARKET_TRANSPORT = "gateway";
   const socketIo = createRequire(import.meta.url)("socket.io-client");
   const original = socketIo.io;
   const handlers = new Map<string, (value?: unknown) => void>();
@@ -79,7 +81,7 @@ test("actual shared gateway subscription filters venues, normalizes aliases and 
     useWorkspace.getState().setMarketProvider("okx");
     assert.equal(emitted.length, count);
     assert.ok(emitted.some(event => event.name === "unsubscribe"));
-  } finally { socketIo.io = original; }
+  } finally { socketIo.io = original; if (transport === undefined) delete process.env.NEXT_PUBLIC_MARKET_TRANSPORT; else process.env.NEXT_PUBLIC_MARKET_TRANSPORT = transport; }
 });
 
 test("every exposed venue routes history to its selected native market or explains unsupported access", async () => {

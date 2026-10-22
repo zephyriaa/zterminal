@@ -15,6 +15,7 @@ export class BinanceDepthSynchronizer {
   status: BinanceBookStatus = "SYNCING";
   private buffer: BinanceDepth[] = [];
   private sequence = 0;
+  lastSequence() { return this.sequence; }
   private pendingSnapshot: BinanceSnapshot | null = null;
 
   push(event: BinanceDepth) {
@@ -38,7 +39,8 @@ export class BinanceDepthSynchronizer {
   }
 
   bridge(snapshot: BinanceSnapshot): boolean {
-    if (this.status === "ERROR" || !Number.isInteger(snapshot.lastUpdateId)) return false;
+    if (this.status === "ERROR") return false;
+    if (!Number.isSafeInteger(snapshot.lastUpdateId) || snapshot.lastUpdateId < 0 || !Array.isArray(snapshot.bids) || !Array.isArray(snapshot.asks)) return this.fail();
     this.pendingSnapshot = snapshot;
     return this.attemptPendingBridge();
   }

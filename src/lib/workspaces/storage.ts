@@ -59,9 +59,9 @@ export function announceWorkspaceChange(id: string) {
   window.dispatchEvent(new Event("zterminal:workspace-catalog"));
   if (typeof BroadcastChannel !== "undefined") { const channel = new BroadcastChannel("zterminal-workspaces"); channel.postMessage({ type: "changed", id }); channel.close(); }
 }
-export const createWorkspace = (snapshot: WorkspaceSnapshot) => updateWorkspace(snapshot.id, current => {
+export const createWorkspace = (snapshot: WorkspaceSnapshot, importedDrafts?: WorkspaceRecord["importedDrafts"]) => updateWorkspace(snapshot.id, current => {
   if (current) throw new Error("A workspace with this ID already exists");
-  return { snapshot, updatedAt: Date.now(), lastOpenedAt: 0, ownerId: null, cloudRevision: null, dirty: false };
+  return { snapshot, ...(importedDrafts ? { importedDrafts } : {}), updatedAt: Date.now(), lastOpenedAt: 0, ownerId: null, cloudRevision: null, dirty: false };
 });
 
 export async function migrateLegacyWorkspaces() {

@@ -29,7 +29,7 @@ export interface BarsResult {
   timestampUnit: "ms";
   integrity: "provider-ohlcv" | "simulated";
   reason?: string;
-  cache: "network" | "memory" | "server";
+  cache: "network" | "memory" | "server" | "disk";
   requestedFrom: number;
   requestedTo: number;
   requestedCount: number;

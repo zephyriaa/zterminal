@@ -6,7 +6,40 @@
 > and Google callback requirements. Do not deploy the SQLite instructions below
 > as a cloud-auth database.
 
-## Production hosting: Cloudflare edge + persistent Node backend
+## Current recovery candidate: public web + local Windows Helper
+
+The active configuration is the OpenNext Worker in `wrangler.jsonc`. The recovery
+branch uses direct Gate/Binance browser data by default; a paid persistent feed
+server is not a prerequisite. Keep the existing hosting project and free budget.
+Direct exchange access still depends on the user's jurisdiction/network; access
+restrictions must be shown, not bypassed. This is a candidate configuration, not
+an assertion that this branch has been deployed.
+
+- Build with `npm run build`; this produces a local standalone application and
+  verifies all pinned Monaco assets and license. It is not the Worker bundle.
+- Assemble the actual Worker with `npm run cf:build` on the supported Linux CI
+  runner in `.github/workflows/quality.yml`. This step generates the PostgreSQL
+  Prisma client; do not reuse its client as evidence for local SQLite tests.
+- Set `NEXT_PUBLIC_MARKET_TRANSPORT=gateway` only for an intentionally configured
+  compatibility gateway. Its origin is public configuration, never a credential.
+- Production cloud identity requires the existing verified OAuth/session and
+  PostgreSQL configuration described in [AUTH_AUDIT.md](AUTH_AUDIT.md). Missing
+  configuration must disable cloud features, not fall back to shared identity.
+- Python runs in the paired local Windows Helper, not the Worker. Preserve the
+  exact origin allowlist and unsigned-preview disclosure. Build the package from
+  `research/desktop/build-private.ps1` using the pinned embedded runtime.
+- The user authorized publishing validated implementation changes on each development pass on 22 October 2026. Release only a verified exact candidate through the existing workflow, unless a later request limits or pauses the task. No production
+  secrets, DNS, hosting account or Worker was changed by this recovery work.
+
+Gate the release on browser feed/history recovery, workspace source portability,
+packaged Helper pair/run/report/export, protected API behavior, account isolation,
+the hosting adapter build and the dependency threshold. Keep unverified gates
+explicit. Never infer seven/thirty-day reliability from a short local test.
+
+The remaining proxy/Railway sections are historical compatibility instructions;
+they are not prerequisites or the default topology for this recovery candidate.
+
+## Historical optional topology: Cloudflare edge + persistent Node backend
 
 ZTerminal cannot currently be exported as a static Cloudflare Pages site. It is
 a Next.js App Router application with route handlers, NextAuth/Prisma-backed
