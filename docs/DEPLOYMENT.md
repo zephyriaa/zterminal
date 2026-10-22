@@ -20,6 +20,11 @@ an assertion that this branch has been deployed.
 - Assemble the actual Worker with `npm run cf:build` on the supported Linux CI
   runner in `.github/workflows/quality.yml`. This step generates the PostgreSQL
   Prisma client; do not reuse its client as evidence for local SQLite tests.
+- Run `npm run cf:smoke` against that bundle before deployment. It starts local
+  workerd and checks the auth capability endpoint, dashboard, workspace and
+  example report. Both CI workflows enforce this gate. Next 16.4 requires
+  OpenNext Cloudflare 1.20.13's preview-props manifest support; a successful
+  bundle alone did not catch the runtime failure during the 22 October release.
 - Set `NEXT_PUBLIC_MARKET_TRANSPORT=gateway` only for an intentionally configured
   compatibility gateway. Its origin is public configuration, never a credential.
 - Production cloud identity requires the existing verified OAuth/session and
@@ -28,8 +33,8 @@ an assertion that this branch has been deployed.
 - Python runs in the paired local Windows Helper, not the Worker. Preserve the
   exact origin allowlist and unsigned-preview disclosure. Build the package from
   `research/desktop/build-private.ps1` using the pinned embedded runtime.
-- The user authorized publishing validated implementation changes on each development pass on 22 October 2026. Release only a verified exact candidate through the existing workflow, unless a later request limits or pauses the task. No production
-  secrets, DNS, hosting account or Worker was changed by this recovery work.
+- The user authorized publishing validated implementation changes on each development pass on 22 October 2026. Release only a verified exact candidate through the existing workflow, unless a later request limits or pauses the task. Preserve production
+  secrets, DNS and hosting account configuration when releasing the Worker.
 
 Gate the release on browser feed/history recovery, workspace source portability,
 packaged Helper pair/run/report/export, protected API behavior, account isolation,

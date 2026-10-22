@@ -87,6 +87,9 @@ jobs:
           DATABASE_URL: "postgresql://build:placeholder@127.0.0.1:5432/build"
           NODE_ENV: production
 
+      - name: Smoke test built Cloudflare Worker
+        run: npm run cf:smoke
+
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v4
         with:

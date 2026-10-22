@@ -44,6 +44,8 @@ jobs:
         run: npm run cf:build
         env:
           DATABASE_URL: postgresql://build:placeholder@127.0.0.1:5432/build
+      - name: Smoke test built Cloudflare Worker
+        run: npm run cf:smoke
       - name: Enforce high-severity production dependency threshold
         run: npm audit --omit=dev --audit-level=high
       - name: Capture production dependency audit
