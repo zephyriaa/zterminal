@@ -1,9 +1,13 @@
 "use client";
 
-import type { Bar, Timeframe } from "./types";
+import type { Bar, BarsResult, Timeframe } from "./types";
+import { chartHistoryRange, normalizeChartBars } from "./chart-data";
+import { alignToTimeframe } from "./session";
+import { normalizeGateioSymbol } from "./gateio";
 
 const DB_NAME = "zterminal-market-cache-v1";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+const HISTORY_STORE = "history-results";
 const BARS_STORE = "bars";
 const DATASETS_STORE = "datasets";
 
@@ -49,6 +53,7 @@ function getDB(): Promise<IDBDatabase> {
 
       request.onupgradeneeded = () => {
         const db = request.result;
+        if (!db.objectStoreNames.contains(HISTORY_STORE)) db.createObjectStore(HISTORY_STORE);
         if (!db.objectStoreNames.contains(BARS_STORE)) {
           const barsStore = db.createObjectStore(BARS_STORE, { keyPath: "key" });
           barsStore.createIndex("by_series_time", ["symbol", "timeframe", "t"], { unique: true });
@@ -58,8 +63,9 @@ function getDB(): Promise<IDBDatabase> {
         }
       };
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = () => { request.result.onversionchange = () => { request.result.close(); dbPromise = null; }; resolve(request.result); };
+      request.onerror = () => { dbPromise = null; reject(request.error); };
+      request.onblocked = () => { dbPromise = null; reject(new Error("Market cache upgrade blocked by another tab")); };
     });
   }
   return dbPromise;
@@ -235,4 +241,53 @@ export async function purgeDataset(datasetId?: string): Promise<void> {
   } catch (err) {
     console.warn("Failed to purge dataset:", err);
   }
+}
+
+/** Full provenance is retained separately from legacy unqualified bar records. */
+function chartCacheKey(provider: string, symbol: string, timeframe: Timeframe, to: number, count: number) {
+  const native = normalizeGateioSymbol(symbol);
+  if (!native) throw new Error("Unsupported cached instrument");
+  const range = chartHistoryRange(to, count, timeframe);
+  return `${provider}:${native}:${timeframe}:${count}:${range.from}:${range.lastOpen}`;
+}
+
+export async function cacheChartHistory(result: BarsResult) {
+  if (!isBrowser()) return;
+  const db = await getDB(), key = chartCacheKey(result.selectedProvider, result.symbol, result.timeframe, result.requestedTo, result.requestedCount);
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(HISTORY_STORE, "readwrite"), store = tx.objectStore(HISTORY_STORE);
+    store.put(result, key);
+    const keys = store.getAllKeys();
+    keys.onsuccess = () => { for (const old of keys.result.filter(value => value !== key).slice(0, Math.max(0, keys.result.length - 50))) store.delete(old); };
+    tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+  });
+}
+
+/** Only initial charts may explicitly opt into an older saved window; research and paging require their requested range. */
+export function restoreCachedChartHistory(result: BarsResult | undefined, provider: string, symbol: string, timeframe: Timeframe, to: number, count: number, allowOlder = false): BarsResult | null {
+  try {
+    if (!result || result.selectedProvider !== provider || result.effectiveProvider !== provider || result.timeframe !== timeframe || result.requestedCount !== count || result.environment !== "live" || result.integrity !== "provider-ohlcv" || !result.contract?.verified || result.contract.product !== "perpetual" || result.contract.exchange.toLowerCase() !== provider || normalizeGateioSymbol(result.contract.symbol) !== normalizeGateioSymbol(symbol) || normalizeGateioSymbol(result.symbol) !== normalizeGateioSymbol(symbol) || result.nativeSymbol !== result.contract.symbol || !Number.isFinite(result.retrievedAt) || result.retrievedAt <= 0 || result.retrievedAt > Date.now() || result.requestedTo > to || result.timestampUnit !== "ms") return null;
+    if (!allowOlder && chartCacheKey(provider, symbol, timeframe, to, count) !== chartCacheKey(provider, result.symbol, timeframe, result.requestedTo, result.requestedCount)) return null;
+    const bars = normalizeChartBars(result.bars), range = chartHistoryRange(result.requestedTo, result.requestedCount, timeframe);
+    if (!bars.length || result.sourceTimestamp !== bars.at(-1)?.t || result.requestedFrom !== range.from || result.gapCount !== range.expected - bars.length || bars.some(bar => bar.t < range.from || bar.t >= result.requestedTo || alignToTimeframe(bar.t, timeframe) !== bar.t) || result.volumeUnit !== (provider === "gateio" ? "contracts" : "base")) return null;
+    return { ...result, bars, cache: "disk", dataStatus: "STALE" };
+  } catch { return null; }
+}
+
+export async function cachedChartHistory(provider: string, symbol: string, timeframe: Timeframe, to: number, count: number, allowOlder = false): Promise<BarsResult | null> {
+  if (!isBrowser()) return null;
+  try {
+    const db = await getDB(), key = chartCacheKey(provider, symbol, timeframe, to, count);
+    const results = await new Promise<BarsResult[]>((resolve, reject) => {
+      const tx = db.transaction(HISTORY_STORE, "readonly"), store = tx.objectStore(HISTORY_STORE);
+      const request = allowOlder ? store.getAll() : store.get(key);
+      tx.oncomplete = () => resolve(allowOlder ? request.result : [request.result]);
+      tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
+    for (const result of results.filter(Boolean).sort((a, b) => b.requestedTo - a.requestedTo)) {
+      const restored = restoreCachedChartHistory(result, provider, symbol, timeframe, to, count, allowOlder);
+      if (restored) return restored;
+    }
+    return null;
+  } catch { return null; }
 }

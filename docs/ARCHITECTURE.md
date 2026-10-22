@@ -10,6 +10,30 @@
 > This legacy overview describes the web workspace generation and contains
 > historical file references.
 
+## Current web recovery map
+
+The homepage leads to `/workspaces`; each `/workspaces/[id]` owns its chart and
+research snapshot. IndexedDB records, edit locks and explicit cloud revisions
+remain the canonical workspace model. Portable backups add referenced Python
+source without cloud ownership or automatic execution. The read-only
+`/research/example` uses a captured synthetic engine report, not hosted Python.
+
+Gate/Binance public adapters now feed the existing `useMarketStream` subscriber
+and order-flow session path directly. REST catalogue/history and verified units
+come from the selected venue. Gate uses the shared sequence-aware GateOrderBook;
+Binance separates public depth/book sockets from market trade/derivatives sockets.
+Independent quality and generation guards invalidate gaps and superseded responses.
+The gateway remains an explicit compatibility transport, not a default dependency.
+
+The paired Windows Helper remains the active Python runtime. Reports retain the
+source, dataset, declared cost model and hashes. Resource limits are not a security
+sandbox. Native Win32/Direct3D/WinUI work and authoritative event replay remain
+separate future acceptance gates. See [the repair track](ROADMAP.md) and
+[security boundaries](SECURITY.md). This describes local candidate source, not
+new production acceptance.
+
+## Historical overview
+
 Z TERMINAL is a single-route Next.js 16 application with a client-side workspace
 shell. All market data flows through a provider abstraction layer, normalizes
 into a single internal model, and is delivered to the UI either via REST API

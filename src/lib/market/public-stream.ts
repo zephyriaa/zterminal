@@ -4,6 +4,10 @@ import { BinanceDepthSynchronizer, type BinanceDepth, type BinanceSnapshot } fro
 import { LocalOrderBook } from "./public-stream/local-book";
 import { OKXDepthSynchronizer, type OKXBookPayload } from "./adapters/okx-l2-adapter";
 import { normalizeOkxInstrument } from "./okx";
+import { GateOrderBook, type GateBookDelta, type GateBookSnapshot } from "./gate-order-book";
+import { GATEIO_REST_URL } from "./gateio";
+import { getContract } from "./contracts";
+import { publicFetch } from "./public-data";
 import type { DataStatus, DepthEvent, DepthLevel, DerivativesEvent, FeedHealth, LiquidationEvent, QuoteEvent, TradeEvent } from "./types";
 
 export type StreamEvent = TradeEvent | QuoteEvent | DepthEvent | DerivativesEvent | LiquidationEvent;
@@ -24,7 +28,7 @@ const DEFAULT_PROVIDER: StreamProvider =
   (process.env.NEXT_PUBLIC_MARKET_PROVIDER as StreamProvider) || "binance";
 
 const ENDPOINTS: Record<StreamProvider, string> = {
-  binance: "wss://fstream.binance.com/ws",
+  binance: "wss://fstream.binance.com/public/ws",
   gateio: "wss://fx-ws.gateio.ws/v4/ws/usdt",
   bybit: "wss://stream.bybit.com/v5/public/linear",
   coinbase: "wss://advanced-trade-ws.coinbase.com",
@@ -65,6 +69,8 @@ export function normalizeSymbolForProvider(symbol: string, provider: StreamProvi
 export class PublicMarketDataProvider {
   private provider: StreamProvider = DEFAULT_PROVIDER;
   private socket: WebSocket | null = null;
+  private marketSocket: WebSocket | null = null;
+  private marketRetry: ReturnType<typeof setTimeout> | undefined;
   private listeners = new Map<string, Set<StreamListener>>();
   private stateListeners = new Set<(state: StreamState) => void>();
   private binanceSyncs = new Map<string, BinanceDepthSynchronizer>();
@@ -76,7 +82,10 @@ export class PublicMarketDataProvider {
   private snapshotCache = new Map<string, { snapshot: BinanceSnapshot; at: number }>();
 
   // Gate.io local books
-  private gateBooks = new Map<string, { bids: Map<number, number>; asks: Map<number, number>; sequence: number; valid: boolean }>();
+  private gateBooks = new Map<string, GateOrderBook>();
+  private gateSnapshots = new Map<string, AbortController>();
+  private feedHealth = new Map<string, FeedHealth>();
+  private epoch = 0;
   private bybitBooks = new Map<string, { book: LocalOrderBook; sequence: number; valid: boolean }>();
   private coinbaseBooks = new Map<string, { book: LocalOrderBook; sequence: number; valid: boolean }>();
 
@@ -93,8 +102,10 @@ export class PublicMarketDataProvider {
 
   setProvider(provider: StreamProvider) {
     if (this.provider === provider) return;
-    this.provider = provider;
     this.cleanupSocket();
+    this.provider = provider;
+    this.retries = 0;
+    this.feedHealth.clear();
     this.binanceSyncs.clear();
     this.okxSyncs.clear();
     this.gateBooks.clear();
@@ -110,6 +121,9 @@ export class PublicMarketDataProvider {
       this.connect();
     }
   }
+
+  reconnect() { if (this.socket?.readyState === WebSocket.OPEN) return; this.cleanupSocket(); this.connect(); }
+  disconnect() { this.cleanupSocket(); this.announce("disconnected", "DISCONNECTED"); }
 
   getProvider(): StreamProvider {
     return this.provider;
@@ -129,7 +143,7 @@ export class PublicMarketDataProvider {
 
     this.connect();
 
-    if (isFirstSubscription) {
+    if (isFirstSubscription && this.socket?.readyState === WebSocket.OPEN) {
       this.sendSubscription(normalized, "SUBSCRIBE");
       if (this.provider === "binance") {
         this.initBinanceDepth(normalized);
@@ -146,6 +160,13 @@ export class PublicMarketDataProvider {
         this.bybitBooks.delete(normalized);
         this.coinbaseBooks.delete(normalized);
         this.symbolLastActivity.delete(normalized);
+        this.feedHealth.delete(normalized);
+        this.gateSnapshots.get(normalized)?.abort();
+        this.gateSnapshots.delete(normalized);
+        const retry = this.snapshotRetryTimers.get(normalized);
+        if (retry) clearTimeout(retry);
+        this.snapshotRetryTimers.delete(normalized);
+        this.snapshotCache.delete(normalized); this.fetchingSnapshots.delete(normalized);
         this.sendSubscription(normalized, "UNSUBSCRIBE");
 
         if (this.listeners.size === 0) {
@@ -189,6 +210,7 @@ export class PublicMarketDataProvider {
     if (this.socket || this.listeners.size === 0) return;
 
     const endpoint = ENDPOINTS[this.provider];
+    const epoch = this.epoch;
     this.announce(this.retries > 0 ? "reconnecting" : "connecting", "DISCONNECTED");
 
     try {
@@ -206,7 +228,8 @@ export class PublicMarketDataProvider {
         if (this.handshakeTimer) clearTimeout(this.handshakeTimer);
         this.retries = 0;
         this.lastMessageAt = Date.now();
-        this.announce("connected", "LIVE");
+        this.announce("connected", "DISCONNECTED", "Waiting for verified instrument observations");
+        if (this.provider === "binance") this.connectBinanceMarket();
 
         // Resubscribe all active symbols
         for (const symbol of this.listeners.keys()) {
@@ -220,6 +243,7 @@ export class PublicMarketDataProvider {
       };
 
       socket.onmessage = ({ data }) => {
+        if (epoch !== this.epoch || socket !== this.socket) return;
         this.lastMessageAt = Date.now();
         const text = String(data).trim();
         if (text === "pong" || text === "PONG") {
@@ -244,6 +268,12 @@ export class PublicMarketDataProvider {
       socket.onclose = () => {
         this.socket = null;
         this.stopWatchdog();
+        this.epoch++; this.cleanupBinanceMarket();
+        this.binanceSyncs.clear(); this.fetchingSnapshots.clear(); this.gateBooks.clear();
+        for (const request of this.gateSnapshots.values()) request.abort();
+        this.gateSnapshots.clear(); this.feedHealth.clear();
+        for (const timer of this.snapshotRetryTimers.values()) clearTimeout(timer);
+        this.snapshotRetryTimers.clear();
         this.snapshotCache.clear();
         this.okxSyncs.clear();
         this.bybitBooks.clear();
@@ -252,19 +282,6 @@ export class PublicMarketDataProvider {
         if (this.listeners.size === 0) return;
 
         this.retries += 1;
-
-        if (this.provider === "gateio" && this.retries >= 3) {
-          this.announce("degraded", "UNAVAILABLE", "Gate.io failed 3 consecutive times; failing over to Binance");
-          this.retries = 0;
-          
-          // Delay the failover slightly so the UI doesn't flicker instantly on the 3rd fail
-          if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-          this.reconnectTimer = setTimeout(() => {
-            this.reconnectTimer = undefined;
-            this.setProvider("binance");
-          }, 1_000);
-          return;
-        }
 
         // Exponential backoff with jitter: 1s, 2s, 4s, 8s, 16s, max 30s + [0..500ms] jitter
         const baseDelay = Math.min(30_000, 1_000 * Math.pow(2, Math.min(this.retries, 5)));
@@ -286,6 +303,10 @@ export class PublicMarketDataProvider {
   }
 
   private cleanupSocket() {
+    this.epoch++; this.cleanupBinanceMarket();
+    this.binanceSyncs.clear(); this.fetchingSnapshots.clear(); this.gateBooks.clear(); this.feedHealth.clear();
+    for (const request of this.gateSnapshots.values()) request.abort();
+    this.gateSnapshots.clear();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = undefined;
@@ -337,6 +358,43 @@ export class PublicMarketDataProvider {
     }
   }
 
+  private sendBinanceMarket(symbol: string, method: "SUBSCRIBE" | "UNSUBSCRIBE") {
+    if (this.marketSocket?.readyState !== WebSocket.OPEN) return;
+    const name = symbol.toLowerCase();
+    this.marketSocket.send(JSON.stringify({ method, params: [`${name}@aggTrade`, `${name}@markPrice@1s`, `${name}@forceOrder`], id: Date.now() }));
+  }
+
+  private cleanupBinanceMarket() {
+    if (this.marketRetry) clearTimeout(this.marketRetry);
+    this.marketRetry = undefined;
+    if (!this.marketSocket) return;
+    const previous = this.marketSocket; this.marketSocket = null;
+    previous.onopen = previous.onmessage = previous.onerror = previous.onclose = null;
+    previous.close();
+  }
+
+  private connectBinanceMarket() {
+    if (this.marketSocket || this.provider !== "binance" || !this.listeners.size) return;
+    const socket = this.marketSocket = new WebSocket("wss://fstream.binance.com/market/ws"), epoch = this.epoch;
+    socket.onopen = () => { if (socket === this.marketSocket) for (const symbol of this.listeners.keys()) this.sendBinanceMarket(symbol, "SUBSCRIBE"); };
+    socket.onmessage = ({ data }) => {
+      if (epoch !== this.epoch || socket !== this.marketSocket) return;
+      try { this.handleMessage(JSON.parse(String(data))); } catch { /* The affected stream's health expires without fabricated data. */ }
+    };
+    socket.onclose = () => {
+      if (socket !== this.marketSocket || epoch !== this.epoch) return;
+      this.marketSocket = null;
+      for (const symbol of this.listeners.keys()) {
+        const previous = this.health(symbol);
+        const next: FeedHealth = { ...previous, state: "DEGRADED", lastMessageAt: undefined, reason: "Binance trade stream disconnected; reconnecting", streams: { trades: { state: "UNAVAILABLE" }, depth: previous.streams!.depth } };
+        this.feedHealth.set(symbol, next);
+        for (const listener of this.listeners.get(symbol) ?? []) listener(next);
+      }
+      if (this.listeners.size) this.marketRetry = setTimeout(() => { this.marketRetry = undefined; this.connectBinanceMarket(); }, 5000);
+    };
+    socket.onerror = () => socket.close();
+  }
+
   private sendSubscription(symbol: string, action: "SUBSCRIBE" | "UNSUBSCRIBE") {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
 
@@ -346,15 +404,13 @@ export class PublicMarketDataProvider {
         JSON.stringify({
           method: action,
           params: [
-            `${name}@aggTrade`,
             `${name}@bookTicker`,
             `${name}@depth@100ms`,
-            `${name}@markPrice@1s`,
-            `${name}@forceOrder`,
           ],
           id: Date.now(),
         })
       );
+      this.sendBinanceMarket(symbol, action);
     } else if (this.provider === "gateio") {
       const event = action === "SUBSCRIBE" ? "subscribe" : "unsubscribe";
       const channels = [
@@ -372,6 +428,7 @@ export class PublicMarketDataProvider {
           })
         );
       }
+      if (action === "SUBSCRIBE") this.initGateDepth(symbol);
     } else if (this.provider === "bybit") {
       const op = action === "SUBSCRIBE" ? "subscribe" : "unsubscribe";
       this.socket.send(
@@ -400,22 +457,87 @@ export class PublicMarketDataProvider {
     }
   }
 
-  private emit(symbol: string, event: StreamEvent) {
-    this.symbolLastActivity.set(symbol, Date.now());
-    const targetListeners = this.listeners.get(symbol);
-    if (!targetListeners || targetListeners.size === 0) return;
+  health(symbol: string): FeedHealth {
+    const now = Date.now(), old = this.feedHealth.get(symbol);
+    const lastTrade = old?.streams?.trades.lastMessageAt;
+    const lastDepth = old?.lastDepthAt;
+    const trades = lastTrade && now - lastTrade <= 15000 && lastTrade <= now ? "LIVE" : lastTrade ? "STALE" : "SYNCING";
+    const depth = old?.depthReady && lastDepth && now - lastDepth <= 15000 && lastDepth <= now ? "LIVE" : old?.depthReady ? "STALE" : old?.streams?.depth.state ?? "SYNCING";
+    return { provider: this.provider, symbol, state: trades === "LIVE" && depth === "LIVE" ? "LIVE" : trades === "STALE" || depth === "STALE" ? "STALE" : "DEGRADED", updatedAt: now, lastMessageAt: lastTrade, lastDepthAt: lastDepth, depthReady: depth === "LIVE", sequence: old?.sequence, reason: old?.reason,
+      streams: { trades: { state: trades, lastMessageAt: lastTrade }, depth: { state: depth, lastMessageAt: lastDepth, reason: old?.reason } } };
+  }
 
-    for (const listener of targetListeners) {
-      try {
-        listener(event);
-      } catch (err) {
-        console.error("Stream subscriber listener error:", err);
+  private invalidateDepth(symbol: string, state: "GAP_DETECTED" | "UNAVAILABLE", reason: string) {
+    const previous = this.health(symbol);
+    const next: FeedHealth = { ...previous, state: "DEGRADED", depthReady: false, reason, streams: { trades: previous.streams!.trades, depth: { state, reason } } };
+    this.feedHealth.set(symbol, next);
+    for (const listener of this.listeners.get(symbol) ?? []) listener(next);
+  }
+
+  private emit(symbol: string, event: StreamEvent) {
+    if (event.provider !== this.provider || event.environment !== "live") return;
+    if (event.type === "trade" && (!Number.isSafeInteger(event.sequence) || event.sequence < 0 || !Number.isFinite(event.price) || event.price <= 0 || !Number.isFinite(event.quantity) || event.quantity <= 0)) return;
+    if (event.type === "depth") {
+      const bids = event.levels.filter(level => level.side === "buy"), asks = event.levels.filter(level => level.side === "sell");
+      if (!Number.isSafeInteger(event.sequence) || !bids.length || !asks.length || event.levels.some(level => !Number.isFinite(level.price) || level.price <= 0 || !Number.isFinite(level.size) || level.size <= 0) || Math.max(...bids.map(level => level.price)) >= Math.min(...asks.map(level => level.price))) {
+        this.invalidateDepth(symbol, "GAP_DETECTED", "Invalid or incomplete order book"); return;
       }
+    }
+    if (event.type === "quote" && (!(event.bid > 0) || !(event.ask > event.bid) || !Number.isFinite(event.bidSize) || event.bidSize < 0 || !Number.isFinite(event.askSize) || event.askSize < 0)) return;
+    if (!Number.isFinite(event.timestamp) || event.timestamp <= 0 || event.timestamp > Date.now() + 1000) return;
+    const now = Date.now();
+    this.symbolLastActivity.set(symbol, now);
+    const targetListeners = this.listeners.get(symbol);
+    if (!targetListeners?.size) return;
+    if (event.type === "trade" || event.type === "depth") {
+      const previous = this.health(symbol);
+      this.feedHealth.set(symbol, { ...previous, reason: event.type === "depth" ? undefined : previous.reason, depthReady: event.type === "depth" || previous.depthReady,
+        lastMessageAt: event.type === "trade" ? now : previous.lastMessageAt, lastDepthAt: event.type === "depth" ? now : previous.lastDepthAt,
+        sequence: event.type === "depth" ? event.sequence : previous.sequence,
+        streams: { trades: event.type === "trade" ? { state: "LIVE", lastMessageAt: now } : previous.streams!.trades, depth: event.type === "depth" ? { state: "LIVE", lastMessageAt: now } : previous.streams!.depth } });
+      const health = this.health(symbol);
+      for (const listener of targetListeners) listener(health);
+    }
+    for (const listener of targetListeners) {
+      try { listener(event); } catch (err) { console.error("Stream subscriber listener error:", err); }
     }
   }
 
+  private async initGateDepth(symbol: string) {
+    if (this.gateSnapshots.has(symbol)) return;
+    const book = this.gateBooks.get(symbol) ?? new GateOrderBook();
+    this.gateBooks.set(symbol, book);
+    const controller = new AbortController(), epoch = this.epoch;
+    this.gateSnapshots.set(symbol, controller);
+    try {
+      const response = await publicFetch(`${GATEIO_REST_URL}/futures/usdt/order_book?contract=${encodeURIComponent(symbol)}&limit=100&with_id=true`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) });
+      if (!response.ok) throw new Error(`Gate.io depth snapshot HTTP ${response.status}`);
+      const raw = await response.json();
+      if (epoch !== this.epoch || this.provider !== "gateio" || !this.listeners.has(symbol) || this.gateBooks.get(symbol) !== book) return;
+      const snapshot: GateBookSnapshot = { id: Number(raw.id), current: raw.current, update: raw.update, bids: raw.bids.map((row: { p: string; s: string }) => [row.p, String(row.s)]), asks: raw.asks.map((row: { p: string; s: string }) => [row.p, String(row.s)]) };
+      if (book.bootstrap(snapshot)) this.emitGateDepth(symbol, book, Number(raw.update) * 1000);
+    } catch (error) {
+      if (epoch !== this.epoch || controller.signal.aborted || !this.listeners.has(symbol)) return;
+      book.reset();
+      this.invalidateDepth(symbol, "UNAVAILABLE", String(error));
+      this.scheduleGateSnapshot(symbol, 30000);
+    } finally { if (this.gateSnapshots.get(symbol) === controller) this.gateSnapshots.delete(symbol); }
+  }
+
+  private scheduleGateSnapshot(symbol: string, delay = 1000) {
+    if (!this.socket || !this.listeners.has(symbol) || this.snapshotRetryTimers.has(symbol)) return;
+    this.snapshotRetryTimers.set(symbol, setTimeout(() => {
+      this.snapshotRetryTimers.delete(symbol);
+      if (this.provider === "gateio" && this.listeners.has(symbol)) void this.initGateDepth(symbol);
+    }, delay));
+  }
+
+  private emitGateDepth(symbol: string, book: GateOrderBook, timestamp: number) {
+    if (!book.isReady() || !book.bestQuote()) return;
+    this.emit(symbol, { type: "depth", provider: "gateio", environment: "live", symbol, exchange: "GATEIO", timestamp: timestamp > 0 ? timestamp : Date.now(), sequence: book.lastSequence(), levels: book.levels(100) });
+  }
+
   private static binanceGlobalNextAllowedAt = 0;
-  private static binanceInFlight = new Map<string, Promise<BinanceSnapshot>>();
 
   // --- Binance Depth Synchronization ---
 
@@ -449,30 +571,20 @@ export class PublicMarketDataProvider {
   private async fetchBinanceSnapshot(symbol: string) {
     if (this.fetchingSnapshots.has(symbol)) return;
 
+    if (!this.binanceSyncs.has(symbol)) this.binanceSyncs.set(symbol, new BinanceDepthSynchronizer());
     const cached = this.snapshotCache.get(symbol);
     if (cached && Date.now() - cached.at < 15_000) {
       this.bridgeBinanceSnapshot(symbol, cached.snapshot);
       return;
     }
 
+    const epoch = this.epoch, expectedSync = this.binanceSyncs.get(symbol);
     const now = Date.now();
     const globalWait = Math.max(0, PublicMarketDataProvider.binanceGlobalNextAllowedAt - now);
     const symbolWait = Math.max(0, (this.snapshotNextAllowedAt.get(symbol) ?? 0) - now);
     const wait = Math.max(globalWait, symbolWait);
     if (wait > 0) {
       this.scheduleBinanceSnapshot(symbol, wait);
-      return;
-    }
-
-    // Reuse in-flight promise if another component already requested this symbol
-    const existingPromise = PublicMarketDataProvider.binanceInFlight.get(symbol);
-    if (existingPromise) {
-      try {
-        const data = await existingPromise;
-        this.bridgeBinanceSnapshot(symbol, data);
-      } catch {
-        // Handled by original caller
-      }
       return;
     }
 
@@ -483,40 +595,26 @@ export class PublicMarketDataProvider {
     const fetchPromise = (async () => {
       // Use limit=100 (weight 5 vs weight 20 for limit=1000)
       const url = `${BINANCE_REST_DEPTH_URL}/fapi/v1/depth?symbol=${encodeURIComponent(symbol)}&limit=100`;
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) {
-        const retryAfter = Number(response.headers.get("retry-after"));
-        const retryAfterMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1_000 : undefined;
-        const delay = this.snapshotRetryDelay(symbol, response.status, retryAfterMs);
-        const globalBlock = response.status === 418 ? 120_000 : response.status === 429 ? 30_000 : 0;
-        if (globalBlock > 0) {
-          PublicMarketDataProvider.binanceGlobalNextAllowedAt = Math.max(
-            PublicMarketDataProvider.binanceGlobalNextAllowedAt,
-            Date.now() + (retryAfterMs ?? globalBlock),
-          );
-        }
-        this.snapshotNextAllowedAt.set(symbol, Date.now() + delay);
-        throw new Error(`Binance depth snapshot HTTP ${response.status}; retrying in ${delay}ms`);
-      }
+      const response = await publicFetch(url, { cache: "no-store" });
       return (await response.json()) as BinanceSnapshot;
     })();
 
-    PublicMarketDataProvider.binanceInFlight.set(symbol, fetchPromise);
-
     try {
       const data = await fetchPromise;
+      if (epoch !== this.epoch || this.provider !== "binance" || !this.listeners.has(symbol) || this.binanceSyncs.get(symbol) !== expectedSync) return;
       this.snapshotFailures.delete(symbol);
       this.snapshotNextAllowedAt.delete(symbol);
       this.snapshotCache.set(symbol, { snapshot: data, at: Date.now() });
       this.bridgeBinanceSnapshot(symbol, data);
     } catch (err) {
+      if (epoch !== this.epoch || !this.listeners.has(symbol) || this.binanceSyncs.get(symbol) !== expectedSync) return;
+      this.invalidateDepth(symbol, "UNAVAILABLE", String(err));
       const delay = this.snapshotNextAllowedAt.get(symbol) ?? Date.now() + this.snapshotRetryDelay(symbol);
       if (!this.snapshotNextAllowedAt.has(symbol)) this.snapshotNextAllowedAt.set(symbol, delay);
       this.announce("syncing", "STALE", `Binance ${symbol} snapshot fetch failed: ${String(err)}`);
       this.scheduleBinanceSnapshot(symbol, Math.max(0, delay - Date.now()));
     } finally {
-      this.fetchingSnapshots.delete(symbol);
-      PublicMarketDataProvider.binanceInFlight.delete(symbol);
+      if (this.binanceSyncs.get(symbol) === expectedSync) this.fetchingSnapshots.delete(symbol);
     }
   }
 
@@ -534,6 +632,8 @@ export class PublicMarketDataProvider {
     }
     this.announce("syncing", "STALE", `Binance ${symbol} snapshot bridging failed; waiting for a safe resync`);
     this.binanceSyncs.delete(symbol);
+    this.fetchingSnapshots.delete(symbol);
+    this.snapshotCache.delete(symbol);
     const delay = this.snapshotRetryDelay(symbol);
     this.snapshotNextAllowedAt.set(symbol, Date.now() + delay);
     this.scheduleBinanceSnapshot(symbol, delay);
@@ -551,7 +651,7 @@ export class PublicMarketDataProvider {
       symbol,
       exchange: "BINANCE",
       timestamp: Date.now(),
-      sequence: Date.now(),
+      sequence: sync.lastSequence(),
       levels,
     });
   }
@@ -580,7 +680,7 @@ export class PublicMarketDataProvider {
 
   private handleBinanceMessage(raw: Record<string, unknown>) {
     const eventType = String(raw.e ?? "");
-    const symbol = String(raw.s ?? raw.S ?? "").toUpperCase();
+    const symbol = String(raw.s ?? raw.S ?? (raw.o as Record<string, unknown> | undefined)?.s ?? "").toUpperCase();
     if (!symbol) return;
 
     if (eventType === "aggTrade") {
@@ -620,25 +720,27 @@ export class PublicMarketDataProvider {
         this.fetchBinanceSnapshot(symbol);
       }
 
-      const delta: BinanceDepth = {
-        U: safeNumber(raw.U),
-        u: safeNumber(raw.u),
-        pu: raw.pu !== undefined ? safeNumber(raw.pu) : undefined,
-        b: Array.isArray(raw.b) ? (raw.b as [string, string][]) : [],
-        a: Array.isArray(raw.a) ? (raw.a as [string, string][]) : [],
-      };
-
-      sync.push(delta);
-
-      if (sync.status === "LIVE") {
-        this.emitBinanceDepth(symbol, sync);
-      } else if (sync.status === "ERROR") {
-        this.announce("syncing", "STALE", `Binance ${symbol} depth sequence gap detected; resyncing`);
+      try {
+        if (!Array.isArray(raw.b) || !Array.isArray(raw.a)) throw new Error("Missing Binance depth levels");
+        const delta: BinanceDepth = {
+          U: safeNumber(raw.U), u: safeNumber(raw.u),
+          pu: raw.pu !== undefined ? safeNumber(raw.pu) : undefined,
+          b: raw.b as [string, string][], a: raw.a as [string, string][],
+        };
+        sync.push(delta);
+        if (sync.status === "ERROR") throw new Error("Binance depth sequence or level validation failed");
+        if (sync.status === "LIVE") this.emitBinanceDepth(symbol, sync);
+      } catch (error) {
+        this.invalidateDepth(symbol, "GAP_DETECTED", `Binance ${symbol}: ${String(error)}; resynchronizing`);
         this.binanceSyncs.delete(symbol);
+        this.fetchingSnapshots.delete(symbol);
+        this.snapshotCache.delete(symbol);
         const delay = this.snapshotRetryDelay(symbol);
         this.snapshotNextAllowedAt.set(symbol, Date.now() + delay);
         this.scheduleBinanceSnapshot(symbol, delay);
       }
+    } else if (eventType === "markPriceUpdate") {
+      this.emit(symbol, { type: "derivatives", provider: "binance", environment: "live", symbol, exchange: "BINANCE", timestamp: safeNumber(raw.E), markPrice: safeNumber(raw.p), indexPrice: safeNumber(raw.i), fundingRate: safeNumber(raw.r), nextFundingTime: safeNumber(raw.T) });
     } else if (eventType === "forceOrder") {
       const order = raw.o as Record<string, unknown> | undefined;
       if (order) {
@@ -675,6 +777,8 @@ export class PublicMarketDataProvider {
         ) continue;
         const size = safeNumber(trade.size);
         const symbol = String(trade.contract);
+        let multiplier: number | undefined;
+        try { const contract = getContract(symbol, "gateio"); if (contract.verified && contract.exchange === "GATEIO") multiplier = contract.multiplier; } catch { /* Unknown metadata keeps quote notional unavailable. */ }
         this.emit(symbol, {
           type: "trade",
           provider: "gateio",
@@ -688,6 +792,9 @@ export class PublicMarketDataProvider {
           price: safeNumber(trade.price),
           quantity: Math.abs(size),
           side: size >= 0 ? "buy" : "sell",
+          quantityUnit: "contracts",
+          contractMultiplier: multiplier,
+          conditions: ["raw-trade"],
         });
       }
     } else if (channel === "futures.book_ticker") {
@@ -714,60 +821,19 @@ export class PublicMarketDataProvider {
   }
 
   private handleGateioDepth(raw: Record<string, unknown>) {
-    if (!raw || typeof raw !== "object" || raw.s == null) return;
-    const symbol = String(raw.s);
-    const book = this.gateBooks.get(symbol) ?? {
-      bids: new Map<number, number>(),
-      asks: new Map<number, number>(),
-      sequence: 0,
-      valid: false,
-    };
-
-    const apply = (levels: unknown, target: Map<number, number>) => {
-      for (const level of Array.isArray(levels) ? levels : []) {
-        const entry = level as Record<string, unknown>;
-        if (entry.p == null || entry.s == null) continue;
-        const price = safeNumber(entry.p);
-        const size = Math.abs(safeNumber(entry.s));
-        if (size > 0) target.set(price, size);
-        else target.delete(price);
-      }
-    };
-
-    if (raw.full === true) {
-      book.bids.clear();
-      book.asks.clear();
-      book.valid = true;
-    }
-
-    apply(raw.b, book.bids);
-    apply(raw.a, book.asks);
-    book.sequence = safeNumber(raw.u);
+    if (!raw || typeof raw !== "object" || typeof raw.s !== "string") return;
+    const symbol = raw.s;
+    const book = this.gateBooks.get(symbol) ?? new GateOrderBook();
     this.gateBooks.set(symbol, book);
-
-    if (book.valid) {
-      const levels: DepthLevel[] = [
-        ...[...book.bids.entries()]
-          .sort(([a], [b]) => b - a)
-          .slice(0, 100)
-          .map(([price, size]) => ({ price, size, side: "buy" as const })),
-        ...[...book.asks.entries()]
-          .sort(([a], [b]) => a - b)
-          .slice(0, 100)
-          .map(([price, size]) => ({ price, size, side: "sell" as const })),
-      ];
-
-      this.emit(symbol, {
-        type: "depth",
-        provider: "gateio",
-        environment: "live",
-        symbol,
-        exchange: "GATEIO",
-        timestamp: Date.now(),
-        sequence: book.sequence,
-        levels,
-      });
-    }
+    try {
+      const delta = { U: Number(raw.U), u: Number(raw.u), t: Number(raw.t), b: raw.b, a: raw.a, full: raw.full === true } as GateBookDelta;
+      if (!book.apply(delta)) {
+        this.invalidateDepth(symbol, "GAP_DETECTED", "Gate.io book sequence gap; resynchronizing");
+        this.scheduleGateSnapshot(symbol);
+        return;
+      }
+      this.emitGateDepth(symbol, book, delta.t);
+    } catch (error) { book.reset(); this.invalidateDepth(symbol, "GAP_DETECTED", String(error)); this.scheduleGateSnapshot(symbol); }
   }
 
   private handleBybitMessage(message: Record<string, unknown>) {

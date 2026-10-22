@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ScriptRecord } from "../local-research/contracts";
 
 export const STARTERS = {
   chart: { name: "Chart", description: "One chart. Add tools as you need them." },
@@ -29,6 +30,7 @@ export const workspaceSnapshotSchema = workspaceBaseSchema.extend({
 }).refine(value => JSON.stringify(value).length <= 8_000_000, "Workspace exceeds the 8 MB snapshot limit");
 export type WorkspaceSnapshot = z.infer<typeof workspaceSnapshotSchema>;
 export interface WorkspaceRecord {
+  importedDrafts?: Record<string, ScriptRecord>;
   snapshot: WorkspaceSnapshot; updatedAt: number; lastOpenedAt: number;
   /** Null is device-local; non-null is an explicitly bound cloud owner. */
   ownerId: string | null; cloudRevision: number | null; dirty: boolean;

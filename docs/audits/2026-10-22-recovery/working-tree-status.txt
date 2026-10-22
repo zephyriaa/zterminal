@@ -1,0 +1,29 @@
+ M .env.example
+ M mini-services/market-data/order-book.ts
+ M src/components/terminal/chart-toolbar.tsx
+ M src/components/terminal/feed-inspector.tsx
+ M src/components/terminal/reference-chart-workspace.tsx
+ M src/components/workspaces/dashboard.tsx
+ M src/hooks/use-contract-catalog.ts
+ M src/hooks/use-market-stream.ts
+ M src/lib/market/bar-cache.ts
+ M src/lib/market/bars-dedup.ts
+ M src/lib/market/instrument.ts
+ M src/lib/market/public-stream.ts
+ M src/lib/market/public-stream/binance-depth.ts
+ M src/lib/market/types.ts
+ M src/lib/workspaces/model.ts
+ M src/lib/workspaces/runtime.ts
+ M src/lib/workspaces/storage.ts
+ M tests/provider-l2-sync.test.ts
+ M tests/provider-provenance.test.ts
+?? docs/audits/
+?? public/research/
+?? scripts/generate-research-example.py
+?? src/app/research/example/
+?? src/lib/market/gate-order-book.ts
+?? src/lib/market/public-data.ts
+?? src/lib/workspaces/backup.ts
+?? tests/direct-feed-readiness.test.ts
+?? tests/public-data.test.ts
+?? tests/workspace-backup.test.ts

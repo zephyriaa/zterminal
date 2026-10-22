@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const output = resolve(process.argv[2] ?? ".open-next/assets", "vendor/monaco-0.55.1");
+const output = resolve(process.argv[2] ?? ".open-next/assets", "vendor/monaco-0.57.0");
 const source = resolve("node_modules/monaco-editor/min/vs");
 const digest = data => createHash("sha256").update(data).digest("hex");
 let count = 0;

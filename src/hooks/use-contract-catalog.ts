@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ContractMetadata } from "@/lib/market/types";
 import { useWorkspace } from "@/stores/workspace";
+import { fetchPublicCatalogue } from "@/lib/market/public-data";
 import { registerRuntimeContracts } from "@/lib/market/contracts";
 
 export type ContractCatalogue = {
@@ -30,6 +31,14 @@ async function fetchCatalogueSingleton(provider: string): Promise<ContractCatalo
   if (pending) return pending;
   const request = (async () => {
     try {
+      if (process.env.NEXT_PUBLIC_MARKET_TRANSPORT !== "gateway" && (provider === "gateio" || provider === "binance")) {
+        const contracts = await fetchPublicCatalogue(provider);
+        if (!contracts.length) throw new Error("Selected provider has no verified perpetual contracts");
+        registerRuntimeContracts(contracts);
+        const catalogue: ContractCatalogue = { provider, environment: "live", state: "verified", verified: true, contracts, loading: false };
+        cachedCatalogues.set(provider, { at: Date.now(), catalogue });
+        return catalogue;
+      }
       const response = await fetch(`/api/contracts?provider=${encodeURIComponent(provider)}`, {
         headers: { Accept: "application/json" },
       });

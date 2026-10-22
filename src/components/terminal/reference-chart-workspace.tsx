@@ -66,7 +66,7 @@ export function ReferenceChartWorkspace() {
   const [documentsHydrated, setDocumentsHydrated] = useState(false);
   const indicatorDocumentRef = useRef<string | null>(null);
   const indicatorLoadingRef = useRef(false);
-  const { lastTrade, derivatives, dataStatus, provider, effectiveProvider, gatewayProvider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
+  const { lastTrade, derivatives, dataStatus, provider, effectiveProvider, gatewayProvider, transport, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
   const chartProvider = archivedChart?.dataset.provider ?? provider ?? "gateio";
   const liveContract = useMarketContract(chartSymbol, chartProvider);
   const chartContract = useMemo(() => archivedChart ? { ...liveContract, symbol: archivedChart.dataset.symbol, exchange: archivedChart.dataset.provider === "gateio" ? "GATEIO" as const : "BINANCE" as const, product: "perpetual" as const, tickSize: archivedChart.config.tickSize ?? archivedChart.instrument?.tickSize ?? Number.NaN, multiplier: archivedChart.config.multiplier, quantityStep: archivedChart.config.quantityStep } : liveContract, [archivedChart, liveContract]);
@@ -236,7 +236,7 @@ export function ReferenceChartWorkspace() {
             archivedContract={archivedChart ? chartContract : undefined}
             overlays={chartDocument.overlays}
           />
-          {!archivedChart && <FeedInspector provider={provider} effectiveProvider={effectiveProvider} gatewayProvider={gatewayProvider} dataStatus={dataStatus} health={health} reason={reason} />}
+          {!archivedChart && <FeedInspector transport={transport} provider={provider} effectiveProvider={effectiveProvider} gatewayProvider={gatewayProvider} dataStatus={dataStatus} health={health} reason={reason} />}
         </div>
   );
 }

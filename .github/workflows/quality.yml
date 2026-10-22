@@ -45,7 +45,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://build:placeholder@127.0.0.1:5432/build
       - name: Enforce high-severity production dependency threshold
-        run: npm audit --omit=dev --audit-level=high || true
+        run: npm audit --omit=dev --audit-level=high
       - name: Capture production dependency audit
         if: always()
         run: npm audit --omit=dev --json > npm-audit-production.json || true
