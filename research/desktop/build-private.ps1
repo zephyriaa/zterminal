@@ -22,7 +22,7 @@ Copy-Item -LiteralPath (Join-Path $repoRoot 'docs/licenses/MIT-legacy.txt') -Des
 [IO.File]::WriteAllText((Join-Path $packageRoot 'runtime/python312._pth'), "python312.zip`n.`nLib/site-packages`n../app`nimport site`n")
 # Build a native Windows GUI launcher with the installed .NET Framework compiler.
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
-& $compiler /nologo /target:winexe /platform:x64 /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll /reference:Microsoft.CSharp.dll "/win32manifest:$PSScriptRoot/launcher.manifest" "/resource:$repoRoot/public/landing/zterminal-logo-mark.png,logo.png" "/out:$packageRoot/ZTerminalResearchHelper.exe" (Join-Path $PSScriptRoot 'Launcher.cs')
+& $compiler /nologo /target:winexe /platform:x64 /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll /reference:Microsoft.CSharp.dll "/win32manifest:$PSScriptRoot/launcher.manifest" "/resource:$repoRoot/assets/branding/ZTerminal-Logo-Kit-v1/brandmark/png/off-white/zterminal-mark-off-white-256.png,logo.png" "/resource:$repoRoot/assets/branding/ZTerminal-Logo-Kit-v1/desktop/windows/zterminal.ico,app.ico" "/win32icon:$repoRoot/assets/branding/ZTerminal-Logo-Kit-v1/desktop/windows/zterminal.ico" "/out:$packageRoot/ZTerminalResearchHelper.exe" (Join-Path $PSScriptRoot 'Launcher.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Launcher compilation failed.' }
 $manifestScript = @"
 import hashlib

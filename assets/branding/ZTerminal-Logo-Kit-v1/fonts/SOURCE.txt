@@ -1,0 +1,4 @@
+Inter by Rasmus Andersson / The Inter Project Authors. Unmodified variable font from Google Fonts.
+https://github.com/google/fonts/tree/main/ofl/inter
+SIL Open Font License 1.1: see OFL.txt.
+Outlines use weight 500, optical size 32; glyph advances with kerning disabled for deterministic editing.

@@ -106,11 +106,11 @@ export function PublicHeader({ overlay = false, hero = false }: { overlay?: bool
         onPointerDown={placePressHighlight}
         onPointerLeave={releasePress}
       >
-        {/* Canonical mark; its transparent source padding is handled in CSS. */}
+        {/* The supplied square canvas preserves the mark's clear space. */}
         <Link href="/" className={styles.brand} aria-label="ZTerminal home">
           <span className={styles.brandMarkFrame}>
             <Image
-              src="/brand/zterminal-mark-v2.png"
+              src="/brand/zterminal-mark-kit-v1.png"
               alt="ZTerminal"
               width={80}
               height={80}

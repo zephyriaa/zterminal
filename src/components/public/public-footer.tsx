@@ -10,7 +10,7 @@ export function PublicFooter() {
           <div className={styles.brand}>
             <span className={styles.brandMarkFrame}>
               <Image
-                src="/brand/zterminal-mark-v2.png"
+                src="/brand/zterminal-mark-kit-v1.png"
                 alt="ZTerminal brand mark"
                 width={80}
                 height={80}

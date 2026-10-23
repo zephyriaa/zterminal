@@ -99,7 +99,7 @@ export function WorkspaceDashboard() {
   const visible = items.filter(item => `${item.name} ${item.symbol} ${STARTERS[item.starter]?.name ?? ""}`.toLowerCase().includes(query.toLowerCase())).sort((a, b) => sort === "name" ? a.name.localeCompare(b.name) : Math.max(b.lastOpenedAt, b.updatedAt)-Math.max(a.lastOpenedAt, a.updatedAt));
 
   return <div className={styles.page}>
-    <header className={styles.header}><Link href="/" className={styles.brand}><Image src="/brand/zterminal-mark-v2.png" width={26} height={26} alt="" />ZTerminal</Link><div className={styles.headerRight}><Link href="/research/example">Example report</Link><Link href="/docs">Help</Link><WorkspaceAccount /></div></header>
+    <header className={styles.header}><Link href="/" className={styles.brand}><Image src="/brand/zterminal-mark-kit-v1.png" width={26} height={26} alt="" />ZTerminal</Link><div className={styles.headerRight}><Link href="/research/example">Example report</Link><Link href="/docs">Help</Link><WorkspaceAccount /></div></header>
     <main className={styles.main}>
       <div className={styles.heading}><div><h1>Workspaces</h1><p>Your charts, tools and research. Ready when you are.</p></div><button className={styles.primary} onClick={() => { setCreating(value => !value); setCreated(null); }}>{creating ? <X size={17} /> : <Plus size={17} />}{creating ? "Cancel" : "Create workspace"}</button></div>
       <div className={styles.notice} role="status"><Monitor size={15} /><span>{cloudStatus}. Local workspaces do not require an account. Back up before clearing browser data.</span></div>
