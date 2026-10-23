@@ -47,7 +47,11 @@ jobs:
       - name: Smoke test built Cloudflare Worker
         run: npm run cf:smoke
       - name: Enforce high-severity production dependency threshold
-        run: npm audit --omit=dev --audit-level=high --fetch-retries=1 --fetch-timeout=30000
+        # Retry the whole audit once if npm falls back to its retiring quick endpoint.
+        # Both attempts retain the same threshold; a repeated failure blocks release.
+        run: |
+          npm audit --omit=dev --audit-level=high --fetch-retries=1 --fetch-timeout=30000 ||
+          npm audit --omit=dev --audit-level=high --fetch-retries=1 --fetch-timeout=30000
       - name: Capture production dependency audit
         if: always()
         run: npm audit --omit=dev --fetch-retries=1 --fetch-timeout=30000 --json > npm-audit-production.json || true

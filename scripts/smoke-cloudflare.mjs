@@ -42,6 +42,15 @@ try {
     assert.ok((await response.text()).includes(expected), `${path} must contain its page content`);
     console.log(`PASS ${path}`);
   }
+  const anonymous = await fetch(`http://127.0.0.1:${port}/api/cloud/workspaces`, { signal: AbortSignal.timeout(15000) });
+  assert.ok([401, 503].includes(anonymous.status), "Anonymous Worker requests must not list cloud workspaces");
+  for (const method of ["POST", "DELETE"]) {
+    const response = await fetch(`http://127.0.0.1:${port}/api/cloud/workspaces`, {
+      method, headers: { Origin: "https://untrusted.example", "Content-Type": "application/json" }, body: "{}", signal: AbortSignal.timeout(15000),
+    });
+    assert.equal(response.status, 403, `${method} must reject foreign origins before accessing storage`);
+  }
+  console.log("PASS anonymous cloud access and cross-origin mutation boundaries");
 } catch (error) {
   console.error(output);
   throw error;

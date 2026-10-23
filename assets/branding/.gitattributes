@@ -1,0 +1,3 @@
+# Preserve the supplied kit's bytes, including its CRLF text exports and checksums.
+ZTerminal-Logo-Kit-v1/** -text whitespace=cr-at-eol
+ZTerminal-Logo-Kit-v1/fonts/OFL.txt -whitespace

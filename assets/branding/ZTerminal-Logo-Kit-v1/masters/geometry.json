@@ -1,0 +1,36 @@
+{
+  "viewBox": [
+    0,
+    0,
+    644,
+    572
+  ],
+  "paths": [
+    {
+      "id": "upper-left",
+      "d": "M5 0H272C138.49 15.43 29.55 120.73 5 216Z"
+    },
+    {
+      "id": "diagonal",
+      "d": "M484 0H644L160 572H0Z"
+    },
+    {
+      "id": "lower-right",
+      "d": "M384 572C500.88 553.2 606.39 464.43 633 367V572Z"
+    }
+  ],
+  "colors": {
+    "off-white": "#F5F5F0",
+    "black": "#000000",
+    "blue": "#3563E9"
+  },
+  "backgrounds": {
+    "dark": "#101114",
+    "light": "#F5F5F0"
+  },
+  "reference_origin_px": [
+    310,
+    344
+  ],
+  "reference_fit_note": "Hand-reconstructed straight edges; cubic curves fitted to visible original alpha boundary. No comparison-image trace."
+}

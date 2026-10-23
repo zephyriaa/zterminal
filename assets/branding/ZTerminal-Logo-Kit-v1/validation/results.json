@@ -1,0 +1,3542 @@
+{
+  "status": "PASS",
+  "assertions": 704,
+  "png_assets_checked": 130,
+  "svg_files_parsed_and_rendered": 32,
+  "ico_containers_checked": 5,
+  "ico_frames_per_container": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    128,
+    256
+  ],
+  "icns_chunks_checked": 11,
+  "pwa_max_bounding_radius_fraction": 0.37449903525938216,
+  "android_max_bounding_radius_dp": 32.09991730794704,
+  "native_builds_and_installed_shells": "NOT TESTED",
+  "checks": [
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/off-white/zterminal-mark-off-white-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/off-white/zterminal-mark-off-white-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/off-white/zterminal-mark-off-white-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/off-white/zterminal-mark-off-white-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/black/zterminal-mark-black-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/black/zterminal-mark-black-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/black/zterminal-mark-black-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/black/zterminal-mark-black-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-24.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-64.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG brandmark/png/blue/zterminal-mark-blue-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha brandmark/png/blue/zterminal-mark-blue-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB brandmark/png/blue/zterminal-mark-blue-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins brandmark/png/blue/zterminal-mark-blue-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-lockup-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-lockup-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-lockup-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-lockup-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-lockup-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-lockup-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-lockup-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-lockup-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-wordmark-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-wordmark-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-wordmark-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-wordmark-off-white@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-wordmark-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-wordmark-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-wordmark-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-wordmark-off-white@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-lockup-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-lockup-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-lockup-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-lockup-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-lockup-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-lockup-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-lockup-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-lockup-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-wordmark-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-wordmark-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-wordmark-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-wordmark-black@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-wordmark-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-wordmark-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-wordmark-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-wordmark-black@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-lockup-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-lockup-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-lockup-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-lockup-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-lockup-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-lockup-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-lockup-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-lockup-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-wordmark-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-wordmark-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-wordmark-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-wordmark-blue@1x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG wordmark/png/zterminal-wordmark-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha wordmark/png/zterminal-wordmark-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB wordmark/png/zterminal-wordmark-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins wordmark/png/zterminal-wordmark-blue@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/favicon-16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/favicon-16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/favicon-16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/favicon-32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/favicon-32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/favicon-32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/favicon-48x48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/favicon-48x48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/favicon-48x48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/dark/apple-touch-icon.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/dark/apple-touch-icon.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/dark/apple-touch-icon.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/favicon-16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/favicon-16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/favicon-16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/favicon-32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/favicon-32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/favicon-32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/favicon-48x48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/favicon-48x48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/favicon-48x48.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG web/light/apple-touch-icon.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque web/light/apple-touch-icon.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB web/light/apple-touch-icon.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-40.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-40.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-40.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-60.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-60.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-60.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-58.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-58.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-58.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-87.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-87.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-87.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-80.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-80.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-80.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-120.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-120.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-120.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-180.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-180.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-180.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-20.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-20.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-20.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-29.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-29.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-29.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-76.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-76.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-76.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-152.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-152.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-152.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-167.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-167.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-167.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/app-store-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/app-store-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/app-store-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/ios/alternates/app-store-light-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/ios/alternates/app-store-light-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/ios/alternates/app-store-light-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/res/mipmap-mdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/res/mipmap-mdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/res/mipmap-mdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile\\android\\res\\mipmap-mdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile\\android\\res\\mipmap-mdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile\\android\\res\\mipmap-mdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/mdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/mdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/mdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/mdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/mdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/mdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/mdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/mdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/mdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/layers/mdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/mdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/res/mipmap-hdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/res/mipmap-hdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/res/mipmap-hdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile\\android\\res\\mipmap-hdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile\\android\\res\\mipmap-hdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile\\android\\res\\mipmap-hdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/hdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/hdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/hdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/hdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/hdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/hdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/hdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/hdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/hdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/layers/hdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/hdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/res/mipmap-xhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/res/mipmap-xhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/res/mipmap-xhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile\\android\\res\\mipmap-xhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile\\android\\res\\mipmap-xhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile\\android\\res\\mipmap-xhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/xhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/xhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/xhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/xhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/layers/xhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/res/mipmap-xxhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/res/mipmap-xxhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/res/mipmap-xxhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile\\android\\res\\mipmap-xxhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile\\android\\res\\mipmap-xxhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile\\android\\res\\mipmap-xxhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/xxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/xxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/xxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/xxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xxhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/layers/xxhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xxhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/res/mipmap-xxxhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/res/mipmap-xxxhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/res/mipmap-xxxhdpi/ic_launcher.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile\\android\\res\\mipmap-xxxhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile\\android\\res\\mipmap-xxxhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile\\android\\res\\mipmap-xxxhdpi\\ic_launcher_round.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xxxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/xxxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xxxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/xxxhdpi/foreground.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xxxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha mobile/android/layers/xxxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xxxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins mobile/android/layers/xxxhdpi/monochrome.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/layers/xxxhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/layers/xxxhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/layers/xxxhdpi/background.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG mobile/android/play-store-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque mobile/android/play-store-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB mobile/android/play-store-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_16x16.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_16x16@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_16x16@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_16x16@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_32x32.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_32x32@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_32x32@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_32x32@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_128x128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_128x128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_128x128.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_128x128@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_128x128@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_128x128@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_256x256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_256x256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_256x256.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_256x256@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_256x256@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_256x256@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_512x512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_512x512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_512x512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/macos/ZTerminal.iconset/icon_512x512@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/macos/ZTerminal.iconset/icon_512x512@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/macos/ZTerminal.iconset/icon_512x512@2x.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/dark/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/dark/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/dark/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/dark/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/16x16/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/24x24/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/32x32/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/48x48/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/64x64/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/128x128/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/256x256/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/512x512/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG desktop/linux/light/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Alpha desktop/linux/light/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB desktop/linux/light/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Transparent margins desktop/linux/light/1024x1024/zterminal.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG social/zterminal-avatar-dark-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque social/zterminal-avatar-dark-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB social/zterminal-avatar-dark-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG social/zterminal-avatar-dark-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque social/zterminal-avatar-dark-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB social/zterminal-avatar-dark-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG social/zterminal-og-dark-1200x630.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque social/zterminal-og-dark-1200x630.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB social/zterminal-og-dark-1200x630.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG social/zterminal-avatar-light-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque social/zterminal-avatar-light-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB social/zterminal-avatar-light-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG social/zterminal-avatar-light-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque social/zterminal-avatar-light-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB social/zterminal-avatar-light-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "PNG social/zterminal-og-light-1200x630.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Opaque social/zterminal-og-light-1200x630.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "sRGB social/zterminal-og-light-1200x630.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 512",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 512",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 512",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 512",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact off-white interior at 1024",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact black interior at 1024",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Exact blue interior at 1024",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Identical color-variant geometry at 1024",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity masters\\zterminal-brandmark-black.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render masters\\zterminal-brandmark-black.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity masters\\zterminal-brandmark-blue.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render masters\\zterminal-brandmark-blue.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity masters\\zterminal-brandmark-currentcolor.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render masters\\zterminal-brandmark-currentcolor.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity masters\\zterminal-brandmark-off-white.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render masters\\zterminal-brandmark-off-white.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity social\\zterminal-og-dark.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render social\\zterminal-og-dark.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity social\\zterminal-og-light.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render social\\zterminal-og-light.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\zterminal-lockup-black-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\zterminal-lockup-black-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\zterminal-lockup-blue-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\zterminal-lockup-blue-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\zterminal-lockup-off-white-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\zterminal-lockup-off-white-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\zterminal-wordmark-black-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\zterminal-wordmark-black-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\zterminal-wordmark-blue-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\zterminal-wordmark-blue-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\zterminal-wordmark-off-white-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\zterminal-wordmark-off-white-outlined.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity brandmark\\svg\\zterminal-mark-black-square.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render brandmark\\svg\\zterminal-mark-black-square.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity brandmark\\svg\\zterminal-mark-blue-square.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render brandmark\\svg\\zterminal-mark-blue-square.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity brandmark\\svg\\zterminal-mark-off-white-square.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render brandmark\\svg\\zterminal-mark-off-white-square.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity desktop\\linux\\zterminal.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render desktop\\linux\\zterminal.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity desktop\\macos\\zterminal-icon.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render desktop\\macos\\zterminal-icon.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity mobile\\android\\layers\\background.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render mobile\\android\\layers\\background.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity mobile\\android\\layers\\foreground.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render mobile\\android\\layers\\foreground.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity mobile\\android\\layers\\monochrome.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render mobile\\android\\layers\\monochrome.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity web\\dark\\app-icon.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render web\\dark\\app-icon.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity web\\dark\\brandmark.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render web\\dark\\brandmark.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity web\\dark\\safari-pinned-tab.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render web\\dark\\safari-pinned-tab.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity web\\light\\app-icon.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render web\\light\\app-icon.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity web\\light\\brandmark.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render web\\light\\brandmark.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity web\\light\\safari-pinned-tab.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render web\\light\\safari-pinned-tab.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\editable\\zterminal-lockup-black-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\editable\\zterminal-lockup-black-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\editable\\zterminal-lockup-blue-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\editable\\zterminal-lockup-blue-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\editable\\zterminal-lockup-off-white-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\editable\\zterminal-lockup-off-white-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\editable\\zterminal-wordmark-black-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\editable\\zterminal-wordmark-black-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\editable\\zterminal-wordmark-blue-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\editable\\zterminal-wordmark-blue-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG validity wordmark\\editable\\zterminal-wordmark-off-white-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "SVG render wordmark\\editable\\zterminal-wordmark-off-white-live-text.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Canonical master zterminal-brandmark-black.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Canonical master zterminal-brandmark-blue.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Canonical master zterminal-brandmark-currentcolor.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Canonical master zterminal-brandmark-off-white.svg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Three pieces at 16px",
+      "pass": true,
+      "detail": "[5, 30, 4]"
+    },
+    {
+      "check": "Three pieces at 24px",
+      "pass": true,
+      "detail": "[15, 74, 13]"
+    },
+    {
+      "check": "Three pieces at 32px",
+      "pass": true,
+      "detail": "[27, 132, 25]"
+    },
+    {
+      "check": "Three pieces at 48px",
+      "pass": true,
+      "detail": "[57, 288, 54]"
+    },
+    {
+      "check": "Three pieces at 64px",
+      "pass": true,
+      "detail": "[96, 500, 78]"
+    },
+    {
+      "check": "Three pieces at 128px",
+      "pass": true,
+      "detail": "[390, 2058, 354]"
+    },
+    {
+      "check": "PWA circle-safe",
+      "pass": true,
+      "detail": "maximum normalized artwork radius 0.374499; allowed 0.400000"
+    },
+    {
+      "check": "Android circle-safe",
+      "pass": true,
+      "detail": "maximum artwork radius 32.099917 dp; allowed 33 dp"
+    },
+    {
+      "check": "Actual PWA safe pixels dark 192",
+      "pass": true,
+      "detail": "0.372623"
+    },
+    {
+      "check": "Actual PWA safe pixels light 192",
+      "pass": true,
+      "detail": "0.372623"
+    },
+    {
+      "check": "Actual PWA safe pixels dark 512",
+      "pass": true,
+      "detail": "0.374921"
+    },
+    {
+      "check": "Actual PWA safe pixels light 512",
+      "pass": true,
+      "detail": "0.374921"
+    },
+    {
+      "check": "Actual Android safe pixels mdpi",
+      "pass": true,
+      "detail": "31.851217 dp"
+    },
+    {
+      "check": "Actual Android safe pixels hdpi",
+      "pass": true,
+      "detail": "31.640340 dp"
+    },
+    {
+      "check": "Actual Android safe pixels xhdpi",
+      "pass": true,
+      "detail": "31.868872 dp"
+    },
+    {
+      "check": "Actual Android safe pixels xxhdpi",
+      "pass": true,
+      "detail": "31.875626 dp"
+    },
+    {
+      "check": "Actual Android safe pixels xxxhdpi",
+      "pass": true,
+      "detail": "32.045378 dp"
+    },
+    {
+      "check": "iOS entry icon-40.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-60.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-58.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-87.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-80.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-120.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-120.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-180.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-20.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-40.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-29.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-58.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-40.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-80.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-76.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-152.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-167.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS entry icon-1024.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "iOS marketing entry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-maskable-192.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "Manifest /brand/pwa-maskable-512.png",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO header zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-dark.ico16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-dark.ico24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-dark.ico32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-dark.ico48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-dark.ico64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-dark.ico128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-dark.ico256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO complete sizes zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO Pillow decode zterminal-dark.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO header zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-light.ico16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-light.ico24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-light.ico32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-light.ico48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-light.ico64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-light.ico128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal-light.ico256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO complete sizes zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO Pillow decode zterminal-light.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO header zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal.ico16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal.ico24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal.ico32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal.ico48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal.ico64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal.ico128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame zterminal.ico256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO complete sizes zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO Pillow decode zterminal.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO header favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO complete sizes favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO Pillow decode favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO header favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico24",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico32",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico48",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico64",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico128",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame offsets favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO frame favicon.ico256",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO complete sizes favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICO Pillow decode favicon.ico",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS header",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS icp4",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS icp5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS icp6",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic07",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic08",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic09",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic11",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic12",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic13",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS ic14",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS representations",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "ICNS Pillow decode",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

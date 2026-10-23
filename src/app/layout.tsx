@@ -38,7 +38,10 @@ export const metadata: Metadata = {
     "order flow",
   ],
   authors: [{ name: "Z Terminal" }],
-  icons: { icon: "/brand/zterminal-mark-v2.png", shortcut: "/brand/zterminal-mark-v2.png", apple: "/brand/zterminal-mark-v2.png" },
+  icons: { icon: "/brand/favicon.ico", shortcut: "/brand/favicon-32x32.png", apple: "/brand/apple-touch-icon.png" },
+  manifest: "/brand/site.webmanifest",
+  openGraph: { images: [{ url: "/brand/zterminal-og-dark-1200x630.png", width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image", images: ["/brand/zterminal-og-dark-1200x630.png"] },
 };
 
 export default function RootLayout({

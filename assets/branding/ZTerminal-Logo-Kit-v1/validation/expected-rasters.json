@@ -1,0 +1,1172 @@
+{
+  "brandmark/png/off-white/zterminal-mark-off-white-16.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-24.png": {
+    "size": [
+      24,
+      24
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-32.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-48.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-64.png": {
+    "size": [
+      64,
+      64
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-128.png": {
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-256.png": {
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/off-white/zterminal-mark-off-white-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-16.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-24.png": {
+    "size": [
+      24,
+      24
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-32.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-48.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-64.png": {
+    "size": [
+      64,
+      64
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-128.png": {
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-256.png": {
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/black/zterminal-mark-black-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-16.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-24.png": {
+    "size": [
+      24,
+      24
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-32.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-48.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-64.png": {
+    "size": [
+      64,
+      64
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-128.png": {
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-256.png": {
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "brandmark/png/blue/zterminal-mark-blue-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-mark"
+  },
+  "wordmark/png/zterminal-lockup-off-white@1x.png": {
+    "size": [
+      781,
+      208
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-lockup-off-white@2x.png": {
+    "size": [
+      1562,
+      416
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-wordmark-off-white@1x.png": {
+    "size": [
+      533,
+      160
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-wordmark-off-white@2x.png": {
+    "size": [
+      1066,
+      320
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-lockup-black@1x.png": {
+    "size": [
+      781,
+      208
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-lockup-black@2x.png": {
+    "size": [
+      1562,
+      416
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-wordmark-black@1x.png": {
+    "size": [
+      533,
+      160
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-wordmark-black@2x.png": {
+    "size": [
+      1066,
+      320
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-lockup-blue@1x.png": {
+    "size": [
+      781,
+      208
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-lockup-blue@2x.png": {
+    "size": [
+      1562,
+      416
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-wordmark-blue@1x.png": {
+    "size": [
+      533,
+      160
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "wordmark/png/zterminal-wordmark-blue@2x.png": {
+    "size": [
+      1066,
+      320
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "transparent-wordmark"
+  },
+  "web/dark/favicon-16x16.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "favicon"
+  },
+  "web/dark/favicon-32x32.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "favicon"
+  },
+  "web/dark/favicon-48x48.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "favicon"
+  },
+  "web/dark/pwa-192.png": {
+    "size": [
+      192,
+      192
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-any"
+  },
+  "web/dark/pwa-maskable-192.png": {
+    "size": [
+      192,
+      192
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-maskable"
+  },
+  "web/dark/pwa-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-any"
+  },
+  "web/dark/pwa-maskable-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-maskable"
+  },
+  "web/dark/apple-touch-icon.png": {
+    "size": [
+      180,
+      180
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "apple-touch"
+  },
+  "web/light/favicon-16x16.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "favicon"
+  },
+  "web/light/favicon-32x32.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "favicon"
+  },
+  "web/light/favicon-48x48.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "favicon"
+  },
+  "web/light/pwa-192.png": {
+    "size": [
+      192,
+      192
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-any"
+  },
+  "web/light/pwa-maskable-192.png": {
+    "size": [
+      192,
+      192
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-maskable"
+  },
+  "web/light/pwa-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-any"
+  },
+  "web/light/pwa-maskable-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "pwa-maskable"
+  },
+  "web/light/apple-touch-icon.png": {
+    "size": [
+      180,
+      180
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "apple-touch"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-40.png": {
+    "size": [
+      40,
+      40
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-60.png": {
+    "size": [
+      60,
+      60
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-58.png": {
+    "size": [
+      58,
+      58
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-87.png": {
+    "size": [
+      87,
+      87
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-80.png": {
+    "size": [
+      80,
+      80
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-120.png": {
+    "size": [
+      120,
+      120
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-180.png": {
+    "size": [
+      180,
+      180
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-20.png": {
+    "size": [
+      20,
+      20
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-29.png": {
+    "size": [
+      29,
+      29
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-76.png": {
+    "size": [
+      76,
+      76
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-152.png": {
+    "size": [
+      152,
+      152
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-167.png": {
+    "size": [
+      167,
+      167
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/Assets.xcassets/AppIcon.appiconset/icon-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/app-store-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/ios/alternates/app-store-light-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "ios-app"
+  },
+  "mobile/android/res/mipmap-mdpi/ic_launcher.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-legacy"
+  },
+  "mobile/android/res/mipmap-mdpi/ic_launcher_round.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-round"
+  },
+  "mobile/android/layers/mdpi/foreground.png": {
+    "size": [
+      108,
+      108
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-foreground"
+  },
+  "mobile/android/layers/mdpi/monochrome.png": {
+    "size": [
+      108,
+      108
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-monochrome"
+  },
+  "mobile/android/layers/mdpi/background.png": {
+    "size": [
+      108,
+      108
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-background"
+  },
+  "mobile/android/res/mipmap-hdpi/ic_launcher.png": {
+    "size": [
+      72,
+      72
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-legacy"
+  },
+  "mobile/android/res/mipmap-hdpi/ic_launcher_round.png": {
+    "size": [
+      72,
+      72
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-round"
+  },
+  "mobile/android/layers/hdpi/foreground.png": {
+    "size": [
+      162,
+      162
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-foreground"
+  },
+  "mobile/android/layers/hdpi/monochrome.png": {
+    "size": [
+      162,
+      162
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-monochrome"
+  },
+  "mobile/android/layers/hdpi/background.png": {
+    "size": [
+      162,
+      162
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-background"
+  },
+  "mobile/android/res/mipmap-xhdpi/ic_launcher.png": {
+    "size": [
+      96,
+      96
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-legacy"
+  },
+  "mobile/android/res/mipmap-xhdpi/ic_launcher_round.png": {
+    "size": [
+      96,
+      96
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-round"
+  },
+  "mobile/android/layers/xhdpi/foreground.png": {
+    "size": [
+      216,
+      216
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-foreground"
+  },
+  "mobile/android/layers/xhdpi/monochrome.png": {
+    "size": [
+      216,
+      216
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-monochrome"
+  },
+  "mobile/android/layers/xhdpi/background.png": {
+    "size": [
+      216,
+      216
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-background"
+  },
+  "mobile/android/res/mipmap-xxhdpi/ic_launcher.png": {
+    "size": [
+      144,
+      144
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-legacy"
+  },
+  "mobile/android/res/mipmap-xxhdpi/ic_launcher_round.png": {
+    "size": [
+      144,
+      144
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-round"
+  },
+  "mobile/android/layers/xxhdpi/foreground.png": {
+    "size": [
+      324,
+      324
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-foreground"
+  },
+  "mobile/android/layers/xxhdpi/monochrome.png": {
+    "size": [
+      324,
+      324
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-monochrome"
+  },
+  "mobile/android/layers/xxhdpi/background.png": {
+    "size": [
+      324,
+      324
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-background"
+  },
+  "mobile/android/res/mipmap-xxxhdpi/ic_launcher.png": {
+    "size": [
+      192,
+      192
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-legacy"
+  },
+  "mobile/android/res/mipmap-xxxhdpi/ic_launcher_round.png": {
+    "size": [
+      192,
+      192
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-round"
+  },
+  "mobile/android/layers/xxxhdpi/foreground.png": {
+    "size": [
+      432,
+      432
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-foreground"
+  },
+  "mobile/android/layers/xxxhdpi/monochrome.png": {
+    "size": [
+      432,
+      432
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "android-monochrome"
+  },
+  "mobile/android/layers/xxxhdpi/background.png": {
+    "size": [
+      432,
+      432
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "android-background"
+  },
+  "mobile/android/play-store-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "play-store"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_16x16.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_16x16@2x.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_32x32.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_32x32@2x.png": {
+    "size": [
+      64,
+      64
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_128x128.png": {
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_128x128@2x.png": {
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_256x256.png": {
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_256x256@2x.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_512x512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/macos/ZTerminal.iconset/icon_512x512@2x.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "macos-icon"
+  },
+  "desktop/linux/dark/16x16/zterminal.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/24x24/zterminal.png": {
+    "size": [
+      24,
+      24
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/32x32/zterminal.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/48x48/zterminal.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/64x64/zterminal.png": {
+    "size": [
+      64,
+      64
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/128x128/zterminal.png": {
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/256x256/zterminal.png": {
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/512x512/zterminal.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/dark/1024x1024/zterminal.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/16x16/zterminal.png": {
+    "size": [
+      16,
+      16
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/24x24/zterminal.png": {
+    "size": [
+      24,
+      24
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/32x32/zterminal.png": {
+    "size": [
+      32,
+      32
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/48x48/zterminal.png": {
+    "size": [
+      48,
+      48
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/64x64/zterminal.png": {
+    "size": [
+      64,
+      64
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/128x128/zterminal.png": {
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/256x256/zterminal.png": {
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/512x512/zterminal.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "desktop/linux/light/1024x1024/zterminal.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "transparent": true,
+    "tag": "linux-icon"
+  },
+  "social/zterminal-avatar-dark-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "avatar"
+  },
+  "social/zterminal-avatar-dark-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "avatar"
+  },
+  "social/zterminal-og-dark-1200x630.png": {
+    "size": [
+      1200,
+      630
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "og"
+  },
+  "social/zterminal-avatar-light-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "avatar"
+  },
+  "social/zterminal-avatar-light-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "avatar"
+  },
+  "social/zterminal-og-light-1200x630.png": {
+    "size": [
+      1200,
+      630
+    ],
+    "mode": "RGB",
+    "transparent": false,
+    "tag": "og"
+  }
+}
