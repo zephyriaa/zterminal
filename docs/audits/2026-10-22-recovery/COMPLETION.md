@@ -38,6 +38,13 @@ future-time guard rejected the source timestamps. The guard remains; the UI now
 discloses the device-clock problem instead of silently discarding those prints.
 These are bounded local measurements, not whole-product reliability claims.
 
+The packaged Python suite completed 78 tests with six skips. The extracted
+1.2.0 package also passed the production-origin pairing/rotation, execution,
+immutable-archive, cancellation and pipe-loss cleanup acceptance script after
+correcting that script's stale 1.1.0 expected version. A separate synthetic stress
+check inserted 250,000 trades with 100 aggregate checks and retained 2,000 prints;
+it does not establish browser/network or long-run reliability.
+
 ## External gates
 
 - Interactive browser: the prior attempt to restart the isolated test browser
