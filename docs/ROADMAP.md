@@ -24,6 +24,11 @@ schema, or mock exists.
 
 ## Active audit recovery track — 22 October 2026
 
+The user selected completing GLM recovery first on 23 October. The current
+execution gates are in [the completion ledger](audits/2026-10-22-recovery/COMPLETION.md).
+The table below retains the earlier checkpoint; PRs #14/#15 subsequently deployed
+the direct-feed and portability recovery. Institutional/native phases remain separate.
+
 The GLM audit recovery is the current repair track, alongside the longer-term
 institutional design above. It extends existing workspace, chart and Helper
 contracts; it does not authorize replacing them with speculative V2 systems.

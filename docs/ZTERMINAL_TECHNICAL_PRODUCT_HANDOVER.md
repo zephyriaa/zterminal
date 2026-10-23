@@ -75,7 +75,7 @@ Generated directories (`node_modules`, `.next`, Rust `target`, installer `out`) 
 | `package.json`, `package-lock.json`, `bun.lock` | JavaScript scripts/dependency locks. | `npm` is the CI/runtime path; Bun lock exists but no verified Bun workflow. [11] |
 | `Dockerfile`, `Caddyfile`, `railway.json` | Web/gateway container and proxy; Railway configuration. | Active deployment code. Render configuration is not present. [7] [8] |
 | `next.config.ts`, `tailwind.config.ts`, `postcss.config.mjs`, `tsconfig.json`, `eslint.config.mjs`, `components.json` | Web build/style/type/lint/UI configuration. | Active web configuration. [11] |
-| `README.md`, `README_GITHUB_ORIGINAL.md`, `worklog.md`, `LICENSE` | Project/support documentation and license. | Read before changing public claims/license. |
+| `README.md`, `LICENSE`, `docs/archive/recovery/` | Current public documentation/license and preserved historical development artifacts. | Archived claims and screenshots are not current acceptance. |
 | `verify-*.png`, `zterminal.png` | Historical visual verification/image assets. | Supporting evidence; not current source-of-truth UI specification. |
 
 ### Important source subtrees

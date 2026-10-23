@@ -2,7 +2,8 @@
 
 The eight supplied GLM reports are historical evidence at e5f7f4d1. Their
 recommendations are inputs, not instructions to execute. Status below describes
-this isolated recovery branch. Production remains unchanged and unverified.
+the original isolated checkpoint. Production was subsequently published in PRs
+#14/#15; [COMPLETION.md](COMPLETION.md) records the continuation and open gates.
 
 | Finding | Current response | Status and acceptance boundary |
 | --- | --- | --- |

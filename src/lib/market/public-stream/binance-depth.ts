@@ -20,7 +20,7 @@ export class BinanceDepthSynchronizer {
 
   push(event: BinanceDepth) {
     if (this.status === "ERROR") return;
-    if (!Number.isInteger(event.U) || !Number.isInteger(event.u) || event.U > event.u) {
+    if (!Number.isSafeInteger(event.U) || !Number.isSafeInteger(event.u) || event.U < 0 || event.U > event.u || event.pu !== undefined && (!Number.isSafeInteger(event.pu) || event.pu < 0)) {
       return this.fail();
     }
     if (this.status === "SYNCING") {

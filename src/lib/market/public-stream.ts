@@ -484,7 +484,11 @@ export class PublicMarketDataProvider {
       }
     }
     if (event.type === "quote" && (!(event.bid > 0) || !(event.ask > event.bid) || !Number.isFinite(event.bidSize) || event.bidSize < 0 || !Number.isFinite(event.askSize) || event.askSize < 0)) return;
-    if (!Number.isFinite(event.timestamp) || event.timestamp <= 0 || event.timestamp > Date.now() + 1000) return;
+    if (!Number.isFinite(event.timestamp) || event.timestamp <= 0) return;
+    if (event.timestamp > Date.now() + 1000) {
+      this.announce("degraded", "UNAVAILABLE", "Exchange timestamp is ahead of this device clock. Synchronize the device clock and reconnect.");
+      return;
+    }
     const now = Date.now();
     this.symbolLastActivity.set(symbol, now);
     const targetListeners = this.listeners.get(symbol);
@@ -684,6 +688,7 @@ export class PublicMarketDataProvider {
     if (!symbol) return;
 
     if (eventType === "aggTrade") {
+      if (typeof raw.m !== "boolean") return;
       this.emit(symbol, {
         type: "trade",
         provider: "binance",
