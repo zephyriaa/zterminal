@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaClient as PrismaClientWasm } from "@prisma/client/wasm.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { after } from "next/server";
 import path from "node:path";
 
 /**
@@ -47,6 +49,22 @@ function createClient() {
   return client;
 }
 
-export const db = globalForPrisma.prisma ?? createClient();
+// A Worker socket belongs to its request. Reusing a module-level pool can hang
+// later requests, including session lookup and cloud workspace reads.
+const requestClients = new WeakMap<object, ReturnType<typeof createClient>>();
+export const db = isEdge ? new Proxy({} as PrismaClient, {
+  get(_target, property) {
+    const { ctx } = getCloudflareContext();
+    let client = requestClients.get(ctx);
+    if (!client) {
+      client = createClient();
+      requestClients.set(ctx, client);
+      const current = client;
+      after(() => current.$disconnect());
+    }
+    const value = Reflect.get(client, property);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+}) : globalForPrisma.prisma ?? createClient();
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+if (!isEdge && process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;

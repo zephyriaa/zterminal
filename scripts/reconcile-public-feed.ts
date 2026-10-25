@@ -115,7 +115,7 @@ try {
   for (const trade of emitted) assert.deepEqual({ price: trade.price, quantity: trade.quantity, side: trade.side, timestamp: trade.timestamp }, expected.get(trade.sequence));
   const ordered = [...expected].sort(([a], [b]) => a - b).slice(-2000);
   assert.deepEqual(session.trades.map(trade => trade.sequence), ordered.map(([id]) => id), "No raw trade may disappear from the retained observed window");
-  const now = Math.max(...ordered.map(([, trade]) => trade.timestamp));
+  const now = Math.max(depth.timestamp, ...ordered.map(([, trade]) => trade.timestamp));
   const model = session.context({ ...DEFAULT_ORDER_FLOW_SETTINGS, layers: ["cvd", "footprint", "trade-profile", "imbalance", "microprice"], windowSeconds: 900 }, instrument.tickSize, true, true, now);
   const near = (actual: number | undefined | null, wanted: number) => assert.ok(actual != null && Math.abs(actual - wanted) <= 1e-9 * Math.max(1, Math.abs(wanted)), `${actual} != ${wanted}`);
   const buy = ordered.filter(([, trade]) => trade.side === "buy").reduce((sum, [, trade]) => sum + trade.quantity, 0);
