@@ -1,5 +1,9 @@
 # GLM recovery completion ledger — 23 October 2026
 
+The [25 October security continuation](SECURITY-RELEASE.md) records the candidate
+repair of the dependency release gate. The historical checkpoint below remains;
+browser and deployed acceptance require their own evidence.
+
 The user authorized completing GLM recovery first. The institutional/native
 roadmap remains separate. The eight GLM reports and 252 older assertions are
 historical inputs; their original contents and statuses remain preserved.
