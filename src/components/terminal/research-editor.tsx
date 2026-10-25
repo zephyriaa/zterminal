@@ -4,7 +4,7 @@ import Editor, { loader, type Monaco, type OnMount } from "@monaco-editor/react"
 import type { editor, IDisposable } from "monaco-editor";
 import { useResearch } from "@/stores/research";
 import { useTerminalAppearance } from "@/stores/terminal-appearance";
-loader.config({ paths: { vs: "/vendor/monaco-0.57.0/vs" } });
+loader.config({ paths: { vs: "/vendor/monaco-0.57.0-dompurify-3.4.17/vs" } });
 
 export default function ResearchEditor({ onReady }: { onReady?: () => void }) {
   const script = useResearch(s => s.drafts[s.activeId]);

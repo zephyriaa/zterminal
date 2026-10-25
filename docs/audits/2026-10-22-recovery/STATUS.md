@@ -1,5 +1,7 @@
 # Audit recovery checkpoint — 22 October 2026
 
+For the 23 October continuation and remaining gates, see [COMPLETION.md](COMPLETION.md).
+
 Historical local implementation checkpoint: `codex/audit-recovery`, isolated from
 the original dirty checkout. The checks below preceded publication; no real trade.
 The original 1,070 source files and Git index match their preservation baseline.

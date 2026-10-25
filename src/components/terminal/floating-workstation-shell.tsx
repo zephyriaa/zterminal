@@ -79,7 +79,7 @@ function Workstation({ managed, name }: { managed: boolean; name?: string }) {
       <TerminalAppearanceBridge />{!managed && <CloudSyncBridge />}<CommandPalette />
       <header className="zt-reference-header" aria-label="Terminal header">
         <button type="button" className="zt-reference-mark" onClick={() => dock.focusPanel("chart")} aria-label="Focus chart workspace" title="Chart workspace">
-          <Image src="/brand/zterminal-mark-v2.png" alt="" width={24} height={24} priority />
+          <Image src="/brand/zterminal-mark-kit-v1.png" alt="" width={24} height={24} priority />
         </button>
         <MobileResearchMenu />
         <span className="zt-header-separator" aria-hidden="true" />

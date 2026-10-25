@@ -35,7 +35,7 @@ export function TerminalHeader() {
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 pr-2 border-r hairline">
           <Image
-            src="/brand/zterminal-mark-v2.png"
+            src="/brand/zterminal-mark-kit-v1.png"
             alt="ZTerminal"
             width={22}
             height={22}

@@ -1,13 +1,15 @@
-import { cp, mkdir, stat, readdir } from "node:fs/promises";
-import { resolve } from "node:path";
-// Reproducible local editor assets; no CDN dependency and no generated files in Git.
-const destination = resolve("public/vendor/monaco-0.57.0");
-await mkdir(destination, { recursive: true });
-await cp(resolve("node_modules/monaco-editor/min/vs"), resolve(destination, "vs"), { recursive: true });
-await cp(resolve("node_modules/monaco-editor/LICENSE"), resolve(destination, "LICENSE"));
-for (const asset of ["loader.js", "editor/editor.main.js", "editor/editor.main.css"]) {
-  if (!(await stat(resolve(destination, "vs", asset))).size) throw new Error(`Missing Monaco asset: ${asset}`);
+import assert from "node:assert/strict";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { dirname, resolve, sep } from "node:path";
+import { buildMonaco, monacoDirectory } from "./build-monaco.mjs";
+
+const files = await buildMonaco();
+const legacy = resolve("public/vendor/monaco-0.57.0");
+assert.ok(legacy.startsWith(resolve("public/vendor") + sep));
+await rm(legacy, { recursive: true, force: true });
+for (const [name, contents] of files) {
+  const path = resolve("public", monacoDirectory, name);
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, contents);
 }
-const files = await readdir(resolve(destination, "vs"));
-const workers = await readdir(resolve(destination, "vs/assets"));
-if (!files.some(name => /^python-.*\.js$/.test(name)) || !workers.some(name => /^editor\.worker-.*\.js$/.test(name))) throw new Error("Missing Monaco Python language or editor worker bundle");
+console.log(`Prepared ${monacoDirectory} from module sources with DOMPurify 3.4.17`);

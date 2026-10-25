@@ -44,9 +44,9 @@
       "primary_file": "prompts/08-chart-behavior-and-replay.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "22 October deployed preserved workspace rendered historical chart; production-after.png/txt."
     },
     {
       "audit_id": "A002",
@@ -56,9 +56,9 @@
       "primary_file": "prompts/03-gateway-and-recovery.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "22 October both venues LIVE; 23 October local clock skew blocks fresh live acceptance."
     },
     {
       "audit_id": "A003",
@@ -80,9 +80,9 @@
       "primary_file": "prompts/01-market-identity.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "BTC Gate/Binance identity, quantity units and source provenance verified; not every market."
     },
     {
       "audit_id": "A005",
@@ -104,9 +104,9 @@
       "primary_file": "prompts/08-chart-behavior-and-replay.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "22 October deployed 5m Gate/Binance historical chart observed; production-after/binance captures."
     },
     {
       "audit_id": "A007",
@@ -944,9 +944,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Captured raw-ledger CVD totals reconcile; fresh browser acceptance remains open."
     },
     {
       "audit_id": "A077",
@@ -956,9 +956,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Captured raw-ledger signed trade totals reconcile; fresh browser acceptance remains open."
     },
     {
       "audit_id": "A078",
@@ -968,9 +968,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Captured raw-ledger footprint volume totals reconcile; full browser/configuration acceptance remains open."
     },
     {
       "audit_id": "A079",
@@ -980,9 +980,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Independent raw book reconstruction and nearest-five imbalance reconcile; fresh browser gate open."
     },
     {
       "audit_id": "A080",
@@ -992,9 +992,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Independent raw book top-quote weighted microprice reconciles; fresh browser gate open."
     },
     {
       "audit_id": "A081",
@@ -1004,9 +1004,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Bounded actual-frame rendering checked previously; raw-book replay now reconciles, fresh UI gate open."
     },
     {
       "audit_id": "A082",
@@ -1040,9 +1040,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Captured raw-ledger observed profile totals reconcile; no full-session completeness claim."
     },
     {
       "audit_id": "A085",
@@ -1052,9 +1052,9 @@
       "primary_file": "prompts/02-provider-and-provenance.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Deployed Gate BTC source observed; fresh provider-switch/recovery after restart remains open."
     },
     {
       "audit_id": "A086",
@@ -1064,9 +1064,9 @@
       "primary_file": "prompts/04-history-ranges-and-cache.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Actual deployed 30-day Gate run retains 929/929 candles and dataset hash in archived report."
     },
     {
       "audit_id": "A087",
@@ -1076,9 +1076,9 @@
       "primary_file": "prompts/03-gateway-and-recovery.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Deployed trades observed 22 October; 40 captured raw prints reconcile offline on 23 October."
     },
     {
       "audit_id": "A088",
@@ -1088,9 +1088,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Captured Gate snapshot/deltas reconstruct to sequence 128777053049; live clock gate open."
     },
     {
       "audit_id": "A089",
@@ -1124,9 +1124,9 @@
       "primary_file": "prompts/02-provider-and-provenance.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "22 October deployed menu switch to Binance with matching selected/effective source; production-binance.png/txt."
     },
     {
       "audit_id": "A092",
@@ -1136,9 +1136,9 @@
       "primary_file": "prompts/04-history-ranges-and-cache.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "22 October deployed Binance 5m provider-matched network history; production-binance capture."
     },
     {
       "audit_id": "A093",
@@ -1148,9 +1148,9 @@
       "primary_file": "prompts/03-gateway-and-recovery.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Deployed trades observed 22 October; 97 captured aggregate prints reconcile offline on 23 October."
     },
     {
       "audit_id": "A094",
@@ -1160,9 +1160,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Captured Binance book reconstructs to sequence 11901369793271; live clock gate open."
     },
     {
       "audit_id": "A095",
@@ -1412,9 +1412,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Provider fixtures and both captured snapshot/delta ledgers pass; fresh browser startup not retested."
     },
     {
       "audit_id": "A116",
@@ -1424,9 +1424,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Sequence regression and malformed/unsafe-ID tests pass; captured ledger continuity checked offline."
     },
     {
       "audit_id": "A117",
@@ -1436,9 +1436,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Captured book levels exactly match independent absolute-update reconstruction; fresh browser grouping not tested."
     },
     {
       "audit_id": "A118",
@@ -1448,9 +1448,9 @@
       "primary_file": "prompts/11-level2-and-orderflow.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Crossed/stale/malformed fixtures pass; device clock failure is now explicit."
     },
     {
       "audit_id": "A119",
@@ -1640,9 +1640,9 @@
       "primary_file": "prompts/06-helper-runtime-and-jobs.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Verify first, preserve regression",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "22 October public app paired to packaged Helper after granting isolated test browser loopback permissions."
     },
     {
       "audit_id": "A135",
@@ -1652,9 +1652,9 @@
       "primary_file": "prompts/07-research-accounting-and-workflows.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Verify first, preserve regression",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "22 October actual public UI completed 30-day Gate preset and opened archived report with 14 closed trades."
     },
     {
       "audit_id": "A136",
@@ -1688,9 +1688,9 @@
       "primary_file": "prompts/07-research-accounting-and-workflows.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Verify first, preserve regression",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Actual report payload verified previously; browser report-download completion remains blocked."
     },
     {
       "audit_id": "A139",
@@ -1796,9 +1796,9 @@
       "primary_file": "prompts/05-editor-and-helper-release.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Packaged service/protocol passed; native launcher and installation UI unverified."
     },
     {
       "audit_id": "A148",
@@ -1892,9 +1892,9 @@
       "primary_file": "prompts/07-research-accounting-and-workflows.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Archived report source/input/dataset/result/evidence/accounting validation passes; full cache lifecycle not retested."
     },
     {
       "audit_id": "A156",
@@ -2168,9 +2168,9 @@
       "primary_file": "prompts/13-auth-and-workspaces.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Verify first, preserve regression",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Anonymous workspace download/source preservation and HTTP cloud rejection verified; full browser scope not retested."
     },
     {
       "audit_id": "A179",
@@ -2180,9 +2180,9 @@
       "primary_file": "prompts/13-auth-and-workspaces.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "BLOCKED",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Needs interactive Google test identity and connected browser; fixture protocol tests are separate evidence."
     },
     {
       "audit_id": "A180",
@@ -2192,9 +2192,9 @@
       "primary_file": "prompts/13-auth-and-workspaces.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "BLOCKED",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Needs two interactive user-controlled accounts; fixture ownership tests do not close real cloud isolation."
     },
     {
       "audit_id": "A181",
@@ -2852,9 +2852,9 @@
       "primary_file": "prompts/13-auth-and-workspaces.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PASS",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Built Worker serves validated capability endpoint; CI runtime smoke gate."
     },
     {
       "audit_id": "A236",
@@ -2888,9 +2888,9 @@
       "primary_file": "prompts/13-auth-and-workspaces.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Reproduce/verify; repair confirmed defect; keep external prerequisites explicit",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Public anonymous GET returns 401; real authenticated two-owner journey remains open."
     },
     {
       "audit_id": "A239",
@@ -2972,9 +2972,9 @@
       "primary_file": "prompts/05-editor-and-helper-release.md",
       "cross_checks": "00 baseline; 18 integrated gates; 20 independent closure",
       "closure_rule": "Verify first, preserve regression",
-      "currentStatus": "NOT TESTED",
-      "evidenceEnvironment": "historical",
-      "reconciliation": "Revalidate against this branch; original observation preserved"
+      "currentStatus": "PARTIAL",
+      "evidenceEnvironment": "bounded deployed/captured/local evidence; see reconciliation",
+      "reconciliation": "Public Helper manifest rendered available/version/unsigned notice; native download/install not fully accepted."
     },
     {
       "audit_id": "A246",
@@ -3065,37 +3065,44 @@
     {
       "id": "S-1",
       "phase": "1",
-      "status": "NOT TESTED"
+      "status": "PARTIAL",
+      "acceptanceBoundary": "Direct feeds deployed and observed LIVE; long-duration observation remains open."
     },
     {
       "id": "S-2",
       "phase": "1",
-      "status": "NOT TESTED"
+      "status": "PARTIAL",
+      "acceptanceBoundary": "Direct selected-venue data plus explicit unavailable/stale recovery; regional access remains network-specific."
     },
     {
       "id": "S-3",
       "phase": "6",
-      "status": "NOT TESTED"
+      "status": "PASS",
+      "acceptanceBoundary": "Source-grounded SECURITY.md replaced the stale simulated-only trust model."
     },
     {
       "id": "S-4",
       "phase": "2",
-      "status": "NOT TESTED"
+      "status": "PARTIAL",
+      "acceptanceBoundary": "Real deployed workspace download and exact source bytes verified; fresh downloaded-file restore after restart remains open."
     },
     {
       "id": "S-5",
       "phase": "3",
-      "status": "NOT TESTED"
+      "status": "PARTIAL",
+      "acceptanceBoundary": "Intentional disclosed local trusted-Python boundary; no sandbox claim or arbitrary-source execution on import."
     },
     {
       "id": "S-6",
       "phase": "3",
-      "status": "NOT TESTED"
+      "status": "BLOCKED",
+      "acceptanceBoundary": "Unsigned preview; no trusted signing identity available under the strictly free constraint."
     },
     {
       "id": "S-7",
       "phase": "6",
-      "status": "NOT TESTED"
+      "status": "NOT TESTED",
+      "acceptanceBoundary": "Real two-account OAuth/cloud isolation needs user-controlled interactive test identities."
     }
   ],
   "phases": [
@@ -3107,9 +3114,9 @@
     {
       "id": "1",
       "name": "Direct public feeds",
-      "status": "PASS",
-      "evidenceEnvironment": "local candidate",
-      "limitations": "No new deployed or long-duration evidence"
+      "status": "PARTIAL",
+      "evidenceEnvironment": "deployed PR #15 and 23 October local candidate",
+      "limitations": "Short deployed LIVE journeys passed; current raw capture failed live acceptance because of clock skew. Long-duration acceptance remains open."
     },
     {
       "id": "2",
@@ -3130,8 +3137,8 @@
       "id": "5",
       "name": "Exposed order flow",
       "status": "PARTIAL",
-      "evidenceEnvironment": "local candidate",
-      "limitations": "Live cross-output arithmetic and independent fixture ledger pass; raw exchange ledger/stress acceptance remains open"
+      "evidenceEnvironment": "local candidate and captured raw data",
+      "limitations": "Independent raw-ledger replay passes; clock-synchronized browser and stress/long-duration acceptance remain open."
     },
     {
       "id": "6",
@@ -3141,17 +3148,19 @@
     {
       "id": "7",
       "name": "Research lineage, recording and native growth",
-      "status": "PLANNED"
+      "status": "DEFERRED",
+      "limitations": "User selected GLM recovery first; institutional/native roadmap is separate."
     }
   ],
-  "executionState": "REVIEW_CHECKPOINT",
+  "executionState": "in_progress_glm_recovery_first",
   "handoff": "HANDOFF.md",
   "reconciliation": "RECONCILIATION.md",
   "verification": {
     "typescript": {
       "status": "PASS",
-      "tests": 365,
-      "evidence": "artifacts/audit-recovery/typescript-release-check.log"
+      "tests": 368,
+      "evidence": "artifacts/audit-recovery/completion-all-tests.log",
+      "scope": "23 October local candidate; isolated disposable SQLite database"
     },
     "productionDependencies": {
       "critical": 0,
@@ -3190,6 +3199,28 @@
       "status": "PASS",
       "scope": "isolated Ubuntu WSL build, no deployment",
       "evidence": "artifacts/audit-recovery/linux-cloudflare-build.log"
+    },
+    "publishedRelease": {
+      "status": "PASS",
+      "commit": "ad0ff3cb43f16be59d0bf41f3274386511b065e2",
+      "qualityRun": 39741575056,
+      "productionRun": 39741574987,
+      "scope": "PR #15; not acceptance of the current candidate"
+    },
+    "rawExchangeReconciliation": {
+      "status": "PARTIAL",
+      "offline": "PASS",
+      "gateTrades": 40,
+      "binanceAggregateTrades": 97,
+      "live": "FAIL: source timestamps approximately two seconds ahead of local clock",
+      "scope": "bounded raw REST/WS captures, not browser or historical replay acceptance"
+    },
+    "rootCleanup": {
+      "status": "PASS",
+      "files": 15,
+      "evidence": "artifacts/audit-recovery/root-artifact-relocations.json",
+      "scope": "tracked-consumer search and identical SHA256 before/after relocation"
     }
-  }
+  },
+  "completionLedger": "COMPLETION.md"
 }

@@ -38,7 +38,7 @@ def verify_package(package):
                 connection.close()
                 return result
 
-            assert request("GET", "capabilities")[1]["version"] == "1.1.0-preview.1"
+            assert request("GET", "capabilities")[1]["version"] == "1.2.0-preview.1"
             assert request("POST", "pair", {"code": "wrong"})[0] == 403
             status, paired = request("POST", "pair", {"code": pair["code"]})
             assert status == 200
