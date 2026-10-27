@@ -185,7 +185,7 @@ The workspace page, toolbar, account, banner and recovery surfaces explicitly ap
 
 The dashboard content is centered with max-width 1280px, desktop gutters of 32px and top padding 58px. Header minimum height is 72px on desktop. Saved cards use an auto-fill grid with minimum column width 280px and gap 18px. Cards have minimum height 196px and padding 20px. The search field is 340px wide at desktop.
 
-At the observed 760px breakpoint, gutters become 16px, main top padding becomes 32px, header minimum height becomes 64px, heading/actions wrap, and search occupies its own full-width row. Starter choices change from three columns to one; form fields use two columns with the name spanning both. Footer content stacks. The workspace wrapper toolbar wraps independently; its canvas fills remaining viewport height without changing the terminal layout engine. These measurements describe the workspace surface, not every ZTerminal page.
+At the observed 760px breakpoint, gutters become 16px, main top padding becomes 32px, dashboard header minimum height becomes 64px, heading/actions wrap, and search occupies its own full-width row. Starter choices change from three columns to one; form fields use two columns with the name spanning both. Footer content stacks. Open workspaces use the existing terminal header with a compact workspace dropdown instead of a second toolbar; its canvas fills the remaining viewport height. These measurements describe the workspace surface, not every ZTerminal page.
 
 ## Elevation & Depth
 
@@ -221,7 +221,7 @@ Saved work uses a quiet opaque container with a text link, starter icon, market 
 
 ### Navigation
 
-Brand/help/account navigation stays compact; the workspace wrapper has a return link, workspace name, explicit save state and actions. Title links open workspace tabs; the Lucide external-arrow treatment makes that destination understandable. On mobile the wrapper wraps and the save-state label gets its own row.
+Brand/help/account navigation stays compact. An open workspace's terminal header contains a dropdown for its full name, explicit save state, dashboard navigation, duplication and applicable cloud actions. The existing terminal account control remains the account entry. On mobile, the workspace and add-panel triggers use icons; redundant terminal shortcuts remain available through mobile navigation. Workspace controls remain usable in read-only tabs while chart/editor controls stay inert. Dashboard title links open workspace tabs; the Lucide external-arrow treatment makes that destination understandable.
 
 ### Starter selection and state feedback
 

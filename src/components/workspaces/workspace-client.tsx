@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ArrowLeft, CloudUpload, Copy, LockKeyhole, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronDown, CloudUpload, Copy, FolderOpen, LockKeyhole, RefreshCw } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FloatingWorkstationShell } from "@/components/terminal/floating-workstation-shell";
 import { useAuthHealth } from "@/components/auth/session-provider";
 import { flushDraftWrites } from "@/lib/local-research/drafts";
@@ -106,10 +107,21 @@ export function WorkspaceClient({ id }: { id: string }) {
   if (!runtime || !record) return <main className="ws-recovery"><h1>Workspace could not be opened</h1><p role="alert">{error || "The saved snapshot is unavailable."}</p><button onClick={() => setRetry(n => n+1)}><RefreshCw size={16} />Retry</button><Link href="/workspaces">Back to workspaces</Link><WorkspaceAccount /></main>;
 
   return <div className="ws-runtime">
-    <header className="ws-toolbar" aria-label="Workspace controls"><a href="/workspaces" onClick={event => { event.preventDefault(); void action(async () => { await runtime.flushAll(); await flushDraftWrites(); router.push("/workspaces"); }); }}><ArrowLeft size={15} />Workspaces</a><strong>{record.snapshot.name}</strong><span className="ws-save-status" role="status">{save.local}{save.cloud && ` · ${save.cloud}`}</span><div className="ws-toolbar-actions"><button disabled={busy} onClick={() => void action(() => duplicate())}><Copy size={14} />Duplicate</button>{ownerId && editing && !record.ownerId && <button disabled={busy} onClick={() => void action(async () => { await runtime.enableCloud(ownerId); setRecord((await getWorkspace(id))!); })}><CloudUpload size={14} />Save to account</button>}{record.ownerId && editing && <button disabled={busy || save.conflict} onClick={() => void action(runtime.sync)}>Retry sync</button>}<WorkspaceAccount /></div></header>
     {!editing && <div className="ws-banner" role="status"><LockKeyhole size={15} /><span>Read-only · this workspace is editable in one tab at a time.</span><button disabled={busy} onClick={() => void action(async () => { runtime.pause(); await lock.current?.takeover(); window.location.reload(); })}>Take over editing</button></div>}
     {save.conflict && <div className="ws-banner" role="alert">The cloud workspace changed elsewhere. Local changes are retained.<button disabled={busy} onClick={() => void action(reloadCloud)}>Reload cloud version</button><button disabled={busy} onClick={() => void action(() => duplicate())}>Save local version as copy</button><span>Reloading also preserves a local recovery copy.</span></div>}
     {error && <div className="ws-banner" role="alert">{error}</div>}{info && <div className="ws-banner" role="status">{info}</div>}
-    <div className="ws-canvas" aria-readonly={!editing} inert={!editing}><WorkspaceSessionContext.Provider value={runtime.dock}><FloatingWorkstationShell managed name={record.snapshot.name} /></WorkspaceSessionContext.Provider></div>
+    <span className="sr-only" role="status">{save.local}{save.cloud && ` · ${save.cloud}`}</span>
+    <div className="ws-canvas" aria-readonly={!editing}><WorkspaceSessionContext.Provider value={runtime.dock}><FloatingWorkstationShell managed name={record.snapshot.name} readOnly={!editing} workspaceControls={
+      <DropdownMenu><DropdownMenuTrigger asChild><button type="button" className="ws-workspace-trigger" aria-label="Workspace menu" title={record.snapshot.name}><FolderOpen size={15} /><span>{record.snapshot.name}</span><ChevronDown size={12} /></button></DropdownMenuTrigger>
+        <DropdownMenuContent className="ws-workspace-menu" align="start" collisionPadding={8}>
+          <DropdownMenuLabel><strong>{record.snapshot.name}</strong><span className="ws-save-status">{save.local}{save.cloud && ` · ${save.cloud}`}</span></DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem disabled={busy} onSelect={() => void action(async () => { await runtime.flushAll(); await flushDraftWrites(); router.push("/workspaces"); })}><ArrowLeft />Back to Workspaces</DropdownMenuItem>
+          <DropdownMenuItem disabled={busy} onSelect={() => void action(() => duplicate())}><Copy />Duplicate</DropdownMenuItem>
+          {ownerId && editing && !record.ownerId && <DropdownMenuItem disabled={busy} onSelect={() => void action(async () => { await runtime.enableCloud(ownerId); setRecord((await getWorkspace(id))!); })}><CloudUpload />Save to account</DropdownMenuItem>}
+          {record.ownerId && editing && <DropdownMenuItem disabled={busy || save.conflict} onSelect={() => void action(runtime.sync)}><RefreshCw />Retry sync</DropdownMenuItem>}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    } /></WorkspaceSessionContext.Provider></div>
   </div>;
 }
