@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import {
   CalendarDays,
@@ -33,12 +33,12 @@ import { useWorkspaceDockSession } from "@/components/workspaces/session-context
  * chart and stream components remain inside it, so visual restoration never
  * substitutes an archived client or simulated market state.
  */
-export function FloatingWorkstationShell({ managed = false, name }: { managed?: boolean; name?: string }) {
+export function FloatingWorkstationShell({ managed = false, name, workspaceControls, readOnly = false }: { managed?: boolean; name?: string; workspaceControls?: ReactNode; readOnly?: boolean }) {
   const session = useWorkspaceDockSession();
-  return <TerminalErrorBoundary resetLayout={session ? () => session.removeItem(WORKSPACE_LAYOUT_KEY) : undefined}><WorkspaceDockProvider><Workstation managed={managed} name={name} /></WorkspaceDockProvider></TerminalErrorBoundary>;
+  return <TerminalErrorBoundary resetLayout={session ? () => session.removeItem(WORKSPACE_LAYOUT_KEY) : undefined}><WorkspaceDockProvider><Workstation managed={managed} name={name} workspaceControls={workspaceControls} readOnly={readOnly} /></WorkspaceDockProvider></TerminalErrorBoundary>;
 }
 
-function Workstation({ managed, name }: { managed: boolean; name?: string }) {
+function Workstation({ managed, name, workspaceControls, readOnly }: { managed: boolean; name?: string; workspaceControls?: ReactNode; readOnly: boolean }) {
   const dock = useWorkspaceDock();
   const { data: session, status } = useSession();
   const authHealth = useAuthHealth();
@@ -76,17 +76,19 @@ function Workstation({ managed, name }: { managed: boolean; name?: string }) {
 
   return (
     <div data-terminal-material={material} className="zt-reference-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
-      <TerminalAppearanceBridge />{!managed && <CloudSyncBridge />}<CommandPalette />
+      <TerminalAppearanceBridge />{!managed && <CloudSyncBridge />}{!readOnly && <CommandPalette />}
       <header className="zt-reference-header" aria-label="Terminal header">
+        <div className="contents" inert={readOnly}>
         <button type="button" className="zt-reference-mark" onClick={() => dock.focusPanel("chart")} aria-label="Focus chart workspace" title="Chart workspace">
           <Image src="/brand/zterminal-mark-kit-v1.png" alt="" width={24} height={24} priority />
         </button>
         <MobileResearchMenu />
         <span className="zt-header-separator" aria-hidden="true" />
         <InstrumentPicker />
-        <div className="zt-workspace-label hidden lg:block"><b>{name ?? "RESEARCH WORKSPACE"}</b><span>Write / backtest / inspect</span></div>
-        <div className="ml-auto flex items-center gap-1.5">
-          {managed && <details className="ws-add-panel"><summary><Plus size={15} />Add panel</summary><div>{Object.entries(PANEL_DEFINITIONS).map(([id, panel]) => <button key={id} onClick={event => { dock.openPanel(id as DockPanelId); event.currentTarget.closest("details")?.removeAttribute("open"); }}>{panel.title}</button>)}</div></details>}
+        </div>
+        {workspaceControls ?? <div className="zt-workspace-label hidden lg:block"><b>{name ?? "RESEARCH WORKSPACE"}</b><span>Write / backtest / inspect</span></div>}
+        <div className="ml-auto flex items-center gap-1.5" inert={readOnly}>
+          {managed && <details className="ws-add-panel"><summary aria-label="Add panel"><Plus size={15} /><span>Add panel</span></summary><div>{Object.entries(PANEL_DEFINITIONS).map(([id, panel]) => <button key={id} onClick={event => { dock.openPanel(id as DockPanelId); event.currentTarget.closest("details")?.removeAttribute("open"); }}>{panel.title}</button>)}</div></details>}
           <button type="button" className="zt-header-icon" onClick={() => dock.openPanel("calendar")} aria-label="Open economic calendar" title="Economic calendar"><CalendarDays /></button>
           <button type="button" className="zt-header-icon" onClick={() => dock.openPanel("strategy")} aria-label="Open Python strategy developer" title="Python strategy developer"><Code2 /></button>
           <button type="button" className="zt-header-icon" onClick={() => window.dispatchEvent(new Event("zterminal:open-symbol-picker"))} aria-label="Search verified markets" title="Search verified markets"><Search /></button>
@@ -95,7 +97,7 @@ function Workstation({ managed, name }: { managed: boolean; name?: string }) {
           {accountOpen && <AccountPanel symbol={symbol} provider={provider} dataStatus={dataStatus} onClose={() => setAccountOpen(false)} />}
         </div>
       </header>
-      <div className={cn("zt-reference-body", sidebarCollapsed && "is-collapsed")} data-sidebar-collapsed={sidebarCollapsed}>
+      <div className={cn("zt-reference-body", sidebarCollapsed && "is-collapsed")} data-sidebar-collapsed={sidebarCollapsed} inert={readOnly}>
         <ResearchSidebar />
         <main className="min-h-0 min-w-0 overflow-hidden" aria-label="Market research workspace"><DynamicWorkspaceDock /></main>
       </div>
