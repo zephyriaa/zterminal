@@ -7,7 +7,8 @@ import { ReferenceChartWorkspace } from "../reference-chart-workspace";
 import { OrderbookPanel } from "./orderbook-panel";
 import { GexSurfacePanel } from "./gex-surface-panel";
 import { useWorkspaceDock } from "./workspace-dock-controller";
-import { initializeWorkspace, persistWorkspace, PANEL_DEFINITIONS, isDockPanelId, type DockPanelId } from "@/lib/workspace-dock-layout";
+import { initializeWorkspace, persistWorkspace, buildDefaultLayout, validateSavedLayout, PANEL_DEFINITIONS, isDockPanelId, type DockPanelId } from "@/lib/workspace-dock-layout";
+import { useWorkspace } from "@/stores/workspace";
 import { useWorkspaceDockSession } from "@/components/workspaces/session-context";
 const loading = () => <p className="p-4 text-xs" role="status">Opening tool…</p>;
 const Research = dynamic(() => import("../research-report").then(m => m.ResearchReport), { loading });
@@ -30,6 +31,7 @@ const storage = {
 };
 export function WorkspaceDock() {
   const session = useWorkspaceDockSession();
+  const locked = useWorkspace(state => state.layoutLocked);
   const { attach, setActivePanelId } = useWorkspaceDock();
   const dispose = useRef<(() => void) | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -73,8 +75,12 @@ export function WorkspaceDock() {
         } catch (cause) { setError(cause instanceof Error ? cause : new Error("Unable to open panel")); }
       };
       attach({ openPanel, focusPanel: openPanel, resetLayout: () => {
-        try { persistence?.reset(); fit(); } catch (cause) { setError(cause instanceof Error ? cause : new Error("Unable to reset workspace")); }
-      } });
+        try { persistence?.reset(); openPanel("settings"); fit(); } catch (cause) { setError(cause instanceof Error ? cause : new Error("Unable to reset workspace")); }
+      }, getLayout: () => api.toJSON(), restoreLayout: value => {
+        validateSavedLayout(value);
+        const previous = api.toJSON();
+        try { api.fromJSON(value); openPanel("settings"); fit(); persistence?.flush(); } catch (cause) { api.fromJSON(previous); fit(); throw cause; }
+      }, useStarter: starter => { api.clear(); buildDefaultLayout(api, starter); openPanel("settings"); fit(); persistence?.flush(); } });
       narrow.addEventListener("change", fit);
       window.addEventListener("pagehide", onPageHide);
       setReady(true);
@@ -85,6 +91,6 @@ export function WorkspaceDock() {
   }, [attach, setActivePanelId, session]);
   useEffect(() => () => { dispose.current?.(); dispose.current = null; }, []);
   if (error) throw error;
-  return <div className="zt-workspace-dock" data-testid="workspace-dock" data-ready={ready}><DockviewReact components={components} onReady={onReady} className="dockview-theme-dark" /></div>;
+  return <div className="zt-workspace-dock" data-testid="workspace-dock" data-ready={ready}><DockviewReact components={components} onReady={onReady} disableDnd={locked} locked={locked} className="dockview-theme-dark" /></div>;
 }
 export default WorkspaceDock;

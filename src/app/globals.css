@@ -1657,3 +1657,60 @@ html[data-terminal-density="comfortable"] .zt-reference-toolrail { padding-top: 
   .zt-floating-drawing-widget { left:8px; right:8px; transform:none; }
   .zt-floating-settings-card { width:100%; }
 }
+
+/* Preferences extend the graphite/violet workstation; controls share its tokens. */
+body[data-terminal="true"] { --zt-control-space: 6px; --zt-preference-line: color-mix(in srgb, var(--zt-accent) 20%, transparent); }
+html[data-terminal-density="comfortable"] body[data-terminal="true"] { --zt-control-space: 10px; }
+body[data-terminal="true"] :is(.zt-reference-terminal button, .zt-reference-terminal input, .zt-reference-terminal select, .zt-dock-panel table, .zt-dock-panel label, .zt-dock-panel p, [role="menuitem"], [cmdk-item]) { font-size: var(--zt-font-size, 12px); }
+body[data-terminal="true"] :is(.zt-dock-panel td, .zt-dock-panel th, [role="menuitem"], [cmdk-item]) { padding-block: var(--zt-control-space); }
+body[data-terminal="true"] :is(.zt-reference-terminal input, .zt-reference-terminal select) { min-height: calc(20px + var(--zt-control-space)); }
+body[data-terminal-motion="reduced"] *, body[data-terminal-motion="reduced"] *::before, body[data-terminal-motion="reduced"] *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+.zt-customization { color: #e4e0ee; font-size: var(--zt-font-size, 12px); line-height: 1.55; padding: 18px; overflow-wrap: anywhere; }
+.zt-customization h2 { font-size: 1.35em; font-weight: 650; margin: 0 0 8px; letter-spacing: -.02em; }
+.zt-customization h3 { font-size: 1.1em; font-weight: 600; margin: 20px 0 8px; }
+.zt-customization h4 { font-weight: 600; }
+.zt-customization p { color: #b6aecb; margin: 8px 0 16px; }
+.zt-customization nav { display: flex; flex-wrap: wrap; gap: 5px; border-bottom: 1px solid var(--zt-preference-line); padding-bottom: 12px; margin-block: 16px; }
+.zt-customization button { border: 1px solid var(--zt-preference-line); border-radius: 5px; background: color-mix(in srgb, var(--zt-panel-bg) 92%, var(--zt-accent)); color: #e9e5f3; padding: var(--zt-control-space) 10px; cursor: pointer; min-height: 30px; line-height: 1.4; }
+.zt-customization button:hover { border-color: var(--zt-accent); background: color-mix(in srgb, var(--zt-panel-bg) 80%, var(--zt-accent)); }
+.zt-customization button[aria-current="page"], .zt-customization button[aria-pressed="true"] { background: color-mix(in srgb, var(--zt-accent) 24%, var(--zt-panel-bg)); border-color: var(--zt-accent); color: #fff; }
+.zt-customization button:disabled { opacity: .45; cursor: default; }
+.zt-customization :is(button, input, select):focus-visible { outline: 2px solid var(--zt-accent); outline-offset: 3px; }
+.zt-customization .zt-preference-section { border-bottom: 1px solid var(--zt-preference-line); padding-bottom: 20px; margin-bottom: 12px; }
+.zt-preference-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 14px; }
+.zt-preference-field { display: flex; flex-direction: column; gap: 6px; margin-block: 14px; }
+.zt-customization :is(input:not([type="checkbox"]):not([type="range"]):not([type="color"]), select) { min-width: 0; max-width: 100%; padding: 7px 9px; background: var(--zt-app-bg); border: 1px solid var(--zt-preference-line); border-radius: 4px; color: #e9e5f3; }
+.zt-customization input[type="range"] { width: 100%; accent-color: var(--zt-accent); }
+.zt-preference-check { display: flex; align-items: center; gap: 9px; margin-block: 12px; }
+.zt-preference-check input { accent-color: var(--zt-accent); width: 16px; height: 16px; }
+.zt-preference-color { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-block: 12px; min-width: 0; }
+.zt-preference-color label { display: grid; grid-template-columns: 32px minmax(72px,1fr); gap: 6px; flex: 1; min-width: 120px; }
+.zt-preference-color label span { grid-column: 1 / -1; }
+.zt-preference-color input[type="color"] { width: 32px; height: 32px; padding: 2px; background: transparent; border: 1px solid var(--zt-preference-line); border-radius: 4px; }
+.zt-customization input[aria-invalid="true"] { border-color: #fb7185; }
+.zt-preference-saved { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-bottom: 1px solid var(--zt-preference-line); padding-block: 10px; }
+.zt-preference-saved > span { flex: 1; min-width: 130px; }
+.zt-customization .zt-preference-status { color: #d3c4f4; min-height: 1.5em; }
+.zt-import-preview { border: 1px solid var(--zt-preference-line); padding: 12px; margin-top: 12px; border-radius: 6px; }
+.zt-import-preview button { margin: 4px; }
+.zt-chart-customization-scroll { height: 100%; overflow-y: auto; }
+.zt-chart-customization .zt-chart-settings-panel { height: auto; min-height: 360px; }
+.zt-chart-customization .zt-chart-settings-tabs { flex-wrap: wrap; }
+.zt-chart-customization .zt-chart-settings-content { overflow: visible; }
+.zt-customization .zt-preference-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,210px),1fr)); }
+@media (max-width: 600px) { .zt-customization { padding: 12px; } .zt-preference-saved > span { flex-basis: 100%; } }
+
+.zt-terminal-preferences.zt-customization { display: block; }
+.zt-customization > :is(section, nav, p, h2, label) { max-width: 960px; }
+.zt-customization h2, .zt-customization h3 { color: #e4e0ee; }
+.zt-customization label { padding: 0; border: 0; background: transparent; }
+.zt-customization label.zt-preference-field { display: flex; flex-direction: column; gap: 6px; }
+.zt-customization label.zt-preference-check { display: flex; gap: 9px; }
+.zt-customization .zt-preference-color label { display: grid; grid-template-columns: 32px minmax(72px,1fr); }
+.zt-customization .zt-preference-color label span { font-size: inherit; letter-spacing: normal; text-transform: none; font-weight: 500; margin: 0; color: #d6cfe5; }
+.zt-customization .zt-preference-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.zt-customization .zt-preference-presets button { flex: 0 1 auto; min-width: 100px; }
+.zt-customization .zt-preference-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+@media (max-width: 600px) { .zt-customization .zt-preference-grid { grid-template-columns: 1fr; } }
+
+.zt-customization select { height: auto; min-height: 34px; }

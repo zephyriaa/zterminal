@@ -27,12 +27,14 @@ function scaleMode(settings: ChartSettingsV2) {
 export function lightweightChartOptions(
   settings: ChartSettingsV2,
   axisText = "#8b98a5",
+  fontSize = 12,
 ): DeepPartial<ChartOptions> {
   const gridColor = `rgba(255,255,255,${settings.showGrid ? settings.gridOpacity : 0})`;
   return {
     layout: {
       background: { type: ColorType.Solid, color: settings.backgroundColor },
       textColor: axisText,
+      fontSize,
     },
     grid: {
       vertLines: { color: gridColor },

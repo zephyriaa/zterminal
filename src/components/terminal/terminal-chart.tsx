@@ -13,6 +13,7 @@ import { fetchBarsDeduplicated } from "@/lib/market/bars-dedup";
 import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpeningRange, type VolumeProfile } from "@/domain/analytics/market";
 import type { ChartTimezone } from "@/stores/workspace";
 import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/lib/chart/contracts";
+import { useCustomization } from "@/stores/customization";
 import { applyVolumePaneLayout, lightweightChartOptions } from "@/lib/chart/lightweight-adapter";
 import { createDrawingCoordinates } from "@/lib/chart/lightweight-adapter";
 import { intervalMs } from "@/lib/local-research/dataset";
@@ -174,6 +175,7 @@ export function TerminalChart({
   const [studyWarnings, setStudyWarnings] = useState<string[]>([]);
   const visibleDrawingsRef = useRef<DrawingObject[]>([]);
   const drawingPreviewRef = useRef<DrawingObject | null>(null);
+  const fontSize = useCustomization(state => state.preferences.fontSize);
   const settingsRef = useRef(settings);
 
   const [liveBars, setBars] = useState<Bar[]>([]);
@@ -348,7 +350,7 @@ export function TerminalChart({
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, lightweightChartOptions(settings, themeColors().axisText));
+    const chart = createChart(chartContainerRef.current, lightweightChartOptions(settings, themeColors().axisText, fontSize));
     
     chartRef.current = chart;
 
@@ -592,11 +594,11 @@ function applyZTerminalWatermark(
   useEffect(() => {
     settingsRef.current = settings;
     if (chartRef.current) {
-      chartRef.current.applyOptions(lightweightChartOptions(settings, themeColors().axisText));
+      chartRef.current.applyOptions(lightweightChartOptions(settings, themeColors().axisText, fontSize));
       const width = chartContainerRef.current?.clientWidth ?? 0;
       chartRef.current.applyOptions({ timeScale: { rightOffset: width < 640 ? Math.min(5, settings.futureBars) : settings.futureBars } });
     }
-  }, [settings]);
+  }, [settings, fontSize]);
 
   // Apply main series type
   useEffect(() => {

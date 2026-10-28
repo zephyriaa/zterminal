@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import Editor, { loader, type Monaco, type OnMount } from "@monaco-editor/react";
 import type { editor, IDisposable } from "monaco-editor";
 import { useResearch } from "@/stores/research";
+import { useCustomization } from "@/stores/customization";
 import { useTerminalAppearance } from "@/stores/terminal-appearance";
 loader.config({ paths: { vs: "/vendor/monaco-0.57.0-dompurify-3.4.17/vs" } });
 
@@ -11,6 +12,7 @@ export default function ResearchEditor({ onReady }: { onReady?: () => void }) {
   const minimap = useResearch(s => s.minimap);
   const diagnostic = useResearch(s => s.diagnostic);
   const captured = useResearch(s => s.capturedScript);
+  const fontSize = useCustomization(state => state.preferences.fontSize);
   const appearance = useTerminalAppearance(state => state.appearance);
   const instance = useRef<editor.IStandaloneCodeEditor | null>(null);
   const api = useRef<Monaco | null>(null);
@@ -53,5 +55,5 @@ export default function ResearchEditor({ onReady }: { onReady?: () => void }) {
     } }));
     editor.focus();
   };
-  return <Editor height="100%" path={`zterminal://scripts/${script.id}.py`} defaultLanguage="python" theme="zterminal-dark" value={script.source} onChange={value => useResearch.getState().setSource(value ?? "")} beforeMount={prepare} onMount={mount} loading={<p className="p-4 text-xs text-muted-foreground">Loading Python editor…</p>} options={{ fontSize: 12, lineHeight: 20, fontFamily: "var(--font-geist-mono), Consolas, monospace", minimap: { enabled: minimap }, automaticLayout: true, scrollBeyondLastLine: false, wordWrap: "off", padding: { top: 12 }, tabSize: 4, renderLineHighlight: "line", ariaLabel: "Python strategy editor", accessibilitySupport: "auto" }} />;
+  return <Editor height="100%" path={`zterminal://scripts/${script.id}.py`} defaultLanguage="python" theme="zterminal-dark" value={script.source} onChange={value => useResearch.getState().setSource(value ?? "")} beforeMount={prepare} onMount={mount} loading={<p className="p-4 text-xs text-muted-foreground">Loading Python editor…</p>} options={{ fontSize, lineHeight: Math.round(fontSize * 1.65), fontFamily: "var(--font-geist-mono), Consolas, monospace", minimap: { enabled: minimap }, automaticLayout: true, scrollBeyondLastLine: false, wordWrap: "off", padding: { top: 12 }, tabSize: 4, renderLineHighlight: "line", ariaLabel: "Python strategy editor", accessibilitySupport: "auto" }} />;
 }

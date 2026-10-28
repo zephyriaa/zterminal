@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import {
   Camera,
   CandlestickChart,
@@ -22,6 +21,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { useCustomization, type PreferenceSection } from "@/stores/customization";
 import { useWorkspace } from "@/stores/workspace";
 import { useContractCatalogue } from "@/hooks/use-contract-catalog";
 import { useWorkspaceDock, type DockPanelId } from "./docking/workspace-dock-controller";
@@ -33,6 +33,7 @@ const VIEWS: { id: DockPanelId; label: string; icon: React.ComponentType<{ class
   { id: "research", label: "Open Research Report", icon: FlaskConical },
   { id: "calendar", label: "Open Economic Calendar", icon: LayoutDashboard },
   { id: "settings", label: "Open Terminal Preferences", icon: LayoutDashboard },
+  { id: "chart-settings", label: "Change candle colors and chart settings", icon: CandlestickChart },
 ];
 
 export function CommandPalette() {
@@ -52,21 +53,6 @@ export function CommandPalette() {
   } = useWorkspace();
   const catalogue = useContractCatalogue();
 
-  // Keyboard shortcut Ctrl/Cmd+K
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const editable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
-      if (editable && !commandOpen) return;
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setCommandOpen(!commandOpen);
-      }
-      if (e.key === "Escape") setCommandOpen(false);
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [commandOpen, setCommandOpen]);
 
   const openSymbol = (s: string) => {
     setSymbol(s);
@@ -124,6 +110,9 @@ export function CommandPalette() {
             }}><Save className="mr-2 h-3.5 w-3.5" /><span>Open workspace: {workspace.name}</span></CommandItem>
           ))}
         </CommandGroup>}
+        <CommandGroup heading="Customize workstation">
+          {([ ["Appearance", "Change appearance, text size and density"], ["Charts", "Change candle colors, styles and indicator templates"], ["Layout", "Restore layout and saved templates"], ["Keyboard", "Customize keyboard shortcuts"], ["Import / Export", "Import or export preferences"] ] as [PreferenceSection, string][]).map(([section, label]) => <CommandItem key={section} value={label} onSelect={() => { useCustomization.setState({ section }); dock.openPanel("settings"); setCommandOpen(false); }}>{label}</CommandItem>)}
+        </CommandGroup>
         <CommandGroup heading="Actions">
           <CommandItem
             value="save workspace layout"
@@ -140,13 +129,14 @@ export function CommandPalette() {
           <CommandItem
             value="reset layout restore default panels"
             onSelect={() => {
-              dock.resetLayout();
+              dock.openPanel("settings");
+              useCustomization.setState({ section: "Layout" });
               setCommandOpen(false);
             }}
             className="flex items-center gap-2"
           >
             <RotateCcw className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Reset chart layout</span>
+            <span>Restore layout and templates</span>
           </CommandItem>
           <CommandItem
             value="toggle sidebar hide collapse"
