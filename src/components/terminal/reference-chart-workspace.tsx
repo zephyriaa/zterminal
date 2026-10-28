@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspaceDock } from "./docking/workspace-dock-controller";
 import { hydrateTerminalAppearance, useTerminalAppearance } from "@/stores/terminal-appearance";
+import { useCustomization, hydrateCustomization } from "@/stores/customization";
+import { appearanceChartStyle } from "@/lib/customization";
 import { useStudies } from "@/stores/studies";
 import { migrateStudy, type IndicatorInstance } from "@/lib/indicator-library";
 import {
@@ -55,6 +57,7 @@ export function ReferenceChartWorkspace() {
   const { layout: multiChartLayout, setLayout: setMultiChartLayout } = useMultiChart();
   const instances = useStudies(s => s.instances);
   const appearance = useTerminalAppearance(state => state.appearance);
+  const chartDefaults = useCustomization(state => state.preferences.chartDefaults);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
   const [latestBar, setLatestBar] = useState<Bar | null>(null);
   const [drawingTool, setDrawingTool] = useState<DrawingTool>("crosshair");
@@ -76,7 +79,7 @@ export function ReferenceChartWorkspace() {
   const chartDocumentId = chartDocumentKey(activeWorkspaceId, PRIMARY_CHART_ID, instrument);
   const olderDocument = useChartDocuments(state => Object.values(state.documents).find(document => document.workspaceId === activeWorkspaceId && document.chartId === PRIMARY_CHART_ID && document.id !== chartDocumentId && document.instrument.nativeSymbol.replace(/[_-]/g, "") === chartSymbol.replace(/[_-]/g, "")));
   const storedChartDocument = useChartDocuments(state => state.documents[chartDocumentId]);
-  const fallbackChartDocument = useMemo(() => createChartDocument({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: { backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 } }), [activeWorkspaceId, appearance.chartBackground, appearance.downColor, appearance.gridOpacity, appearance.upColor, chartTimeframe, instrument]);
+  const fallbackChartDocument = useMemo(() => createChartDocument({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: { ...appearanceChartStyle(appearance), ...chartDefaults } }), [activeWorkspaceId, appearance, chartDefaults, chartTimeframe, instrument]);
   const chartDocument = storedChartDocument ?? fallbackChartDocument;
   const chartType = chartDocument.chartType;
   const chartSettings = chartDocument.settings;
@@ -96,7 +99,7 @@ export function ReferenceChartWorkspace() {
   useEffect(() => {
     void Promise.resolve(useStudies.persist.rehydrate()).then(() => setStudiesHydrated(true));
     let disposed = false;
-    void Promise.all([useChartDocuments.persist.rehydrate(), hydrateTerminalAppearance()]).then(() => {
+    void Promise.all([useChartDocuments.persist.rehydrate(), hydrateTerminalAppearance(), hydrateCustomization()]).then(() => {
       if (!disposed) setDocumentsHydrated(true);
     });
     const storage = (event: StorageEvent) => { if (event.key === "zterminal.chart-documents") void useChartDocuments.persist.rehydrate(); };

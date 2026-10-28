@@ -19,7 +19,7 @@ export const workspaceSnapshotSchema = workspaceBaseSchema.extend({
   version: z.literal(3), revision: z.number().int().nonnegative(),
   starter: z.enum(["chart", "orderflow", "research"]),
   marketProvider: z.enum(["gateio", "binance", "bybit", "okx", "coinbase", "mock"]).nullable(),
-  sidebarCollapsed: z.boolean(), dockLayout: z.record(z.string(), z.unknown()).nullable(),
+  sidebarCollapsed: z.boolean(), layoutLocked: z.boolean().default(false), dockLayout: z.record(z.string(), z.unknown()).nullable(),
   multiChart: z.object({
     layout: z.enum(["1", "2h", "2v", "3", "4"]), activePaneIndex: z.number().int().min(0).max(3),
     syncCrosshairs: z.boolean(), syncSymbol: z.boolean(),

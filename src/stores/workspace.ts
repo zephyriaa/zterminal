@@ -37,6 +37,7 @@ export interface SavedWorkspace {
 }
 
 interface WorkspaceState {
+  layoutLocked: boolean;
   marketProvider: MarketProvider;
   setMarketProvider: (provider: MarketProvider) => void;
   activeWorkspaceId: string;
@@ -112,6 +113,7 @@ export function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
 export const useWorkspace = create<WorkspaceState>()(
   persist(
     (set, get) => ({
+      layoutLocked: false,
       marketProvider: "gateio",
       setMarketProvider: (marketProvider) => set({ marketProvider, connection: { state: "connecting", provider: marketProvider, environment: marketProvider === "mock" ? "simulation" : "live", dataStatus: "DISCONNECTED" } }),
       activeWorkspaceId: "local-default",

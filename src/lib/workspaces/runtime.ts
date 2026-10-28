@@ -28,7 +28,7 @@ export async function restoreWorkspaceRuntime(record: WorkspaceRecord) {
   useChartDocuments.persist.setOptions({ storage: { getItem: () => ({ state: useChartDocuments.getState(), version: 5 }), setItem() {}, removeItem() {} } });
   useStudies.persist.setOptions({ storage: { getItem: () => ({ state: useStudies.getState(), version: 2 }), setItem() {}, removeItem() {} } });
   useMultiChart.persist.setOptions({ storage: { getItem: () => ({ state: useMultiChart.getState(), version: 1 }), setItem() {}, removeItem() {} } });
-  useWorkspace.setState({ activeWorkspaceId: s.id, marketProvider: s.marketProvider, symbol: s.symbol, timeframe: s.timeframe, timezone: s.timezone, activeView: s.view, sidebarCollapsed: s.sidebarCollapsed, workspaces: [], cloudWorkspaces: [], cloudAuthenticated: false });
+  useWorkspace.setState({ activeWorkspaceId: s.id, marketProvider: s.marketProvider, symbol: s.symbol, timeframe: s.timeframe, timezone: s.timezone, activeView: s.view, sidebarCollapsed: s.sidebarCollapsed, layoutLocked: s.layoutLocked, workspaces: [], cloudWorkspaces: [], cloudAuthenticated: false });
   useChartDocuments.setState({ documents: Object.fromEntries(documents.map(d => [d.id, d])), workspaceOwners: {}, drawingHistory: {} });
   useStudies.setState({ instances: studies });
   useMultiChart.setState(s.multiChart);
@@ -51,7 +51,7 @@ export function workspaceRuntime(initial: WorkspaceRecord, owns: () => boolean, 
     const ws = useWorkspace.getState(), research = useResearch.getState(), multi = useMultiChart.getState();
     return workspaceSnapshotSchema.parse({
       ...record.snapshot, marketProvider: ws.marketProvider, symbol: ws.symbol, timeframe: ws.timeframe, timezone: ws.timezone,
-      view: ws.activeView, sidebarCollapsed: ws.sidebarCollapsed, dockLayout: layout,
+      view: ws.activeView, sidebarCollapsed: ws.sidebarCollapsed, layoutLocked: ws.layoutLocked, dockLayout: layout,
       chartDocuments: workspaceChartDocuments(Object.values(useChartDocuments.getState().documents).filter(d => d.workspaceId === record.snapshot.id), record.snapshot.id),
       multiChart: { layout: multi.layout, activePaneIndex: multi.activePaneIndex, syncCrosshairs: multi.syncCrosshairs, syncSymbol: multi.syncSymbol, panes: multi.panes },
       studies: useStudies.getState().instances,
@@ -111,7 +111,7 @@ export function workspaceRuntime(initial: WorkspaceRecord, owns: () => boolean, 
     return syncing;
   };
   const subscriptions = [
-    useWorkspace.subscribe((s, p) => { if (["symbol", "timeframe", "timezone", "activeView", "marketProvider", "sidebarCollapsed"].some(key => s[key as keyof typeof s] !== p[key as keyof typeof p])) schedule(); }),
+    useWorkspace.subscribe((s, p) => { if (["symbol", "timeframe", "timezone", "activeView", "marketProvider", "sidebarCollapsed", "layoutLocked"].some(key => s[key as keyof typeof s] !== p[key as keyof typeof p])) schedule(); }),
     useChartDocuments.subscribe((s, p) => { if (s.documents !== p.documents) schedule(); }),
     useStudies.subscribe((s, p) => { if (s.instances !== p.instances) schedule(); }),
     useMultiChart.subscribe(schedule),

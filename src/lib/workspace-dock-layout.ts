@@ -40,7 +40,7 @@ export function discardWorkspaceLayout(storage?: Storage) {
   try { (storage ?? window.localStorage).removeItem(WORKSPACE_LAYOUT_KEY); } catch { /* Private mode still supports an in-memory workspace. */ }
 }
 
-function validateSavedLayout(value: unknown): asserts value is SerializedDockview {
+export function validateSavedLayout(value: unknown): asserts value is SerializedDockview {
   if (!value || typeof value !== "object") throw new Error("Invalid workspace");
   const layout = value as SerializedDockview;
   if (layout.grid?.root?.type !== "branch" || !layout.panels || typeof layout.panels !== "object") throw new Error("Incompatible workspace");

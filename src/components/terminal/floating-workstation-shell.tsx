@@ -12,6 +12,7 @@ import {
 import { InstrumentPicker } from "./instrument-picker";
 import { WorkspaceDockProvider, useWorkspaceDock } from "./docking/workspace-dock-controller";
 import { TerminalErrorBoundary } from "./terminal-error-boundary";
+import { TerminalShortcuts } from "./terminal-shortcuts";
 import { CommandPalette } from "./command-palette";
 import { useSession } from "next-auth/react";
 import { useAuthHealth } from "@/components/auth/session-provider";
@@ -60,23 +61,11 @@ function Workstation({ managed, name, workspaceControls, readOnly }: { managed: 
     window.addEventListener("zterminal:open-backtester", research);
     return () => window.removeEventListener("zterminal:open-backtester", research);
   }, [dock.openPanel]);
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      const editable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
 
-      if (!editable && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "b") {
-        event.preventDefault();
-        useWorkspace.getState().toggleSidebar();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
 
   return (
     <div data-terminal-material={material} className="zt-reference-terminal h-[100dvh] w-screen overflow-hidden text-foreground">
-      <TerminalAppearanceBridge />{!managed && <CloudSyncBridge />}{!readOnly && <CommandPalette />}
+      <TerminalAppearanceBridge />{!managed && <CloudSyncBridge />}{!readOnly && <><CommandPalette /><TerminalShortcuts /></>}
       <header className="zt-reference-header" aria-label="Terminal header">
         <div className="contents" inert={readOnly}>
         <button type="button" className="zt-reference-mark" onClick={() => dock.focusPanel("chart")} aria-label="Focus chart workspace" title="Chart workspace">
