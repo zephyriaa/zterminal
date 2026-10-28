@@ -5,7 +5,7 @@ import { useChartDocuments } from "@/stores/chart-documents";
 import { useTerminalAppearance } from "@/stores/terminal-appearance";
 import { useCustomization } from "@/stores/customization";
 import { useStudies } from "@/stores/studies";
-import { appearanceChartStyle, chartStyle } from "@/lib/customization";
+import { defaultChartStyle, chartStyle } from "@/lib/customization";
 import { ChartSettingsPanel } from "./chart-settings-panel";
 import type { ChartDocument, ChartSettingsV2 } from "@/lib/chart/contracts";
 
@@ -29,7 +29,7 @@ export function ChartCustomization() {
   return <div className="zt-chart-customization">
     <p>Chart · {chartSymbol} · {chartProvider.toUpperCase()}. Style changes preserve drawings, scales, symbols and research.</p>
     <div className="zt-preference-actions">
-      <button onClick={() => patch(appearanceChartStyle(appearance))}>Restore application colors</button>
+      <button onClick={() => patch(defaultChartStyle(appearance, preferences.chartDefaults))}>Restore application style</button>
       <button onClick={() => patch(chartStyle(document.settings), true)}>Apply style to workspace charts</button>
       <button onClick={() => { update({ chartDefaults: chartStyle(document.settings) }); setMessage("Style saved as the default for new charts."); }}>Use style for new charts</button>
       <button onClick={() => { update({ chartDefaults: null }); setMessage("New charts will use application colors."); }}>Reset new-chart defaults</button>

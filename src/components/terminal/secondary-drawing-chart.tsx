@@ -11,7 +11,7 @@ import { useMarketStream } from "@/hooks/use-market-stream";
 import { useMarketContract } from "@/hooks/use-market-contract";
 import { useTerminalAppearance } from "@/stores/terminal-appearance";
 import { useCustomization } from "@/stores/customization";
-import { appearanceChartStyle } from "@/lib/customization";
+import { defaultChartStyle } from "@/lib/customization";
 import { createChartDocument, type DrawingObject } from "@/lib/chart/contracts";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 
@@ -25,7 +25,7 @@ export function SecondaryDrawingChart({ pane, indicators, timezone, captureActiv
   const workspaceId = useWorkspace(state => state.activeWorkspaceId);
   const { provider } = useMarketStream(pane.symbol, { trades: 1, depth: false });
   const contract = useMarketContract(pane.symbol, provider);
-  const seed = useMemo(() => ({ workspaceId, chartId: pane.id, instrument: { provider: provider ?? "gateio" as const, exchange: contract.exchange, product: contract.product, nativeSymbol: contract.verified ? contract.symbol : pane.symbol }, timeframe: pane.timeframe, settings: { ...appearanceChartStyle(appearance), ...defaults } }), [appearance, defaults, workspaceId, pane.id, pane.symbol, pane.timeframe, provider, contract]);
+  const seed = useMemo(() => ({ workspaceId, chartId: pane.id, instrument: { provider: provider ?? "gateio" as const, exchange: contract.exchange, product: contract.product, nativeSymbol: contract.verified ? contract.symbol : pane.symbol }, timeframe: pane.timeframe, settings: defaultChartStyle(appearance, defaults) }), [appearance, defaults, workspaceId, pane.id, pane.symbol, pane.timeframe, provider, contract]);
   const fallback = useMemo(() => createChartDocument(seed), [seed]);
   const document = useChartDocuments(state => state.documents[fallback.id]) ?? fallback;
   const history = useChartDocuments(state => state.drawingHistory[fallback.id]);
