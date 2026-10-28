@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspaceDock } from "./docking/workspace-dock-controller";
 import { hydrateTerminalAppearance, useTerminalAppearance } from "@/stores/terminal-appearance";
 import { useCustomization, hydrateCustomization } from "@/stores/customization";
-import { appearanceChartStyle } from "@/lib/customization";
+import { defaultChartStyle } from "@/lib/customization";
 import { useStudies } from "@/stores/studies";
 import { migrateStudy, type IndicatorInstance } from "@/lib/indicator-library";
 import {
@@ -79,7 +79,7 @@ export function ReferenceChartWorkspace() {
   const chartDocumentId = chartDocumentKey(activeWorkspaceId, PRIMARY_CHART_ID, instrument);
   const olderDocument = useChartDocuments(state => Object.values(state.documents).find(document => document.workspaceId === activeWorkspaceId && document.chartId === PRIMARY_CHART_ID && document.id !== chartDocumentId && document.instrument.nativeSymbol.replace(/[_-]/g, "") === chartSymbol.replace(/[_-]/g, "")));
   const storedChartDocument = useChartDocuments(state => state.documents[chartDocumentId]);
-  const fallbackChartDocument = useMemo(() => createChartDocument({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: { ...appearanceChartStyle(appearance), ...chartDefaults } }), [activeWorkspaceId, appearance, chartDefaults, chartTimeframe, instrument]);
+  const fallbackChartDocument = useMemo(() => createChartDocument({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: defaultChartStyle(appearance, chartDefaults) }), [activeWorkspaceId, appearance, chartDefaults, chartTimeframe, instrument]);
   const chartDocument = storedChartDocument ?? fallbackChartDocument;
   const chartType = chartDocument.chartType;
   const chartSettings = chartDocument.settings;

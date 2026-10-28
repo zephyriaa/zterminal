@@ -42,6 +42,9 @@ export function chartStyle(settings: ChartSettingsV2): Partial<ChartSettingsV2> 
 export function appearanceChartStyle(appearance: TerminalAppearance): Partial<ChartSettingsV2> {
   return { backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, candleBorderUpColor: appearance.upColor, candleBorderDownColor: appearance.downColor, candleWickUpColor: appearance.upColor, candleWickDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 };
 }
+export function defaultChartStyle(appearance: TerminalAppearance, overrides: Partial<ChartSettingsV2> | null) {
+  return chartStyle(sanitizeChartSettings({ ...appearanceChartStyle(appearance), ...overrides }));
+}
 const name = z.string().trim().min(1).max(60);
 const layoutTemplate = z.object({ name, layout: z.record(z.string(), z.unknown()), multiLayout: z.enum(["1", "2h", "2v", "3", "4"]) });
 export const customizationSchema = z.object({

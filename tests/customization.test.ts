@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { appearanceChartStyle, chartStyle, contrastRatio, DEFAULT_CUSTOMIZATION, defaultBindings, parseCustomization, parsePreferenceFile, shortcutFromEvent, validateBindings } from "../src/lib/customization";
+import { appearanceChartStyle, defaultChartStyle, chartStyle, contrastRatio, DEFAULT_CUSTOMIZATION, defaultBindings, parseCustomization, parsePreferenceFile, shortcutFromEvent, validateBindings } from "../src/lib/customization";
 import { DEFAULT_APPEARANCE } from "../src/lib/terminal-appearance";
 import { createChartDocument, DEFAULT_CHART_SETTINGS } from "../src/lib/chart/contracts";
 import { useChartDocuments } from "../src/stores/chart-documents";
@@ -55,4 +55,16 @@ test("style and preset libraries are bounded and contrast feedback is numeric", 
   assert.throws(() => parseCustomization({ indicatorTemplates: [{ name: "bad", indicators: [{}] }] }));
   assert.equal(contrastRatio("#000000", "#ffffff"), 21);
   assert.equal(contrastRatio("#ffffff", "#ffffff"), 1);
+});
+
+
+test("restoring application style uses exactly the defaults that seed future charts", () => {
+  const saved = { candleWickUpColor: "#ffffff", showGrid: false, showCrosshair: false };
+  const defaults = defaultChartStyle(DEFAULT_APPEARANCE, saved);
+  assert.equal(defaults.candleWickUpColor, "#ffffff");
+  assert.equal(defaults.candleUpColor, DEFAULT_APPEARANCE.upColor);
+  assert.equal(defaults.showGrid, false);
+  assert.equal(defaults.showCrosshair, false);
+  assert.ok(!Object.hasOwn(defaults, "scaleMode"));
+  assert.ok(!Object.hasOwn(defaults, "futureBars"));
 });
