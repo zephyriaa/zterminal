@@ -115,9 +115,11 @@ function ensureSocket(): Socket | null {
     stopDirectState = directFeed.onState(state => publishState(state));
     if (typeof window !== "undefined") {
       const online = () => directFeed?.reconnect(), offline = () => directFeed?.disconnect();
+      const reconnect = () => directFeed?.reconnect(true);
       const visible = () => { if (!document.hidden && navigator.onLine) online(); };
       window.addEventListener("online", online); window.addEventListener("offline", offline); document.addEventListener("visibilitychange", visible);
-      removeNetworkWatch = () => { window.removeEventListener("online", online); window.removeEventListener("offline", offline); document.removeEventListener("visibilitychange", visible); };
+      window.addEventListener("zterminal:reconnect-feed", reconnect);
+      removeNetworkWatch = () => { window.removeEventListener("online", online); window.removeEventListener("offline", offline); document.removeEventListener("visibilitychange", visible); window.removeEventListener("zterminal:reconnect-feed", reconnect); };
     }
     return null;
   }

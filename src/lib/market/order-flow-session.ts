@@ -46,7 +46,7 @@ export class OrderFlowSession {
 
   updateHealth(health: FeedHealth) {
     if (health.provider !== this.provider || health.symbol !== this.symbol || this.health && health.updatedAt < this.health.updatedAt) return;
-    this.health = freezeSnapshot(health); this.now = Date.now();
+    this.health = freezeSnapshot(health); this.now = Math.max(Date.now(), this.now);
     if ((health.streams?.trades.state ?? health.state) !== "LIVE") this.clearTrades();
     if ((health.streams?.depth.state ?? health.state) !== "LIVE") this.clearDepth();
     this.invalidate();
@@ -72,7 +72,9 @@ export class OrderFlowSession {
     else this.count++;
     this.ring[this.head] = observed; this.bySequence.set(observed.sequence, observed);
     this.head = (this.head + 1) % 2000; this.tradesDirty = true;
-    this.now = Date.now();
+    // Live adapters allow up to five seconds of device clock skew. Keep the
+    // observed window on the accepted source time without rewriting events.
+    this.now = Math.max(Date.now(), Math.min(trade.timestamp, Date.now() + 5000), this.now);
     this.invalidate();
   }
 
@@ -82,7 +84,7 @@ export class OrderFlowSession {
     if (frames === this.frames) return;
     this.frames = Object.freeze(frames.map(frame => Object.isFrozen(frame) ? frame : Object.freeze({ ...frame, levels: Object.freeze(frame.levels.map(level => Object.freeze(level))) as unknown as DepthEvent["levels"] })));
     this.depth = freezeSnapshot({ ...event, levels: event.levels.map(level => ({ ...level })) });
-    this.now = Date.now();
+    this.now = Math.max(Date.now(), Math.min(event.timestamp, Date.now() + 5000), this.now);
     this.invalidate();
   }
 
@@ -96,7 +98,7 @@ export class OrderFlowSession {
     this.depth = null; this.frames = Object.freeze([]); this.invalidate();
   }
 
-  reset() { this.clearTrades(); this.clearDepth(); this.lastSequence = -1; this.health = null; this.invalidate(); }
+  reset() { this.clearTrades(); this.clearDepth(); this.lastSequence = -1; this.health = null; this.now = 0; this.invalidate(); }
 
   dispose() { this.reset(); if (this.timer) clearTimeout(this.timer); this.timer = null; this.listeners.clear(); }
 
