@@ -1,13 +1,19 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import type { FeedHealth, ProviderId } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 
 export function FeedInspector({ transport, provider, effectiveProvider, gatewayProvider, dataStatus, health, reason }: { transport?: "direct" | "gateway"; provider?: ProviderId; effectiveProvider?: ProviderId; gatewayProvider?: ProviderId; dataStatus: string; health: FeedHealth | null; reason?: string }) {
+  const [expanded, setExpanded] = useState(false);
   const granularities = provider === "binance" ? "Aggregate public trades" : provider === "gateio" ? "Public trades" : "Unavailable";
   const lastUpdate = health?.lastMessageAt ?? health?.updatedAt;
   return <div className="absolute bottom-2 left-2 z-40 max-w-72 border hairline bg-panel/92 px-2 py-1.5 font-mono text-[9px] shadow-sm backdrop-blur" aria-label="Feed inspector">
-    <div className="flex items-center justify-between gap-3"><span className="text-muted-foreground">FEED</span><span className={cn(dataStatus === "LIVE" ? "text-pos" : "text-warn")}>{dataStatus}</span></div>
+    <button type="button" className="flex min-h-7 w-full items-center justify-between gap-3" aria-expanded={expanded} aria-label={expanded ? "Minimize feed details" : "Expand feed details"} onClick={() => setExpanded(value => !value)}><span className="text-muted-foreground">{provider ?? "FEED"}</span><span className={cn(dataStatus === "LIVE" ? "text-pos" : "text-warn")}>{dataStatus}</span>{expanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}</button>
+    {expanded && <>
     <div className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-muted-foreground"><span>Selected</span><span className="text-right text-foreground">{provider ?? "unavailable"}</span><span>Effective</span><span className="text-right text-foreground">{effectiveProvider ?? "unavailable"}</span><span>Transport</span><span className="text-right text-foreground">{transport === "direct" ? "Direct exchange" : gatewayProvider ? `${gatewayProvider} gateway` : "Gateway unavailable"}</span><span>Connection</span><span className="text-right text-foreground">{health?.state ?? "connecting"}</span><span>Latency</span><span className="text-right text-foreground">{health?.latencyMs == null ? "—" : `${Math.round(health.latencyMs)} ms`}</span><span>Last update</span><span className="text-right text-foreground">{lastUpdate ? new Date(lastUpdate).toLocaleTimeString() : "—"}</span><span>Trades</span><span className="text-right text-foreground">{granularities}</span>{reason || health?.reason ? <><span>Reason</span><span className="text-right text-warn">{reason ?? health?.reason}</span></> : null}</div>
+    {transport === "direct" && <button type="button" className="mt-2 flex min-h-7 items-center gap-1 text-foreground" onClick={() => window.dispatchEvent(new Event("zterminal:reconnect-feed"))}><RefreshCw size={12} />Reconnect feed</button>}
+    </>}
   </div>;
 }
