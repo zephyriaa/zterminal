@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Activity,
   BarChart3,
@@ -51,6 +52,7 @@ export function ResearchSidebar() {
     <div className="zt-sidebar-footer">
       <SidebarTool collapsed={collapsed} active={false} tool={{ id: "reset", label: "Layout settings", detail: "Templates and undoable reset", icon: RotateCcw, action: () => { useCustomization.setState({ section: "Layout" }); openPanel("settings"); } }} />
       {!collapsed && <span>Layout saved locally</span>}
+      <Link href="/docs/chart-credits" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground" aria-label="Chart credits">{collapsed ? "©" : "Chart credits"}</Link>
     </div>
   </aside>;
 }
@@ -71,7 +73,7 @@ export function MobileResearchMenu() {
     <SheetContent side="left" className="zt-mobile-navigation">
       <SheetHeader><SheetTitle>ZTerminal</SheetTitle><SheetDescription>Research workspace</SheetDescription></SheetHeader>
       <nav aria-label="Mobile workspace tools">{tools(openPanel).map(tool => <SheetClose asChild key={tool.id}><button type="button" className={cn("zt-mobile-navigation-tool", active === tool.id && "is-active")} onClick={tool.action}><tool.icon /><span><b>{tool.label}</b><small>{tool.detail}</small></span></button></SheetClose>)}</nav>
-      <div className="zt-mobile-navigation-footer"><SheetClose asChild><button type="button" onClick={() => { useCustomization.setState({ section: "Layout" }); openPanel("settings"); }}><RotateCcw />Layout settings</button></SheetClose></div>
+      <div className="zt-mobile-navigation-footer"><SheetClose asChild><button type="button" onClick={() => { useCustomization.setState({ section: "Layout" }); openPanel("settings"); }}><RotateCcw />Layout settings</button></SheetClose><Link href="/docs/chart-credits" target="_blank" rel="noopener noreferrer" className="mt-3 block text-xs text-muted-foreground hover:text-foreground">Chart credits</Link></div>
     </SheetContent>
   </Sheet>;
 }
