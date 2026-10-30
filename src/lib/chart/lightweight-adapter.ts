@@ -34,6 +34,7 @@ export function lightweightChartOptions(
     layout: {
       background: { type: ColorType.Solid, color: settings.backgroundColor },
       textColor: axisText,
+      attributionLogo: false,
       fontSize,
     },
     grid: {
