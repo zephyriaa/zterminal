@@ -6,11 +6,17 @@ import { MockLiveMarket } from "../../src/lib/market/mock-provider";
 import type { ContractMetadata, DepthLevel, FeedHealth, QuoteEvent, TradeEvent } from "../../src/lib/market/types";
 import { GateioFuturesProvider, type GateEvent, type ProviderStatus } from "./gateio-provider";
 import { BinanceFuturesProvider, type BinanceEvent } from "./binance-provider";
+import { BybitFuturesProvider, type BybitEvent } from "./bybit-provider";
+import { OKXFuturesProvider, type OKXEvent } from "./okx-provider";
 import { resolveGatewayOrigins, validateSubscriptionRequest } from "../../src/lib/market/gateway-policy";
 
 const PORT = Number(process.env.MARKET_DATA_PORT ?? 3003);
 const PROVIDER_MODE = process.env.MARKET_PROVIDER === "binance"
   ? "binance"
+  : process.env.MARKET_PROVIDER === "bybit"
+    ? "bybit"
+  : process.env.MARKET_PROVIDER === "okx"
+    ? "okx"
   : process.env.MARKET_PROVIDER === "mock"
     ? "mock"
     : "gateio";
@@ -39,6 +45,8 @@ let bootRetryAttempt = 0;
 const providerEventCounts = { trade: 0, quote: 0, depth: 0, derivatives: 0, liquidation: 0 };
 
 function feedHealth(symbol: string): FeedHealth {
+  if (PROVIDER_MODE === "okx" && okx) return okx.health(symbol);
+  if (PROVIDER_MODE === "bybit" && bybit) return bybit.health(symbol);
   if (PROVIDER_MODE === "binance" && binance) return binance.health(symbol);
   if (PROVIDER_MODE === "gateio" && gateio) return gateio.health(symbol);
   return { provider: "mock", symbol, state: "LIVE", updatedAt: Date.now(), reason: "Explicit simulation; not a live exchange feed" };
@@ -106,11 +114,13 @@ const io = new Server(httpServer, {
 
 const gateio = PROVIDER_MODE === "gateio" ? new GateioFuturesProvider() : null;
 const binance = PROVIDER_MODE === "binance" ? new BinanceFuturesProvider() : null;
+const bybit = PROVIDER_MODE === "bybit" ? new BybitFuturesProvider() : null;
+const okx = PROVIDER_MODE === "okx" ? new OKXFuturesProvider() : null;
 
 function emitStatus(socket?: Parameters<typeof io.to>[0]) {
   const payload = {
     state: providerStatus,
-    provider: PROVIDER_MODE,
+    provider: providerInitialized ? PROVIDER_MODE : undefined,
           environment: PROVIDER_MODE === "mock" ? "simulation" : "live",
 
     dataStatus:
@@ -191,9 +201,28 @@ function handleBinanceEvent(event: BinanceEvent) {
 
 binance?.on(handleBinanceEvent);
 
+function handlePublicEvent(event: BybitEvent | OKXEvent) {
+  if (event.type === "contracts") {
+    liveContracts = event.contracts;
+    io.emit("contracts", liveContracts);
+    return;
+  }
+  if (event.type === "status") {
+    providerStatus = event.state;
+    providerReason = event.reason;
+    emitStatus();
+    if (event.symbol) emitFeedHealth(event.symbol);
+    return;
+  }
+  publishToSubscribers(event.data.symbol, event.type, event.data);
+}
+
+bybit?.on(handlePublicEvent);
+okx?.on(handlePublicEvent);
+
 async function bootLiveProvider() {
   if (PROVIDER_MODE === "mock" || bootRetryTimer) return;
-  const provider = PROVIDER_MODE === "binance" ? binance : gateio;
+  const provider = PROVIDER_MODE === "okx" ? okx : PROVIDER_MODE === "bybit" ? bybit : PROVIDER_MODE === "binance" ? binance : gateio;
   if (!provider) return;
   try {
     liveContracts = await provider.discoverContracts();
@@ -201,12 +230,13 @@ async function bootLiveProvider() {
     providerStatus = "connecting";
     providerReason = undefined;
     bootRetryAttempt = 0;
+    emitStatus();
   } catch (error) {
     providerInitialized = false;
     providerStatus = "unavailable";
     providerReason = error instanceof Error
       ? error.message
-      : `${PROVIDER_MODE === "binance" ? "Binance" : "Gate.io"} contract discovery failed`;
+      : `${PROVIDER_MODE} contract discovery failed`;
     const delay = Math.min(30_000, 1_000 * 2 ** Math.min(bootRetryAttempt, 5));
     bootRetryAttempt += 1;
     console.warn(`[market-data] ${providerReason}; retrying contract discovery in ${delay}ms`);
@@ -257,12 +287,16 @@ function normalizeSymbol(input: string) {
 async function startSymbol(symbol: string) {
   if (PROVIDER_MODE === "gateio") await gateio?.subscribe(symbol);
   else if (PROVIDER_MODE === "binance") await binance?.subscribe(symbol);
+  else if (PROVIDER_MODE === "bybit") await bybit?.subscribe(symbol);
+  else if (PROVIDER_MODE === "okx") await okx?.subscribe(symbol);
   else startMockSymbol(symbol);
 }
 
 function stopSymbol(symbol: string) {
   if (PROVIDER_MODE === "gateio") gateio?.unsubscribe(symbol);
   else if (PROVIDER_MODE === "binance") binance?.unsubscribe(symbol);
+  else if (PROVIDER_MODE === "bybit") bybit?.unsubscribe(symbol);
+  else if (PROVIDER_MODE === "okx") okx?.unsubscribe(symbol);
   else stopMockSymbol(symbol);
 }
 
@@ -365,6 +399,8 @@ function shutdown() {
   for (const symbol of mockStates.keys()) stopMockSymbol(symbol);
   gateio?.close();
   binance?.close();
+  bybit?.close();
+  okx?.close();
   httpServer.close(() => process.exit(0));
 }
 process.on("SIGTERM", shutdown);

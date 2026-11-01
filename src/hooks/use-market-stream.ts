@@ -45,7 +45,7 @@ function gatewayView(gateway: GatewayState, provider: ProviderId): { state: Stre
 }
 
 function publishState(next: GatewayState) {
-  latestGatewayState = { ...latestGatewayState, ...next };
+  latestGatewayState = { ...latestGatewayState, ...next, reason: next.reason };
   const provider = useWorkspace.getState().marketProvider;
   const view = gatewayView(latestGatewayState, provider);
   useWorkspace.getState().setConnection({ ...view, dataStatus: view.dataStatus === "LIVE" ? "DISCONNECTED" : view.dataStatus, provider, environment: provider === "mock" ? "simulation" : "live" });

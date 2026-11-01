@@ -5,7 +5,7 @@ import type { ContractMetadata } from "./types";
 /** Only verified USDT perpetual identities are admitted to the terminal history path. */
 export async function fetchInstrument(provider: string, input: string, signal?: AbortSignal, fetcher: (input: string | URL, init?: RequestInit) => Promise<Response> = fetch): Promise<ContractMetadata> {
   if (input.includes(":") && !input.toUpperCase().startsWith(`${provider.toUpperCase()}:`)) throw new Error("Instrument alias belongs to a different venue");
-  const gate = normalizeGateioSymbol(input);
+  const gate = normalizeGateioSymbol(provider === "okx" ? input.trim().toUpperCase().replace(/-SWAP$/, "") : input);
   if (!gate) throw new Error(`Unsupported perpetual instrument: ${input}`);
   const canonical = gate.replace("_", "");
   const options = { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000), cache: "no-store" as const, headers: { Accept: "application/json" } };

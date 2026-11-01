@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
 
   const unavailable = (error: string, status = 422) => NextResponse.json({ symbol: requestedSymbol, requestedProvider, selectedProvider: requestedProvider, effectiveProvider: null, environment: requestedProvider === "mock" ? "simulation" : "live", dataStatus: "UNAVAILABLE", sourceTimestamp: null, integrity: "unavailable", reason: error, error }, { status, headers: { "Cache-Control": "no-store" } });
   if (!SUPPORTED_PROVIDERS.includes(requestedProvider)) return unavailable("Unsupported provider");
-  if (requestedProvider !== "mock" && (!normalizeGateioSymbol(requestedSymbol) || requestedProvider === "coinbase")) return unavailable("No verified USDT perpetual mapping for this instrument and provider. Spot and tokenized products are distinct markets.");
+  const candidateSymbol = requestedProvider === "okx" ? requestedSymbol.trim().toUpperCase().replace(/-SWAP$/, "") : requestedSymbol;
+  if (requestedProvider !== "mock" && (!normalizeGateioSymbol(candidateSymbol) || requestedProvider === "coinbase")) return unavailable("No verified USDT perpetual mapping for this instrument and provider. Spot and tokenized products are distinct markets.");
 
   if (!isGateioTimeframe(timeframe)) {
     return unavailable("unsupported timeframe", 400);

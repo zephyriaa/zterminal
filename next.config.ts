@@ -11,7 +11,7 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-  { key: "Content-Security-Policy", value: `default-src 'self' 'unsafe-eval' 'unsafe-inline'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'${gatewayConnect} http://127.0.0.1:47321 wss://*.gate.io wss://*.binance.com https://*.gate.io https://*.binance.com https://api.binance.com wss://stream.bybit.com wss://advanced-trade-ws.coinbase.com https://api.gateio.ws wss://fx-ws.gateio.ws https://accounts.google.com https://oauth2.googleapis.com https://lh3.googleusercontent.com; form-action 'self' https://accounts.google.com;` },
+  { key: "Content-Security-Policy", value: `default-src 'self' 'unsafe-eval' 'unsafe-inline'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'${gatewayConnect} http://127.0.0.1:47321 wss://*.gate.io wss://*.binance.com https://*.gate.io https://*.binance.com https://api.binance.com https://api.bybit.com wss://stream.bybit.com https://www.okx.com wss://ws.okx.com wss://advanced-trade-ws.coinbase.com https://api.gateio.ws wss://fx-ws.gateio.ws https://accounts.google.com https://oauth2.googleapis.com https://lh3.googleusercontent.com; form-action 'self' https://accounts.google.com;` },
 ];
 
 const nextConfig: NextConfig = {

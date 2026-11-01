@@ -22,8 +22,9 @@ export interface OKXBookPayload {
 
 /**
  * OKX Level 2 Order Book Synchronizer.
- * Enforces monotonic sequence integrity and IEEE 802.3 CRC32 checksum validation.
- * Any checksum mismatch or dropped sequence triggers immediate transition to ERROR.
+ * Enforces sequence linkage, including maintenance resets. Current JSON feeds
+ * deprecate checksum as fixed zero; nonzero legacy checksums are still validated.
+ * Any legacy checksum mismatch or dropped sequence transitions to ERROR.
  */
 export class OKXDepthSynchronizer {
   readonly book = new LocalOrderBook();
@@ -47,6 +48,9 @@ export class OKXDepthSynchronizer {
     const prevSeqId = typeof item.prevSeqId === "number" ? item.prevSeqId : undefined;
     const checksum = typeof item.checksum === "number" ? item.checksum : undefined;
     const timestamp = Number(item.ts) || Date.now();
+    if (checksum === 0 && (!Number.isSafeInteger(seqId) || seqId < 0 || !Number.isSafeInteger(prevSeqId) || (action === "snapshot" ? prevSeqId !== -1 : prevSeqId! < 0))) {
+      return this.fail("Modern OKX books require sequence continuity fields");
+    }
 
     if (action === "snapshot") {
       this.book.clear();
@@ -61,7 +65,9 @@ export class OKXDepthSynchronizer {
         return this.fail("Crossed book on snapshot");
       }
 
-      if (checksum !== undefined) {
+      // Current JSON books publish a deprecated fixed zero; continuity uses seqId/prevSeqId.
+      // https://www.okx.com/docs-v5/en/#order-book-trading-market-data-ws-order-book-channel
+      if (checksum !== undefined && checksum !== 0) {
         const topBids = this.book.top("buy", 25).map(l => [String(l.price), String(l.size)] as [string, string]);
         const topAsks = this.book.top("sell", 25).map(l => [String(l.price), String(l.size)] as [string, string]);
         if (!validateOkxChecksum(topBids, topAsks, checksum)) {
@@ -103,7 +109,7 @@ export class OKXDepthSynchronizer {
       }
 
       // Verify CRC32 checksum if provided
-      if (checksum !== undefined) {
+      if (checksum !== undefined && checksum !== 0) {
         const topBids = this.book.top("buy", 25).map(l => [String(l.price), String(l.size)] as [string, string]);
         const topAsks = this.book.top("sell", 25).map(l => [String(l.price), String(l.size)] as [string, string]);
         if (!validateOkxChecksum(topBids, topAsks, checksum)) {

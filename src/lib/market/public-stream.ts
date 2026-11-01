@@ -32,7 +32,7 @@ const ENDPOINTS: Record<StreamProvider, string> = {
   gateio: "wss://fx-ws.gateio.ws/v4/ws/usdt",
   bybit: "wss://stream.bybit.com/v5/public/linear",
   coinbase: "wss://advanced-trade-ws.coinbase.com",
-  okx: "wss://ws.okx.com:8443/ws/v5/public",
+  okx: "wss://ws.okx.com/ws/v5/public",
 };
 
 const BINANCE_REST_DEPTH_URL =

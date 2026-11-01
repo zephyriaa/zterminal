@@ -22,7 +22,7 @@ export async function GET(request?: Request) {
     if (upstream.ok) {
       const body = await upstream.json();
       if (body.provider === selectedProvider && Array.isArray(body.contracts) && body.contracts.length > 0) {
-        const verified = body.environment === "live" && ["gateio", "binance"].includes(body.provider);
+        const verified = body.environment === "live" && ["gateio", "binance", "bybit", "okx"].includes(body.provider);
         return NextResponse.json({ ...body, verified, contracts: body.contracts.map((contract: { verified?: boolean }) => ({ ...contract, verified: verified && contract.verified === true })) }, {
           status: upstream.status,
           headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" },

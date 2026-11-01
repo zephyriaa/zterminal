@@ -74,6 +74,9 @@ export interface TradeEvent {
   exchange: Exchange;
   timestamp: number;      // epoch ms (UTC)
   sequence: number;
+  /** Source identity retained when sequence is adapter-local delivery order. */
+  eventId?: string;
+  sourceSequence?: string;
   price: number;
   quantity: number;
   side: Side;              // aggressor side
@@ -112,6 +115,7 @@ export interface DepthEvent {
   exchange: Exchange;
   timestamp: number;
   sequence: number;
+  sourceSequence?: string;
   levels: DepthLevel[];
 }
 
