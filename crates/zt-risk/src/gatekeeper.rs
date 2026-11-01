@@ -1,10 +1,10 @@
+use rust_decimal::Decimal;
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
-use rust_decimal::Decimal;
 
 use crate::error::RiskError;
-use crate::ipc::{RiskCheckRequest, OrderSide};
+use crate::ipc::{OrderSide, RiskCheckRequest};
 use crate::sizing::calculate_position_size;
 
 pub struct RiskGatekeeper {
@@ -16,7 +16,11 @@ pub struct RiskGatekeeper {
 }
 
 impl RiskGatekeeper {
-    pub fn new(max_requests_per_window: usize, rate_limit_window: Duration, min_step_size: Decimal) -> Self {
+    pub fn new(
+        max_requests_per_window: usize,
+        rate_limit_window: Duration,
+        min_step_size: Decimal,
+    ) -> Self {
         Self {
             kill_switch: AtomicBool::new(false),
             rate_limit_window,
@@ -29,7 +33,7 @@ impl RiskGatekeeper {
     pub fn engage_kill_switch(&self) {
         self.kill_switch.store(true, Ordering::SeqCst);
     }
-    
+
     pub fn disengage_kill_switch(&self) {
         self.kill_switch.store(false, Ordering::SeqCst);
     }
@@ -39,7 +43,11 @@ impl RiskGatekeeper {
     }
 
     /// Primary entry point. Must be called mutably to update rate limiter.
-    pub fn evaluate_order(&mut self, request: &RiskCheckRequest, now: Instant) -> Result<Decimal, RiskError> {
+    pub fn evaluate_order(
+        &mut self,
+        request: &RiskCheckRequest,
+        now: Instant,
+    ) -> Result<Decimal, RiskError> {
         // E: Global Kill-Switch
         if self.is_kill_switch_engaged() {
             return Err(RiskError::KillSwitchEngaged);
@@ -95,7 +103,11 @@ impl RiskGatekeeper {
         while let Some(&timestamp) = self.request_timestamps.front() {
             // we remove anything outside the window BEFORE now.
             // If `now - timestamp > window`, it's expired.
-            if now.checked_duration_since(timestamp).unwrap_or(Duration::ZERO) > self.rate_limit_window {
+            if now
+                .checked_duration_since(timestamp)
+                .unwrap_or(Duration::ZERO)
+                > self.rate_limit_window
+            {
                 self.request_timestamps.pop_front();
             } else {
                 break;
@@ -114,7 +126,7 @@ mod tests {
             account_equity: dec!(10000),
             daily_start_equity: dec!(10000),
             max_daily_drawdown: dec!(0.10), // 10%
-            risk_target_pct: dec!(0.01), // 1%
+            risk_target_pct: dec!(0.01),    // 1%
             atr_n: dec!(5),
             point_value: dec!(10),
             max_dollar_risk: dec!(200),
@@ -138,14 +150,17 @@ mod tests {
     fn test_rate_limiter() {
         let mut gk = RiskGatekeeper::new(2, Duration::from_secs(1), dec!(1));
         let now = Instant::now();
-        
+
         // 1st request
         assert!(gk.evaluate_order(&default_req(), now).is_ok());
         // 2nd request
         assert!(gk.evaluate_order(&default_req(), now).is_ok());
         // 3rd request (exceeds limit)
-        assert_eq!(gk.evaluate_order(&default_req(), now), Err(RiskError::RateLimitExceeded));
-        
+        assert_eq!(
+            gk.evaluate_order(&default_req(), now),
+            Err(RiskError::RateLimitExceeded)
+        );
+
         // Advance time past window
         let later = now + Duration::from_millis(1001);
         assert!(gk.evaluate_order(&default_req(), later).is_ok());

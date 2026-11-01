@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
   "crates/zt-protocol",
+  "crates/zt-domain",
   "crates/zt-core",
   "crates/zt-storage",
   "crates/zt-adapters",
@@ -23,7 +24,7 @@ exclude = ["src-tauri"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license-file = "LICENSE"
+license = "UNLICENSED"
 authors = ["ZTerminal"]
 repository = "https://github.com/zephyriaa/zterminal"
 

@@ -1,0 +1,107 @@
+<Application x:Class="ZTerminal.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Application.Resources><ResourceDictionary>
+    <ResourceDictionary.MergedDictionaries><XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls"/></ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary.ThemeDictionaries>
+      <ResourceDictionary x:Key="Default">
+        <SolidColorBrush x:Key="ZtControlBrush" Color="#11151D"/>
+        <SolidColorBrush x:Key="ZtControlHoverBrush" Color="#1B202B"/>
+        <SolidColorBrush x:Key="TextControlBackground" Color="#0D1118"/>
+        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#111722"/>
+        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#111722"/>
+        <SolidColorBrush x:Key="TextControlBorderBrush" Color="#282D38"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#414859"/>
+        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#A78BFA"/>
+        <SolidColorBrush x:Key="ComboBoxBackground" Color="#11151D"/>
+        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#1B202B"/>
+        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#242A38"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#282D38"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#414859"/>
+        <SolidColorBrush x:Key="ContentDialogBackground" Color="#10151E"/>
+        <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="#10151E"/>
+        <SolidColorBrush x:Key="ContentDialogBorderBrush" Color="#343B49"/>
+        <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected" Color="#1A1928"/>
+        <SolidColorBrush x:Key="TabViewItemHeaderBackgroundPointerOver" Color="#151A24"/>
+        <SolidColorBrush x:Key="TabViewItemHeaderForegroundSelected" Color="#CBB8FF"/>
+
+        <SolidColorBrush x:Key="WelcomeSurfaceBrush" Color="#ED111522"/>
+        <SolidColorBrush x:Key="WelcomeWorkspaceBrush" Color="#090C11"/>
+        <SolidColorBrush x:Key="WelcomeTextBrush" Color="#F0EFF5"/>
+        <SolidColorBrush x:Key="WelcomeMutedBrush" Color="#B8B5C4"/>
+        <SolidColorBrush x:Key="WelcomeBorderBrush" Color="#797789"/>
+        <LinearGradientBrush x:Key="WelcomeActionBrush" StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#1D64DB" Offset="0"/><GradientStop Color="#4435EA" Offset="1"/></LinearGradientBrush>
+        <SolidColorBrush x:Key="WelcomeActionTextBrush" Color="White"/>
+      </ResourceDictionary>
+      <ResourceDictionary x:Key="HighContrast">
+        <SolidColorBrush x:Key="ZtControlBrush" Color="{ThemeResource SystemColorButtonFaceColor}"/>
+        <SolidColorBrush x:Key="ZtControlHoverBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
+
+        <SolidColorBrush x:Key="WelcomeSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+        <SolidColorBrush x:Key="WelcomeWorkspaceBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+        <SolidColorBrush x:Key="WelcomeTextBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+        <SolidColorBrush x:Key="WelcomeMutedBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+        <SolidColorBrush x:Key="WelcomeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+        <SolidColorBrush x:Key="WelcomeActionBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
+        <SolidColorBrush x:Key="WelcomeActionTextBrush" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+      </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+    <SolidColorBrush x:Key="WorkspaceBrush" Color="#090C11"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="#101319"/>
+    <SolidColorBrush x:Key="ChartBrush" Color="#0A0D12"/>
+    <SolidColorBrush x:Key="SelectionBrush" Color="#B5A2E8"/>
+    <SolidColorBrush x:Key="TextBrush" Color="#F0EFF5"/>
+    <SolidColorBrush x:Key="MutedBrush" Color="#A8A2B5"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#282D38"/>
+    <Style TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource TextBrush}"/><Setter Property="FontFamily" Value="Assets/Geist-Regular.ttf#Geist"/><Setter Property="FontSize" Value="13"/></Style>
+    <FontFamily x:Key="ContentControlThemeFontFamily">Assets/Geist-Regular.ttf#Geist</FontFamily>
+    <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
+    <Style x:Key="ZtButtonStyle" TargetType="Button">
+      <Setter Property="FontFamily" Value="{StaticResource ContentControlThemeFontFamily}"/>
+      <Setter Property="FontSize" Value="13"/><Setter Property="MinHeight" Value="32"/><Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="CornerRadius" Value="4"/><Setter Property="Padding" Value="10,6"/>
+      <Setter Property="Background" Value="{ThemeResource ZtControlBrush}"/><Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/><Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}"/><Setter Property="UseSystemFocusVisuals" Value="True"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+        <ContentPresenter x:Name="ButtonSurface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" AutomationProperties.AccessibilityView="Raw">
+          <VisualStateManager.VisualStateGroups><VisualStateGroup x:Name="CommonStates">
+            <VisualState x:Name="Normal"/>
+            <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="ButtonSurface.BorderBrush" Value="{StaticResource SelectionBrush}"/></VisualState.Setters></VisualState>
+            <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="ButtonSurface.Opacity" Value="0.72"/></VisualState.Setters></VisualState>
+            <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="ButtonSurface.Opacity" Value="0.45"/></VisualState.Setters></VisualState>
+          </VisualStateGroup></VisualStateManager.VisualStateGroups>
+        </ContentPresenter>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style TargetType="Button" BasedOn="{StaticResource ZtButtonStyle}"/>
+    <Style TargetType="TabViewItem">
+      <Setter Property="FontFamily" Value="{StaticResource ContentControlThemeFontFamily}"/>
+      <Setter Property="MinHeight" Value="40"/><Setter Property="UseSystemFocusVisuals" Value="True"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabViewItem">
+        <Grid x:Name="LayoutRoot" MinHeight="40" Margin="0,4,2,0" Background="Transparent">
+          <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="CommonStates">
+              <VisualState x:Name="Normal"/>
+              <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="TabContainer.Background" Value="{ThemeResource ZtControlHoverBrush}"/></VisualState.Setters></VisualState>
+              <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="TabContainer.Opacity" Value="0.8"/></VisualState.Setters></VisualState>
+              <VisualState x:Name="Selected"><VisualState.Setters><Setter Target="ActiveLine.Visibility" Value="Visible"/><Setter Target="TabContainer.Background" Value="{ThemeResource ZtControlBrush}"/></VisualState.Setters></VisualState>
+              <VisualState x:Name="PointerOverSelected"><VisualState.Setters><Setter Target="ActiveLine.Visibility" Value="Visible"/><Setter Target="TabContainer.Background" Value="{ThemeResource ZtControlHoverBrush}"/></VisualState.Setters></VisualState>
+              <VisualState x:Name="PressedSelected"><VisualState.Setters><Setter Target="ActiveLine.Visibility" Value="Visible"/><Setter Target="TabContainer.Opacity" Value="0.8"/></VisualState.Setters></VisualState>
+            </VisualStateGroup>
+            <VisualStateGroup x:Name="DisabledStates"><VisualState x:Name="Enabled"/><VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="LayoutRoot.Opacity" Value="0.45"/></VisualState.Setters></VisualState></VisualStateGroup>
+            <VisualStateGroup x:Name="CloseIconStates"><VisualState x:Name="CloseButtonVisible"/><VisualState x:Name="CloseButtonCollapsed"><VisualState.Setters><Setter Target="CloseButton.Visibility" Value="Collapsed"/></VisualState.Setters></VisualState></VisualStateGroup>
+          </VisualStateManager.VisualStateGroups>
+          <Border x:Name="TabContainer" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,1,1,0" CornerRadius="5,5,0,0" Padding="12,0,6,0">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <ContentPresenter x:Name="ContentPresenter" Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <Button x:Name="CloseButton" Grid.Column="1" IsTabStop="False" MinHeight="24" Width="24" Padding="5" BorderThickness="0" Background="Transparent" AutomationProperties.Name="Close tab"><Path Width="12" Height="12" Stroke="{StaticResource MutedBrush}" StrokeThickness="1.2" Data="M 2,2 L 10,10 M 10,2 L 2,10"/></Button>
+            </Grid>
+          </Border>
+          <Border x:Name="ActiveLine" Visibility="Collapsed" Height="2" VerticalAlignment="Bottom" Background="{StaticResource SelectionBrush}"/>
+        </Grid>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style TargetType="ContentDialog" BasedOn="{StaticResource DefaultContentDialogStyle}"><Setter Property="FontFamily" Value="{StaticResource ContentControlThemeFontFamily}"/><Setter Property="CornerRadius" Value="6"/><Setter Property="PrimaryButtonStyle" Value="{StaticResource ZtButtonStyle}"/><Setter Property="SecondaryButtonStyle" Value="{StaticResource ZtButtonStyle}"/><Setter Property="CloseButtonStyle" Value="{StaticResource ZtButtonStyle}"/></Style>
+    <Style TargetType="TextBox"><Setter Property="FontFamily" Value="{StaticResource ContentControlThemeFontFamily}"/><Setter Property="CornerRadius" Value="4"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="10,7"/></Style>
+    <Style TargetType="ComboBox"><Setter Property="FontFamily" Value="{StaticResource ContentControlThemeFontFamily}"/><Setter Property="CornerRadius" Value="4"/><Setter Property="MinHeight" Value="32"/><Setter Property="Padding" Value="10,6"/></Style>
+    <Style x:Key="NavigationButtonStyle" TargetType="Button" BasedOn="{StaticResource ZtButtonStyle}"><Setter Property="HorizontalAlignment" Value="Stretch"/><Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontSize" Value="12"/><Setter Property="Padding" Value="10,8"/><Setter Property="CornerRadius" Value="4"/></Style>
+  </ResourceDictionary></Application.Resources>
+</Application>

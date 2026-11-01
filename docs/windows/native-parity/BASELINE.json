@@ -1,0 +1,2665 @@
+{
+  "audit_date_local": "2026-10-28",
+  "timezone": "Asia/Baku",
+  "scope": "Phase 01 audit and plan only; UI work deferred by user",
+  "native_source": {
+    "root": "C:\\Users\\aykhank\\Desktop\\Others\\Projects\\ZT",
+    "branch": "codex/auth-drawing-rebuild",
+    "head": "80124f17ae500565fe4bb7a88ad44f4b693d4e02",
+    "dirty_file_count": 381,
+    "staged_path_count": 25,
+    "unstaged_path_count": 216,
+    "untracked_file_count": 142,
+    "initial_state_manifest": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18282-2502-7322-b414-bc1194578ca4\\native-parity-audit\\initial-state.json",
+    "initial_manifest_sha256": "7b3186f46312de02b350cb91e7efb8e75513f2e01bab118dd36ae85ddf6862a4",
+    "unstaged_diff_sha256": "1902dda5bf0c0f8160f9db6b82d60faa775f52381d0b703db398cfbbf563ddaa",
+    "staged_diff_sha256": "f75271c5f370ca3112131fc7c8e3b85907c71b6f53af5ca3d45d213b9ab397ce",
+    "dirty_entries": [
+      {
+        "status": " M",
+        "path": ".env.example",
+        "sha256": "7fdf60d3841056839c5676714d9d53fc825ef07ae51201c06f9cf480c3ce4d63"
+      },
+      {
+        "status": " M",
+        "path": ".gitignore",
+        "sha256": "9b49ceb8807f5bbd8bb24ce8909ab059ad06f8a2a49eac71bdd3e19996ae8400"
+      },
+      {
+        "status": " M",
+        "path": "AGENTS.md",
+        "sha256": "65f290fdbccfcf22b94d9bc599a2b811627d5135fcaa21dff8bac917f5ff8468"
+      },
+      {
+        "status": " M",
+        "path": "Caddyfile",
+        "sha256": "92e410dd2df8a0304b9eb16089ae993a621d2a91342566ecb9ee94a89e95701c"
+      },
+      {
+        "status": " M",
+        "path": "apps/windows-host/CMakeLists.txt",
+        "sha256": "0113575505926cd70dceafe7375dcd609e8dbe3fc90e1139bbc57eb600366526"
+      },
+      {
+        "status": " M",
+        "path": "apps/windows-host/src/local_scene_bridge.cpp",
+        "sha256": "1765e20719b83de4649a89bad07ab74a833c7e2d08aab873302a448c2e1fd319"
+      },
+      {
+        "status": " M",
+        "path": "apps/windows-host/src/main.cpp",
+        "sha256": "24cb444ad00f97995f1657150a05280101cfd54878cf3b5a94f055461061ec09"
+      },
+      {
+        "status": "D ",
+        "path": "apps/workstation/assets.d.ts",
+        "sha256": null
+      },
+      {
+        "status": "D ",
+        "path": "apps/workstation/assets/geist-mono.woff2",
+        "sha256": null
+      },
+      {
+        "status": "D ",
+        "path": "apps/workstation/assets/geist.woff2",
+        "sha256": null
+      },
+      {
+        "status": "D ",
+        "path": "apps/workstation/assets/mark.png",
+        "sha256": null
+      },
+      {
+        "status": "D ",
+        "path": "apps/workstation/public/NOTICES.txt",
+        "sha256": null
+      },
+      {
+        "status": "D ",
+        "path": "apps/workstation/public/geist-OFL.txt",
+        "sha256": null
+      },
+      {
+        "status": "M ",
+        "path": "apps/workstation/style.css",
+        "sha256": "d4cd3840220c69f6ea96903f633f791b672e33f4629d7af5b592ce6407840f1f"
+      },
+      {
+        "status": "M ",
+        "path": "apps/workstation/workstation.tsx",
+        "sha256": "0b60a8ddfd3809f472c8f709853d3a9d020b3c996d341e59a285d09388f6dcd8"
+      },
+      {
+        "status": " M",
+        "path": "bun.lock",
+        "sha256": "3e74d8ff7a3f04b4947904d75b6fcd682d0be0a9853fa6deea58e7ae44bc95c8"
+      },
+      {
+        "status": " M",
+        "path": "crates/zt-core/src/lib.rs",
+        "sha256": "096515bf1165834ff332d0ba4ba69a6fc55aa9e7a0cd8a631e781075a8b209ee"
+      },
+      {
+        "status": " M",
+        "path": "crates/zt-risk/src/gatekeeper.rs",
+        "sha256": "7b328b554c757afd91ef60ffb2b4e19e47851e44760c92d16994e0afaa45f880"
+      },
+      {
+        "status": " M",
+        "path": "crates/zt-risk/src/ipc.rs",
+        "sha256": "05122afd960889e7c6b2d37184f1a842cdbcd726aa1263cf749f2cddb2e7e33a"
+      },
+      {
+        "status": " M",
+        "path": "crates/zt-risk/src/sizing.rs",
+        "sha256": "f79091c6745e230966e98abf108b3d39b188b261503e3f2d45a0890df6a4c795"
+      },
+      {
+        "status": " M",
+        "path": "docs/windows/V2-PRODUCT-BUILD-PROMPT.md",
+        "sha256": "06ce414b36cc60b77e218de8a10280c5f6e47658b96c675a84ea66ccf20050d6"
+      },
+      {
+        "status": "M ",
+        "path": "docs/windows/v2/ACCEPTANCE.md",
+        "sha256": "c3e4dc63452d1ea65dbb0824e36b06bfe4b7786f67f7204a0dd0fc58852c349d"
+      },
+      {
+        "status": "M ",
+        "path": "docs/windows/v2/MILESTONE-1.md",
+        "sha256": "8cd62c05f0d7281cca3968a0f6d4c42cf6d3255f9e040974f05749d8057c6c51"
+      },
+      {
+        "status": "M ",
+        "path": "docs/windows/v2/README.md",
+        "sha256": "a628aa4a0af9dea6e0a884e8dfd26d0564004a2d9fe595c492a4f0dfb1b1746f"
+      },
+      {
+        "status": "M ",
+        "path": "docs/windows/v2/RISKS-DECISIONS.md",
+        "sha256": "959a2c1b66606333fa52357dcbb1e47ff0bf37ed9270dd4b478640de45c036ed"
+      },
+      {
+        "status": "M ",
+        "path": "docs/windows/v2/generate-inventory.py",
+        "sha256": "fc70264f6392842770750b53dcb62ca5479e6585cfc8ec0ae8ae998841731398"
+      },
+      {
+        "status": "D ",
+        "path": "docs/windows/v2/verify-shell.py",
+        "sha256": null
+      },
+      {
+        "status": " M",
+        "path": "eslint.config.mjs",
+        "sha256": "e7372d015a1ae1331533a4111efd7318b7a07b3ff1c208a9fda0cb90c2c0939f"
+      },
+      {
+        "status": " M",
+        "path": "mini-services/market-data/binance-order-book.ts",
+        "sha256": "b1585f0595ac55cb74575bf52cf559608140f0e61912e06459d90dc0a1a1bdc3"
+      },
+      {
+        "status": " M",
+        "path": "mini-services/market-data/binance-provider.ts",
+        "sha256": "99ea700c8c4e7c534f7697f69a3387b371d2e0e6d4c422c7d123b1e3e36292c5"
+      },
+      {
+        "status": " M",
+        "path": "mini-services/market-data/bun.lock",
+        "sha256": "c87e9a617a314c21312ec2493191bfab14085e900d3b1ca9dcc683d21d0bd00f"
+      },
+      {
+        "status": " M",
+        "path": "mini-services/market-data/gateio-provider.ts",
+        "sha256": "0fe2109deeddd6084161d6c7fc8ad585601146d57a6ff857db09f67dce006cd9"
+      },
+      {
+        "status": " M",
+        "path": "mini-services/market-data/index.ts",
+        "sha256": "ca8a337f8129128fa51bd5f4b86e11423def4b2e69ef07379bfc765225eed1b1"
+      },
+      {
+        "status": " M",
+        "path": "mini-services/market-data/order-book.ts",
+        "sha256": "2688c18a2a4b028be5281856da54a2bda95e03bf68332c9618681ac937c3f9c6"
+      },
+      {
+        "status": " M",
+        "path": "mini-services/market-data/package.json",
+        "sha256": "aa610126b740bb65e03310a300ee48b5092d3c72369b298896b8e32233a57815"
+      },
+      {
+        "status": " M",
+        "path": "next.config.ts",
+        "sha256": "1403c5fa6f8491683a331beb60885bcdd1dbdad62817134ca624b840dcbf59c2"
+      },
+      {
+        "status": " M",
+        "path": "open-next.config.ts",
+        "sha256": "23d20e2a94299abf497f56d27e4e5c1ba96664987a3ec7c3bec3bfea8e81b86c"
+      },
+      {
+        "status": " M",
+        "path": "package-lock.json",
+        "sha256": "2df0ffb9c9c1aa9e421395a76daa95c7ffacaf98ff51c11e03661bdc97f78f7f"
+      },
+      {
+        "status": " M",
+        "path": "package.json",
+        "sha256": "84be91cdcf0d457e29f4dfc6d4c1f1c4efc0baac39398e58122a020e4fc90259"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/Launcher.cs",
+        "sha256": "41dfdb4a977828dd1950c9eaa678424974080f577f29bd6601d48ad76ccc6f22"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/README.md",
+        "sha256": "00d11f852c21e5d797ce3ea1634adfc671b97a85b24add40c29762c20ea64aed"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/analytics.py",
+        "sha256": "9a43dd4e13dfeaf3838186bf1ba1a02a73b9df0e903a52ceb3efdb49c36ff8a6"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/archive.py",
+        "sha256": "7bf4c44f78a18648e99a719504c921dd12f4f40a1a6d31710f27a4fb4211bd95"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/build-private.ps1",
+        "sha256": "2d9e5996beb78c926016a75dfa7a3217d61b77b9ef27996867273c3ec9c0a9ac"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/child.py",
+        "sha256": "cb99ce24554d4e8924943f072ab0e998b86f1ea89f3e8330f82bf62f3c05d2cb"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/controller.py",
+        "sha256": "e766c7619e395a2c5d052b432c3c2e5677fe88c5811110232394d524df901e4e"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/engine.py",
+        "sha256": "ac67bdce000169623a176fd8bbb2611201889ccba1e1c2510736266b29030dd7"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/requirements.txt",
+        "sha256": "b5b0ee155eef59c0765be6bc74c031a3674a3fd4fae53909a8f44d833bdce352"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/server.py",
+        "sha256": "5d08833fc9a176b1cf8053524c98892dfb16a6a9177d80191268275ad978411f"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/test_engine.py",
+        "sha256": "03ef9a3cae21f6c3cdf61552af99a3470404b79800a8042b2f6586dab7f1e95c"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/test_helper.py",
+        "sha256": "3edce7f6eda3a62c77c0445dd7aca8a65d94d174267db36a11519f367a10c42b"
+      },
+      {
+        "status": " M",
+        "path": "research/desktop/validation.py",
+        "sha256": "023574281853afb48d9a66db6a92040a5d7ec8edbd3178b290dc8fb22b6b2489"
+      },
+      {
+        "status": " M",
+        "path": "scripts/prepare-monaco.mjs",
+        "sha256": "fd234cb2b915dc9a02be58a3e3f1cb4f1a1ad461b28c633fce27194268168be1"
+      },
+      {
+        "status": " M",
+        "path": "scripts/test-python.ps1",
+        "sha256": "680ac5f4c88563c305c25fc86dcd989509886fcfae77620c76d05f69f5d6c6d4"
+      },
+      {
+        "status": "M ",
+        "path": "scripts/test-workstation-browser.py",
+        "sha256": "a2ccf9f9b932d815a9867191bf2c62ee6b5457b6a546152fa2760067f3f2ccd5"
+      },
+      {
+        "status": "D ",
+        "path": "scripts/test-workstation-shell.mjs",
+        "sha256": null
+      },
+      {
+        "status": " M",
+        "path": "services/quant-engine/requirements.txt",
+        "sha256": "403ff58969958e2e5e331093352bf89e2ba4ce637f29f3f4f1b2977ddcee9cd9"
+      },
+      {
+        "status": " M",
+        "path": "services/quant-engine/tests/test_quant_worker.py",
+        "sha256": "0fb0f821df07d2ee465f34bb46eaf654eda024ce128365ca0c55238ec40affd1"
+      },
+      {
+        "status": " M",
+        "path": "services/quant-engine/tests/test_simulation.py",
+        "sha256": "5e4e09617df4a01bba8d4ca93714e75203628e6c608932f79dfb68247f7170e8"
+      },
+      {
+        "status": " M",
+        "path": "services/quant-engine/worker/cv.py",
+        "sha256": "4e7354d0d3d85076f42006a3db233b28c3b5aad0fc5c0879b0cf15e1ff121d00"
+      },
+      {
+        "status": " M",
+        "path": "services/quant-engine/worker/engine.py",
+        "sha256": "bf3234fe7e1cc622707bafcd7227b6bc63dd54a0013b5fa8989c6a1368320023"
+      },
+      {
+        "status": " M",
+        "path": "services/quant-engine/worker/limits.py",
+        "sha256": "4019b0bebc14053be0df811416e76595195d2222d7434efad417d8b1474a0e07"
+      },
+      {
+        "status": " M",
+        "path": "services/quant-engine/worker/simulation.py",
+        "sha256": "890f48080a5fea7bda218502617688a3e47482c35d9044bb886e5d81b94b2f81"
+      },
+      {
+        "status": "M ",
+        "path": "src-tauri/src/commands.rs",
+        "sha256": "d8c77afd96ab7f486f52b6671818b6a9c72fd9ed3c88de5e4aa449ba0a980a5b"
+      },
+      {
+        "status": "M ",
+        "path": "src-tauri/src/lib.rs",
+        "sha256": "0b48856a07ab88ba171f028749e9389dd8f8c134e58af0094cffea3637e7a46b"
+      },
+      {
+        "status": "M ",
+        "path": "src-tauri/tauri.conf.json",
+        "sha256": "2cbd61f2700ea693f55c07fb645851aee18be9d019f769d1ae28d856c206ae6e"
+      },
+      {
+        "status": "D ",
+        "path": "src-tauri/tauri.milestone1-test.conf.json",
+        "sha256": null
+      },
+      {
+        "status": "M ",
+        "path": "src-tauri/workstation-core/examples/bridge.rs",
+        "sha256": "875b4faa193ba2cea3c2c0c4205a8241611e9dc7fc90af2afec789e053e68ecc"
+      },
+      {
+        "status": "MM",
+        "path": "src-tauri/workstation-core/src/lib.rs",
+        "sha256": "bb5ca03e4ecc9c41cabaac2f3d9876e9d9b7466c7a8771a1968830a2456ae2a7"
+      },
+      {
+        "status": " M",
+        "path": "src/app/api/bars/route.ts",
+        "sha256": "92267167a40681c9d7ae0bb81329bdca014239f46f568555f9379acc1ddd4a04"
+      },
+      {
+        "status": " M",
+        "path": "src/app/api/contracts/route.ts",
+        "sha256": "b445f1ba8f3d958118b98d736e8fe434d261ded676e9162d55fd870b2ba56e6e"
+      },
+      {
+        "status": " M",
+        "path": "src/app/api/market-data/health/route.ts",
+        "sha256": "043dc3fafd4b86092252aa655acf546f8cde514f72cf8c53c2e5a5741fd0fdc3"
+      },
+      {
+        "status": " M",
+        "path": "src/app/api/research-instrument/route.ts",
+        "sha256": "8aa76f60d6a01d970ff8545e7bd1355cf3540855cc09f9f0da3d6d17231ea6d2"
+      },
+      {
+        "status": " M",
+        "path": "src/app/docs/python-research/page.tsx",
+        "sha256": "de1da437b2a50f2dc092e1367710bf83a6723bd9050ae753454f8aff37d10314"
+      },
+      {
+        "status": " M",
+        "path": "src/app/download/helper/route.ts",
+        "sha256": "e4b2d94c6216639731bda3b81a0926d4440e584cadb0fd2908bda9e50db55705"
+      },
+      {
+        "status": " M",
+        "path": "src/app/globals.css",
+        "sha256": "7c7455829cf7d03994ae6d7cb78004a55aa7f4a8d02ce82a0847c5bb341879bf"
+      },
+      {
+        "status": " D",
+        "path": "src/components/HeroCanvas.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/desktop/StudyCard.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/desktop/WorkspaceCard.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/public/device-frame.module.css",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/public/device-frame.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/public/motion-capability.tsx",
+        "sha256": null
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/docking/chart-tools.tsx",
+        "sha256": "da9a846041f9bf6d95c6725b6564f0851d59bf44b078eee6d9f4a8eb5941988d"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/docking/gex-surface-panel.tsx",
+        "sha256": "23ecc0a005ec147c4529f37a6840fea676e35ddd403fa3c4225da37c745d111c"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/docking/index.tsx",
+        "sha256": "a232c494315275ea773f5294a12dca2e941989b9ad3a3b920ad0009177bf34c4"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/docking/orderbook-panel.tsx",
+        "sha256": "39914568215484ba1817f787c5210ff5d06d9539d471c04b8332177ff5b80f22"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/docking/use-primary-chart-document.ts",
+        "sha256": "2aec74908d502db41f96ce4e194119ae935523afb1e191aa34a4653e616b4d64"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/docking/workspace-dock-controller.tsx",
+        "sha256": "742c6c673d97390adf387a14bfef9816f5e3f4f4e13c4d84d10deb4ca318ba3b"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/docking/workspace-dock.tsx",
+        "sha256": "a37de23daea7e078f5776a49fdbd5fd6a245627a145ac1be043e4e75093bd558"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/drawing-interaction-layer.tsx",
+        "sha256": "61411a2c24ba05efa4a88a84448f15ddda6694d742dad20ec9f620cdc25e16bf"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/feed-inspector.tsx",
+        "sha256": "016474b8d8c5123e15edb213c03b1709877b1d52f3bdb09d04d8af5140c96b8c"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/global-controls.tsx",
+        "sha256": "a7aff432e6354c37538b5c4ca81d389e2ece622d63a262f497b778708808b62f"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/indicators-browser.tsx",
+        "sha256": "d68de05426c4643744c52d12eed1ad5c3769448fa5d189accdb81d586aaa6b3b"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/instrument-picker.tsx",
+        "sha256": "7e3e5a7d15c0cc5b9a93f456f8548b05e9bbfcf4ee8c5348aa1d3dd181f7f9be"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/multi-chart-grid.tsx",
+        "sha256": "873834d0a775225de099c1bd5b9d3cce14056257279ee68675a1a3d87cde9707"
+      },
+      {
+        "status": "M ",
+        "path": "src/components/terminal/observed-history-chart.tsx",
+        "sha256": "3a39f9922c1f7c985a9ce26784c2ee6ee83a47e6566322e59ba94e7e676698f9"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/reference-chart-workspace.tsx",
+        "sha256": "721cfa797ae281248f13841b1d25e1e03313626fbf1a8c88a9e33c0f8d754d66"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/research-editor.tsx",
+        "sha256": "46b97023ea52230452936928b15f875d7b5166ea569d61898b86f9abc17313e8"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/research-report.tsx",
+        "sha256": "57e6ce4001d6d5f574db4b935527e87f3ac90aa1c55f8254f103ef80a33a5b4c"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/research-workbench.tsx",
+        "sha256": "4e6f90f49a000197c812d913c7ad53aedaa0b9196a0d65b858a5fb0b86aa5942"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/secondary-drawing-chart.tsx",
+        "sha256": "28070e4bb1b8678fa3cfbadf0d22e7c2fcd1848c83339cc93552da18beba2660"
+      },
+      {
+        "status": "MM",
+        "path": "src/components/terminal/terminal-chart.tsx",
+        "sha256": "0c2b7d399ef74139b9fb529e72ce4c0667e199ef745ca02b7e7359c1dd0d3789"
+      },
+      {
+        "status": " M",
+        "path": "src/components/terminal/terminal-error-boundary.tsx",
+        "sha256": "7e5ea9c045f7b1d90232e7585ec198ce0c9e1039ffb618f850a9fb2595b11810"
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/accordion.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/alert-dialog.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/alert.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/aspect-ratio.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/avatar.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/badge.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/breadcrumb.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/calendar.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/carousel.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/chart.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/checkbox.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/collapsible.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/context-menu.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/drawer.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/form.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/hover-card.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/input-otp.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/label.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/menubar.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/navigation-menu.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/pagination.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/progress.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/radio-group.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/separator.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/sidebar.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/skeleton.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/slider.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/sonner.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/table.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/tabs.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/textarea.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/toggle-group.tsx",
+        "sha256": null
+      },
+      {
+        "status": " D",
+        "path": "src/components/ui/toggle.tsx",
+        "sha256": null
+      },
+      {
+        "status": " M",
+        "path": "src/components/views/backtester-view.tsx",
+        "sha256": "609b381c261e9e125bdbee97b12a454142a1779fc79867031bbe425b2001a826"
+      },
+      {
+        "status": " M",
+        "path": "src/domain/analytics/market.ts",
+        "sha256": "537561c586e0c1cd9840399958ea74bc0110c18109e1ef440bcc35afec248927"
+      },
+      {
+        "status": " M",
+        "path": "src/hooks/use-contract-catalog.ts",
+        "sha256": "07e97c3ea66346cd6d840ee5e682256db013856588053229edfc402ec4d63cd7"
+      },
+      {
+        "status": " M",
+        "path": "src/hooks/use-market-stream.ts",
+        "sha256": "231cd56d9029b59c42f08b451f02b19916b1e1e2f9afa1b5f230b791c992fdf6"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/chart/contracts.ts",
+        "sha256": "b623f97ea9410e94459b5def3d9159ba88999c2100c9657046df00cc0cfac31e"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/chart/indicators/evaluators.ts",
+        "sha256": "d23f9fc721671d6c4e606da8b710669a28c28d09a4e983d5d4fdbe360d86dac0"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/chart/overlays/big-trades-primitive.ts",
+        "sha256": "7e3706b694371c9db7713bebd1f683cad17c35a4bd9664b4ff0dcbe34533249c"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/chart/overlays/big-trades.ts",
+        "sha256": "5dc24e0bffb53aa2bcbf7db6e404c6f4755107b482553c35c951363e8505354e"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/chart/overlays/contracts.ts",
+        "sha256": "89db6f333f66d2cd445322f0aba783ba3879e9f53a2765bf96699c31e8841ee3"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/chart/workspace-snapshot.ts",
+        "sha256": "68df46a0e0b56a7763812206aeb3d16c753d288febd3a753df3a4ccb59be65c4"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/indicator-library.ts",
+        "sha256": "64b90a4d1f58f9ac696c710695f14bcbf9dc7041dedb4c74b15f5791a9dec508"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/local-research/client.ts",
+        "sha256": "4a3f1180c9b025fc693679c6020bcd01301b9fc87d0379e6e30a9eb04e11f2fe"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/local-research/contracts.ts",
+        "sha256": "a67fac5dc59ce52d6f48877199ff71150918b2fb43986cf138e2f9703d5a711d"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/local-research/dataset.ts",
+        "sha256": "ce27f4e83913cfbf13041967a5d03dbf60156fa96425655158528613c67083f9"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/local-research/drafts.ts",
+        "sha256": "966b4b56490091bd0d83ab20689145587a83653b68836d3cf27315f66c8d812a"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/adapters/coinbase-l2-adapter.ts",
+        "sha256": "798779b673ce9e01d735dce68d23f0e27ef1583df9f88096b648866446a23fce"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/adapters/okx-l2-adapter.ts",
+        "sha256": "ededc2e81b001716d1c5469cc9576a196d9e3176632a0853f17c9701df341237"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/bar-cache.ts",
+        "sha256": "50f0b559e5fbe637b50418e1545e0047edc83dec8d1c163f697d1758fa193b31"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/bars-dedup.ts",
+        "sha256": "a2e0a02441f58a0c4c4127c878bc4ba7630cb49d8f44e5c09395511870757af8"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/binance.ts",
+        "sha256": "a3009977062129cb5e852948ea01d774f05b50e7bfd75bf6c49da952a10152af"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/bybit.ts",
+        "sha256": "c9d7cacec40608552063d2ae3a578174cedd6a8aab4c2bad6a1547f03cef909d"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/cached-bars-provider.ts",
+        "sha256": "983abf43f7a7e15ac6b7c87e1fcda1af9b2144b153b53baece2f462c3480b9f5"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/capabilities.ts",
+        "sha256": "c68d140af208c3a7454509f251278318eff3952b91fc89bee8b7183af078bbc8"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/chart-data.ts",
+        "sha256": "6cb86e47568b3e48abbdb24b57ec4b47ca9df29b2fc245933339062e8ffeeecb"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/coinbase.ts",
+        "sha256": "f67997124be059c9b52bd3748816f6c41a3cbf5f1183e87778f3654eec075fab"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/connectors.ts",
+        "sha256": "96d1d9cbee806d2ba8509d17f69975052d0c9585ecf095a60a84bd397b6ea08e"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/contracts-v2.ts",
+        "sha256": "63e5837b19956e4603b46b50987343576f9affec3f5af3467ec542bc07b44638"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/contracts.ts",
+        "sha256": "3c54422493c686f5e08829cd3cf72044dab4ab0efe1401978880a9163310aaf7"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/cross-market.ts",
+        "sha256": "20db2e3eaef98c57e85af2aec785a3fc6b5d1a5e930da4a45f1f255decfa5204"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/dataset-importer.ts",
+        "sha256": "44adb687ac443040d3aab8e836f8e802ce731e06f1899d1c71970324e8f90688"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/gateio.ts",
+        "sha256": "3ef19fcdb0e04b3b437b30bbbb9f2d426052c6f2e28142e9336ae60addc5a6ce"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/gateway-policy.ts",
+        "sha256": "ee31f66a3d456fec2c281b460fd60b6d4c3c7f7e31f54ef6be7d40468d61628f"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/l2-types.ts",
+        "sha256": "3e31f11f9ca11f290711586606891b98749c0c1a3265a093a16e90c93471a997"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/market-sessions.ts",
+        "sha256": "693a91bffb13d815567028f0dee365f91446ff11d6c9e435e662007deb72291a"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/mock-provider.ts",
+        "sha256": "5faa0ffe48d93cee6786d1972cf20318d1b476156b92cda9022d89bc3bbd20df"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/multi-data.ts",
+        "sha256": "fd9ed983a22b2a6fa79e47542edd3273528df9fd9ff2fbd39bdaa50f33611cc5"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/okx-crc32.ts",
+        "sha256": "00f0ac365476e5eae10d331f03feed0420780e4aa5d1cf5ac7b92b4fed3d8193"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/okx.ts",
+        "sha256": "34608424e7425ac1a9b1a67d4b1f5c59eff643c6713e43492eec102701e17436"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/order-flow.ts",
+        "sha256": "884752b2e1065c86841a0333deff312ec4eac5f234ef3cee88d722a49d050b09"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/provider.ts",
+        "sha256": "9bd24d0b0727e945689a9f866c57600021a5d6804b25213112e1812f9ad8fbb2"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/public-stream.ts",
+        "sha256": "b64aed1c61b2a0b5298560e3cbd5aff6118843790cdf2cbbb294e79b77ff0af9"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/public-stream/binance-depth.ts",
+        "sha256": "1794bbbcb0f66308e89e0dc4ce499215fb0cd81227b5a34e44d5d720e9161bd6"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/public-stream/local-book.ts",
+        "sha256": "3e803773a80a3e96c2fd10956eb22d74dc614485af1765202f6cac83618a09ef"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/rng.ts",
+        "sha256": "2641b608d040f0cccbe5fca17c0204215d438209dd821705bc3ee5a150ac1024"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/session.ts",
+        "sha256": "aa9daea6a2e0218318577f138be9ec09282309e1cfb2aed6e9307ce876b912c6"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/streaming-enhancements.ts",
+        "sha256": "1c1917018e5b08650d4272cf6b1c6a1435c156b10747de1577862e68b5670be1"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/throttled-orderbook.ts",
+        "sha256": "cf4b86b0fd98b8f86ff5fcca491edbc5aeaf061731e0d7003ae4e7e06be5b096"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/types.ts",
+        "sha256": "707ff3f4aaef70ad6c46c5e42a320e96d22ae33f0840d75082a046376219b5ba"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/market/volume-profile.ts",
+        "sha256": "68942dfe9ea69e0e79001d73ceb39d14acb3d606f0d5fe11ef13f6bb9ccc63a4"
+      },
+      {
+        "status": " M",
+        "path": "src/lib/releases/helper-release.ts",
+        "sha256": "c75a5e75dc1aee1b577b9f3146b0903668c548e633c1e8e31d36f6aade54c156"
+      },
+      {
+        "status": "M ",
+        "path": "src/lib/workstation-platform.ts",
+        "sha256": "bce0b2c94eff3ba0f8efb7735ef3fa61c0bcf12129feda8ee8479bad54948d0e"
+      },
+      {
+        "status": " M",
+        "path": "src/stores/multi-chart.ts",
+        "sha256": "2c47f015a406b1b9d194dc1044f557fbb94c900cd5c0479763938672faef7c21"
+      },
+      {
+        "status": " M",
+        "path": "src/stores/research.ts",
+        "sha256": "65636b1b17da82b24cedbf066f9821cfceee625433b2506d196d6846b807df6d"
+      },
+      {
+        "status": " M",
+        "path": "src/stores/studies.ts",
+        "sha256": "a1afa800cb7f422f5df6155e35454989e85127052997875a7261330689e0a274"
+      },
+      {
+        "status": " M",
+        "path": "src/stores/workspace.ts",
+        "sha256": "a29b34df425ed6987dedc709550e522cd57615c7d10faab4884d79cee37b8948"
+      },
+      {
+        "status": " M",
+        "path": "tests/advanced-risk.test.ts",
+        "sha256": "de0f60f651dd88df90640f162fdf31a11889d4a61fa58203e6e904d95bc1122f"
+      },
+      {
+        "status": " M",
+        "path": "tests/big-trades.test.ts",
+        "sha256": "cdd691eb099565f89bc6a20d20c40eb6247af7c5d618b1c121dd06eba42c670b"
+      },
+      {
+        "status": " M",
+        "path": "tests/binance-direct-depth.test.ts",
+        "sha256": "985ce56d8d9e87f3bdc5286a6a4e3611f3c1df6e999264283a660dae83e3efe6"
+      },
+      {
+        "status": " M",
+        "path": "tests/binance-market.test.ts",
+        "sha256": "e7baa3e0b0902dbdeb9c493ede7fa7b6fc0a394a6dd67d2e257808d6118d6a21"
+      },
+      {
+        "status": " M",
+        "path": "tests/binance-rate-limit-resilience.test.ts",
+        "sha256": "e62aacaf4854f487ecdc6141288ca220166a72b824e5c348490ab7ba6f4f511f"
+      },
+      {
+        "status": " M",
+        "path": "tests/chart-data.test.ts",
+        "sha256": "eb7a31999ceba0582e23e8ece21314597432be0834ac0bcaf774aaab24986c5b"
+      },
+      {
+        "status": " M",
+        "path": "tests/chart-document.test.ts",
+        "sha256": "a2eecc24a2bdedd5fc80422cce456d8e9dbc270f42101618ed11a1e260a9f2da"
+      },
+      {
+        "status": " M",
+        "path": "tests/compute-engine.test.ts",
+        "sha256": "31aeb1a8ce1f85e8557622f1a7b4ee6f8bdf6d84b6e4b4e0404cfd8c67a06409"
+      },
+      {
+        "status": " M",
+        "path": "tests/context-alerts.test.ts",
+        "sha256": "32a44055b9493ff8f7787915fa09ed96d9e6646a9f7d68f7ca39770002ac5b41"
+      },
+      {
+        "status": " M",
+        "path": "tests/cross-market.test.ts",
+        "sha256": "57e930b09a1b107d263fa66918179c0d75c93649a341fd64e91d0770fba9fb7d"
+      },
+      {
+        "status": " M",
+        "path": "tests/database-runtime-build.sh",
+        "sha256": "6e181130660f4c075b153732458b05be590c41976906073b877cc30759f2a98a"
+      },
+      {
+        "status": " M",
+        "path": "tests/desktop-window-minimized.test.ts",
+        "sha256": "e0c62ad0643b8815071dad8eaa6e4bfd35940845b8b6ba70e4920402f87bbd58"
+      },
+      {
+        "status": " M",
+        "path": "tests/domain-core.test.ts",
+        "sha256": "aad9a61ef167dc595488005abe0d6f2bcdb0dd8cd2aaff670fc4fca08a1765f8"
+      },
+      {
+        "status": " M",
+        "path": "tests/drawing-geometry.test.ts",
+        "sha256": "17659019621ab270cebf8e46064825503e2654e3e2f49d3c2d37700f5f76def1"
+      },
+      {
+        "status": " M",
+        "path": "tests/drawing-store.test.ts",
+        "sha256": "3f718d7f880dc77fa4d3ad67f531a50c6d8da127a5b9787b590deba153dc9fe6"
+      },
+      {
+        "status": " M",
+        "path": "tests/economic-calendar.test.ts",
+        "sha256": "90ea163cb1392162198c32ca931323facb51ee099a0bb95e4a3f77de120d32a2"
+      },
+      {
+        "status": " M",
+        "path": "tests/exposure.test.ts",
+        "sha256": "20c018a169d301c8625cb9094f6dbfc9c49ce7c14b0bfc8855e776aabb7b5ee1"
+      },
+      {
+        "status": " M",
+        "path": "tests/gateio-market.test.ts",
+        "sha256": "35691dfd2d21717ee7d2687f9503bc70b470e00634c3f82a2430dfdb69c14bc5"
+      },
+      {
+        "status": " M",
+        "path": "tests/gex-surface.test.ts",
+        "sha256": "e6c4012fc61b6b434f33e97d90057296083bea1a090649380ddc9f1bf3b4c96e"
+      },
+      {
+        "status": " M",
+        "path": "tests/indicator-evaluators.test.ts",
+        "sha256": "fee8e9f767d1166ba5548d98eea7df3b1754688c811b654a496b325f6b601a46"
+      },
+      {
+        "status": " M",
+        "path": "tests/indicator-library.test.ts",
+        "sha256": "d689e12bf2f1ea3f0168526a01f3c5037e299a042f4dcb80a16c14d79cda9651"
+      },
+      {
+        "status": " M",
+        "path": "tests/institutional-execution.test.ts",
+        "sha256": "450744833d246118743801cb40e67511c717eb678ef57ba3065a5e54c46e6397"
+      },
+      {
+        "status": " M",
+        "path": "tests/institutional-protocol.test.ts",
+        "sha256": "fb964d5ddd264b41751746c145bb975cbf861e1c6780ae813d60ea81621e3788"
+      },
+      {
+        "status": " M",
+        "path": "tests/l2-orderbook-reconstruction.test.ts",
+        "sha256": "85879dffac1008529e6b637b8e0562111057def468cf61de1bd9c71a13fac3f7"
+      },
+      {
+        "status": " M",
+        "path": "tests/live-gateio-smoke.ts",
+        "sha256": "b1d9bc6ce55267d51280a5bb4cb11d99e66ff7bc8ff925f03285dfa2d72b00ea"
+      },
+      {
+        "status": " M",
+        "path": "tests/local-research.test.ts",
+        "sha256": "7af60d539fe4ced630ef270993f35d8d8a8247b2ea12c51d2b06ef2444195171"
+      },
+      {
+        "status": " M",
+        "path": "tests/market-sessions-and-connectors.test.ts",
+        "sha256": "e6a5a59f034bca704417e72a8506531e8abe07d12d21d03b7f49dcfe2a3ea887"
+      },
+      {
+        "status": " M",
+        "path": "tests/microstructure-contracts.test.ts",
+        "sha256": "0c66f7bc760373893b8e847dfe748583bdce01553675ccc1b9daf35c44be3b7d"
+      },
+      {
+        "status": " M",
+        "path": "tests/multi-provider-and-gex.test.ts",
+        "sha256": "c08e023413843d27c67ad5d72ea7b35fd0e416a143206ebfaeda8ec9d7aaf699"
+      },
+      {
+        "status": " M",
+        "path": "tests/object-store.test.ts",
+        "sha256": "a1cc06ee8b22377c1905f49ce4569ff366c5843e383d5bdd1a975d72abfe5a61"
+      },
+      {
+        "status": " M",
+        "path": "tests/order-flow-expanded.test.ts",
+        "sha256": "cc8315ce62842d99a740308354d0028c5834766459c8710d6a2a6d66082365ef"
+      },
+      {
+        "status": " M",
+        "path": "tests/order-flow.test.ts",
+        "sha256": "d25777362cd366883cc52d51a0cc824c93538084d53ae182a048b2706c13c4bb"
+      },
+      {
+        "status": " M",
+        "path": "tests/panel-layout.test.ts",
+        "sha256": "4dbde8876f37b2c78dd5bda5a376debe1ff0531cf3235a1d9ccb88978ffc7d22"
+      },
+      {
+        "status": " M",
+        "path": "tests/provider-l2-sync.test.ts",
+        "sha256": "6795c5ad469cadebf8cb5927d5459f6ca10998e4dedeb5567c496c10804d7e28"
+      },
+      {
+        "status": " M",
+        "path": "tests/public-local-book.test.ts",
+        "sha256": "01a2e26f1c7d53bdaf206b8304af08579defceae96ec989d9531e86f85d5bbba"
+      },
+      {
+        "status": " M",
+        "path": "tests/public-stream-resilience.test.ts",
+        "sha256": "6ba181c80a5603cabfee63f503dd3031da2659770713a601102df24525fe8b3f"
+      },
+      {
+        "status": " M",
+        "path": "tests/python-runtime-build.sh",
+        "sha256": "85036541781fcae0fee4001a365fbe3149a9d5d5fb5fb753169905d36540e810"
+      },
+      {
+        "status": " M",
+        "path": "tests/python-runtime-container.sh",
+        "sha256": "c47b40af9b800d656a391f7c79eaf601a4cf344a45315d5c42e5fd6f4adcebb2"
+      },
+      {
+        "status": " M",
+        "path": "tests/quote-manager.test.ts",
+        "sha256": "f742d23e42ab8729af682b599290c9f1b347a5a33bcfd9972020a43627e7354c"
+      },
+      {
+        "status": " M",
+        "path": "tests/remote-config.test.ts",
+        "sha256": "798125c590633f15fb8b0081f9834e1fc22e00220c4418060e5c08aba6ebc7d7"
+      },
+      {
+        "status": " M",
+        "path": "tests/replay-lookahead.test.ts",
+        "sha256": "667e0ae053a9239f656de12c06db6d3e2ec1155153d0827e5641d4b529846880"
+      },
+      {
+        "status": " M",
+        "path": "tests/trade-plan-workspace.test.ts",
+        "sha256": "e8b702a26d8f91721d52a74b2674edb69a8eb54cf300e804c1ae3966f78c8b54"
+      },
+      {
+        "status": " M",
+        "path": "tests/volume-profile.test.ts",
+        "sha256": "86c31d2104952950f8acca1ace3e497c0529828397595afa7d9a0caf37ba03e8"
+      },
+      {
+        "status": " M",
+        "path": "tests/websocket-enhancements.test.ts",
+        "sha256": "d713dbda5ea1fdf45e8ed6a41d6c851a17f3d8ea0b915183dca162b7fcdc8ad4"
+      },
+      {
+        "status": " M",
+        "path": "tests/workload-benchmarker.test.ts",
+        "sha256": "3b654275aa27af294db0a3d2dc32229b076796766bbd0fa70783f2ea0b5d4381"
+      },
+      {
+        "status": " M",
+        "path": "tests/workspace-dock-layout.test.ts",
+        "sha256": "995df90db1d320b1d1a42cdda1bae77cb4f3c32a73c1dc9c1b25741195f5a7d0"
+      },
+      {
+        "status": " M",
+        "path": "tsconfig.json",
+        "sha256": "1f39f6538b04042a5dbbb7bf69d65d42ee9d98608eaae00eb650c917c5c92a30"
+      },
+      {
+        "status": " M",
+        "path": "wrangler.jsonc",
+        "sha256": "c30c8e690ff94eb8a94699adc98ae5bf03d691dae47723a9a5122a99803bdaf0"
+      },
+      {
+        "status": "??",
+        "path": ".codex/config.toml",
+        "sha256": "b8b758ffc3f42d4bf38ffdc2cb3684473fdf6b1b4fce62e2860e6e08c644ded5"
+      },
+      {
+        "status": "??",
+        "path": ".nvmrc",
+        "sha256": "f14b4987904bcb5814e4459a057ed4d20f58a633152288a761214dcd28780b56"
+      },
+      {
+        "status": "??",
+        "path": "ZTerminal.code-workspace",
+        "sha256": "1bdac60564c0bf2d09e53efac4dd6548af2dcdfdd85adf3ae6c3ec309296f944"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/scripts/build-winui.ps1",
+        "sha256": "85f41813321e40c240059c9cc2d996f118e7b974ef32912565c77d84aab28996"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/scripts/measure-r1.ps1",
+        "sha256": "8518cc44c09438cad5c9dbc0f82e4a34257ecf2bb3c3fd205aca15dca5f195bb"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/scripts/prepare-winui-toolchain.ps1",
+        "sha256": "9cefdf621af2ce7d3c630486a1184ada3ee55c2ff9ac69f4ed8537dd83d7394f"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/scripts/winui-build-dependencies.json",
+        "sha256": "f7e8896139a45374a95cf4af8f01788fbad85bfb7fc4fefa1206f50b636f1a24"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/src/chart_math.h",
+        "sha256": "18193e65bf6a75ab2e5445563f6427d731f633b1421d4f792d03b358d6a30e98"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/src/native_chart_host.h",
+        "sha256": "8b931032b445272cb298fc9614aa1cdb515c88afc142d166640159e6f8e9720d"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/tests/chart_math_test.cpp",
+        "sha256": "5a885d6d0efee816a6221b8fcbf43615243443260c0aa893c4aa6220db3389c1"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/tests/native_chart_test.cpp",
+        "sha256": "ed02d633aa7804a699891d6826cb768f445f8136fad0cd4064f174469f13f3a2"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/tests/native_store_process_test.py",
+        "sha256": "679b925acaf022609d1d1128c5176cdc1ec07a47fafdf68adc6147a0c43edf40"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/tests/native_strategy_process_test.py",
+        "sha256": "e695d98740cf64a695607ccea0ea083395ad9506035e49c61e541769a87e24fe"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/.gitignore",
+        "sha256": "0c34c92888e3caa5270f79a21cd97770dc11d764b9b502c7c2299c010bbc3b3a"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/App.xaml",
+        "sha256": "a4824b5d87c26b8ce04546d9b07544c2f412c3ff8bf8baf901b367faa3a4aec3"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/App.xaml.cpp",
+        "sha256": "fb488e91c6f5baabf2d9698799885cc1bd77395649472f45fcf4af3ce3507888"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/App.xaml.h",
+        "sha256": "eaf125f9755cc3498ec81040c169c512481ca9551c00dac26904d87673d4adb7"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/Assets/Geist-Regular.ttf",
+        "sha256": "bde046ddd9f20be35b0bd56cc79eb752b967fb6661a3fe76cb067bb09f871d76"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/Assets/GeistMono.ttf",
+        "sha256": "f8c31436516e7768a0495446125fd96606980b8d0b00060d8ba22b5451eba615"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/Assets/geist-OFL.txt",
+        "sha256": "1dc6255c3f36ba15736d427a9ee527608a297797255369926ca6952ecc7a781c"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/Assets/mark.png",
+        "sha256": "cad7cc28ca96efe424e3786d0f25072c2a91a174ac8157f164d50b4a9a8988ca"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/MainWindow.xaml",
+        "sha256": "c29b1341075785b7c867ce93367d565aa5ed5dc4d9725cbc3e667d5b0664b8fc"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/MainWindow.xaml.cpp",
+        "sha256": "a86cc441dbd7fcef5ca2c7a2446b9104b2b0754905bfb9d655a3ee98acfeb39d"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/MainWindow.xaml.h",
+        "sha256": "61d553b1a00588fdcef6f7d500de5581b7c85ee85f2b84bfd99791441b7e6cfd"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/Project.idl",
+        "sha256": "9a9ca9e68e0c4a5f76fc27a4b068de0086d370e279a5f1cc487b67c2edc6957a"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/XamlMetaDataProvider.cpp",
+        "sha256": "4aaf0c1230882b92c0ec5c734843d45a3f5e3cd56e070fd79ed2bfed52f16e51"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/ZTerminalWindowsHost.vcxproj",
+        "sha256": "a6db24d05200f72fb002402e71539df918c8f95446d19b992c26fdc327676dd6"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/app.manifest",
+        "sha256": "755b32dff3f6dd9d180e0f37b54cac7f3aa387e91d9b13fc87106341dbae631a"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/native_store.h",
+        "sha256": "2e5eae699a1d5c6123891ec6c98cedfae68f03c096d623312a58d7f7342cc833"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/pch.cpp",
+        "sha256": "b7cb2190d8f04fa432c3b0af4288f41d8f20a178325887619ebf61d2961228e7"
+      },
+      {
+        "status": "??",
+        "path": "apps/windows-host/winui/pch.h",
+        "sha256": "422eb94ecd0a7ebcde19ab06ab65a7f6f86bd50a7034d5a0ef1a9c6210146984"
+      },
+      {
+        "status": "??",
+        "path": "docs/DEVELOPMENT.md",
+        "sha256": "3b2a09a074db95fc28ca79688592158fb794d44d4084f54fe498da2071c74d47"
+      },
+      {
+        "status": "??",
+        "path": "docs/DEVELOPMENT_SETUP.md",
+        "sha256": "68d69c38467e7f4ab565fd811a756e26dea1d8aa3a730442ef5d7a202d37c81c"
+      },
+      {
+        "status": "??",
+        "path": "docs/REA.md",
+        "sha256": "9ad7c24f66b70c105b99044c27ffedfeaa007c6610eb800dcee5c58e44462ddf"
+      },
+      {
+        "status": "??",
+        "path": "docs/audits/2026-10-20-codebase-speed-audit.md",
+        "sha256": "2e2238cadc8b01ee79306c48b154a34fb677fafb273f57b2e7a7983486801801"
+      },
+      {
+        "status": "??",
+        "path": "docs/audits/2026-10-20-codebase-speed-fixes.md",
+        "sha256": "271018d1001ca4d8d7e8d5c6ef00f9506dee6014c81c55cd9f8fb37f7a4bfc9e"
+      },
+      {
+        "status": "??",
+        "path": "docs/audits/2026-10-20-codebase-speed-plan.md",
+        "sha256": "a19bb3a1023b63840f9ff849c539c1a01cf01002659159a287da853033ffbbcf"
+      },
+      {
+        "status": "??",
+        "path": "docs/licenses/MIT-legacy.txt",
+        "sha256": "84c9c36d31a8bda033ca45d80b0dc0cc12aa7dc26dd8cb61d6cc17091b25c1b7"
+      },
+      {
+        "status": "??",
+        "path": "docs/python-research-implementation-ledger.md",
+        "sha256": "15372edfbf9acd2d56dc836f9a6145afc5b79b9f6af1dba1aa197774558feef2"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/FIGMA-ALIGNED-REVISION-PLAN.md",
+        "sha256": "a806d217de05d62fc89805b2d4c9822378dbbd00d150c50525cb6f66077bfdaf"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/NATIVE_UI_PORT_STATUS.md",
+        "sha256": "7cf7470b5e9a3a530cd19d2677d50887d9c3148ca64c91c274e2c1d4ac72b100"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/OWN-CHART-RENDERER-PLAN-PROMPT.md",
+        "sha256": "e1e647a26295cd082bf0e20dea7d78224c44551a90d42e9cf488463bb341c8e3"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/RESEARCH-SESSION-PROGRESS.md",
+        "sha256": "7df454068733a4b5cc0f59619fe2fa5aa93ea1689ca03b99a38a6d2a43a79bbe"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/FEATURE-TEST-MATRIX.md",
+        "sha256": "05861453abbbf806b8e7e4693496eca4c06e02488d9bbf43ea99118c0c0eb986"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/R0-AUDIT.md",
+        "sha256": "1891582a017c9d502e6ee71dcaab504c5c2c01e216898a7e0d85791a04688b93"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/R1-HANDOFF.md",
+        "sha256": "31637144bb93e4dffacf635d891def2c748f9899a149216c72b2e1834c107d14"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/R1-PRODUCT-CORRECTION.md",
+        "sha256": "5e708c5117172d8e535f844bb0c9436d330bb024a91c2e3f02ae2868d1e62e3b"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/evidence/R0-baseline.json",
+        "sha256": "de8683fd8504c3117a1354f9bf085386a70e45dcd0fa9d0dae4f30e806f6bf3b"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/evidence/audit-probes.ts",
+        "sha256": "5d48c1f5b7842c36cb42aab5076ed9bf465bd1858276c74068a059668dd20733"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/evidence/measure-baseline.ps1",
+        "sha256": "ba0ee926a6030a316c530d1da3d045be640ac16409dfc246aaa37d57b4df3de2"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/evidence/performance-runs.json",
+        "sha256": "e8a06825fa839eea8a5820214352c426e392ca24a102ceb0258cd889d4938bf9"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/renderer/evidence/performance-summary.json",
+        "sha256": "c9271ad8a1930a31b3361cd99b576c26e9bd215a75d531ba4f0daeb706fb28df"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-interrupted-fixture.json",
+        "sha256": "31160c19c2c9d3c430fa92326a6fe5ce8fcebd3774c4298d1936718e4ff43380"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/compact-1366x768-dpr1.5.png",
+        "sha256": "8cd9fe3c94c17b443d0fac919b235eb8ae42c4b0b383925791ea93770dbade34"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/compact-1366x768-dpr1.png",
+        "sha256": "0d8b8b408689b79b78db0509eb0e7478b5d192d5b9a1c2ab3a010e40603dd6de"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/compact-1366x768-dpr2.png",
+        "sha256": "02fb884c3c609bc2c32b69740c6817d2ab29925111293d7ed77eb1e2e7f676a5"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/comparison-main-client.png",
+        "sha256": "ac6ae47261fff4923824d0a1d1ea707dc1a8d6c3f099daaaba3c945cf99217ba"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/comparison-preferences-client.png",
+        "sha256": "d3eb29e3def90ad5c62f66c4604e19446960ddb8916f8f099f0aab8773a89cdf"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/control-focus-disabled-selected.png",
+        "sha256": "9e33a7963e57ca96c5e64b5e245de1441a58a4c352317fc67eba4cea92bd251a"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/control-hover.png",
+        "sha256": "a1fcae0c368793fa8c373a3db2c8966d1f9466a19ef06df5853abc74dddf9f45"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/control-pressed.png",
+        "sha256": "5707f949e66d26aa5e10b8ecae168f5dc6d36abf97949e88d5f842260285f439"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/empty.png",
+        "sha256": "80e44e34c98f3d8a64a2868b8b2f3063349efe8a3cfd5ffeb1572d579ca983e3"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/error-rejected-import.png",
+        "sha256": "665ceb427ab2ba1e96c11d51ec4d77d6bbf7f6808fe63e4cb5f5078e01e81725"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/evidence-empty-1440x900.png",
+        "sha256": "0f5c205c62717924a71d9eff087bee6d94948401298aba49663a1a5aa592b395"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/expanded-1920x1080-dpr1.5.png",
+        "sha256": "4e8990d6063f729072faafc69963571439f19aa356286744f58f24bf966d5441"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/expanded-1920x1080-dpr1.png",
+        "sha256": "c946214bdf088095f69cf530b6d9ed07aab64fc7992b44233bdc5f9da8623913"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/expanded-1920x1080-dpr2.png",
+        "sha256": "b3ad7b3e5a51956455ce021f0a312df9635e80c542996724fdba0e4e4bdc53dc"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/focused-1440x900.png",
+        "sha256": "795b5f252ffc4b81992d3515c19bdf559344a0485adee1d7e214f6a573c8c0b3"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/main-1440x900-dpr1.5.png",
+        "sha256": "8a181092fb61b48809bbf3dd67846be8a26a995d9932978ced61c36a6f0797fa"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/main-1440x900-dpr1.png",
+        "sha256": "4a217fc8ca9fb8b4cac2b51ae1ba9ed71f50640e7619a12a6a284d80a45673c1"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/main-1440x900-dpr2.png",
+        "sha256": "db2b106952ee82f20e9d03f68dc8a00a7c7c15426e59ee42d12da5c844ada0f8"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/native-client-actual.png",
+        "sha256": "66411ad9d2826a1fda2f644086a4bc09fa639e7ce39ccb39cb8c58ba9056b4bf"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/preferences-1440x900.png",
+        "sha256": "38bec4feaf0553b5dc868412ce0e9c1b984f61b3c51d7d1006a917572b2a42b4"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/preferences-opaque.png",
+        "sha256": "ea4309f4ad1be1b3f35dc846000089be191a090a4aab001a3228c5eb72e4a2d1"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/preferences-reduced.png",
+        "sha256": "b49ae1556bfcf577ad1a5081061fdca678f176e8e4db52f95072d28750ebccea"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/shell-results.json",
+        "sha256": "29d3d7c0c87e0289e6830f6253429d99643ad07c0a31970aa6b8c492969c4d8f"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/small-911x512-dpr1.5.png",
+        "sha256": "c2e11fa364479b74a49535e86ba91aa04a062385150c62d8018c29647fdb2361"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/small-911x512-dpr1.png",
+        "sha256": "26db22dcd1462cd8d79dae8d2b9ee3bde4720a53a813c675a3c0052850765e64"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/small-911x512-dpr2.png",
+        "sha256": "d10c9f98f92532fbe413a21c039a5d8efe7c7b2164f6b595a914bf3c7bdc026f"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/small-focused.png",
+        "sha256": "82244006c016c3dc526041d87b00c4836924fcf3cce1d9de86d781784b41b5d5"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/small-preferences.png",
+        "sha256": "ce757647d6cf1776a7d6b68264c72c36c451994cce93d7bd47b7955fcf6d4c12"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/smallest-683x384-dpr1.5.png",
+        "sha256": "4ab4ec32b93ae0945659de245b9fddda59db5e524cb38c1ce34c475686f6bf0f"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/smallest-683x384-dpr1.png",
+        "sha256": "703acd39ad9c1afebe2be63bf0ad728c12836ec6369fda427fc156810b1f241f"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/smallest-683x384-dpr2.png",
+        "sha256": "7fb8f438adc67377d33ace4d9577c0184823f0227c052e387891b3b6ba5c5170"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/smallest-focused.png",
+        "sha256": "f09d4ad5edfa0e6c08d308b69ace3a804c7da13108700b1fad5f13408ebe7e22"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/m1-shell/smallest-preferences.png",
+        "sha256": "9eabcb3c0f820aab6c45852ce6bf2c3d57c02a1ea0e322a3757085c94df611ce"
+      },
+      {
+        "status": "??",
+        "path": "docs/windows/v2/evidence/superseded-webview/unfinished-range-fix.patch",
+        "sha256": "0cbb2070118918e2c23351331b01754fbebb3086dfc59aa8bd5c820e1d8713b1"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/LICENSE.txt",
+        "sha256": "287cbff7a5fd818349ca0bf9d3aed6d313a7b026a8bc1e2b4f1c38f375120c2f"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/launcher.manifest",
+        "sha256": "18c0a5587631d2c6fcec1fa30bd7765e08f8fbcec79cee8eccb4e6b0913e5a24"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/local_cash.py",
+        "sha256": "bc95548d1f4e480baaeabefa1ce422c90b185fde79e60f86d99385f3fcaeacd0"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/research_analysis.py",
+        "sha256": "7ba59cc4082ce1dd940eeb300c74ceef5dcf56d827785c3263204b625671afd6"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/test_canonical.py",
+        "sha256": "41b914dc5e95e5bcecac0985136e8784ebcfe68df05f56c43ceee8c71a207bd0"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/test_local_cash.py",
+        "sha256": "9dd50d1fa20a5e46bfd677c802e4b5bd74494891d18caa7c9159419e783753b9"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/test_package.py",
+        "sha256": "ebb0595c9f1705028b761b0369b1529ffdc95a1a0874c03435e9c7844acfcf24"
+      },
+      {
+        "status": "??",
+        "path": "research/desktop/test_research_workflow.py",
+        "sha256": "ff96a7835406c1b2d2d20ee3d4fb243d4814d07a105d5dcb0217546af459ae22"
+      },
+      {
+        "status": "??",
+        "path": "research/fixtures/README.md",
+        "sha256": "d3b5840d357013fa1b351754b9a1156514c76f5a4c479ae279620a9c21290b9d"
+      },
+      {
+        "status": "??",
+        "path": "research/fixtures/compare_next_open.py",
+        "sha256": "21a695059e1a1000e229ab4d30589ab689be0216e0b82bdd374f220cc786a94f"
+      },
+      {
+        "status": "??",
+        "path": "research/fixtures/market-next-open.csv",
+        "sha256": "5056f147ea1d9584789c2c10f9ce3ac3242b925e9432cf8f4329480ac63b0805"
+      },
+      {
+        "status": "??",
+        "path": "research/fixtures/synthetic-market-strategy.py",
+        "sha256": "014b2d9ea36016f072c9fada6747a8c70d0e3f90ebb26c01485ad7db04d76db4"
+      },
+      {
+        "status": "??",
+        "path": "research/requirements-dev.txt",
+        "sha256": "572877af3ddcf99cf3d37ca966867ca5a0b7590fe8a1e8d0a21cd883a4311de5"
+      },
+      {
+        "status": "??",
+        "path": "scripts/check-dev.ps1",
+        "sha256": "f40958bbddb8845badb3f6d753096ef72da188105243d172d6bafdb8bfb8bd7d"
+      },
+      {
+        "status": "??",
+        "path": "scripts/dev-environment.ps1",
+        "sha256": "1142845920dca1f94094db5c5bf3c0b21f53fea16ecfe81e2da2e8245d7a0127"
+      },
+      {
+        "status": "??",
+        "path": "scripts/prepare-helper.ps1",
+        "sha256": "b6db95ea64c64bff84d75dd3fa763f676c8f08a6a5140b0ff66a70f6a0895e0f"
+      },
+      {
+        "status": "??",
+        "path": "scripts/setup-dev.ps1",
+        "sha256": "92eb96770d435e1f38a6727327552a8b3d78038f9f6a918e3ead9c8335971d55"
+      },
+      {
+        "status": "??",
+        "path": "scripts/setup-rea.ps1",
+        "sha256": "79ad05db0e7c78590f757cf4237bf52813fb9fd22b88cc6e6b78cc9ff8c7beb0"
+      },
+      {
+        "status": "??",
+        "path": "scripts/start-dev.ps1",
+        "sha256": "c6cdad5f7380f7086669876e4363dd18399c21e6dd54fff08897409ec70caa62"
+      },
+      {
+        "status": "??",
+        "path": "scripts/stop-dev.ps1",
+        "sha256": "763901a481a208bfe359f12e48f0a9401d7828ec5de6aa7a2844365f132e0cf8"
+      },
+      {
+        "status": "??",
+        "path": "scripts/test-native-cash-research.py",
+        "sha256": "32dbe285966e2b545106aed1a080da117e2c21948bbbec8b6634422b00f397dd"
+      },
+      {
+        "status": "??",
+        "path": "scripts/verify-monaco.mjs",
+        "sha256": "d11fedb0306f8cc45e8b608d716d498d90925f191d204e1ed85edb0a5273dc8a"
+      },
+      {
+        "status": "??",
+        "path": "scripts/verify-python-research-harness.py",
+        "sha256": "dde742bbf2cab651a337fd8c0559b9d37a32adfbbb1615223cbcc8291fcc9d3f"
+      },
+      {
+        "status": "??",
+        "path": "src-tauri/workstation-core/src/bin/zt-native-store.rs",
+        "sha256": "56b33970f25c36fa382af9c37ce0ca81772fb7e0cd4ec6b0bf13f047c02f09c7"
+      },
+      {
+        "status": "??",
+        "path": "src-tauri/workstation-core/src/native.rs",
+        "sha256": "04c99ddf992e494fc8ac4da11f63b2c8333d7064cc3bffcf54aefff8c8ff6851"
+      },
+      {
+        "status": "??",
+        "path": "src-tauri/workstation-core/src/strategy.rs",
+        "sha256": "23c151dce27c1fb263c7121c50ee9d98e62c3f9f52fa272634f27f67f368253a"
+      },
+      {
+        "status": "??",
+        "path": "src/components/terminal/docking/order-flow-context.tsx",
+        "sha256": "c95c6579d3e539c7a4ff6a713d0e3341c95b868edf9be3b527de956dbad0da22"
+      },
+      {
+        "status": "??",
+        "path": "src/components/terminal/research-analysis-panel.tsx",
+        "sha256": "ab7cdc55bebc7bb6f355931e2da6f01b40c6373fc1fcf169485290178859bf11"
+      },
+      {
+        "status": "??",
+        "path": "src/components/terminal/research-editor-host.tsx",
+        "sha256": "b819cfe7f9dad279fbe1bc87aaaba4dd15cba0487f7de54e3e0eadd5c1b07f10"
+      },
+      {
+        "status": "??",
+        "path": "src/hooks/use-market-contract.ts",
+        "sha256": "1b5e11ac7a71cef6ff8c65689869c040fa511feeed28862177ebb5007d491816"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/chart/overlays/volume-profile-primitive.ts",
+        "sha256": "3476ea48cf0db8cac86890b015df444202d670e5ca1fc3ed568fd52ec7abe32d"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/local-research/compatibility.ts",
+        "sha256": "ec4d4cbb8419759762f7e9c3e742fc74d5e3c51cf40953d432c590ff16a64b19"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/local-research/indicator-evaluation.ts",
+        "sha256": "db744d7ae2f7f4f8f437faf8263039cdff58f767b0d5d5f396e1f242d2049c81"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/market/instrument.ts",
+        "sha256": "516255875829e9ea9221a70ce681f91aeec2e7ea5b7d1e042701d8dd95269780"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/market/order-flow-context.ts",
+        "sha256": "de91b5f1858432ded7f887f74a808760c9df601e6d645d71af80d8743bd2601a"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/market/order-flow-session.ts",
+        "sha256": "473a9644f27acbb980c5e874a71d0e5ec6abe45aae2e29a7542f04573ec185bc"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/market/provenance.ts",
+        "sha256": "26fb66076ec357539192125ab8632dcfe4b52c5c6c23cd22ce1bb89a93431e0e"
+      },
+      {
+        "status": "??",
+        "path": "src/lib/market/trade-units.ts",
+        "sha256": "6f37dd4668e7a7358b70fe7331939499d8e1af53cc69d7114c0e302e9b87b545"
+      },
+      {
+        "status": "??",
+        "path": "tests/big-trades-projection.test.ts",
+        "sha256": "873e9563f2aa3c9d539145fc90685704b57193e546dc7f6c4d3ed4ad788e0cb6"
+      },
+      {
+        "status": "??",
+        "path": "tests/binance-book-integrity.test.ts",
+        "sha256": "6d95912799a0c809f4f92ed198f7c8d67f5e3c0677fe85eda120ac8440668b33"
+      },
+      {
+        "status": "??",
+        "path": "tests/chart-boundaries.test.ts",
+        "sha256": "0c69e20fda6b3922e4505c1a7ac34a261d36a8d7b6ec5288baf7966de76c43cc"
+      },
+      {
+        "status": "??",
+        "path": "tests/drawing-interaction.test.ts",
+        "sha256": "116b7650f494a7337c99793ea07a7f5cabdd29b179b8e47f23809164fbac701e"
+      },
+      {
+        "status": "??",
+        "path": "tests/gateway-recovery.test.ts",
+        "sha256": "ddd0e69b07b1839f828f339c1c169c8ff7603746a8ce0af146251b3b436d976c"
+      },
+      {
+        "status": "??",
+        "path": "tests/helper-release.test.ts",
+        "sha256": "ec3335539a423cfee561da847b5a334f2df93d7f95dea1c7464cf04e971baf03"
+      },
+      {
+        "status": "??",
+        "path": "tests/history-ranges.test.ts",
+        "sha256": "0f4dd4f6227d422a8897d82f43179d39f42b07a09f36015f1b42518818499b51"
+      },
+      {
+        "status": "??",
+        "path": "tests/indicator-repair.test.ts",
+        "sha256": "82a7d9108d4a608f156dec8f9c72d6c7b104647b3bfc83ebe1eb055a8dd200e6"
+      },
+      {
+        "status": "??",
+        "path": "tests/market-identity.test.ts",
+        "sha256": "63aa9bced1a1b56089b0a36b766d03f26bfb818e0924d6f919b9f7bf7581ce0c"
+      },
+      {
+        "status": "??",
+        "path": "tests/order-flow-context.test.ts",
+        "sha256": "440db08ad10f70e8d78995972a454f968bb9eb21c57aa86d8da322f59b3829f2"
+      },
+      {
+        "status": "??",
+        "path": "tests/order-flow-integrity.test.ts",
+        "sha256": "38d5bb405c189febfd49fc3efc97777a4b0e0f0dbed7ce7a69f13dc60098f365"
+      },
+      {
+        "status": "??",
+        "path": "tests/order-flow-readiness.test.ts",
+        "sha256": "2a48f3ef0ffd505980b160d11c048064c210da61ba90b6efdbb6af2849df92da"
+      },
+      {
+        "status": "??",
+        "path": "tests/order-flow-session.test.ts",
+        "sha256": "5646da954069351f90519ca825e59cd652e2e013d1805ace4304c9406028bb68"
+      },
+      {
+        "status": "??",
+        "path": "tests/provider-provenance.test.ts",
+        "sha256": "466c68506b0273bb57f7c5d9597dcf2f44821b6ca24595c491bf5c38d22a755b"
+      },
+      {
+        "status": "??",
+        "path": "tests/python-indicator-binding.test.ts",
+        "sha256": "5f10244096134c70d2f6e69c0690b06649c306d8f78c54d12418971d394cbf1d"
+      },
+      {
+        "status": "??",
+        "path": "tests/research-lifecycle.test.ts",
+        "sha256": "62f4e8b8a9e11bc6be314b575455f3fef6fcf7a2aaa2abf97b076367bb62a7fb"
+      },
+      {
+        "status": "??",
+        "path": "tests/stream-quality.test.ts",
+        "sha256": "99815246f0aba1959ec3b9910d395e1857d24d4009ee5acd2e9e39d59df4430d"
+      }
+    ],
+    "manifest_correction": {
+      "reason": "First porcelain record lost leading space in collector strip(); corrected from current record after exact initial staged/unstaged diff hash equality",
+      "original_manifest": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18282-2502-7322-b414-bc1194578ca4\\native-parity-audit\\initial-state-original.json",
+      "original_first_record": {
+        "status": "M ",
+        "path": "env.example",
+        "sha256": null
+      }
+    }
+  },
+  "web_reference": {
+    "repository": "zephyriaa/zterminal",
+    "branch": "main",
+    "sha": "eef28dd4c0d4353b94d2afbbff6b252bfa5e4243",
+    "extracted_source": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18282-2502-7322-b414-bc1194578ca4\\native-parity-audit\\web-source-eef28dd4c0d4",
+    "latest_successful_deployment_run": 40677788639,
+    "deployment_job": "Deploy Frontend to Cloudflare",
+    "job_conclusion": "success",
+    "runtime_build_attestation": "NOT TESTED: no build hash from running Worker",
+    "live_browser": "/workspaces dashboard and create form only; no new record submitted; chart journey deferred",
+    "direct_http": "403 for /, /workspaces, /terminal, /api/version, /api/health"
+  },
+  "evidence_root": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18282-2502-7322-b414-bc1194578ca4\\native-parity-audit",
+  "native_artifacts": [
+    {
+      "path": "out\\windows-app\\Release\\RestartAgent.exe",
+      "bytes": 77624,
+      "mtime_utc": "2026-08-31T17:00:18+00:00",
+      "sha256": "c0d146fa48dbb765df0829ab9578fa81d3c3d9e694c5f0872172c0718e489a4b"
+    },
+    {
+      "path": "out\\windows-app\\Release\\zt-direct-public-ingest.exe",
+      "bytes": 1838080,
+      "mtime_utc": "2026-10-14T16:46:32.554015+00:00",
+      "sha256": "5e6129bf18f2caa4d3cf4b4404140b5b6d3b349cb3ec1b54ccbcbe8411b57694"
+    },
+    {
+      "path": "out\\windows-app\\Release\\zt-local-monte-carlo.exe",
+      "bytes": 220160,
+      "mtime_utc": "2026-10-11T17:36:08.607784+00:00",
+      "sha256": "abd0b4e0add4061c863dd8c27784f69fe45850b1d5d9dde91a8435f3cfa80aed"
+    },
+    {
+      "path": "out\\windows-app\\Release\\zt-local-scene-bridge.exe",
+      "bytes": 195584,
+      "mtime_utc": "2026-10-11T17:36:08.510206+00:00",
+      "sha256": "b314451ee0b32a3475b895d578e038c8e72d73d118dc2d89d3fb36ea90a9d162"
+    },
+    {
+      "path": "out\\windows-app\\Release\\zt-local-segment-catalog.exe",
+      "bytes": 203264,
+      "mtime_utc": "2026-10-05T11:48:03.765836+00:00",
+      "sha256": "3551a8d0c0067666d2b27a15a7abd7b569e54d7b76701183267428eeab458642"
+    },
+    {
+      "path": "out\\windows-app\\Release\\zt-local-workspace.exe",
+      "bytes": 203776,
+      "mtime_utc": "2026-10-05T11:48:03.849350+00:00",
+      "sha256": "982fe454a267d892ba0211d178886aa024320588d68646fbae50672ed3ed569a"
+    },
+    {
+      "path": "out\\windows-app\\Release\\zt-native-store.exe",
+      "bytes": 2292224,
+      "mtime_utc": "2026-10-14T16:48:02.838968+00:00",
+      "sha256": "3fc393c6d620207633a7f2245055b5d232ce3f4ce616de327fabb752fe5dcd1b"
+    },
+    {
+      "path": "out\\windows-app\\Release\\zt-offline-provider-import.exe",
+      "bytes": 280064,
+      "mtime_utc": "2026-10-11T17:36:08.756539+00:00",
+      "sha256": "4a3d18e3cbe686c406500eb78f2867a0d807cd3d86eeea3f96a60eb85fa4a733"
+    },
+    {
+      "path": "out\\windows-app\\Release\\ZTerminal.exe",
+      "bytes": 953344,
+      "mtime_utc": "2026-10-14T17:07:15.844978+00:00",
+      "sha256": "cfae00122f2d3442f1efbb41835cf1c13f59a9b2d8f48f4e5e55990bb200b95b"
+    },
+    {
+      "path": "out\\windows-host\\Release\\zt-direct-public-ingest.exe",
+      "bytes": 1838080,
+      "mtime_utc": "2026-10-14T16:46:32.554015+00:00",
+      "sha256": "5e6129bf18f2caa4d3cf4b4404140b5b6d3b349cb3ec1b54ccbcbe8411b57694"
+    },
+    {
+      "path": "out\\windows-host\\Release\\zt-local-monte-carlo.exe",
+      "bytes": 220160,
+      "mtime_utc": "2026-10-11T17:36:08.607784+00:00",
+      "sha256": "abd0b4e0add4061c863dd8c27784f69fe45850b1d5d9dde91a8435f3cfa80aed"
+    },
+    {
+      "path": "out\\windows-host\\Release\\zt-local-scene-bridge.exe",
+      "bytes": 195584,
+      "mtime_utc": "2026-10-11T17:36:08.510206+00:00",
+      "sha256": "b314451ee0b32a3475b895d578e038c8e72d73d118dc2d89d3fb36ea90a9d162"
+    },
+    {
+      "path": "out\\windows-host\\Release\\zt-local-segment-catalog.exe",
+      "bytes": 203264,
+      "mtime_utc": "2026-10-05T11:48:03.765836+00:00",
+      "sha256": "3551a8d0c0067666d2b27a15a7abd7b569e54d7b76701183267428eeab458642"
+    },
+    {
+      "path": "out\\windows-host\\Release\\zt-local-workspace.exe",
+      "bytes": 203776,
+      "mtime_utc": "2026-10-05T11:48:03.849350+00:00",
+      "sha256": "982fe454a267d892ba0211d178886aa024320588d68646fbae50672ed3ed569a"
+    },
+    {
+      "path": "out\\windows-host\\Release\\zt-offline-provider-import.exe",
+      "bytes": 280064,
+      "mtime_utc": "2026-10-11T17:36:08.756539+00:00",
+      "sha256": "4a3d18e3cbe686c406500eb78f2867a0d807cd3d86eeea3f96a60eb85fa4a733"
+    },
+    {
+      "path": "out\\windows-host\\Release\\ZTerminalChartMathTests.exe",
+      "bytes": 46080,
+      "mtime_utc": "2026-10-14T16:49:48.007699+00:00",
+      "sha256": "3917b7a37a740bcf9b8879ac09d9a989f5f528b2484c6f375272982c4cf539db"
+    },
+    {
+      "path": "out\\windows-host\\Release\\ZTerminalNativeChartTests.exe",
+      "bytes": 235008,
+      "mtime_utc": "2026-10-14T16:49:44.845019+00:00",
+      "sha256": "708f07efa7eb98dc15adccfc8deb322cde207cfb9575a55c1e529ba3c474cba0"
+    },
+    {
+      "path": "out\\windows-host\\Release\\ZTerminalWindowsHost.exe",
+      "bytes": 256512,
+      "mtime_utc": "2026-10-14T16:49:54.274675+00:00",
+      "sha256": "1b67890bde9be9ce584f4507e4269b1b4b2104235deb5c9428f74074f0c72e5e"
+    }
+  ],
+  "native_artifact_source_match": "NOT TESTED: existing October 14 artifacts; not rebuilt from dirty checkout",
+  "signature": {
+    "path": "out/windows-app/Release/ZTerminal.exe",
+    "status": "NotSigned"
+  },
+  "hardware": {
+    "os": "Microsoft Windows 11 Pro",
+    "build": "26200",
+    "architecture": "64-bit",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-1335U",
+    "logical_processors": 12.0,
+    "memory_bytes": 8216215552,
+    "gpu": [
+      {
+        "Name": "Intel(R) UHD Graphics",
+        "DriverVersion": "32.0.101.7084",
+        "AdapterRAM": 2147479552
+      }
+    ]
+  },
+  "measured_workload": {
+    "launch": {
+      "pid": 15296,
+      "path": "C:\\Users\\aykhank\\Desktop\\Others\\Projects\\ZT\\out\\windows-app\\Release\\ZTerminal.exe",
+      "launch_to_window_ms": 527,
+      "window_handle": 1377704,
+      "responding": true,
+      "working_set_bytes": 101113856,
+      "private_bytes": 66555904,
+      "store_root": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18282-2502-7322-b414-bc1194578ca4\\native-parity-audit\\native-empty-store",
+      "visibility": "launched Hidden; window-ready is not first-present"
+    },
+    "settled_idle": {
+      "duration_ms": 10022,
+      "cpu_one_core_percent": 0.0,
+      "cpu_machine_percent": 0.0,
+      "working_set_bytes": 11567104,
+      "private_bytes": 128610304,
+      "condition": "settled single native window, empty dataset; foreground visibility uncontrolled; no input during sample",
+      "tcp_connection_count": 0
+    },
+    "earlier_resource_sample": {
+      "duration_ms": 10012,
+      "cpu_one_core_percent": 7.647073511785857,
+      "cpu_machine_percent": 0.6372561259821548,
+      "working_set_bytes": 167141376,
+      "private_bytes": 128655360,
+      "tcp": [],
+      "condition": "empty workspace idle; no UI input during interval"
+    },
+    "module_snapshot_file": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18282-2502-7322-b414-bc1194578ca4\\native-parity-audit\\native-idle.json",
+    "limitations": [
+      "HWND timing is not first present",
+      "foreground visibility uncontrolled; working set may be trimmed",
+      "single empty-dataset native window only",
+      "zero TCP snapshot is not zero requests/bytes",
+      "no fresh build/source identity proof",
+      "no 4/8 charts, Home catalog, sustained replay or concurrent research performance",
+      "no native loaded-chart save/restart acceptance"
+    ]
+  },
+  "verification": {
+    "existing_artifact_checks": {
+      "chart_math": 0,
+      "native_chart": 0,
+      "store_process": 0
+    },
+    "local_cash_tests": {
+      "status": "PASS",
+      "tests": 4,
+      "evidence": "local-cash.log"
+    },
+    "strategy_process": {
+      "status": "FAIL",
+      "attempts": 2,
+      "reason": "WinError 145 during TemporaryDirectory cleanup; no PASS results emitted",
+      "evidence": [
+        "strategy-process.log",
+        "strategy-process-retry.log"
+      ]
+    },
+    "native_ui": "PARTIAL: empty state screenshot/AX; create click produced isolated revision-1 record; interrupted before verification; further UI deferred",
+    "web_ui": "PARTIAL: dashboard/create form only"
+  },
+  "sdk_inventory": {
+    "status": "BLOCKED",
+    "scope": [
+      "native source/build configuration",
+      "repository SDK filename search excluding dependency/build noise",
+      "top-level C:/Program Files",
+      "top-level C:/Program Files (x86)",
+      "top-level user Downloads"
+    ],
+    "result": "No eligible SDK located in bounded inventory; machine-wide absence not asserted",
+    "pro_process_name_check": "No matching Rithmic/RTrader process found",
+    "account_credentials_entitlements": "Not read/tested",
+    "redistribution": "Unknown; actual eligible kit/license not supplied"
+  },
+  "source_files": [
+    {
+      "path": "src/components/workspaces/dashboard.tsx",
+      "source": "web",
+      "bytes": 15698,
+      "sha256": "6c3b765035dffec833e55915b8667822a748a4f1a82bc37c70f2ba408ceceb1f"
+    },
+    {
+      "path": "apps/windows-host/winui/App.xaml.cpp",
+      "source": "native",
+      "bytes": 295,
+      "sha256": "fb488e91c6f5baabf2d9698799885cc1bd77395649472f45fcf4af3ce3507888"
+    },
+    {
+      "path": "src/app/terminal/page.tsx",
+      "source": "web",
+      "bytes": 424,
+      "sha256": "b3f31c0124a1515881f58ea7008712273767654211ebb6a4dc266a4db6c15f0b"
+    },
+    {
+      "path": "apps/windows-host/winui/MainWindow.xaml.cpp",
+      "source": "native",
+      "bytes": 32122,
+      "sha256": "a86cc441dbd7fcef5ca2c7a2446b9104b2b0754905bfb9d655a3ee98acfeb39d"
+    },
+    {
+      "path": "src/lib/auth.ts",
+      "source": "web",
+      "bytes": 3558,
+      "sha256": "6f8726c3ed312f18bf3b3abbbad046598e054789c673416e0c9687cb08492f95"
+    },
+    {
+      "path": "src/lib/workspaces/cloud.ts",
+      "source": "web",
+      "bytes": 2294,
+      "sha256": "5ea3e6a51109ae74c67f0a1bc2a2c7cee1290f0711d1301858515bce5debc939"
+    },
+    {
+      "path": "src-tauri/workstation-core/src/lib.rs",
+      "source": "native",
+      "bytes": 27215,
+      "sha256": "bb5ca03e4ecc9c41cabaac2f3d9876e9d9b7466c7a8771a1968830a2456ae2a7"
+    },
+    {
+      "path": "src/components/terminal/research-workbench.tsx",
+      "source": "web",
+      "bytes": 17000,
+      "sha256": "cb820caa7ebfd0de813f1344d318cf0c7b57f577545868853ae42098ab36b983"
+    },
+    {
+      "path": "apps/windows-host/winui/MainWindow.xaml",
+      "source": "native",
+      "bytes": 7604,
+      "sha256": "c29b1341075785b7c867ce93367d565aa5ed5dc4d9725cbc3e667d5b0664b8fc"
+    },
+    {
+      "path": "src/components/workspaces/workspace-client.tsx",
+      "source": "web",
+      "bytes": 10951,
+      "sha256": "76a8cd81a0235a1a399566de8220734a40c70bed74f0719a78783e255951a4b6"
+    },
+    {
+      "path": "src/lib/workspaces/runtime.ts",
+      "source": "web",
+      "bytes": 11094,
+      "sha256": "4d2ef755bcaef5c50f16e52011ec75d7f95d12d7f1ad6ee34c4a9ad0efe38af9"
+    },
+    {
+      "path": "apps/windows-host/src/main.cpp",
+      "source": "native",
+      "bytes": 93314,
+      "sha256": "24cb444ad00f97995f1657150a05280101cfd54878cf3b5a94f055461061ec09"
+    },
+    {
+      "path": "src/lib/workspaces/edit-lock.ts",
+      "source": "web",
+      "bytes": 2973,
+      "sha256": "284945d08e3bc8db3f6d060a6a5e2dae6fba661084ad9c17898e231c0c64f897"
+    },
+    {
+      "path": "src/lib/workspaces/backup.ts",
+      "source": "web",
+      "bytes": 3443,
+      "sha256": "51643061fda6bd5d4473c4f709743c0c82a69b8b87ae34721c775921ac1acc84"
+    },
+    {
+      "path": "src/lib/workspaces/storage.ts",
+      "source": "web",
+      "bytes": 9425,
+      "sha256": "c7cfcc930ad86ff67e1004e76fa4dbde05401337709a3e6541130bb5e6fa9897"
+    },
+    {
+      "path": "src/lib/chart/contracts.ts",
+      "source": "web",
+      "bytes": 15621,
+      "sha256": "b623f97ea9410e94459b5def3d9159ba88999c2100c9657046df00cc0cfac31e"
+    },
+    {
+      "path": "src/components/terminal/chart-settings-panel.tsx",
+      "source": "web",
+      "bytes": 7663,
+      "sha256": "fca565af645fbb6750d192d72149dc7ac780741f64f42c25ef62260dce93e871"
+    },
+    {
+      "path": "apps/windows-host/src/chart_math.h",
+      "source": "native",
+      "bytes": 5735,
+      "sha256": "18193e65bf6a75ab2e5445563f6427d731f633b1421d4f792d03b358d6a30e98"
+    },
+    {
+      "path": "src/components/terminal/terminal-chart.tsx",
+      "source": "web",
+      "bytes": 49034,
+      "sha256": "a0c8ea8aa8b81e04d6c16bfc5659d910005e3acd5a659ef4474267dcc02b5c06"
+    },
+    {
+      "path": "src/components/terminal/drawing-interaction-layer.tsx",
+      "source": "web",
+      "bytes": 13741,
+      "sha256": "61411a2c24ba05efa4a88a84448f15ddda6694d742dad20ec9f620cdc25e16bf"
+    },
+    {
+      "path": "src/components/terminal/indicators-browser.tsx",
+      "source": "web",
+      "bytes": 11472,
+      "sha256": "1074e4aebfd92f90e18fe7da4af0350d6f3105c2da42b7af1927b997e6f04e97"
+    },
+    {
+      "path": "src/lib/local-research/indicator-evaluation.ts",
+      "source": "web",
+      "bytes": 1672,
+      "sha256": "db744d7ae2f7f4f8f437faf8263039cdff58f767b0d5d5f396e1f242d2049c81"
+    },
+    {
+      "path": "src/components/terminal/terminal-preferences.tsx",
+      "source": "web",
+      "bytes": 12585,
+      "sha256": "e69f4575d58df8aadcd75dc9e3ca9e3bc5644e05e1374af8c4b4da73b40eee52"
+    },
+    {
+      "path": "src/components/terminal/chart-customization.tsx",
+      "source": "web",
+      "bytes": 5430,
+      "sha256": "d52de195054aedf169077b1ac065124e1229f274d4ce377c8702ff47aa9577bf"
+    },
+    {
+      "path": "src/lib/customization.ts",
+      "source": "web",
+      "bytes": 7696,
+      "sha256": "e0b82bc9a8f014eb4b429eae75a417f763fa455f87c81ab2e4a1c2ad7b3c1b5d"
+    },
+    {
+      "path": "src/components/terminal/docking/workspace-dock.tsx",
+      "source": "web",
+      "bytes": 6210,
+      "sha256": "74b9084a6ed6dd35b0dddff5dbd83752ff252fa0cdcde14d1705b8424fdd4750"
+    },
+    {
+      "path": "src/components/terminal/floating-workstation-shell.tsx",
+      "source": "web",
+      "bytes": 6925,
+      "sha256": "5ef7bfca414556a671274b6471926e6bd63ff6ef4118dab615a8a9981bb0c07f"
+    },
+    {
+      "path": "src/stores/multi-chart.ts",
+      "source": "web",
+      "bytes": 3227,
+      "sha256": "412d87b7bff3145e874e373bd2314ce43e9b4edd66d3a57f38fab54f70b97780"
+    },
+    {
+      "path": "src/components/terminal/terminal-shortcuts.tsx",
+      "source": "web",
+      "bytes": 1787,
+      "sha256": "1234f40760af2804c26492530f14cadd89aaca1cc5440bafa2c927f61f8d7a88"
+    },
+    {
+      "path": "src/components/terminal/command-palette.tsx",
+      "source": "web",
+      "bytes": 7660,
+      "sha256": "18128d5c36cc643eb344da5ba7e15168d3ff7fded5e6ac534ad52aba43c0ef97"
+    },
+    {
+      "path": "src/components/terminal/docking/order-flow-context.tsx",
+      "source": "web",
+      "bytes": 12173,
+      "sha256": "24265e3e6f5dc82d09cf7fec24e93ba217d861937e18f5488995d92af79173c1"
+    },
+    {
+      "path": "crates/zt-protocol/src/lib.rs",
+      "source": "native",
+      "bytes": 6377,
+      "sha256": "a8a7711cc3449615b9b3a7e5239eea790413122d396679f4dd3884c260ab31ac"
+    },
+    {
+      "path": "research/desktop/local_cash.py",
+      "source": "native",
+      "bytes": 5052,
+      "sha256": "bc95548d1f4e480baaeabefa1ce422c90b185fde79e60f86d99385f3fcaeacd0"
+    },
+    {
+      "path": "research/desktop/controller.py",
+      "source": "native",
+      "bytes": 9191,
+      "sha256": "e766c7619e395a2c5d052b432c3c2e5677fe88c5811110232394d524df901e4e"
+    },
+    {
+      "path": "src/lib/market/dataset-importer.ts",
+      "source": "web",
+      "bytes": 4929,
+      "sha256": "3b46f1cc76f289a64337650a61bae1e884bd4bc1a8a1d0f8e8c12b72dd54117b"
+    },
+    {
+      "path": "src/lib/market/public-stream.ts",
+      "source": "web",
+      "bytes": 44541,
+      "sha256": "ee27b0f8ab82dc64668e9a7c803ff92295b36c274cff0c79e92eb11658998637"
+    },
+    {
+      "path": "apps/zt-direct-public-ingest/src/main.rs",
+      "source": "native",
+      "bytes": 11050,
+      "sha256": "76cccc71006d8ad9dbe1aa7f9008714718bc5a40a5c563ec0ec337902ba521b5"
+    },
+    {
+      "path": "src/app/api/connectors/rithmic/route.ts",
+      "source": "web",
+      "bytes": 2611,
+      "sha256": "42f00645e26d0040d9cb17cd9d03c7244ea2e406eb8a827b77ca1ce18b7e21b6"
+    },
+    {
+      "path": "crates/zt-adapters/src/lib.rs",
+      "source": "native",
+      "bytes": 43363,
+      "sha256": "3883b41c9eb4af0c113e6c03481b1cb1246192ce0afb8d18d7a4885b37fcab4e"
+    },
+    {
+      "path": "src/components/terminal/terminal-error-boundary.tsx",
+      "source": "web",
+      "bytes": 1569,
+      "sha256": "8c3bfd984761e21d6a3647660b1ff438b8df4ec1328d9e54f37e167f154f7211"
+    },
+    {
+      "path": "apps/windows-host/winui/ZTerminalWindowsHost.vcxproj",
+      "source": "native",
+      "bytes": 5387,
+      "sha256": "a6db24d05200f72fb002402e71539df918c8f95446d19b992c26fdc327676dd6"
+    },
+    {
+      "path": "apps/windows-host/scripts/build-winui.ps1",
+      "source": "native",
+      "bytes": 3135,
+      "sha256": "85f41813321e40c240059c9cc2d996f118e7b974ef32912565c77d84aab28996"
+    },
+    {
+      "path": "AGENTS.md",
+      "source": "native",
+      "bytes": 1033,
+      "sha256": "65f290fdbccfcf22b94d9bc599a2b811627d5135fcaa21dff8bac917f5ff8468"
+    },
+    {
+      "path": "package.json",
+      "source": "native",
+      "bytes": 4665,
+      "sha256": "84be91cdcf0d457e29f4dfc6d4c1f1c4efc0baac39398e58122a020e4fc90259"
+    },
+    {
+      "path": "apps/windows-host/CMakeLists.txt",
+      "source": "native",
+      "bytes": 11595,
+      "sha256": "0113575505926cd70dceafe7375dcd609e8dbe3fc90e1139bbc57eb600366526"
+    },
+    {
+      "path": "apps/windows-host/scripts/build-native.ps1",
+      "source": "native",
+      "bytes": 2159,
+      "sha256": "32f2da4f8371e4be95702d58de37aab06fc4b5e9ce53c04a7793cd1affef18d4"
+    },
+    {
+      "path": "apps/windows-host/winui/App.xaml",
+      "source": "native",
+      "bytes": 1687,
+      "sha256": "a4824b5d87c26b8ce04546d9b07544c2f412c3ff8bf8baf901b367faa3a4aec3"
+    },
+    {
+      "path": "apps/windows-host/winui/native_store.h",
+      "source": "native",
+      "bytes": 6057,
+      "sha256": "2e5eae699a1d5c6123891ec6c98cedfae68f03c096d623312a58d7f7342cc833"
+    },
+    {
+      "path": "src-tauri/workstation-core/src/native.rs",
+      "source": "native",
+      "bytes": 8512,
+      "sha256": "04c99ddf992e494fc8ac4da11f63b2c8333d7064cc3bffcf54aefff8c8ff6851"
+    },
+    {
+      "path": "src-tauri/workstation-core/src/strategy.rs",
+      "source": "native",
+      "bytes": 7115,
+      "sha256": "23c151dce27c1fb263c7121c50ee9d98e62c3f9f52fa272634f27f67f368253a"
+    },
+    {
+      "path": "src-tauri/workstation-core/src/bin/zt-native-store.rs",
+      "source": "native",
+      "bytes": 4514,
+      "sha256": "56b33970f25c36fa382af9c37ce0ca81772fb7e0cd4ec6b0bf13f047c02f09c7"
+    },
+    {
+      "path": "src-tauri/workstation-core/Cargo.toml",
+      "source": "native",
+      "bytes": 551,
+      "sha256": "f8ce0150489feab77282b0ef9ac579ebcbd267d8e6c9a232a564b3ebdf9e03d1"
+    },
+    {
+      "path": "crates/zt-storage/src/lib.rs",
+      "source": "native",
+      "bytes": 45063,
+      "sha256": "35ecb8369538d6c59fed9d8f69cc1786541dce60968eb9c8510f072137349b37"
+    },
+    {
+      "path": "crates/zt-core/src/lib.rs",
+      "source": "native",
+      "bytes": 72209,
+      "sha256": "096515bf1165834ff332d0ba4ba69a6fc55aa9e7a0cd8a631e781075a8b209ee"
+    },
+    {
+      "path": "research/desktop/archive.py",
+      "source": "native",
+      "bytes": 37237,
+      "sha256": "7bf4c44f78a18648e99a719504c921dd12f4f40a1a6d31710f27a4fb4211bd95"
+    },
+    {
+      "path": "research/desktop/engine.py",
+      "source": "native",
+      "bytes": 27678,
+      "sha256": "ac67bdce000169623a176fd8bbb2611201889ccba1e1c2510736266b29030dd7"
+    },
+    {
+      "path": "research/desktop/validation.py",
+      "source": "native",
+      "bytes": 11206,
+      "sha256": "023574281853afb48d9a66db6a92040a5d7ec8edbd3178b290dc8fb22b6b2489"
+    },
+    {
+      "path": "apps/zt-local-scene-bridge/src/main.rs",
+      "source": "native",
+      "bytes": 8739,
+      "sha256": "23b6f8c08c3d7e70ff677a2b7782ee285af8981f051d39531353bbf4383ff760"
+    },
+    {
+      "path": "apps/zt-local-workspace/src/main.rs",
+      "source": "native",
+      "bytes": 14539,
+      "sha256": "ca081abe379f3c3d8c804e8075ec9c295de49b70c733c8cd4164ff659031e61a"
+    },
+    {
+      "path": "apps/zt-local-segment-catalog/src/main.rs",
+      "source": "native",
+      "bytes": 8659,
+      "sha256": "ea10ac3327a122359602218d3612f793913abc4f0f95aead5c5e45bf95d5b704"
+    },
+    {
+      "path": "apps/zt-local-monte-carlo/src/main.rs",
+      "source": "native",
+      "bytes": 20785,
+      "sha256": "e83db797e3f950b137ada702e45d82caea73a9e00f543c2a5dcbad94b2bbc995"
+    },
+    {
+      "path": "apps/zt-offline-provider-import/src/main.rs",
+      "source": "native",
+      "bytes": 15883,
+      "sha256": "6564880e5be1dba9b9dafc4a090770363a30ec587ebc48b9fb3d2fba66eead8d"
+    },
+    {
+      "path": "docs/NATIVE_AUTH_EXCHANGE_PLAN.md",
+      "source": "native",
+      "bytes": 2282,
+      "sha256": "7dfea491d0df1d61c0dd868f15441d6a30391edf86d720ccfa53eba37b22de1a"
+    },
+    {
+      "path": "docs/windows/NATIVE_DESKTOP_ENTRYPOINT.md",
+      "source": "native",
+      "bytes": 2721,
+      "sha256": "470a561ca6d8b3ca02fa5202197a690ab7e8bdd855c9e786c1b20f65d14eb54b"
+    },
+    {
+      "path": "docs/windows/LOCAL_FIRST_PRODUCT_BOUNDARY.md",
+      "source": "native",
+      "bytes": 3032,
+      "sha256": "15b141c396f8181bb527b936c9be0a9e664a6ddf922c98c7a404d79370caa3b5"
+    },
+    {
+      "path": "docs/windows/FIGMA-ALIGNED-REVISION-PLAN.md",
+      "source": "native",
+      "bytes": 30186,
+      "sha256": "a806d217de05d62fc89805b2d4c9822378dbbd00d150c50525cb6f66077bfdaf"
+    },
+    {
+      "path": "docs/windows/OWN-CHART-RENDERER-PLAN-PROMPT.md",
+      "source": "native",
+      "bytes": 26388,
+      "sha256": "e1e647a26295cd082bf0e20dea7d78224c44551a90d42e9cf488463bb341c8e3"
+    },
+    {
+      "path": "docs/windows/RESEARCH-SESSION-PROGRESS.md",
+      "source": "native",
+      "bytes": 17941,
+      "sha256": "7df454068733a4b5cc0f59619fe2fa5aa93ea1689ca03b99a38a6d2a43a79bbe"
+    },
+    {
+      "path": "src/lib/workspaces/route-storage.ts",
+      "source": "web",
+      "bytes": 730,
+      "sha256": "e87649958c5a9ea1ec54289924320ae47ae1a4fd15c060635d602634cba40236"
+    },
+    {
+      "path": "src/lib/terminal-appearance.ts",
+      "source": "web",
+      "bytes": 2536,
+      "sha256": "b308f852f574dadd506d87472613d070bb39bca5181c0b7f8b6c97a1298e0841"
+    },
+    {
+      "path": "src/lib/chart/drawings/geometry.ts",
+      "source": "web",
+      "bytes": 9474,
+      "sha256": "36f37a4f1eafebfc7f86d1cd7bf20db9bd0e8fd1b5385544769c58c4e266b714"
+    },
+    {
+      "path": "src/lib/chart/drawings/coordinates.ts",
+      "source": "web",
+      "bytes": 1257,
+      "sha256": "1dcc8a85fb00c4d9d98cdaf8942b5ebe084fb287e95ebd42110a67bba8d5fb7f"
+    },
+    {
+      "path": "src/lib/chart/indicators/evaluators.ts",
+      "source": "web",
+      "bytes": 4506,
+      "sha256": "fbda5e3a39a817e94e76888d8f86474ef7f0042280b2225c2d26c3bc8ce84b39"
+    },
+    {
+      "path": "tests/customization.test.ts",
+      "source": "web",
+      "bytes": 5702,
+      "sha256": "6e6e55db9d0c1677eddc9348b138fd50b4ba243f4b7f2742b76a13ad348d0a0d"
+    },
+    {
+      "path": "tests/workspace-launcher.test.ts",
+      "source": "web",
+      "bytes": 5861,
+      "sha256": "e520dc07df001a5d81a3817bd5b12bcaac175feaf27bc7ee4f92dd9624458db4"
+    },
+    {
+      "path": "tests/workspace-backup.test.ts",
+      "source": "web",
+      "bytes": 3925,
+      "sha256": "0ae26098c9f07d7f9fcb062d53f2dd9206956ab2afa7a7fbbe809a68c8012e04"
+    },
+    {
+      "path": ".github/workflows/deploy-production.yml",
+      "source": "web",
+      "bytes": 2628,
+      "sha256": "5a1d6a4146c9022f77b868bba4fc2c31db19930f3215e3925cc7d4c0df2f277f"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\00-project-contract.md",
+      "source": "supplied-prompt",
+      "sha256": "343f675c09816d2d0f7b9a0838f8710b7106792eac1d946f7a99731c6192af09"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\01-audit-and-parity.md",
+      "source": "supplied-prompt",
+      "sha256": "7fcb822ccc15e559fb70189aa2d7bb0960abdff5503f3e455115a2d65431a215"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\02-startup-and-account.md",
+      "source": "supplied-prompt",
+      "sha256": "05e5a96dd4b7efdaf1a8999ffa9126404fcde03f40bdbbf7fd05321e472451a5"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\03-dashboard-and-tabs.md",
+      "source": "supplied-prompt",
+      "sha256": "21696ea27d938a43c9ece57254f31a853ba04a73e5d8f76160845047a343aac9"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\04-workspace-parity.md",
+      "source": "supplied-prompt",
+      "sha256": "e3a96aa01ad0dbc2edc0f11bf46f37e920087960ccebae8260c2fa9314b2a9df"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\05-local-research.md",
+      "source": "supplied-prompt",
+      "sha256": "62af2f5c86b2746da54febf5dd240971117a9277d494e996787ab867f259979d"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\06-connectors-and-rithmic.md",
+      "source": "supplied-prompt",
+      "sha256": "5d9eeadb641184d0a79ff9a7d4c695d6af78f55634d432726a818a9a77e5c861"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\07-local-first-scale.md",
+      "source": "supplied-prompt",
+      "sha256": "c798108f678acc67c4cc88a0bc4ea8a0f7e395a87f30499a37b27266bd97321d"
+    },
+    {
+      "path": "C:\\Users\\aykhank\\.codex\\visualizations\\2026\\10\\28\\01a18146-faa3-7dc3-9b36-d6a758f8ee99\\windows-native-sol-prompts\\08-acceptance-and-package.md",
+      "source": "supplied-prompt",
+      "sha256": "19b85166e68df6574a72adfe48040ac18db42a968a83aced3c319bd4c6488916"
+    }
+  ],
+  "parity_row_count": 134
+}

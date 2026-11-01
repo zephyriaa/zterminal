@@ -1,0 +1,4 @@
+obj/
+Generated Files/
+XamlMetaDataProvider.idl
+*.tlog/

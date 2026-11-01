@@ -1,0 +1,37 @@
+[
+  {
+    "id": "Microsoft.VisualStudio.Windows.Build",
+    "version": "17.14.36518.7",
+    "url": "https://download.visualstudio.microsoft.com/download/pr/c8fc9133-40be-4412-8403-7a2525e10208/fcfa0abb5dadf0e35475f8a2c6e9a5e899eefb7eea7a53befe12afbb997d895d/payload.vsix",
+    "sha256": "fcfa0abb5dadf0e35475f8a2c6e9a5e899eefb7eea7a53befe12afbb997d895d",
+    "bytes": 4748391
+  },
+  {
+    "id": "Microsoft.VisualStudio.Windows.Build.VcMeta",
+    "version": "17.14.36015.10",
+    "url": "https://download.visualstudio.microsoft.com/download/pr/58af20f6-56e8-48a0-86d3-115fb110097b/ebb354ca4b4bcc76e49e55ce7f73bd1d418889a6462fad9cb890572711cb5720/payload.vsix",
+    "sha256": "ebb354ca4b4bcc76e49e55ce7f73bd1d418889a6462fad9cb890572711cb5720",
+    "bytes": 97846
+  },
+  {
+    "id": "Microsoft.VisualStudio.Windows.BuildToolsContracts",
+    "version": "17.14.36015.10",
+    "url": "https://download.visualstudio.microsoft.com/download/pr/58af20f6-56e8-48a0-86d3-115fb110097b/6d355e9a7687e5f935a0377aba97dfae26a8130c6ab6d77f5d8f9cb09f859644/payload.vsix",
+    "sha256": "6d355e9a7687e5f935a0377aba97dfae26a8130c6ab6d77f5d8f9cb09f859644",
+    "bytes": 20266
+  },
+  {
+    "id": "Microsoft.VisualStudio.VC.MSBuild.v170.Base.UWP",
+    "version": "17.14.36518.7",
+    "url": "https://download.visualstudio.microsoft.com/download/pr/c8fc9133-40be-4412-8403-7a2525e10208/742d18c206a07b66c76a769b671ddd4a5d4029f24f89363bcc5dd29978da6e81/payload.vsix",
+    "sha256": "742d18c206a07b66c76a769b671ddd4a5d4029f24f89363bcc5dd29978da6e81",
+    "bytes": 12208
+  },
+  {
+    "id": "Microsoft.VisualStudio.VC.MSBuild.v170.X64.UWP",
+    "version": "17.14.36015.10",
+    "url": "https://download.visualstudio.microsoft.com/download/pr/58af20f6-56e8-48a0-86d3-115fb110097b/4438d756440a052869fa0d45feb933a79962cc30866252f88321ff2c74cb4d6a/payload.vsix",
+    "sha256": "4438d756440a052869fa0d45feb933a79962cc30866252f88321ff2c74cb4d6a",
+    "bytes": 15794
+  }
+]

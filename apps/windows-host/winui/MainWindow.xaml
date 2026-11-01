@@ -1,0 +1,81 @@
+<Window x:Class="ZTerminal.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="ZTerminal">
+  <Grid x:Name="Root" Background="{StaticResource WorkspaceBrush}" RequestedTheme="Dark">
+    <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="*"/><RowDefinition Height="28"/></Grid.RowDefinitions>
+    <Border x:Name="WorkspaceCaption" Visibility="Collapsed" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+      <Grid Margin="16,0,150,0"><Grid.ColumnDefinitions><ColumnDefinition Width="194"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <StackPanel x:Name="TitleArea" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><Image Source="Assets/mark-kit-v1.png" Width="24" Height="24"/><TextBlock Text="ZTerminal" FontWeight="SemiBold"/></StackPanel>
+        <Button Grid.Column="1" x:Name="HomeButton" Content="Home" HorizontalAlignment="Left" Margin="0,0,12,0"/><TextBlock Grid.Column="1" Margin="90,0,0,0" x:Name="WorkspaceLabel" Text="Local research workspace" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}"/>
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" x:Name="WorkspaceGrid" Visibility="Collapsed"><Grid.ColumnDefinitions><ColumnDefinition x:Name="NavColumn" Width="48"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="ContextColumn" Width="360"/></Grid.ColumnDefinitions>
+      <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+        <Grid x:Name="NavigationBody" Padding="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <StackPanel Spacing="8"><Button x:Name="ChartsButton" Style="{StaticResource NavigationButtonStyle}" AutomationProperties.Name="Chart" ToolTipService.ToolTip="Chart"><Viewbox Width="18" Height="18"><Path Width="20" Height="20" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M 2,15 L 6,10 L 10,12 L 16,4 M 2,2 L 2,18 L 18,18"/></Viewbox></Button><Button x:Name="ResearchButton" Style="{StaticResource NavigationButtonStyle}" AutomationProperties.Name="Strategy developer" ToolTipService.ToolTip="Strategy developer"><Viewbox Width="18" Height="18"><Path Width="20" Height="20" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M 6,5 L 2,10 L 6,15 M 14,5 L 18,10 L 14,15 M 12,3 L 8,17"/></Viewbox></Button><Button x:Name="DatasetsButton" Style="{StaticResource NavigationButtonStyle}" AutomationProperties.Name="Dataset inspector" ToolTipService.ToolTip="Dataset inspector"><Viewbox Width="18" Height="18"><Path Width="20" Height="20" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M 3,4 L 17,4 L 17,16 L 3,16 Z M 3,8 L 17,8 M 3,12 L 17,12 M 8,4 L 8,16"/></Viewbox></Button><Button x:Name="WorkspacesButton" Style="{StaticResource NavigationButtonStyle}" AutomationProperties.Name="Workspaces" ToolTipService.ToolTip="Workspaces"><Viewbox Width="18" Height="18"><Path Width="20" Height="20" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M 2,2 L 8,2 L 8,8 L 2,8 Z M 12,2 L 18,2 L 18,8 L 12,8 Z M 2,12 L 8,12 L 8,18 L 2,18 Z M 12,12 L 18,12 L 18,18 L 12,18 Z"/></Viewbox></Button></StackPanel>
+          <StackPanel Grid.Row="2" Spacing="8"><Button x:Name="WorkspaceActionsButton" Style="{StaticResource NavigationButtonStyle}" AutomationProperties.Name="Workspace actions" ToolTipService.ToolTip="Workspace actions"><Viewbox Width="18" Height="18"><Path Width="20" Height="20" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M 3,10 L 5,10 M 9,10 L 11,10 M 15,10 L 17,10"/></Viewbox><Button.Flyout><MenuFlyout><MenuFlyoutItem x:Name="NewWorkspaceButton" Text="New workspace"/><MenuFlyoutItem x:Name="LoadButton" Text="Reload saved workspace"/><MenuFlyoutItem x:Name="SaveButton" Text="Save workspace"/><MenuFlyoutSeparator/><MenuFlyoutItem x:Name="ImportButton" Text="Import CSV history"/></MenuFlyout></Button.Flyout></Button><Button x:Name="SettingsButton" Style="{StaticResource NavigationButtonStyle}" AutomationProperties.Name="Appearance" ToolTipService.ToolTip="Appearance"><Viewbox Width="18" Height="18"><Path Width="20" Height="20" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M 2,5 L 18,5 M 2,10 L 18,10 M 2,15 L 18,15 M 6,2 L 6,8 M 14,7 L 14,13 M 9,12 L 9,18"/></Viewbox></Button></StackPanel>
+        </Grid>
+      </Border>
+      <Grid Grid.Column="1"><Grid.RowDefinitions><RowDefinition Height="32"/><RowDefinition Height="44"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"><TextBlock Text="Primary chart" Margin="16,0" VerticalAlignment="Center" FontSize="12"/></Border>
+        <Grid Grid.Row="1" Padding="16,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="InstrumentLabel" Text="No instrument selected" TextTrimming="CharacterEllipsis" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/><Button Grid.Column="1" x:Name="FitButton" Content="Fit history" FontSize="11" Padding="8,4" Margin="8,0" VerticalAlignment="Center"/><ComboBox Grid.Column="2" x:Name="Preset" SelectedIndex="0" Width="124" FontSize="11" VerticalAlignment="Center" AutomationProperties.Name="Layout preset"><ComboBoxItem Content="Research"/><ComboBoxItem Content="Chart focus"/></ComboBox></Grid>
+        <ContentControl Grid.Row="2" x:Name="ChartFocus" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" IsTabStop="True" AutomationProperties.Name="Chart navigation"><Grid x:Name="ChartArea" Background="{StaticResource ChartBrush}" Margin="8,0,8,8">
+          <SwapChainPanel x:Name="ChartSurface" AutomationProperties.Name="Price chart"/>
+          <StackPanel x:Name="ChartEmpty" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12" MaxWidth="340"><TextBlock Text="Your research starts with data" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/><TextBlock x:Name="ChartAvailability" Text="No dataset selected. Saved work stays available offline." Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" TextAlignment="Center"/></StackPanel>
+        </Grid></ContentControl>
+      </Grid>
+      <Grid Grid.Column="2" x:Name="ContextArea" Background="{StaticResource PanelBrush}"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="0.4*"/><RowDefinition Height="0.6*"/></Grid.RowDefinitions>
+        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"><TextBlock Text="Data context" FontSize="12" Margin="16,8"/></Border>
+        <ScrollViewer Grid.Row="1"><StackPanel Margin="16,16,16,16" Spacing="12"><TextBlock Text="Retained historical data" FontWeight="SemiBold"/><TextBlock x:Name="DatasetContext" Text="No historical dataset selected. Import a local CSV to start inspection." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="DatasetIdentity" Visibility="Collapsed" TextWrapping="Wrap" IsTextSelectionEnabled="True" Foreground="{StaticResource MutedBrush}"/></StackPanel></ScrollViewer>
+        <TabView Grid.Row="2" IsAddTabButtonVisible="False" CanDragTabs="False" CanReorderTabs="False"><TabView.TabItems><TabViewItem Header="Python" IsClosable="False"><Grid Background="{StaticResource ChartBrush}"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><StackPanel Margin="16,12" Spacing="8"><TextBlock x:Name="StrategySummary" Text="No saved strategy" FontWeight="SemiBold" TextWrapping="Wrap"/><Button x:Name="EditStrategyButton" Content="Edit strategy" Padding="10,5"/><TextBlock Text="Native backtesting is not connected yet." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource MutedBrush}"/></StackPanel><TextBox Grid.Row="1" x:Name="StrategyPreview" Visibility="Collapsed" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" BorderThickness="0" Background="Transparent" FontFamily="Assets/GeistMono.ttf#Geist Mono" FontSize="12" Margin="8,0,8,8" AutomationProperties.Name="Saved strategy source"/></Grid></TabViewItem><TabViewItem Header="Report" IsClosable="False"><Grid Background="{StaticResource ChartBrush}"><StackPanel Margin="16" Spacing="12"><TextBlock Text="No completed run" FontWeight="SemiBold"/><TextBlock Text="Native backtesting and archived report selection are not connected in this build." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"/></StackPanel></Grid></TabViewItem></TabView.TabItems></TabView>
+      </Grid>
+    </Grid>
+    <Border x:Name="WorkspaceStatusBar" Visibility="Collapsed" Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"><TextBlock x:Name="Status" Text="Local · No dataset selected" Margin="16,0" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="11"/></Border>
+
+    <Grid x:Name="TabCaption" Visibility="Collapsed" Background="{StaticResource PanelBrush}">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
+      <Grid x:Name="TabDrag" Background="Transparent"/>
+      <TabView Grid.Column="1" x:Name="WorkspaceTabs" IsAddTabButtonVisible="False" CanDragTabs="False" CanReorderTabs="False" TabWidthMode="SizeToContent" AutomationProperties.Name="Open research tabs"/>
+    </Grid>
+    <Grid Grid.RowSpan="3" x:Name="StartupView" Background="{ThemeResource WelcomeWorkspaceBrush}">
+      <Grid.RowDefinitions><RowDefinition Height="40"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <Grid x:Name="StartupTitle" Margin="0,0,150,0" Background="Transparent"/>
+      <TextBlock Grid.Row="1" Text="Opening local work…" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{ThemeResource WelcomeMutedBrush}" AutomationProperties.LiveSetting="Polite"/>
+    </Grid>
+    <Grid Grid.RowSpan="3" x:Name="WelcomeView" Visibility="Collapsed" Background="{ThemeResource WelcomeSurfaceBrush}">
+      <Grid.RowDefinitions><RowDefinition Height="40"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <Grid x:Name="WelcomeTitle" Margin="0,0,150,0" Background="Transparent"/>
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+        <StackPanel x:Name="WelcomeContent" Width="440" Margin="32,18,32,32" HorizontalAlignment="Center" Spacing="18">
+          <Image Source="Assets/mark-kit-v1.png" Width="176" Height="176" HorizontalAlignment="Center" AutomationProperties.Name="ZTerminal"/>
+          <TextBlock Text="ZTERMINAL" FontSize="24" CharacterSpacing="300" HorizontalAlignment="Center" Foreground="{ThemeResource WelcomeTextBrush}"/>
+          <TextBlock Text="Research infrastructure for traders" FontSize="17" TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource WelcomeMutedBrush}" Margin="0,-8,0,12"/>
+          <Button x:Name="ContinueAccountButton" FontSize="16" Content="Continue with ZTerminal" HorizontalAlignment="Stretch" MinHeight="52" TabIndex="0" Background="{ThemeResource WelcomeActionBrush}" Foreground="{ThemeResource WelcomeActionTextBrush}" AutomationProperties.Name="Continue with ZTerminal"/>
+          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Border Height="1" Background="{ThemeResource WelcomeBorderBrush}"/><TextBlock Grid.Column="1" Text="or" Margin="16,0" Foreground="{ThemeResource WelcomeMutedBrush}"/><Border Grid.Column="2" Height="1" Background="{ThemeResource WelcomeBorderBrush}"/></Grid>
+          <Button x:Name="ContinueOfflineButton" FontSize="16" Content="Continue offline" HorizontalAlignment="Stretch" MinHeight="52" TabIndex="1" Background="Transparent" BorderBrush="{ThemeResource WelcomeBorderBrush}" Foreground="{ThemeResource WelcomeTextBrush}" AutomationProperties.Name="Continue offline"/>
+          <TextBlock x:Name="WelcomeStatus" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource WelcomeMutedBrush}" AutomationProperties.LiveSetting="Polite"/>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+    <Grid Grid.Row="1" Grid.RowSpan="2" x:Name="HomeView" Visibility="Collapsed" Background="{ThemeResource WelcomeWorkspaceBrush}">
+      <Grid.RowDefinitions><RowDefinition Height="0"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <Grid x:Name="HomeTitle" Margin="20,0,150,0" Background="Transparent"><StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center"><Image Source="Assets/mark-kit-v1.png" Width="24" Height="24"/><TextBlock Text="Home" Foreground="{ThemeResource WelcomeTextBrush}"/></StackPanel></Grid>
+      <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="32,20" Spacing="20">
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <TextBox x:Name="HomeSearch" PlaceholderText="Search local studies and workspaces" MaxLength="256" AutomationProperties.Name="Search local library" Margin="0,0,12,0"/>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"><Button x:Name="HomeSearchButton" Content="Search"/><ComboBox x:Name="HomeSort" SelectedIndex="0" AutomationProperties.Name="Sort library"><ComboBoxItem Content="Recent activity"/><ComboBoxItem Content="Name"/></ComboBox></StackPanel>
+        </Grid>
+        <TextBlock x:Name="HomeMessage" Text="Loading local library…" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" AutomationProperties.LiveSetting="Polite"/>
+        <TextBlock Text="Studies" FontSize="26"/><TextBlock Text="Local Python indicators and strategies" Foreground="{StaticResource MutedBrush}" Margin="0,-16,0,0"/>
+        <Button x:Name="NewStudyButton" Content="+ New study"/>
+        <GridView x:Name="StudyCards" SelectionMode="None" IsItemClickEnabled="False" HorizontalAlignment="Stretch" AutomationProperties.Name="Saved local studies"/>
+        <StackPanel Orientation="Horizontal" Spacing="12"><Button x:Name="PreviousStudies" Content="Previous studies"/><TextBlock x:Name="StudyPage" VerticalAlignment="Center"/><Button x:Name="NextStudies" Content="More studies"/></StackPanel>
+        <Border Height="1" Background="{StaticResource BorderBrush}"/>
+        <TextBlock Text="Workspaces" FontSize="26"/><TextBlock Text="Saved layouts and research environments" Foreground="{StaticResource MutedBrush}" Margin="0,-16,0,0"/>
+        <StackPanel Orientation="Horizontal" Spacing="12"><Button x:Name="HomeWorkspacesButton" Content="+ New workspace"/><Button x:Name="RecoverWorkspaceButton" Content="Recover workspace…"/></StackPanel>
+        <GridView x:Name="WorkspaceCards" SelectionMode="None" IsItemClickEnabled="False" HorizontalAlignment="Stretch" AutomationProperties.Name="Saved local workspaces"/>
+        <StackPanel Orientation="Horizontal" Spacing="12"><Button x:Name="PreviousWorkspaces" Content="Previous workspaces"/><TextBlock x:Name="WorkspacePage" VerticalAlignment="Center"/><Button x:Name="NextWorkspaces" Content="More workspaces"/></StackPanel>
+        <TextBlock x:Name="AccountStatus" Text="Local mode · no account connected" TextWrapping="Wrap" Foreground="{ThemeResource WelcomeMutedBrush}" AutomationProperties.LiveSetting="Polite"/>
+        <StackPanel Orientation="Horizontal" Spacing="12"><Button x:Name="ConnectAccountButton" Content="Connect account"/><Button x:Name="DisconnectAccountButton" Content="Sign out" Visibility="Collapsed"/><Button x:Name="CancelAccountButton" Content="Cancel connection" Visibility="Collapsed"/></StackPanel>
+      </StackPanel></ScrollViewer>
+    </Grid>
+  </Grid>
+</Window>

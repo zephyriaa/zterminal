@@ -1,5 +1,4 @@
 [package]
-license-file.workspace = true
 name = "zt-risk"
 version = "0.1.0"
 edition = "2021"

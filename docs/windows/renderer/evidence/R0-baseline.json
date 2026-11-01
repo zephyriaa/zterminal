@@ -1,0 +1,814 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-11",
+  "timezone": "Asia/Baku",
+  "scope": "R0 audit only; no replacement",
+  "environment": {
+    "date": "2026-10-11",
+    "timezone": "Asia/Baku",
+    "branch": "codex/auth-drawing-rebuild",
+    "commit": "80124f17ae500565fe4bb7a88ad44f4b693d4e02",
+    "os": {
+      "Caption": "Microsoft Windows 11 Pro",
+      "Version": "10.0.26200",
+      "BuildNumber": "26200"
+    },
+    "cpu": {
+      "Name": "13th Gen Intel(R) Core(TM) i5-1335U",
+      "NumberOfCores": 10,
+      "NumberOfLogicalProcessors": 12
+    },
+    "memory": {
+      "TotalPhysicalMemory": 8216215552
+    },
+    "gpu": {
+      "Name": "Intel(R) UHD Graphics",
+      "DriverVersion": "32.0.101.7084",
+      "CurrentHorizontalResolution": 1920,
+      "CurrentVerticalResolution": 1080,
+      "CurrentRefreshRate": 60
+    },
+    "native_host_sha256": "7AD9747CE6463611F79731D5C1A05FAE1E5B73DC418EBB62F634DF382F4AE801",
+    "winui_sha256": "6B514D04C1D822B52F2C293872CD8B1842A68309005704B8CD207CAABE4C4AF3",
+    "node": "v22.23.2",
+    "npm": "10.9.8"
+  },
+  "readme": {
+    "local_blob": "60588dcc5b92546c269785abe04f0fc86a3d71c8",
+    "license_conflict": "main source-available vs local MIT; Cargo UNLICENSED; no redistribution authorized",
+    "main_blob": "5518a4c483e7bfc961ddd80a044de53a8880e7e7"
+  },
+  "dirty_before": [
+    " M .gitignore",
+    " M apps/windows-host/CMakeLists.txt",
+    " M apps/windows-host/src/main.cpp",
+    "D  apps/workstation/assets.d.ts",
+    "D  apps/workstation/assets/geist-mono.woff2",
+    "D  apps/workstation/assets/geist.woff2",
+    "D  apps/workstation/assets/mark.png",
+    "D  apps/workstation/public/NOTICES.txt",
+    "D  apps/workstation/public/geist-OFL.txt",
+    "M  apps/workstation/style.css",
+    "M  apps/workstation/workstation.tsx",
+    " M crates/zt-risk/src/gatekeeper.rs",
+    " M crates/zt-risk/src/ipc.rs",
+    " M crates/zt-risk/src/sizing.rs",
+    " M docs/windows/V2-PRODUCT-BUILD-PROMPT.md",
+    "M  docs/windows/v2/ACCEPTANCE.md",
+    "M  docs/windows/v2/MILESTONE-1.md",
+    "M  docs/windows/v2/README.md",
+    "M  docs/windows/v2/RISKS-DECISIONS.md",
+    "M  docs/windows/v2/generate-inventory.py",
+    "D  docs/windows/v2/verify-shell.py",
+    " M eslint.config.mjs",
+    " M research/desktop/requirements.txt",
+    " M scripts/test-python.ps1",
+    "M  scripts/test-workstation-browser.py",
+    "D  scripts/test-workstation-shell.mjs",
+    "M  src-tauri/src/commands.rs",
+    "M  src-tauri/src/lib.rs",
+    "M  src-tauri/tauri.conf.json",
+    "D  src-tauri/tauri.milestone1-test.conf.json",
+    "M  src-tauri/workstation-core/examples/bridge.rs",
+    "M  src-tauri/workstation-core/src/lib.rs",
+    "M  src/components/terminal/observed-history-chart.tsx",
+    "M  src/components/terminal/terminal-chart.tsx",
+    "M  src/lib/workstation-platform.ts",
+    " M tsconfig.json",
+    "?? .nvmrc",
+    "?? ZTerminal.code-workspace",
+    "?? apps/windows-host/scripts/build-winui.ps1",
+    "?? apps/windows-host/scripts/prepare-winui-toolchain.ps1",
+    "?? apps/windows-host/scripts/winui-build-dependencies.json",
+    "?? apps/windows-host/src/native_chart_host.h",
+    "?? apps/windows-host/winui/",
+    "?? docs/DEVELOPMENT.md",
+    "?? docs/DEVELOPMENT_SETUP.md",
+    "?? docs/windows/NATIVE_UI_PORT_STATUS.md",
+    "?? docs/windows/OWN-CHART-RENDERER-PLAN-PROMPT.md",
+    "?? docs/windows/v2/evidence/m1-interrupted-fixture.json",
+    "?? docs/windows/v2/evidence/m1-shell/",
+    "?? docs/windows/v2/evidence/superseded-webview/",
+    "?? research/requirements-dev.txt",
+    "?? scripts/check-dev.ps1",
+    "?? scripts/dev-environment.ps1",
+    "?? scripts/prepare-helper.ps1",
+    "?? scripts/setup-dev.ps1",
+    "?? scripts/start-dev.ps1",
+    "?? scripts/stop-dev.ps1"
+  ],
+  "preservation": {
+    "source_status_diff": "Only new docs/windows/renderer/",
+    "no_product_source_changes": true,
+    "no_document_migrations": true,
+    "no_staging_or_commits": true,
+    "tracked_diff_hashes": {
+      "unstaged_preserved": true,
+      "staged_preserved": true,
+      "unstaged_sha256": "B7B59418DF313A9556CB6C52B75CE0E756D58B4506638A512771B02A1A69B8F2",
+      "staged_sha256": "C8A7D36182D725950BAB63ED4C8F0C8DB17456E12CC225CED60E701D1181B196"
+    }
+  },
+  "source_hashes": [
+    {
+      "path": "apps/windows-host/CMakeLists.txt",
+      "sha256": "B08495B37DEB20FC488D778230E40C7D8E0BBB27C0A5A28CA332331E6D6D2DC2"
+    },
+    {
+      "path": "apps/windows-host/src/local_scene_bridge.cpp",
+      "sha256": "AE3E9B0A9B401D22A6CB6222CE826A78279BE8AC810063AF99E4AA43CE7F5668"
+    },
+    {
+      "path": "apps/windows-host/src/local_scene_bridge.h",
+      "sha256": "7EC077ABAA8C7FDB6605B2CE0AAD2341FBE91696DE8CC7D005C51B2D43417239"
+    },
+    {
+      "path": "apps/windows-host/src/main.cpp",
+      "sha256": "0E09E997472DEE259660927A7340270EB503810406A57BE2D824564FAC365ED4"
+    },
+    {
+      "path": "apps/windows-host/src/native_chart_host.h",
+      "sha256": "FAC86E91F740D214A1833B09688D0B3228D8C4CAB55B87AABE63789F5751939E"
+    },
+    {
+      "path": "apps/windows-host/winui/MainWindow.xaml",
+      "sha256": "A932505B06A3D3D9DA2A9F95AE05D206720A8597E46E7D8220D39330925493CE"
+    },
+    {
+      "path": "apps/windows-host/winui/MainWindow.xaml.cpp",
+      "sha256": "5579D97B9EB549EA714A61E96058A59B1711CE5DD3F780BB2A2FF22352A05E97"
+    },
+    {
+      "path": "crates/zt-core/src/lib.rs",
+      "sha256": "C10C71EDE40D6C6952ECF05057D3471F8E5C602969098977954EA2F3A56D53FF"
+    },
+    {
+      "path": "crates/zt-domain/src/lib.rs",
+      "sha256": "E86C7F09755AD0161A07A24719DF986BBB95881F0AA8D0EA96232BE4F4146BB9"
+    },
+    {
+      "path": "crates/zt-storage/src/lib.rs",
+      "sha256": "35ECB8369538D6C59FED9D8F69CC1786541DCE60968EB9C8510F072137349B37"
+    },
+    {
+      "path": "src-tauri/workstation-core/src/lib.rs",
+      "sha256": "417B23F98C1181EF5947593CE556281664A06069D3914B942DE730E9E0D4633F"
+    },
+    {
+      "path": "src/components/terminal/drawing-interaction-layer.tsx",
+      "sha256": "1E2D744AC6BD2BFD7EE4C7E07641BCBFBCCE3BD6B8D9CFBFEF511330294ECB70"
+    },
+    {
+      "path": "src/components/terminal/multi-chart-grid.tsx",
+      "sha256": "B6C2A3AB435F72D6A68500FA4100DDCEF1535C858CE45C31E433649F19263896"
+    },
+    {
+      "path": "src/components/terminal/observed-history-chart.tsx",
+      "sha256": "3A39F9922C1F7C985A9CE26784C2EE6EE83A47E6566322E59BA94E7E676698F9"
+    },
+    {
+      "path": "src/components/terminal/reference-chart-workspace.tsx",
+      "sha256": "7C52B04903E6ABA1CE027211C1B157B66B84E73A9F77F3A0214B2855E4F0CD4D"
+    },
+    {
+      "path": "src/components/terminal/terminal-chart.tsx",
+      "sha256": "C5E267280F676939430EDF3C037FCB8F31F36E2DF77E5B36F832D146EE3EBB0F"
+    },
+    {
+      "path": "src/lib/chart\\contracts.ts",
+      "sha256": "CD2DF4361B6D686827607B47500822124FA692BB7C01125799E261583A9DC815"
+    },
+    {
+      "path": "src/lib/chart\\drawings\\contracts.ts",
+      "sha256": "27518B454C177940F5C7A38F1E7C32890AD52C18B00454662555926702282C59"
+    },
+    {
+      "path": "src/lib/chart\\drawings\\coordinates.ts",
+      "sha256": "1DCC8A85FB00C4D9D98CDAF8942B5EBE084FB287E95EBD42110A67BBA8D5FB7F"
+    },
+    {
+      "path": "src/lib/chart\\drawings\\geometry.ts",
+      "sha256": "36F37A4F1EAFEBFC7F86D1CD7BF20DB9BD0E8FD1B5385544769C58C4E266B714"
+    },
+    {
+      "path": "src/lib/chart\\drawings\\primitive.ts",
+      "sha256": "50EEF797C47C83F66F70C51B7F9EA7CAD11E5EE9797CCF3B5F25E1EE4492E1D5"
+    },
+    {
+      "path": "src/lib/chart\\drawings\\snapping.ts",
+      "sha256": "199C35F0633DAAE12C661239FD77B2C2E1372E220B6A36405ACEFE9BB4D76472"
+    },
+    {
+      "path": "src/lib/chart\\indicators\\evaluators.ts",
+      "sha256": "1ED1B471CB5B4093B9E1D60E1A409BD25E533CA7F26548F1F1263DAC0B448D46"
+    },
+    {
+      "path": "src/lib/chart\\lightweight-adapter.ts",
+      "sha256": "06D6597701E00D6FFDECC66B7BF913AA35E2F9CCD14602F0260F50323F4E18C6"
+    },
+    {
+      "path": "src/lib/chart\\overlays\\big-trades-primitive.ts",
+      "sha256": "C5AB95FFB2BCF7130642D4E1D7581A866A0E0F3B50C4C07E0F3ACEBB94082DDE"
+    },
+    {
+      "path": "src/lib/chart\\overlays\\big-trades.ts",
+      "sha256": "716EBDFD6E62F0D1A35FBDD859672E849A48D525B2495D2A6D03E5EADE1EF70C"
+    },
+    {
+      "path": "src/lib/chart\\overlays\\contracts.ts",
+      "sha256": "D9170F50D403C7B4CE28A6897152FE04CD9E7C058B881503F195E5CA2DAD1D63"
+    },
+    {
+      "path": "src/lib/chart\\workspace-snapshot.ts",
+      "sha256": "921362EF00B42F9B6D87E14C558AA59FAA848BDEB064CD2BBC118F0CDE162ADC"
+    },
+    {
+      "path": "src/lib/market/chart-data.ts",
+      "sha256": "D8301AC9C053533BCD7469F1A9D6BEFC47B9E4CB405E32C6A670A4E0DB853762"
+    },
+    {
+      "path": "src/stores/chart-documents.ts",
+      "sha256": "F11299E38C8DA4520CF0BFF52249D90EC66A12C42DBA9F9498D892B96B74015B"
+    },
+    {
+      "path": "src/stores/multi-chart.ts",
+      "sha256": "18834182B079EEC732F2D430FD1A960023A35F53C674A6BFC65CC21E604443E5"
+    }
+  ],
+  "checks": [
+    {
+      "log": "out/renderer-r0/build-native.log",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File apps/windows-host/scripts/build-native.ps1",
+      "status": "Pass"
+    },
+    {
+      "limit": "C++ target clean; Rust build cache retained",
+      "log": "out/renderer-r0/build-native-clean.log",
+      "command": "Bundled VS cmake.exe --build out/windows-host --config Release --clean-first --target ZTerminalWindowsHost",
+      "status": "Pass"
+    },
+    {
+      "log": "out/renderer-r0/build-winui.log",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File apps/windows-host/scripts/build-winui.ps1 -Rebuild",
+      "status": "Pass"
+    },
+    {
+      "passed": 204,
+      "log": "out/renderer-r0/npm-test.log",
+      "failed": 0,
+      "command": "npm test",
+      "status": "Pass"
+    },
+    {
+      "log": "out/renderer-r0/typecheck.log",
+      "command": "npm run typecheck",
+      "status": "Pass"
+    },
+    {
+      "warnings": 11,
+      "errors": 0,
+      "log": "out/renderer-r0/lint.log",
+      "command": "npm run lint",
+      "status": "Pass"
+    },
+    {
+      "limit": "Local build only; existing prebuild generates Prisma client and prepares local Monaco assets",
+      "log": "out/renderer-r0/build-web.log",
+      "command": "npm run build",
+      "status": "Pass"
+    },
+    {
+      "warnings": 109,
+      "status": "Pass",
+      "passed": 43,
+      "log": "out/renderer-r0/rust-tests.log",
+      "command": "cargo test -p zt-domain -p zt-core -p zt-storage -p zt-adapters -p zt-local-scene-bridge -p zt-local-workspace --all-targets",
+      "failed": 0
+    },
+    {
+      "passed": 5,
+      "log": "out/renderer-r0/workstation-core.log",
+      "failed": 0,
+      "command": "cargo test --locked --manifest-path src-tauri/workstation-core/Cargo.toml",
+      "status": "Pass"
+    },
+    {
+      "failure": "Empty PSScriptRoot default parameter before native launch",
+      "log": "out/renderer-r0/pixels.log",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File apps/windows-host/scripts/run-rendered-chart-smoke.ps1 -OutputDirectory out/renderer-r0/pixels",
+      "status": "Fail"
+    },
+    {
+      "cases": 5,
+      "log": "out/renderer-r0/pixels-explicit.log",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File apps/windows-host/scripts/run-rendered-chart-smoke.ps1 -Executable C:/Users/aykhank/Desktop/Others/Projects/ZT/out/windows-host/Release/ZTerminalWindowsHost.exe -OutputDirectory C:/Users/aykhank/Desktop/Others/Projects/ZT/out/renderer-r0/pixels",
+      "status": "Pass"
+    },
+    {
+      "environment": "LOCALAPPDATA=<repo>/out/renderer-r0/native-local-appdata; delete targets verified inside isolated root",
+      "log": "out/renderer-r0/local-navigation.log",
+      "command": "apps/windows-host/scripts/run-local-scene-navigation-smoke.ps1 -RepositoryRoot C:/Users/aykhank/Desktop/Others/Projects/ZT/out/renderer-r0/native-tests -HostExecutable C:/Users/aykhank/Desktop/Others/Projects/ZT/out/windows-host/Release/ZTerminalWindowsHost.exe -ImporterExecutable C:/Users/aykhank/Desktop/Others/Projects/ZT/out/windows-host/Release/zt-offline-provider-import.exe",
+      "status": "Pass"
+    },
+    {
+      "environment": "same isolated LOCALAPPDATA/root as navigation",
+      "log": "out/renderer-r0/local-workspace.log",
+      "command": "apps/windows-host/scripts/run-local-workspace-smoke.ps1 -RepositoryRoot C:/Users/aykhank/Desktop/Others/Projects/ZT/out/renderer-r0/native-tests -WorkspaceExecutable C:/Users/aykhank/Desktop/Others/Projects/ZT/out/windows-host/Release/zt-local-workspace.exe",
+      "status": "Pass"
+    },
+    {
+      "environment": "LOCALAPPDATA=<repo>/out/renderer-r0/native-postclean-appdata; delete target verified inside isolated root",
+      "log": "out/renderer-r0/retained-buffers.log",
+      "command": "apps/windows-host/scripts/run-persistent-vertex-buffer-smoke.ps1 -RepositoryRoot C:/Users/aykhank/Desktop/Others/Projects/ZT/out/renderer-r0/native-postclean-tests -HostExecutable C:/Users/aykhank/Desktop/Others/Projects/ZT/out/windows-host/Release/ZTerminalWindowsHost.exe -ImporterExecutable C:/Users/aykhank/Desktop/Others/Projects/ZT/out/windows-host/Release/zt-offline-provider-import.exe",
+      "status": "Pass"
+    },
+    {
+      "limit": "hidden windows; 600 visible; 2 seconds/run; renderer+Present submission only",
+      "log": "out/renderer-r0/performance.log",
+      "samples": 40,
+      "command": "out/renderer-r0/measure-baseline.ps1",
+      "status": "Pass"
+    },
+    {
+      "limit": "characterizes defects; not product correctness pass",
+      "log": "out/renderer-r0/audit-probes.json",
+      "command": "node node_modules/tsx/dist/cli.mjs out/renderer-r0/audit-probes.ts",
+      "status": "Pass"
+    },
+    {
+      "log": "out/renderer-r0/audit-probes-curated.json",
+      "command": "node node_modules/tsx/dist/cli.mjs docs/windows/renderer/evidence/audit-probes.ts",
+      "limit": "same characterization fixture with relocated imports",
+      "status": "Pass"
+    },
+    {
+      "log": "out/renderer-r0/audit-docs-lint.log",
+      "command": "node node_modules/eslint/bin/eslint.js docs/windows/renderer/evidence/audit-probes.ts",
+      "errors": 0,
+      "status": "Pass"
+    },
+    {
+      "log": "out/renderer-r0/preservation.json",
+      "command": "git diff --check; compare staged/unstaged diff SHA256 before/after; validate local Markdown links and31 source SHA256 entries",
+      "source_hash_mismatches": 0,
+      "status": "Pass"
+    }
+  ],
+  "native_pixel_cases": [
+    {
+      "name": "default",
+      "diagnostic": {
+        "schema_version": 1,
+        "product": "ZTerminal Native Local-First Host",
+        "fixture_only": false,
+        "chart_source": "withheld",
+        "local_availability": "LOCAL DATA UNAVAILABLE",
+        "local_bridge_diagnostic": "explicit local scene request required",
+        "local_total_bars": 0,
+        "local_first_bar": 0,
+        "local_navigation_reloads": 0,
+        "local_segment_switches": 0,
+        "local_history_diagnostic": "",
+        "local_monte_carlo_kind": "RESEARCH NOT REQUESTED",
+        "local_monte_carlo_availability": "LOCAL DATA UNAVAILABLE",
+        "local_monte_carlo_source_segments": 0,
+        "local_monte_carlo_source_bars": 0,
+        "local_monte_carlo_simulations": 0,
+        "local_monte_carlo_horizon_bars": 0,
+        "local_monte_carlo_median_return_bps": 0,
+        "fixture_candles": 0,
+        "benchmark_unsynchronised_present": false,
+        "benchmark_resize_once": false,
+        "driver": "hardware",
+        "adapter": "Intel(R) UHD Graphics",
+        "feature_level": "11_1",
+        "launch_to_visible_ms": 94.83,
+        "frame_samples": 0,
+        "frame_average_ms": 0.0,
+        "frame_p95_ms": 0.0,
+        "frame_maximum_ms": 0.0,
+        "renderer_resize_successes": 0,
+        "renderer_resize_failures": 0,
+        "renderer_device_recoveries": 0,
+        "renderer_unrecoverable_device_failures": 0,
+        "renderer_present_failures": 0,
+        "renderer_vertex_buffer_uploads": 0,
+        "renderer_retained_draw_reuses": 0,
+        "renderer_retained_vertex_clears": 0,
+        "renderer_retained_vertex_rebuilds": 0,
+        "renderer_last_error_hr": 0,
+        "verified_chart_pixels": null,
+        "working_set_bytes": 41639936,
+        "private_usage_bytes": 50937856
+      }
+    },
+    {
+      "name": "missing-local-data",
+      "diagnostic": {
+        "schema_version": 1,
+        "product": "ZTerminal Native Local-First Host",
+        "fixture_only": false,
+        "chart_source": "withheld",
+        "local_availability": "LOCAL DATA UNAVAILABLE",
+        "local_bridge_diagnostic": "",
+        "local_total_bars": 0,
+        "local_first_bar": 0,
+        "local_navigation_reloads": 0,
+        "local_segment_switches": 0,
+        "local_history_diagnostic": "",
+        "local_monte_carlo_kind": "RESEARCH NOT REQUESTED",
+        "local_monte_carlo_availability": "LOCAL DATA UNAVAILABLE",
+        "local_monte_carlo_source_segments": 0,
+        "local_monte_carlo_source_bars": 0,
+        "local_monte_carlo_simulations": 0,
+        "local_monte_carlo_horizon_bars": 0,
+        "local_monte_carlo_median_return_bps": 0,
+        "fixture_candles": 0,
+        "benchmark_unsynchronised_present": false,
+        "benchmark_resize_once": false,
+        "driver": "hardware",
+        "adapter": "Intel(R) UHD Graphics",
+        "feature_level": "11_1",
+        "launch_to_visible_ms": 174.613,
+        "frame_samples": 0,
+        "frame_average_ms": 0.0,
+        "frame_p95_ms": 0.0,
+        "frame_maximum_ms": 0.0,
+        "renderer_resize_successes": 0,
+        "renderer_resize_failures": 0,
+        "renderer_device_recoveries": 0,
+        "renderer_unrecoverable_device_failures": 0,
+        "renderer_present_failures": 0,
+        "renderer_vertex_buffer_uploads": 0,
+        "renderer_retained_draw_reuses": 0,
+        "renderer_retained_vertex_clears": 0,
+        "renderer_retained_vertex_rebuilds": 0,
+        "renderer_last_error_hr": 0,
+        "verified_chart_pixels": null,
+        "working_set_bytes": 41828352,
+        "private_usage_bytes": 50937856
+      }
+    },
+    {
+      "name": "10000-candles",
+      "diagnostic": {
+        "schema_version": 1,
+        "product": "ZTerminal Native Local-First Host",
+        "fixture_only": true,
+        "chart_source": "fixture",
+        "local_availability": "LOCAL DATA UNAVAILABLE",
+        "local_bridge_diagnostic": "",
+        "local_total_bars": 0,
+        "local_first_bar": 0,
+        "local_navigation_reloads": 0,
+        "local_segment_switches": 0,
+        "local_history_diagnostic": "",
+        "local_monte_carlo_kind": "RESEARCH NOT REQUESTED",
+        "local_monte_carlo_availability": "LOCAL DATA UNAVAILABLE",
+        "local_monte_carlo_source_segments": 0,
+        "local_monte_carlo_source_bars": 0,
+        "local_monte_carlo_simulations": 0,
+        "local_monte_carlo_horizon_bars": 0,
+        "local_monte_carlo_median_return_bps": 0,
+        "fixture_candles": 10000,
+        "benchmark_unsynchronised_present": false,
+        "benchmark_resize_once": false,
+        "driver": "hardware",
+        "adapter": "Intel(R) UHD Graphics",
+        "feature_level": "11_1",
+        "launch_to_visible_ms": 50.346,
+        "frame_samples": 32,
+        "frame_average_ms": 32.145,
+        "frame_p95_ms": 32.219,
+        "frame_maximum_ms": 42.682,
+        "renderer_resize_successes": 0,
+        "renderer_resize_failures": 0,
+        "renderer_device_recoveries": 0,
+        "renderer_unrecoverable_device_failures": 0,
+        "renderer_present_failures": 0,
+        "renderer_vertex_buffer_uploads": 1,
+        "renderer_retained_draw_reuses": 31,
+        "renderer_retained_vertex_clears": 0,
+        "renderer_retained_vertex_rebuilds": 1,
+        "renderer_last_error_hr": 0,
+        "verified_chart_pixels": 32453,
+        "working_set_bytes": 50831360,
+        "private_usage_bytes": 56590336
+      }
+    },
+    {
+      "name": "100000-candles",
+      "diagnostic": {
+        "schema_version": 1,
+        "product": "ZTerminal Native Local-First Host",
+        "fixture_only": true,
+        "chart_source": "fixture",
+        "local_availability": "LOCAL DATA UNAVAILABLE",
+        "local_bridge_diagnostic": "",
+        "local_total_bars": 0,
+        "local_first_bar": 0,
+        "local_navigation_reloads": 0,
+        "local_segment_switches": 0,
+        "local_history_diagnostic": "",
+        "local_monte_carlo_kind": "RESEARCH NOT REQUESTED",
+        "local_monte_carlo_availability": "LOCAL DATA UNAVAILABLE",
+        "local_monte_carlo_source_segments": 0,
+        "local_monte_carlo_source_bars": 0,
+        "local_monte_carlo_simulations": 0,
+        "local_monte_carlo_horizon_bars": 0,
+        "local_monte_carlo_median_return_bps": 0,
+        "fixture_candles": 100000,
+        "benchmark_unsynchronised_present": false,
+        "benchmark_resize_once": false,
+        "driver": "hardware",
+        "adapter": "Intel(R) UHD Graphics",
+        "feature_level": "11_1",
+        "launch_to_visible_ms": 62.175,
+        "frame_samples": 34,
+        "frame_average_ms": 30.19,
+        "frame_p95_ms": 32.348,
+        "frame_maximum_ms": 47.399,
+        "renderer_resize_successes": 0,
+        "renderer_resize_failures": 0,
+        "renderer_device_recoveries": 0,
+        "renderer_unrecoverable_device_failures": 0,
+        "renderer_present_failures": 0,
+        "renderer_vertex_buffer_uploads": 1,
+        "renderer_retained_draw_reuses": 33,
+        "renderer_retained_vertex_clears": 0,
+        "renderer_retained_vertex_rebuilds": 1,
+        "renderer_last_error_hr": 0,
+        "verified_chart_pixels": 32274,
+        "working_set_bytes": 54317056,
+        "private_usage_bytes": 58912768
+      }
+    },
+    {
+      "name": "after-resize",
+      "diagnostic": {
+        "schema_version": 1,
+        "product": "ZTerminal Native Local-First Host",
+        "fixture_only": true,
+        "chart_source": "fixture",
+        "local_availability": "LOCAL DATA UNAVAILABLE",
+        "local_bridge_diagnostic": "",
+        "local_total_bars": 0,
+        "local_first_bar": 0,
+        "local_navigation_reloads": 0,
+        "local_segment_switches": 0,
+        "local_history_diagnostic": "",
+        "local_monte_carlo_kind": "RESEARCH NOT REQUESTED",
+        "local_monte_carlo_availability": "LOCAL DATA UNAVAILABLE",
+        "local_monte_carlo_source_segments": 0,
+        "local_monte_carlo_source_bars": 0,
+        "local_monte_carlo_simulations": 0,
+        "local_monte_carlo_horizon_bars": 0,
+        "local_monte_carlo_median_return_bps": 0,
+        "fixture_candles": 10000,
+        "benchmark_unsynchronised_present": false,
+        "benchmark_resize_once": true,
+        "driver": "hardware",
+        "adapter": "Intel(R) UHD Graphics",
+        "feature_level": "11_1",
+        "launch_to_visible_ms": 56.504,
+        "frame_samples": 33,
+        "frame_average_ms": 31.201,
+        "frame_p95_ms": 32.606,
+        "frame_maximum_ms": 43.344,
+        "renderer_resize_successes": 1,
+        "renderer_resize_failures": 0,
+        "renderer_device_recoveries": 0,
+        "renderer_unrecoverable_device_failures": 0,
+        "renderer_present_failures": 0,
+        "renderer_vertex_buffer_uploads": 1,
+        "renderer_retained_draw_reuses": 32,
+        "renderer_retained_vertex_clears": 0,
+        "renderer_retained_vertex_rebuilds": 1,
+        "renderer_last_error_hr": 0,
+        "verified_chart_pixels": 20909,
+        "working_set_bytes": 50896896,
+        "private_usage_bytes": 58118144
+      }
+    }
+  ],
+  "native_navigation": {
+    "schema_version": 1,
+    "test_only_offline_frames": true,
+    "packaged_importer": true,
+    "execution_uses_cargo": false,
+    "network_opened": false,
+    "diagnostic_navigation": "end",
+    "importer": {
+      "source_frames": 7,
+      "retained_completed_bars": 6,
+      "outcome": "persisted"
+    },
+    "native_host": {
+      "schema_version": 1,
+      "product": "ZTerminal Native Local-First Host",
+      "fixture_only": false,
+      "chart_source": "local_scene",
+      "local_availability": "LOCAL CACHED",
+      "local_bridge_diagnostic": "",
+      "local_total_bars": 6,
+      "local_first_bar": 4,
+      "local_navigation_reloads": 1,
+      "local_segment_switches": 0,
+      "local_history_diagnostic": "",
+      "local_monte_carlo_kind": "RESEARCH NOT REQUESTED",
+      "local_monte_carlo_availability": "LOCAL DATA UNAVAILABLE",
+      "local_monte_carlo_source_segments": 0,
+      "local_monte_carlo_source_bars": 0,
+      "local_monte_carlo_simulations": 0,
+      "local_monte_carlo_horizon_bars": 0,
+      "local_monte_carlo_median_return_bps": 0,
+      "fixture_candles": 2,
+      "benchmark_unsynchronised_present": false,
+      "benchmark_resize_once": false,
+      "driver": "hardware",
+      "adapter": "Intel(R) UHD Graphics",
+      "feature_level": "11_1",
+      "launch_to_visible_ms": 258.878,
+      "frame_samples": 121,
+      "frame_average_ms": 16.182,
+      "frame_p95_ms": 17.762,
+      "frame_maximum_ms": 19.889,
+      "renderer_resize_successes": 1,
+      "renderer_resize_failures": 0,
+      "renderer_device_recoveries": 0,
+      "renderer_unrecoverable_device_failures": 0,
+      "renderer_present_failures": 0,
+      "renderer_vertex_buffer_uploads": 1,
+      "renderer_retained_draw_reuses": 120,
+      "renderer_retained_vertex_clears": 0,
+      "renderer_retained_vertex_rebuilds": 1,
+      "renderer_last_error_hr": 0,
+      "verified_chart_pixels": null,
+      "working_set_bytes": 53166080,
+      "private_usage_bytes": 56864768
+    }
+  },
+  "native_journal": {
+    "schema_version": 1,
+    "packaged_local_workspace": true,
+    "execution_uses_cargo": false,
+    "network_opened": false,
+    "missing_argument_guard": {
+      "exit_code": 2,
+      "rejected_before_local_persistence": true
+    },
+    "local_snapshot": {
+      "workspace_id": 7,
+      "revision": 1,
+      "sync_state": "local_only",
+      "payload_bytes": 19,
+      "payload_disclosed": false
+    },
+    "compaction": {
+      "compacted": true,
+      "local_only": true
+    },
+    "missing_workspace": {
+      "workspace_id": 8,
+      "found": false
+    }
+  },
+  "retained_buffers": {
+    "schema_version": 1,
+    "execution_uses_cargo": false,
+    "network_opened": false,
+    "synchronized_present": true,
+    "fixture_diagnostic": {
+      "vertex_buffer_uploads": 1,
+      "retained_draw_reuses": 121,
+      "retained_vertex_rebuilds": 1,
+      "present_failures": 0
+    },
+    "verified_local_scene": {
+      "test_only_offline_frames": true,
+      "chart_source": "local_scene",
+      "vertex_buffer_uploads": 1,
+      "retained_draw_reuses": 120,
+      "retained_vertex_rebuilds": 1,
+      "retained_vertex_clears": 0,
+      "present_failures": 0
+    }
+  },
+  "performance": [
+    {
+      "retained": 10000,
+      "runs": 20,
+      "visible": 600,
+      "first_launch_ms": 69.266,
+      "launch_ms": {
+        "p95": 64.559,
+        "p50": 55.22,
+        "p99": 64.559
+      },
+      "distribution_of_run_frame_p95_ms": {
+        "p95": 35.494,
+        "p50": 18.301,
+        "maximum": 36.397,
+        "p99": 35.494
+      },
+      "final_private_bytes": {
+        "p95": 52658176.0,
+        "p50": 52555776.0
+      },
+      "present_failures": 0.0,
+      "resize_failures": 0.0,
+      "adapter": [
+        "Intel(R) UHD Graphics"
+      ]
+    },
+    {
+      "retained": 100000,
+      "runs": 20,
+      "visible": 600,
+      "first_launch_ms": 58.431,
+      "launch_ms": {
+        "p95": 81.403,
+        "p50": 58.431,
+        "p99": 81.403
+      },
+      "distribution_of_run_frame_p95_ms": {
+        "p95": 33.693,
+        "p50": 18.283,
+        "maximum": 40.899,
+        "p99": 33.693
+      },
+      "final_private_bytes": {
+        "p95": 54964224.0,
+        "p50": 54865920.0
+      },
+      "present_failures": 0.0,
+      "resize_failures": 0.0,
+      "adapter": [
+        "Intel(R) UHD Graphics"
+      ]
+    }
+  ],
+  "browser": {
+    "failed_attempts": [
+      "doctor no connection",
+      "current_tab cdp_disconnected",
+      "Page.navigate timeout during compilation",
+      "hidden tab300x150 canvas and ineffective replay click"
+    ],
+    "viewport_css": [
+      1536,
+      735
+    ],
+    "local_url": "http://localhost:3000/terminal",
+    "tool": "browser-harness 0.1.13",
+    "dpr": 1.25,
+    "endpoint": "existing local CDP 127.0.0.1:9222",
+    "observed": [
+      "candles",
+      "line",
+      "volume",
+      "EMA",
+      "VWAP",
+      "grid",
+      "axes",
+      "disconnected feed",
+      "replay481/600"
+    ],
+    "restored": "Candles active; Exit replay false",
+    "captures": [
+      "out/renderer-r0/web-initial.png",
+      "out/renderer-r0/web-line.png",
+      "out/renderer-r0/web-replay.png"
+    ],
+    "recovery": "explicit endpoint, select observed task tab, activate after hidden compositor evidence",
+    "recording": "off; BH_RECORD=0",
+    "console_resource_audit": "Not Run: no comprehensive error collection"
+  },
+  "native_ui": {
+    "initial_launch": "Pass: native unavailable chart/UIA tree and caption controls",
+    "later_capture": "Blocked attempt: no screenshot targets found after continuation; initial native observation remains scoped evidence",
+    "native_acceptance": "Not Run: no connected workspace/import/save journey",
+    "Workspaces_click": "Fail capability: no state change/service handler",
+    "occluded_capture": "Excluded: first capture showed unrelated foreground window; activated target then verified actual native surface",
+    "tool": "@oai/sky native Windows"
+  },
+  "blocked": [
+    "Original-Figma parity/approval24 of25 original exports missing",
+    "full precision/temporal scene acceptance",
+    "displayed latency/debug layer/resource instrumentation"
+  ],
+  "not_run": [
+    "full native import/save/restart UI",
+    "all drawing/scale/pane/style/export/sync UI regressions",
+    "candidate geometry/raster goldens",
+    "100/150/200% native DPI",
+    "Narrator/IME/high contrast",
+    "device injection/recovery",
+    "million-bar/streaming/long-session",
+    "displayed input latency/CPU/GPU/dropped frames",
+    "research-job contention",
+    "Python suite",
+    "full cargo fmt/clippy/workspace",
+    "installer/release/deploy/trades"
+  ]
+}

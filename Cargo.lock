@@ -1262,6 +1262,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "zt-domain"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "zt-execution"
 version = "0.1.0"
 dependencies = [

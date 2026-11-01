@@ -1,0 +1,38 @@
+# R1 implementation handoff — correct native slice only
+
+R0 stopped on11 October2026. Read [master prompt](../OWN-CHART-RENDERER-PLAN-PROMPT.md), [audit](R0-AUDIT.md), [matrix](FEATURE-TEST-MATRIX.md) and [baseline](evidence/R0-baseline.json) before coding. Baseline HEAD `80124f17ae500565fe4bb7a88ad44f4b693d4e02` plus substantial existing user edits. Re-inventory branch/status/hashes; do not reset or accidentally commit that work. No R1 code is included in this handoff.
+
+## Starting executable and ownership
+
+- Diagnostic native Release host: `out/windows-host/Release/ZTerminalWindowsHost.exe`; clean-build SHA256 `7AD9747CE6463611F79731D5C1A05FAE1E5B73DC418EBB62F634DF382F4AE801`.
+- Native WinUI host: `out/windows-app/Release/ZTerminal.exe`; SHA256 `6B514D04C1D822B52F2C293872CD8B1842A68309005704B8CD207CAABE4C4AF3`. It launches directly without a website/account; chart is truthfully unavailable by default. It has no verified local workspace/import/save UI yet.
+- Reuse `main.cpp` D3D11 resources/composition recovery and `native_chart_host.h`; extract just pure scale/layout/geometry needed for runnable math tests. Native C++ geometry now, original TS/Canvas later; no WASM/graphics-framework rewrite.
+- Rust remains data/storage/revision/replay authority. Reuse `src-tauri/workstation-core` **Store/import/artifact/revision** logic through a narrow native binding/service adapter, not its WebView UI. Five fresh core tests establish source retention/restart/conflict/integrity behavior. Existing `zt-local-workspace` journal command handles opaque bytes and is not a substitute for the Store's document guarantees. Avoid a second dataset/workspace repository.
+- No real-time broker/provider/research expansion. No new research algorithm. Existing Python/Monte Carlo output remains immutable and independently versioned. No chart annotation becomes an order.
+
+## Smallest reviewable implementation sequence
+
+1. **Prove failing boundary cases first.** Add hand-calculated tests for linear forward/inverse/DIP units, cursor zoom anchor, single/equal/doji/negative prices, zero-volume bars, large adjacent integer ticks, ms/ns conversion/overflow, invalid scene/revision rejection and extreme future values. Test expected outputs independently of old renderer implementation. R0 probes are characterizations, not correct acceptance tests.
+2. **Keep exact data in the scene.** Stop discarding time/volume and converting absolute ticks early. Preserve immutable originals and verified metadata (units/increments/product/dataset hash/revision/availability). Narrowly version the rich scene envelope; keep old schema1 supported/rejected explicitly. Validate returned requested bounds and data/replay revisions. Handle instrument/timeframe changes without stale draw results. No epoch values in GPU floats.
+3. **Implement original plot/axes/text/grid/candles/volume.** Pure transform/layout snapshot in DIPs, pane/axis clipping and genuine tick/font measurement. Evaluate native DirectWrite/Direct2D on existing D3D BGRA surface; manage drawing alpha and rebuild text/device resources correctly. Bundle actual Geist/Geist Mono plus notices. Do not call prepared source tokens original-Figma approved. R1 uses normal linear price/UTC labels, with other modes scheduled R2; unsupported settings remain preserved and honestly reported.
+4. **Connect native input.** Same transform for crosshair exact time/price labels, pan, pointer-anchored wheel zoom, fit/reset and keyboard equivalents. WinUI capture/focus/Escape/cancellation/focus-loss/resize behavior must be tested directly. Coalesce paints; stop unconditional static/empty render timer. Do not launch subprocesses or read all history per pointer move.
+5. **Connect one real durable native journey.** Native workspace/create/open/import/load/save controls route into existing verified Store. Use supported strict CSV/import semantics and actual filesystem picker/error results. Persist viewport through existing ChartDocumentV3 visibleFromMs/visibleToMs and expected revision, along with source/data refs; restore correct metadata/availability and meaningful range in a new OS process. No saved-success label before durable completion. Keep all original bytes if source file disappears. TEST ONLY inputs stay in isolated validation storage.
+6. **Verify and stop at R1.** Native screenshots at fixed declared OS/client/DPI/fonts with geometry reference; no V2 original parity claim. All math/precision/cutoff tests and actual import→interaction→save→process restart→restore must pass. Re-run impacted existing web/domain/native checks. Do not implement R2 settings/types, R3 drawings/studies or the web candidate merely because the scaffolding exists.
+
+## Exact R1 exit evidence
+
+| Gate | Required check / rejection case |
+|---|---|
+| Build/run | Clean Release native host and WinUI build, actual launched executable SHA; clear default unavailable state, no fake market candles |
+| Domain/precision | Large adjacent ticks preserved after local-origin projection; correct exact labels/hits, declared metadata, ms↔ns safe conversion and remainder; malformed/duplicate/nonfinite/negative-volume/unknown-version scenes reject without modifying saved state |
+| Math/layout | y100=200/y110=100/y120=0 for plot0..200/range100..120; inverse≤0.25DIP; cursor zoom≤0.25DIP; empty/single/equal/doji/zero-volume/narrow plot; clipping and axes separate from data hits |
+| Temporal | Change every future price/volume/derived output to adversarial extremes; visible geometry/autoscale/crosshair/accessibility remain identical before cutoff; bar completion/availability semantics explicit; rewind invalidates caches |
+| Native input | Real pointer pan/wheel/fit/crosshair and keyboard equivalents; capture loss/cancel/Escape/focus loss/resize during drag do not corrupt viewport or commit cancelled changes |
+| Persistence | Launch offline→workspace→verified import/load→interact→save→close→new process→restore same dataset/viewport; original source removed from isolated validation path; conflict/corrupt/interrupted-write failures preserve authoritative commit |
+| Raster/reference | Native fixed captures for empty/single/doji/gap/volume/grid/crosshair with source fixture/hash/OS/fonts/DPI/client size; independent semantic goldens; original-Figma gate remains Blocked where unavailable |
+| Regression | Existing204 web tests, typecheck/lint/build and relevant Rust Store/domain/scene tests; native rendered-pixel/retained-buffer regressions where still applicable; no weakening assertions |
+| Performance reporting | Reference hardware and600/2,000 visible count; ≥20 relevant repeated samples, CPU/frame/input telemetry capabilities and limits; do not claim60FPS from renderer+Present statistics |
+
+**Known prerequisites to address within R1:** precision metadata uses f64 today; native bridge rejects zero volume; current scene parser lacks full envelope validation; Store is not wired to native shell; singleton is adequate for one chart only; native text/DIP transforms/test harness do not exist. Extend only the necessary boundary/policy, preserve old data and tests; do not label missing capabilities passed.
+
+**Deferred, not waived:** R2 logarithmic/percentage/inverted scales and full styles/panes; R3 all22 drawings, full indicators/overlays/replay/sync/export; R4 actual million-bar/streaming/recovery/long-session/accessibility/performance acceptance; R5 Canvas candidate; R6 document/dependency migration; R7 provenance/product independence review. Missing design states must be prepared in Penpot for review when needed. No publication, installer release, credential change, external sharing, deployment or live trades.

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ZTerminal Workstation Validation",
+  "identifier": "com.zterminal.workstation.validation",
+  "bundle": { "active": false }
+}

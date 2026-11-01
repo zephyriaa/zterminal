@@ -1,0 +1,54 @@
+[
+  {
+    "retained": 10000,
+    "runs": 20,
+    "visible": 600,
+    "first_launch_ms": 69.266,
+    "launch_ms": {
+      "p95": 64.559,
+      "p50": 55.22,
+      "p99": 64.559
+    },
+    "distribution_of_run_frame_p95_ms": {
+      "p95": 35.494,
+      "p50": 18.301,
+      "maximum": 36.397,
+      "p99": 35.494
+    },
+    "final_private_bytes": {
+      "p95": 52658176.0,
+      "p50": 52555776.0
+    },
+    "present_failures": 0.0,
+    "resize_failures": 0.0,
+    "adapter": [
+      "Intel(R) UHD Graphics"
+    ]
+  },
+  {
+    "retained": 100000,
+    "runs": 20,
+    "visible": 600,
+    "first_launch_ms": 58.431,
+    "launch_ms": {
+      "p95": 81.403,
+      "p50": 58.431,
+      "p99": 81.403
+    },
+    "distribution_of_run_frame_p95_ms": {
+      "p95": 33.693,
+      "p50": 18.283,
+      "maximum": 40.899,
+      "p99": 33.693
+    },
+    "final_private_bytes": {
+      "p95": 54964224.0,
+      "p50": 54865920.0
+    },
+    "present_failures": 0.0,
+    "resize_failures": 0.0,
+    "adapter": [
+      "Intel(R) UHD Graphics"
+    ]
+  }
+]

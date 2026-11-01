@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <OutDir>$(MSBuildThisFileDirectory)..\..\..\out\windows-app\$(Configuration)\</OutDir>
+    <IntDir>$(MSBuildThisFileDirectory)..\..\..\out\windows-app\obj\$(Configuration)\</IntDir>
+    <GeneratedFilesDir>$(IntDir)Generated Files\</GeneratedFilesDir>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    <ProjectGuid>{65CCAAC0-EC6F-4F98-A08E-C38CC58694A2}</ProjectGuid>
+    <RootNamespace>ZTerminal</RootNamespace><TargetName>ZTerminal</TargetName>
+    <DefaultLanguage>en-US</DefaultLanguage><AppContainerApplication>false</AppContainerApplication>
+    <ApplicationType>Windows Store</ApplicationType><ApplicationTypeRevision>10.0</ApplicationTypeRevision>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion><WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI><CppWinRTOptimized>true</CppWinRTOptimized><CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
+    <MinimalCoreWin>true</MinimalCoreWin><WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <WindowsPackageType>None</WindowsPackageType><AppxPackage>false</AppxPackage><UseCrtSDKReference>false</UseCrtSDKReference>
+  </PropertyGroup>
+  <PropertyGroup Label="NuGet">
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle><NuGetTargetMoniker>native,Version=v0.0</NuGetTargetMoniker>
+    <NuGetTargetPlatformIdentifier>Windows</NuGetTargetPlatformIdentifier><NuGetTargetPlatformVersion>$(WindowsTargetPlatformVersion)</NuGetTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet><DesktopCompatible>true</DesktopCompatible>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Release'">false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <OutDir>$(MSBuildThisFileDirectory)..\..\..\out\windows-app\$(Configuration)\</OutDir>
+    <IntDir>$(MSBuildThisFileDirectory)..\..\..\out\windows-app\obj\$(Configuration)\</IntDir>
+    <OutputPath>$(OutDir)</OutputPath><IntermediateOutputPath>$(IntDir)</IntermediateOutputPath>
+    <AppxPriInitialPath></AppxPriInitialPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile><PrecompiledHeader>Use</PrecompiledHeader><PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile><LanguageStandard>stdcpp20</LanguageStandard><WarningLevel>Level4</WarningLevel><AdditionalOptions>/bigobj /utf-8 %(AdditionalOptions)</AdditionalOptions><AdditionalIncludeDirectories>$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile>
+    <Link><SubSystem>Windows</SubSystem><AdditionalDependencies>$(ProjectDir)..\..\..\out\windows-host\Release\ZTerminalChartPresentation.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;psapi.lib;d2d1.lib;dwrite.lib;shell32.lib;winhttp.lib;ws2_32.lib;bcrypt.lib;crypt32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <PackageReference Include="Microsoft.Windows.CppWinRT" Version="3.0.260818.1" />
+  </ItemGroup>
+  <ItemGroup><ApplicationDefinition Include="App.xaml" /><Page Include="MainWindow.xaml" /></ItemGroup>
+  <ItemGroup><Midl Include="Project.idl" /><Manifest Include="app.manifest" /></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MainWindow.account.cpp" /><ClCompile Include="MainWindow.home.cpp" /><ClCompile Include="MainWindow.chart.cpp" /><ClCompile Include="..\src\native_account.cpp"><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
+    <ClCompile Include="pch.cpp"><PrecompiledHeader>Create</PrecompiledHeader></ClCompile>
+    <ClCompile Include="App.xaml.cpp"><DependentUpon>App.xaml</DependentUpon></ClCompile><ClCompile Include="MainWindow.xaml.cpp"><DependentUpon>MainWindow.xaml</DependentUpon></ClCompile><ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClInclude Include="pch.h" /><ClInclude Include="App.xaml.h"><DependentUpon>App.xaml</DependentUpon></ClInclude><ClInclude Include="MainWindow.xaml.h"><DependentUpon>MainWindow.xaml</DependentUpon></ClInclude>
+  </ItemGroup>
+  <ItemGroup><Content Include="Assets\**\*" /></ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!-- Unpackaged distribution carries the desktop CRT beside the application. -->
+  <ItemGroup><SDKReference Remove="Microsoft.VCLibs, Version=14.0;Microsoft.VCLibs.Desktop, Version=14.0" /></ItemGroup>
+  <Target Name="CopyNativeAssets" AfterTargets="Build">
+    <Copy SourceFiles="@(Content)" DestinationFiles="@(Content->'$(OutDir)%(Identity)')" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

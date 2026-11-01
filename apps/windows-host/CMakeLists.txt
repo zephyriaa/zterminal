@@ -13,6 +13,16 @@ if(MSVC)
 endif()
 include(CTest)
 if(BUILD_TESTING)
+  add_executable(ZTerminalNativeAccountTests tests/native_account_test.cpp src/native_account.cpp)
+  target_compile_features(ZTerminalNativeAccountTests PRIVATE cxx_std_20)
+  target_compile_definitions(ZTerminalNativeAccountTests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+  target_include_directories(ZTerminalNativeAccountTests PRIVATE src)
+  target_link_libraries(ZTerminalNativeAccountTests PRIVATE winhttp ws2_32 bcrypt crypt32 advapi32)
+  add_test(NAME native-account COMMAND ZTerminalNativeAccountTests)
+  add_executable(ZTerminalChartMathTests tests/chart_math_test.cpp)
+  target_compile_features(ZTerminalChartMathTests PRIVATE cxx_std_20)
+  target_include_directories(ZTerminalChartMathTests PRIVATE src)
+  add_test(NAME chart-math COMMAND ZTerminalChartMathTests)
   add_executable(ZTerminalExecutionVaultTests tests/execution_vault_test.cpp)
   target_compile_definitions(ZTerminalExecutionVaultTests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
   target_link_libraries(ZTerminalExecutionVaultTests PRIVATE ZTerminalExecutionVault crypt32 advapi32)
@@ -27,6 +37,37 @@ if(NOT WIN32)
 endif()
 
 find_program(CARGO_EXECUTABLE cargo REQUIRED)
+
+# Shared chart presentation used by the upcoming WinUI shell. Keep the existing
+# diagnostic host runnable while integrating the composition swap-chain path.
+add_library(ZTerminalChartPresentation STATIC
+  src/main.cpp
+  src/local_scene_bridge.cpp
+  src/local_monte_carlo_bridge.cpp
+  src/local_segment_catalog_bridge.cpp
+)
+target_compile_features(ZTerminalChartPresentation PUBLIC cxx_std_20)
+target_compile_definitions(ZTerminalChartPresentation PRIVATE
+  ZT_NATIVE_CHART_LIBRARY UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_include_directories(ZTerminalChartPresentation PUBLIC src)
+target_link_libraries(ZTerminalChartPresentation PUBLIC d3d11 d3dcompiler dxgi psapi d2d1 dwrite)
+if(MSVC)
+  target_compile_options(ZTerminalChartPresentation PRIVATE /W4 /permissive- /EHsc /utf-8)
+endif()
+if(BUILD_TESTING)
+  add_executable(ZTerminalNativeChartTests tests/native_chart_test.cpp)
+  target_compile_features(ZTerminalNativeChartTests PRIVATE cxx_std_20)
+  if(MSVC)
+    target_compile_options(ZTerminalNativeChartTests PRIVATE /utf-8)
+  endif()
+  target_compile_definitions(ZTerminalNativeChartTests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+  target_link_libraries(ZTerminalNativeChartTests PRIVATE ZTerminalChartPresentation)
+  add_custom_command(TARGET ZTerminalNativeChartTests POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/winui/Assets" "$<TARGET_FILE_DIR:ZTerminalNativeChartTests>/Assets"
+  )
+  add_test(NAME native-chart-boundary COMMAND ZTerminalNativeChartTests)
+endif()
+
 set(ZT_REPOSITORY_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
 set(ZT_LOCAL_SCENE_BRIDGE_MANIFEST "${ZT_REPOSITORY_ROOT}/apps/zt-local-scene-bridge/Cargo.toml")
 set(ZT_LOCAL_SCENE_BRIDGE_TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}/cargo")
@@ -159,6 +200,7 @@ target_link_libraries(ZTerminalWindowsHost PRIVATE d3d11 d3dcompiler dxgi d2d1 d
 
 add_custom_command(
   TARGET ZTerminalWindowsHost POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/winui/Assets" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/Assets"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_LOCAL_SCENE_BRIDGE_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-local-scene-bridge.exe"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_LOCAL_MONTE_CARLO_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-local-monte-carlo.exe"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${ZT_LOCAL_SEGMENT_CATALOG_EXE}" "$<TARGET_FILE_DIR:ZTerminalWindowsHost>/zt-local-segment-catalog.exe"
@@ -169,5 +211,5 @@ add_custom_command(
 )
 
 if(MSVC)
-  target_compile_options(ZTerminalWindowsHost PRIVATE /W4 /permissive- /EHsc)
+  target_compile_options(ZTerminalWindowsHost PRIVATE /W4 /permissive- /EHsc /utf-8)
 endif()

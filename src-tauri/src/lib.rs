@@ -1,40 +1,28 @@
-mod db;
 mod commands;
-
-use serde::Serialize;
 use std::sync::Mutex;
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct DesktopStatus {
-    execution_permission: &'static str,
-    secure_storage: &'static str,
-    window_label: &'static str,
-}
-
-#[tauri::command]
-fn desktop_status() -> DesktopStatus {
-    DesktopStatus {
-        execution_permission: "disabled",
-        secure_storage: "not_configured",
-        window_label: "main",
-    }
-}
+use tauri::Manager;
 
 pub fn run() {
-    let conn = db::init_db().expect("Failed to initialize local database");
-    
     tauri::Builder::default()
-        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .manage(db::DbState {
-            conn: Mutex::new(conn),
+        .setup(|app| {
+            let store = app
+                .path()
+                .app_local_data_dir()
+                .map_err(|e| e.to_string())
+                .and_then(zt_workstation_local::Store::open);
+            // Storage failures remain visible in the shell instead of causing a startup panic.
+            app.manage(commands::LocalState(Mutex::new(store)));
+            Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            desktop_status,
-            commands::fetch_dashboard_data,
-            commands::resize_window,
-            commands::trigger_sync
+            commands::list_workspaces,
+            commands::restore_workspace,
+            commands::open_workspace,
+            commands::create_workspace,
+            commands::save_workspace,
+            commands::import_history,
+            commands::load_scene
         ])
         .run(tauri::generate_context!())
-        .expect("failed to run ZTerminal desktop application");
+        .expect("failed to run ZTerminal local workstation");
 }

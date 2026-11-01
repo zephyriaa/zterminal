@@ -1,0 +1,263 @@
+{
+  "fileKey": "VtIJq6WBPRJUUKtc4XvnxE",
+  "fileUrl": "https://www.figma.com/design/VtIJq6WBPRJUUKtc4XvnxE",
+  "scope": "Figma UI only; latest direction follows current web docking, navigation and Geist typography with Apple-inspired materials",
+  "createdNodeIds": [
+    "3:2",
+    "3:3"
+  ],
+  "mutatedNodeIds": [
+    "0:1"
+  ],
+  "pages": {
+    "Direction & foundations": "0:1",
+    "Components": "3:2",
+    "Core screens & handoff": "3:3"
+  },
+  "collections": {
+    "primitives": "VariableCollectionId:3:4",
+    "semantic": "VariableCollectionId:3:5"
+  },
+  "variables": {
+    "background": "VariableID:3:7",
+    "surface": "VariableID:3:9",
+    "reading": "VariableID:3:11",
+    "elevated": "VariableID:3:13",
+    "accent": "VariableID:3:15",
+    "lavender": "VariableID:3:17",
+    "text": "VariableID:3:19",
+    "muted": "VariableID:3:21",
+    "subtle": "VariableID:3:23",
+    "line": "VariableID:3:25",
+    "positive": "VariableID:3:27",
+    "negative": "VariableID:3:29",
+    "warning": "VariableID:3:31",
+    "ink": "VariableID:3:33",
+    "space/4": "VariableID:3:34",
+    "space/8": "VariableID:3:35",
+    "space/12": "VariableID:3:36",
+    "space/16": "VariableID:3:37",
+    "space/24": "VariableID:3:38",
+    "space/32": "VariableID:3:39",
+    "radius/control": "VariableID:3:40",
+    "radius/panel": "VariableID:3:41",
+    "radius/dialog": "VariableID:3:42",
+    "effects/glass-opacity": "VariableID:3:43",
+    "motion/fast-ms": "VariableID:3:44",
+    "motion/standard-ms": "VariableID:3:45",
+    "motion/slow-ms": "VariableID:3:46"
+  },
+  "styles": {
+    "display": "S:1f54d29c1d0858458832feff926347e634582a25,",
+    "title": "S:4a6656a0286a9d89637d583b809ff472a4f5ca4c,",
+    "heading": "S:706d67c6837a3955f344e3cba023029bba00fd8e,",
+    "body": "S:9a07b68cb63bd4ec3662085acba3c66e31b4a7b5,",
+    "label": "S:684acdf5fcefd9be09bd70cda687584ec6842045,",
+    "caption": "S:a733fc7a7afc44e9f73543e823856f456ba4a8de,",
+    "mono": "S:e20381bacdc307734b403b8252634f9d66b78a69,",
+    "glass": "S:ac997b77738e682f49d45f512c0a880c84cde261,"
+  },
+  "variableCount": 41,
+  "styleCount": 7,
+  "completed": [
+    "discovery",
+    "tokens-and-styles",
+    "components-visual-check",
+    "direction-and-foundations",
+    "35-core-screen-compositions",
+    "studio-three-initial-visual-checks"
+  ],
+  "adaptation": "Five named areas across three pages due Starter plan limit",
+  "components": {
+    "Icon/layers": "4:46",
+    "Icon/code": "4:50",
+    "Icon/chart": "4:53",
+    "Icon/database": "4:56",
+    "Icon/settings": "4:60",
+    "Icon/play": "4:64",
+    "Icon/search": "4:67",
+    "Icon/external": "4:71",
+    "Icon/check": "4:74",
+    "Icon/folder": "4:77",
+    "Icon/alert": "4:80",
+    "Icon/pause": "4:83",
+    "Button/primary/Default": "4:86",
+    "Button/primary/Hover": "4:88",
+    "Button/primary/Pressed": "4:90",
+    "Button/primary/Focus": "4:92",
+    "Button/primary/Disabled": "4:94",
+    "Button/primary/Loading": "4:96",
+    "Button/secondary/Default": "4:98",
+    "Button/secondary/Hover": "4:100",
+    "Button/secondary/Pressed": "4:102",
+    "Button/secondary/Focus": "4:104",
+    "Button/secondary/Disabled": "4:106",
+    "Button/secondary/Loading": "4:108",
+    "Input/Default": "4:111",
+    "Input/Focus": "4:113",
+    "Input/Disabled": "4:115",
+    "Input/Error": "4:117",
+    "Input/Loading": "4:119",
+    "Tab/Default": "4:122",
+    "Tab/Selected": "4:124",
+    "Nav/Default": "4:127",
+    "Nav/Selected": "4:131",
+    "Status/Live": "4:136",
+    "Status/Cached": "4:138",
+    "Status/Stale": "4:140",
+    "Status/Gap": "4:142",
+    "Status/Unavailable": "4:144",
+    "Status/Example": "4:146",
+    "Toggle/Off": "4:149",
+    "Toggle/On": "4:151",
+    "Material/Rich glass": "4:154",
+    "Material/Reduced effects": "4:157",
+    "Material/Opaque": "4:160",
+    "PanelHeader": "4:164"
+  },
+  "screens": {
+    "03 Research studio / 1440": "7:10",
+    "03 Research studio / compact 1366": "7:232",
+    "03 Research studio / expanded 1920": "7:435",
+    "01 First launch": "7:653",
+    "02 Workspace library": "7:725",
+    "05 Dataset library": "7:825",
+    "05 Import / select source": "7:921",
+    "05 Import / verified preview": "7:1012",
+    "05 Import / rejected": "7:1106",
+    "04 Chart workspace": "8:274",
+    "10 Replay / paused": "8:480",
+    "10 Replay / playing": "8:696",
+    "10 Indicator library": "8:912",
+    "10 Indicator / EMA settings": "8:1013",
+    "06 Run configuration": "8:1108",
+    "07 Run / Queued": "8:1326",
+    "07 Run / Running": "8:1393",
+    "07 Run / Cancelled": "8:1461",
+    "07 Run / Failed": "8:1528",
+    "07 Run / Complete": "8:1595",
+    "08 Evidence / Overview": "9:610",
+    "08 Evidence / Equity": "9:734",
+    "08 Evidence / Trades": "9:836",
+    "08 Evidence / Diagnostics": "9:943",
+    "08 Evidence / Assumptions": "9:1045",
+    "08 Evidence / Provenance": "9:1145",
+    "09 Baseline comparison": "9:1245",
+    "09 Monte Carlo robustness": "9:1345",
+    "11 Settings / rich glass": "9:1451",
+    "11 Settings / reduced effects": "9:1564",
+    "11 Settings / opaque": "9:1688",
+    "11 Runtime / unavailable": "9:1812",
+    "12 Detached chart window": "9:1883",
+    "02 Draft recovery": "9:2064",
+    "04 Provider directory": "9:2148"
+  },
+  "sections": {
+    "Direction": "6:102",
+    "Foundations": "6:152"
+  },
+  "status": "v2_continuation_import_review_and_component_work_incomplete",
+  "pending": [
+    "Additional edge-state screens, command palette and mixed-monitor composition",
+    "Prototype navigation and starting points",
+    "Figma handoff board",
+    "Full geometry audit and post-composition visual checks",
+    "Design review before native implementation"
+  ],
+  "revisionV2": {
+    "fileKey": "VtIJq6WBPRJUUKtc4XvnxE",
+    "revision": "Web-aligned professional Windows / v2",
+    "sourceRoute": "/terminal",
+    "primaryNodeId": "14:1080",
+    "views": [
+      {
+        "name": "Main docked workstation",
+        "view": "chart",
+        "width": 1440,
+        "height": 900,
+        "nodeId": "14:1080",
+        "status": "completed"
+      },
+      {
+        "name": "Focused research",
+        "view": "studio",
+        "width": 1440,
+        "height": 900,
+        "nodeId": "16:1080",
+        "status": "completed"
+      },
+      {
+        "name": "Evidence report",
+        "view": "results",
+        "width": 1440,
+        "height": 900,
+        "nodeId": "17:1080",
+        "status": "completed"
+      },
+      {
+        "name": "Terminal preferences",
+        "view": "preferences",
+        "width": 1440,
+        "height": 900,
+        "nodeId": "18:1080",
+        "status": "completed"
+      },
+      {
+        "name": "Compact workstation",
+        "view": "chart",
+        "width": 1366,
+        "height": 768,
+        "nodeId": "19:1080",
+        "status": "completed"
+      },
+      {
+        "name": "Expanded workstation",
+        "view": "chart",
+        "width": 1920,
+        "height": 1080,
+        "nodeId": "21:1080",
+        "status": "completed"
+      },
+      {
+        "name": "Maximized chart",
+        "view": "max",
+        "width": 1440,
+        "height": 900,
+        "nodeId": "22:1080",
+        "status": "completed"
+      },
+      {
+        "name": "Detached chart",
+        "view": "detached",
+        "width": 1024,
+        "height": 680,
+        "nodeId": "20:1080",
+        "status": "completed"
+      }
+    ],
+    "verification": {
+      "sourceFonts": [
+        "Geist",
+        "Geist Mono"
+      ],
+      "sourceUsesWholeUiRaster": false,
+      "sourceVisualReviews": 8,
+      "mainFigmaVisualReview": true,
+      "sidebarCollapseAndRestore": true,
+      "chartMaximizeAndRestore": true,
+      "figmaComponentIntegration": "blocked_by_use_figma_starter_quota",
+      "figmaPrototypeWiring": "pending"
+    },
+    "nativeApplicationChanged": false
+  },
+  "continuation": {
+    "sourceViews": 17,
+    "submittedCaptures": 17,
+    "status": "source_views_designed_figma_review_incomplete",
+    "knownImportDefect": "33:1080 comparison displays diagnostics",
+    "componentIntegration": "blocked_by_starter_mcp_quota",
+    "prototypeWiring": "pending",
+    "resumeFile": "revision-v2/RESUME.md",
+    "nativeApplicationChanged": false
+  }
+}
