@@ -19,6 +19,8 @@ model User {
   workspaces    Workspace[]
   accounts      Account[]
   sessions      Session[]
+  nativeCodes NativeAuthorizationCode[]
+  nativeSessions NativeDeviceSession[]
 }
 
 model Account {
@@ -425,4 +427,42 @@ model AuditEvent {
 
   @@index([workspaceId, createdAt])
   @@index([entityType, entityId])
+}
+
+// Native public-client grants and revocable identity-only device sessions.
+model NativeAuthorizationCode {
+  codeHash String @id
+  userId String
+  challenge String
+  redirectUri String
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+  @@index([userId, createdAt])
+}
+
+model NativeDeviceSession {
+  id String @id @default(cuid())
+  userId String
+  name String
+  scope String @default("native:identity")
+  accessHash String @unique
+  accessExpiresAt DateTime
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens NativeRefreshToken[]
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model NativeRefreshToken {
+  tokenHash String @id
+  sessionId String
+  usedAt DateTime?
+  session NativeDeviceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@index([sessionId])
 }

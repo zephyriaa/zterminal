@@ -1,11 +1,59 @@
 # Windows sign-in exchange contract
 
-Status: design boundary only; the native sign-in bridge is not implemented. The existing Tauri launcher continues to support local research. Google identity and the web database session remain authoritative; Supabase Auth is not an additional identity source.
+Updated 28 October 2026. Native and server implementations exist locally in Phase
+02; production deployment and real browser/native sign-in acceptance remain
+unverified. Google/NextAuth database identity remains authoritative. No parallel
+identity source was added.
 
-The Windows client should generate a cryptographically random state and PKCE verifier, retain both in memory, and open the system browser with an S256 challenge. The web authorization route must require the current verified ZTerminal web session and explicit approval of the named device. Callback destinations must come from a server allowlist of registered application links or loopback listeners; never accept an arbitrary redirect destination.
+Native implementation: `apps/windows-host/src/native_account.{h,cpp}` and
+`winui/MainWindow.account.cpp`. The public client is `zterminal-windows`. An
+exclusive kernel-assigned IPv4 loopback listener is bound before opening the
+system browser. Only exact `http://127.0.0.1:<ephemeral-port>/native/callback`
+callbacks with the current random state and one code/denial are accepted. PKCE
+S256 uses independent cryptographic random state and verifier; only the challenge
+is included in the browser URL. Listener lifetime is bounded and cancellable.
 
-After approval, create an opaque, single-use authorization code with a maximum lifetime of 60 seconds. Persist only its hash, user ID, PKCE challenge, exact callback destination, requested scope, creation/expiry times, and consumption time. Return only that code and the client's state through the callback. The native app checks state and exchanges the code plus verifier over HTTPS. Code consumption must be an atomic transaction that rejects replay, expiry, callback mismatches, and wrong verifiers.
+Server implementation: `src/lib/native-auth.ts`, `native-auth-http.ts` and
+`src/app/api/native/auth/*`. Browser authorization requires a verified existing
+NextAuth session, same-origin POST and identity/request-bound signed consent.
+Codes expire after 60 seconds, are stored only as hashes and are consumed by an
+atomic compare-and-update transaction. Callback, client ID and S256 verifier must
+match. Token/session endpoints reject browser cookies and Origin headers rather
+than bypassing the existing cookie-authenticated web APIs.
 
-Issue a separate, revocable device session, with short-lived access credentials and rotating refresh credentials bound to that device. Store sensitive credentials in Windows Credential Manager/DPAPI; never in localStorage, logs, configuration files, or callback URLs. Do not copy the browser cookie into the webview. Device credentials must use a dedicated, scoped API authentication boundary and must not bypass the web APIs' same-origin protections. Native logout revokes its device session; account-wide revocation should cover every device and browser session.
+Device access is `native:identity` only. Five-minute opaque access tokens and
+rotating refresh tokens are hashed server-side. Refresh-token reuse revokes the
+whole family; session lifetime is absolutely bounded to 30 days. Removing a
+single device is owner-scoped. “Sign out everywhere” revokes all that user's
+native sessions, pending codes and browser database sessions. No native token
+authorizes workspace synchronization or provider access.
 
-Before exposing a login button, implement and test the server exchange records/endpoints, native callback registration, secure storage, rotation/reuse detection, revocation, and origin/callback allowlists. Acceptance cases include wrong state/verifier, duplicate callback, expired code, simultaneous exchanges, interrupted browser flow, hostile deep links, device removal, and account switch. None of these native acceptance cases has been executed in this change.
+Windows Credential Manager holds the complete native credential envelope under
+a per-Windows-user, per-Store-root target. It never goes through JSON sidecar
+requests, localStorage, logs or callback URLs. A verified exchange completes
+onboarding only after credentials are protected. Opening/cancelling the browser
+never marks onboarding complete. Offline choice is durable and valid without
+any account. Failed offline revocation is retained as a protected pending record
+and retried; local work is not removed. Native account operations are serialized
+to prevent cancelled and newer exchanges overwriting each other's credentials.
+
+Production gate: additive SQLite migration and `prisma/native-auth.postgresql.sql`
+are local candidates. PostgreSQL SQL creates tables and applies RLS/revokes within
+one transaction; Auth.js users do not map to Supabase auth.uid(). The server must
+connect with its existing trusted owner/BYPASSRLS role. No public/browser role is
+granted table access. Apply/verify the production migration through the existing
+release workflow, then set `ZTERMINAL_NATIVE_AUTH_ENABLED=1`. It defaults off.
+Neither hosted database migration nor account endpoint publication occurred.
+
+Tests use isolated synthetic users/databases and native loopback/Credential
+Manager fixtures. They cover exact callback allowlisting, known RFC PKCE vector,
+consent binding/expiry, wrong verifier, code expiry/replay/race, refresh rotation
+and reuse, access/session expiry, device/owner separation, all-account revocation,
+browser-cookie/Origin denial and native HTTP token/session/revoke handlers.
+Real successful/denied/cancelled browser sign-in, clean Windows-profile isolation,
+DPI/high contrast and native UI restart journeys still require device evidence.
+
+Guidance checked 28 October 2026:
+- https://www.rfc-editor.org/rfc/rfc8252.html (external user agent, loopback, PKCE)
+- https://www.rfc-editor.org/rfc/rfc9700.html (refresh replay protections)
+- https://supabase.com/docs/guides/database/postgres/row-level-security (grants/RLS)
