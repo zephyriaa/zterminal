@@ -17,21 +17,15 @@ def test_purged_kfold_validation():
     frame = pd.DataFrame({"close": [100.0, 101.0, 102.0]})
     params = {"rsi_period": [14, 21]}
     
-    best_params, dsr = perform_purged_kfold_cv(frame, params)
-    
-    assert best_params["rsi_period"] == 14
-    assert dsr > 0.0
+    with pytest.raises(NotImplementedError, match="unavailable"):
+        perform_purged_kfold_cv(frame, params)
+
 
 def test_simulation_execution():
     frame = pd.DataFrame({"close": [100.0, 101.0, 102.0]})
-    params = {"rsi_period": 14}
-    config = {"initial_capital": 100000.0}
-    
-    sharpe, sortino, max_dd, pnl = run_discrete_event_simulation(frame, params, config)
-    
-    assert sharpe == 1.25
-    assert sortino == 1.8
-    assert max_dd == 0.15
+    with pytest.raises(NotImplementedError, match="unavailable"):
+        run_discrete_event_simulation(frame, {"rsi_period": 14}, {"initial_capital": 100000.0})
+
 
 def test_serialization_schema():
     tear_sheet = TearSheet(

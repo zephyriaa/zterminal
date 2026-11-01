@@ -7,16 +7,11 @@ import uuid
 import math
 from contextlib import contextmanager
 from pathlib import Path
-import rfc8785
-from validation import validate, input_record
+from validation import validate, input_record, digest
 
 
 def encode(value):
     return json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":"))
-
-
-def digest(value):
-    return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
 
 
 class Archive:
@@ -29,6 +24,10 @@ class Archive:
                 CREATE TABLE IF NOT EXISTS scripts(id TEXT PRIMARY KEY, name TEXT NOT NULL, source TEXT NOT NULL, revision INTEGER NOT NULL, updated INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS revisions(script_id TEXT NOT NULL, revision INTEGER NOT NULL, source TEXT NOT NULL, hash TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(script_id, revision));
                 CREATE TABLE IF NOT EXISTS datasets(hash TEXT PRIMARY KEY, manifest TEXT NOT NULL);
+                CREATE INDEX IF NOT EXISTS datasets_identity ON datasets(
+                    json_extract(manifest, '$.provider'), json_extract(manifest, '$.product'),
+                    json_extract(manifest, '$.symbol'), json_extract(manifest, '$.timeframe'),
+                    json_extract(manifest, '$.from'), json_extract(manifest, '$.to'));
                 CREATE TABLE IF NOT EXISTS results(id TEXT PRIMARY KEY, name TEXT NOT NULL, created INTEGER NOT NULL, dataset_hash TEXT NOT NULL REFERENCES datasets(hash), envelope TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, status TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS research_analyses(id TEXT PRIMARY KEY, parent_id TEXT NOT NULL REFERENCES results(id), parent_hash TEXT NOT NULL, kind TEXT NOT NULL, created INTEGER NOT NULL, envelope TEXT NOT NULL);
@@ -440,7 +439,7 @@ class Archive:
         if any(key not in query for key in keys):
             raise ValueError("Supply the exact provider, product, symbol, timeframe and range")
         with self.connect() as db:
-            row = db.execute("SELECT manifest FROM datasets WHERE " + " AND ".join("json_extract(manifest, '$." + key + "')=?" for key in keys) + " LIMIT 1", tuple(query[k] for k in keys)).fetchone()
+            row = db.execute("SELECT manifest FROM datasets WHERE " + " AND ".join("json_extract(manifest, '$." + key + "')=?" for key in keys) + " ORDER BY rowid LIMIT 1", tuple(query[k] for k in keys)).fetchone()
             return json.loads(row[0]) if row else None
 
     def result(self, result_id):

@@ -25,6 +25,25 @@ def strategy(data, params):
 
 
 class TestQuantWorker(unittest.TestCase):
+    def test_signals_execute_on_next_open_and_change_results(self):
+        bars = [{"t": 1740000000000 + i * 300000, "o": price, "h": price,
+                 "l": price, "c": price, "v": 500} for i, price in enumerate([10, 20, 30, 40, 50])]
+        config = dict(initial_capital=100, fee_bps=0, slippage_bps=0, quantity_step=1)
+        source = 'def strategy(data, params):\n return {"entries": data.close == 10, "exits": data.close == 30}'
+        result = execute_quant_backtest(source, bars, config, {}, ExecutionLimiter())
+        self.assertEqual(result['trades'][0]['entryPrice'], 20)
+        self.assertEqual(result['trades'][0]['exitPrice'], 40)
+        self.assertEqual(result['metrics']['finalEquity']['value'], 200)
+        flat = execute_quant_backtest(source.replace('== 10', '== 0'), bars, config, {}, ExecutionLimiter())
+        self.assertEqual(flat['metrics']['finalEquity']['value'], 100)
+
+    def test_rejects_missing_prices_and_misaligned_signals(self):
+        with self.assertRaises(ValueError):
+            execute_quant_backtest(SAMPLE_STRATEGY, [{'c': 10}], {}, {}, ExecutionLimiter())
+        bars = [dict(t=1740000000000, o=10, h=10, l=10, c=10, v=1)]
+        with self.assertRaises(ValueError):
+            execute_quant_backtest('def strategy(data, params):\n return {"entries": [True, False]}', bars, {}, {}, ExecutionLimiter())
+
     def test_queue_enqueue_and_cancel(self):
         queue = JobQueueManager()
         job_id = queue.enqueue({"workspace_id": "test_ws", "source": "def test(): pass"})

@@ -5,6 +5,8 @@ import math
 import time
 import re
 import rfc8785
+from functools import lru_cache
+from io import BytesIO
 
 INTERVALS = {"1m": 60_000, "3m": 180_000, "5m": 300_000, "15m": 900_000,
              "30m": 1_800_000, "1h": 3_600_000, "2h": 7_200_000, "4h": 14_400_000,
@@ -12,8 +14,47 @@ INTERVALS = {"1m": 60_000, "3m": 180_000, "5m": 300_000, "15m": 900_000,
 INDICATOR_ENGINE_VERSION = "1.1.0"
 
 
+@lru_cache(maxsize=4096, typed=True)
+def _canonical_atom(value):
+    return rfc8785.dumps(value)
+
+
+@lru_cache(maxsize=512)
+def _canonical_key(value):
+    return value.encode('utf-16be')
+
+
+def _canonical_dump(value, sink):
+    # Keep RFC 8785 scalar encoding authoritative; cache only small repeated atoms.
+    if type(value) is dict and all(type(key) is str for key in value):
+        sink.write(b'{')
+        keys = sorted(value, key=lambda key: _canonical_key(key) if len(key) <= 64 else key.encode('utf-16be'))
+        for i, key in enumerate(keys):
+            if i: sink.write(b',')
+            _canonical_dump(key, sink)
+            sink.write(b':')
+            _canonical_dump(value[key], sink)
+        sink.write(b'}')
+    elif type(value) in (list, tuple):
+        sink.write(b'[')
+        for i, item in enumerate(value):
+            if i: sink.write(b',')
+            _canonical_dump(item, sink)
+        sink.write(b']')
+    elif type(value) in (str, int, float, bool, type(None)) and not (type(value) is str and len(value) > 64):
+        sink.write(_canonical_atom(value))
+    else:
+        rfc8785.dump(value, sink)
+
+
+def canonical_bytes(value):
+    sink = BytesIO()
+    _canonical_dump(value, sink)
+    return sink.getvalue()
+
+
 def digest(value):
-    return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
+    return hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
 def input_record(request):

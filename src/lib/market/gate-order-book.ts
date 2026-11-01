@@ -147,8 +147,10 @@ export class GateOrderBook {
 
   bestQuote() {
     if (!this.ready) return null;
-    const bid = [...this.bids.entries()].sort(([a], [b]) => b - a)[0];
-    const ask = [...this.asks.entries()].sort(([a], [b]) => a - b)[0];
+    let bid: [number, number] | undefined;
+    let ask: [number, number] | undefined;
+    for (const level of this.bids) if (!bid || level[0] > bid[0]) bid = level;
+    for (const level of this.asks) if (!ask || level[0] < ask[0]) ask = level;
     if (!bid || !ask) return null;
     return { bid: bid[0], bidSize: bid[1], ask: ask[0], askSize: ask[1] };
   }

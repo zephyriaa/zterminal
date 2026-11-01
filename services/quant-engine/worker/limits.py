@@ -32,7 +32,7 @@ class ExecutionLimiter:
 
         # 2. Check wall clock timeout
         elapsed = time.monotonic() - self.started_at
-        if elapsed > self.max_wall_seconds:
+        if elapsed >= self.max_wall_seconds:
             raise ResourceLimitExceeded(
                 f"Execution exceeded wall-clock limit of {self.max_wall_seconds}s (elapsed: {elapsed:.1f}s)"
             )
