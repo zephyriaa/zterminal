@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ContractMetadata } from "@/lib/market/types";
 import { useWorkspace } from "@/stores/workspace";
-import { fetchPublicCatalogue } from "@/lib/market/public-data";
+import { fetchPublicCatalogue, DIRECT_VENUES, type DirectVenue } from "@/lib/market/public-data";
 import { registerRuntimeContracts } from "@/lib/market/contracts";
 
 export type ContractCatalogue = {
@@ -31,8 +31,8 @@ async function fetchCatalogueSingleton(provider: string): Promise<ContractCatalo
   if (pending) return pending;
   const request = (async () => {
     try {
-      if (process.env.NEXT_PUBLIC_MARKET_TRANSPORT !== "gateway" && (provider === "gateio" || provider === "binance")) {
-        const contracts = await fetchPublicCatalogue(provider);
+      if (process.env.NEXT_PUBLIC_MARKET_TRANSPORT !== "gateway" && (DIRECT_VENUES as readonly string[]).includes(provider)) {
+        const contracts = await fetchPublicCatalogue(provider as DirectVenue);
         if (!contracts.length) throw new Error("Selected provider has no verified perpetual contracts");
         registerRuntimeContracts(contracts);
         const catalogue: ContractCatalogue = { provider, environment: "live", state: "verified", verified: true, contracts, loading: false };
@@ -98,4 +98,52 @@ export function useContractCatalogue(): ContractCatalogue {
   }, [provider]);
 
   return loaded?.provider === provider ? loaded.catalogue : EMPTY_CATALOGUE;
+}
+
+let cachedMergedContracts: ContractMetadata[] | null = null;
+let mergedCacheTime = 0;
+let mergedInFlight: Promise<ContractMetadata[]> | null = null;
+
+export async function fetchAllCryptoContracts(): Promise<ContractMetadata[]> {
+  if (cachedMergedContracts && Date.now() - mergedCacheTime < CACHE_TTL_MS) {
+    return cachedMergedContracts;
+  }
+  if (mergedInFlight) return mergedInFlight;
+  mergedInFlight = (async () => {
+    try {
+      const settled = await Promise.allSettled(
+        DIRECT_VENUES.map(venue => fetchCatalogueSingleton(venue))
+      );
+      const all: ContractMetadata[] = [];
+      for (const res of settled) {
+        if (res.status === "fulfilled" && res.value.contracts.length) {
+          all.push(...res.value.contracts);
+        }
+      }
+      cachedMergedContracts = all;
+      mergedCacheTime = Date.now();
+      return all;
+    } finally {
+      mergedInFlight = null;
+    }
+  })();
+  return mergedInFlight;
+}
+
+/** Fetches and groups contracts across all 4 crypto venues (Binance, Bybit, OKX, Gate.io). */
+export function useAllCryptoCatalogues(): { contracts: ContractMetadata[]; loading: boolean } {
+  const [data, setData] = useState<{ contracts: ContractMetadata[]; loading: boolean }>({
+    contracts: cachedMergedContracts ?? [],
+    loading: !cachedMergedContracts,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAllCryptoContracts().then(contracts => {
+      if (!cancelled) setData({ contracts, loading: false });
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  return data;
 }

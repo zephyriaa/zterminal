@@ -10,8 +10,9 @@ import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
 import { prependChartHistory } from "@/lib/market/chart-data";
 import { fetchBarsDeduplicated } from "@/lib/market/bars-dedup";
+import { fetchChartBars, fetchAggregatedBars } from "@/lib/market/aggregate";
 import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpeningRange, type VolumeProfile } from "@/domain/analytics/market";
-import type { ChartTimezone } from "@/stores/workspace";
+import { useWorkspace, type ChartTimezone } from "@/stores/workspace";
 import { DEFAULT_CHART_SETTINGS, type ChartSettingsV2, type ChartType } from "@/lib/chart/contracts";
 import { useCustomization } from "@/stores/customization";
 import { applyVolumePaneLayout, lightweightChartOptions } from "@/lib/chart/lightweight-adapter";
@@ -196,8 +197,11 @@ export function TerminalChart({
   const { lastTrade, provider, dataStatus, tradeStatus, trades: observedTrades, observations, observation } = useMarketStream(symbol, { trades: 2000, depth: false });
   const liveContract = useMarketContract(symbol, provider);
   const contract = snapshotContract ?? liveContract;
+  const aggregated = useWorkspace((s) => s.aggregated);
+  const isCryptoPerp = /^[A-Z0-9]+([_-]?USDT(-SWAP)?)?$/i.test(symbol) && provider !== "mock";
+  const isAggregated = aggregated && isCryptoPerp && !snapshot;
   const flowReady = provider === "mock" ? dataStatus === "SIMULATED" : (tradeStatus ?? dataStatus) === "LIVE" && contract.verified === true;
-  const historyKey = `${provider}:${symbol}:${timeframe}`;
+  const historyKey = isAggregated ? `aggregated:${symbol}:${timeframe}` : `${provider}:${symbol}:${timeframe}`;
   const bars = snapshot ?? (historyIdentity === historyKey ? liveBars : EMPTY_BARS);
   const activeHistory = !snapshot && historyIdentity === historyKey ? history : null;
   const tfSec = TIMEFRAME_SECONDS[timeframe];
@@ -256,7 +260,7 @@ export function TerminalChart({
         const to = Date.now();
         const barsCount = 600;
         const historicalProvider = provider ?? "gateio";
-        const result = await fetchBarsDeduplicated(historicalProvider, symbol, timeframe, to, barsCount, controller.signal, true);
+        const result = await fetchChartBars(symbol, timeframe, to, barsCount, isAggregated, historicalProvider, controller.signal, true);
         if (cancelled) return;
         setHistory(result); setHistoryIdentity(historyKey);
         setBars(result.bars);
@@ -271,11 +275,11 @@ export function TerminalChart({
     return () => {
       cancelled = true; controller.abort();
     };
-  }, [provider, symbol, timeframe, tfSec, snapshot, historyKey]);
+  }, [provider, symbol, timeframe, tfSec, snapshot, historyKey, isAggregated]);
 
-  // Handle live trade update
+  // Handle live trade update (single-venue only; aggregated uses periodic 5s reconciliation)
   useEffect(() => {
-    if (snapshot || !lastTrade || !bars.length) return;
+    if (snapshot || !lastTrade || !bars.length || isAggregated) return;
     const t = lastTrade.timestamp;
     const price = lastTrade.price;
     const bucket = alignToTimeframe(t, timeframe);
@@ -310,7 +314,27 @@ export function TerminalChart({
       }
       return next;
     });
-  }, [lastTrade, timeframe, snapshot]);
+  }, [lastTrade, timeframe, snapshot, isAggregated]);
+
+  // Periodically reconcile latest aggregated candles from all 4 venues
+  useEffect(() => {
+    if (!isAggregated || snapshot || !bars.length || loading) return;
+    const timer = setInterval(async () => {
+      try {
+        const latest = await fetchAggregatedBars(symbol, timeframe, Date.now(), 2);
+        if (latest.bars.length) {
+          setBars((prev) => {
+            const map = new Map(prev.map((b) => [b.t, b]));
+            for (const b of latest.bars) map.set(b.t, b);
+            return Array.from(map.values()).sort((a, b) => a.t - b.t).slice(-12000);
+          });
+        }
+      } catch {
+        // Retry next interval
+      }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isAggregated, snapshot, symbol, timeframe, loading, bars.length]);
 
   useEffect(() => {
     onLatestBar?.(availableBars.at(-1) ?? null);
@@ -566,7 +590,7 @@ function applyZTerminalWatermark(
       if (!manual && failedCutoff === cutoff) return;
       pending = true; pages++; setPaging(true); setPageMessage(null);
       try {
-        const result = await fetchBarsDeduplicated(provider, symbol, timeframe, cutoff, Math.min(600, 12000 - current.length), controller.signal);
+        const result = await fetchChartBars(symbol, timeframe, cutoff, Math.min(600, 12000 - current.length), isAggregated, provider, controller.signal);
         if (!active) return;
         if (!result.bars.length) { ended = true; setHistoryEnd(true); setPageMessage("No earlier candles available from this venue."); return; }
         const latest = barsRef.current;
@@ -898,7 +922,7 @@ function applyZTerminalWatermark(
         </div>
       )}
       
-      {activeHistory && <div className="absolute right-2 top-2 z-20 bg-panel px-2 py-1 text-[9px]" aria-label="History provenance">{activeHistory.selectedProvider} / {activeHistory.effectiveProvider} · {activeHistory.nativeSymbol} · {activeHistory.contract.product} · {activeHistory.environment} · {activeHistory.dataStatus} · {activeHistory.cache} · retrieved {new Date(activeHistory.retrievedAt).toLocaleString()} · source {activeHistory.sourceTimestamp == null ? "unknown" : new Date(activeHistory.sourceTimestamp).toLocaleString()} · {activeHistory.integrity} · volume {activeHistory.volumeUnit} · missing {activeHistory.gapCount} · {activeHistory.hasOpenCandle ? "includes unfinished candle" : "closed candles"}</div>}
+      {activeHistory && <div className="absolute right-2 top-2 z-20 bg-panel px-2 py-1 text-[9px]" aria-label="History provenance">{activeHistory.selectedProvider === "aggregated" ? `AGGREGATED (${activeHistory.effectiveProvider.replace(/^aggregated\((.*)\)$/, "$1")})` : `${activeHistory.selectedProvider} / ${activeHistory.effectiveProvider}`} · {activeHistory.nativeSymbol} · {activeHistory.contract.product} · {activeHistory.environment} · {activeHistory.dataStatus} · {activeHistory.cache} · retrieved {new Date(activeHistory.retrievedAt).toLocaleString()} · source {activeHistory.sourceTimestamp == null ? "unknown" : new Date(activeHistory.sourceTimestamp).toLocaleString()} · {activeHistory.integrity} · volume {activeHistory.volumeUnit} · missing {activeHistory.gapCount} · {activeHistory.hasOpenCandle ? "includes unfinished candle" : "closed candles"}</div>}
       {loading && (
         <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/50 text-[11px] text-muted-foreground uppercase tracking-wider backdrop-blur-sm">
           loading…

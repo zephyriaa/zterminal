@@ -34,7 +34,7 @@ function formatPrice(value: number | undefined | null, tick: number) {
 }
 
 export function ReferenceChartWorkspace() {
-  const { activeWorkspaceId, symbol, timeframe, setTimeframe, timezone, setMarketProvider } = useWorkspace();
+  const { activeWorkspaceId, symbol, timeframe, setTimeframe, timezone, setMarketProvider, aggregated, setAggregated } = useWorkspace();
   const archivedChart = useResearch(s => s.chartResult);
   const selectedTrade = useResearch(s => s.selectedTrade);
   const pythonEvaluations = useResearch(s => s.indicatorResults);
@@ -173,7 +173,7 @@ export function ReferenceChartWorkspace() {
             timeframe={chartTimeframe as Timeframe}
             archived={Boolean(archivedChart)}
             price={formatPrice(identityReady ? livePrice : null, contract.tickSize)}
-            providerLabel={chartProvider.toUpperCase()}
+            providerLabel={aggregated && !archivedChart && chartProvider !== "mock" ? "AGGREGATED (4 VENUES)" : chartProvider.toUpperCase()}
             dataStatus={dataStatus}
             statusReason={reason ?? health?.reason}
             chartType={chartType}
@@ -186,7 +186,10 @@ export function ReferenceChartWorkspace() {
             onReturnLive={() => useResearch.setState({ chartResult: null, selectedTrade: null })}
             onLayoutChange={setMultiChartLayout}
             onProviderChange={next => {
-              if (MARKET_PROVIDERS.includes(next as MarketProvider)) {
+              if (next === "aggregated") {
+                setAggregated(true);
+              } else if (MARKET_PROVIDERS.includes(next as MarketProvider)) {
+                setAggregated(false);
                 setMarketProvider(next as MarketProvider);
               }
             }}

@@ -1,18 +1,23 @@
 import { fetchInstrument } from "./instrument";
 import { fetchGateioHistoricalBars, normalizeGateioSymbol, GATEIO_REST_URL, GateContractSchema, gateContractToMetadata } from "./gateio";
 import { fetchBinanceHistoricalBars } from "./binance";
+import { fetchBybitHistoricalBars } from "./bybit";
+import { fetchOkxHistoricalBars } from "./okx";
 import { chartHistoryRange, normalizeChartBars } from "./chart-data";
 import { alignToTimeframe } from "./session";
 import { TIMEFRAME_SECONDS, type BarsResult, type ContractMetadata, type Timeframe } from "./types";
+
+export type DirectVenue = "gateio" | "binance" | "bybit" | "okx";
+export const DIRECT_VENUES: readonly DirectVenue[] = ["gateio", "binance", "bybit", "okx"] as const;
 
 const pending = new Map<string, Promise<Response>>();
 const cooldowns = new Map<string, number>();
 const instruments = new Map<string, { at: number; value: Promise<ContractMetadata> }>();
 
-export async function fetchPublicCatalogue(provider: "gateio" | "binance"): Promise<ContractMetadata[]> {
-  const response = await publicFetch(provider === "gateio" ? `${GATEIO_REST_URL}/futures/usdt/contracts` : "https://fapi.binance.com/fapi/v1/exchangeInfo");
-  const data = await response.json();
+export async function fetchPublicCatalogue(provider: DirectVenue): Promise<ContractMetadata[]> {
   if (provider === "gateio") {
+    const response = await publicFetch(`${GATEIO_REST_URL}/futures/usdt/contracts`);
+    const data = await response.json();
     if (!Array.isArray(data)) throw new Error("Invalid Gate.io catalogue");
     return data.flatMap(item => {
       const parsed = GateContractSchema.safeParse(item);
@@ -21,13 +26,74 @@ export async function fetchPublicCatalogue(provider: "gateio" | "binance"): Prom
       return contract.verified && contract.tickSize > 0 && contract.multiplier > 0 ? [contract] : [];
     });
   }
-  if (!Array.isArray(data.symbols)) throw new Error("Invalid Binance catalogue");
-  return data.symbols.flatMap((item: { symbol: string; baseAsset: string; quoteAsset: string; contractType: string; status: string; filters: { filterType: string; tickSize?: string; stepSize?: string }[] }) => {
-    if (item.contractType !== "PERPETUAL" || item.quoteAsset !== "USDT" || item.status !== "TRADING" || !/^[A-Z0-9]+USDT$/.test(item.symbol)) return [];
-    const tickSize = Number(item.filters?.find(f => f.filterType === "PRICE_FILTER")?.tickSize), quantityStep = Number(item.filters?.find(f => f.filterType === "LOT_SIZE")?.stepSize);
-    if (![tickSize, quantityStep].every(value => Number.isFinite(value) && value > 0)) return [];
-    return [{ root: item.baseAsset, symbol: item.symbol, description: `${item.baseAsset}/USDT perpetual`, exchange: "BINANCE", product: "perpetual", tickSize, tickValue: tickSize, multiplier: 1, quantityStep, currency: "USDT", session: "crypto", supportsDepth: true, supportsMBO: false, verified: true } satisfies ContractMetadata];
-  });
+  if (provider === "binance") {
+    const response = await publicFetch("https://fapi.binance.com/fapi/v1/exchangeInfo");
+    const data = await response.json();
+    if (!Array.isArray(data.symbols)) throw new Error("Invalid Binance catalogue");
+    return data.symbols.flatMap((item: { symbol: string; baseAsset: string; quoteAsset: string; contractType: string; status: string; filters: { filterType: string; tickSize?: string; stepSize?: string }[] }) => {
+      if (item.contractType !== "PERPETUAL" || item.quoteAsset !== "USDT" || item.status !== "TRADING" || !/^[A-Z0-9]+USDT$/.test(item.symbol)) return [];
+      const tickSize = Number(item.filters?.find(f => f.filterType === "PRICE_FILTER")?.tickSize), quantityStep = Number(item.filters?.find(f => f.filterType === "LOT_SIZE")?.stepSize);
+      if (![tickSize, quantityStep].every(value => Number.isFinite(value) && value > 0)) return [];
+      return [{ root: item.baseAsset, symbol: item.symbol, description: `${item.baseAsset}/USDT perpetual`, exchange: "BINANCE", product: "perpetual", tickSize, tickValue: tickSize, multiplier: 1, quantityStep, currency: "USDT", session: "crypto", supportsDepth: true, supportsMBO: false, verified: true } satisfies ContractMetadata];
+    });
+  }
+  if (provider === "bybit") {
+    const response = await publicFetch("https://api.bybit.com/v5/market/instruments-info?category=linear");
+    const data = await response.json();
+    if (data.retCode !== 0 || !Array.isArray(data.result?.list)) throw new Error("Invalid Bybit catalogue");
+    return data.result.list.flatMap((item: { symbol: string; baseCoin: string; quoteCoin: string; contractType: string; status: string; priceFilter?: { tickSize?: string }; lotSizeFilter?: { qtyStep?: string } }) => {
+      if (item.contractType !== "LinearPerpetual" || item.quoteCoin !== "USDT" || item.status !== "Trading") return [];
+      const tickSize = Number(item.priceFilter?.tickSize);
+      const quantityStep = Number(item.lotSizeFilter?.qtyStep);
+      if (!Number.isFinite(tickSize) || tickSize <= 0) return [];
+      return [{
+        root: item.baseCoin,
+        symbol: item.symbol,
+        description: `${item.baseCoin}/USDT perpetual`,
+        exchange: "BYBIT",
+        product: "perpetual",
+        tickSize,
+        tickValue: tickSize,
+        multiplier: 1,
+        quantityStep: Number.isFinite(quantityStep) && quantityStep > 0 ? quantityStep : undefined,
+        currency: "USDT",
+        session: "crypto",
+        supportsDepth: true,
+        supportsMBO: false,
+        verified: true,
+      } satisfies ContractMetadata];
+    });
+  }
+  if (provider === "okx") {
+    const response = await publicFetch("https://www.okx.com/api/v5/public/instruments?instType=SWAP");
+    const data = await response.json();
+    if (data.code !== "0" || !Array.isArray(data.data)) throw new Error("Invalid OKX catalogue");
+    return data.data.flatMap((item: { instId: string; uly?: string; instType: string; ctType: string; settleCcy: string; state: string; tickSz?: string; lotSz?: string; ctVal?: string; ctMult?: string }) => {
+      if (item.instType !== "SWAP" || item.ctType !== "linear" || item.settleCcy !== "USDT" || item.state !== "live") return [];
+      const root = item.uly ? item.uly.split("-")[0] : item.instId.split("-")[0];
+      const tickSize = Number(item.tickSz);
+      const quantityStep = Number(item.lotSz);
+      const multiplier = Number(item.ctVal) * Number(item.ctMult || 1);
+      if (![tickSize, multiplier].every(value => Number.isFinite(value) && value > 0)) return [];
+      return [{
+        root,
+        symbol: item.instId,
+        description: `${root}/USDT perpetual`,
+        exchange: "OKX",
+        product: "perpetual",
+        tickSize,
+        tickValue: tickSize * multiplier,
+        multiplier,
+        quantityStep: Number.isFinite(quantityStep) && quantityStep > 0 ? quantityStep : undefined,
+        currency: "USDT",
+        session: "crypto",
+        supportsDepth: true,
+        supportsMBO: false,
+        verified: true,
+      } satisfies ContractMetadata];
+    });
+  }
+  throw new Error(`Unsupported public catalogue provider: ${provider}`);
 }
 
 /** Shared public requests have bounded timeouts and respect venue rate limits. */
@@ -51,8 +117,8 @@ export async function publicFetch(input: string | URL, init?: RequestInit): Prom
   return response.clone();
 }
 
-export async function fetchPublicInstrument(provider: "gateio" | "binance", symbol: string) {
-  const normalized = normalizeGateioSymbol(symbol);
+export async function fetchPublicInstrument(provider: DirectVenue, symbol: string) {
+  const normalized = normalizeGateioSymbol(provider === "okx" ? symbol.trim().toUpperCase().replace(/-SWAP$/, "") : symbol);
   if (!normalized) throw new Error("Unsupported USDT perpetual instrument");
   const key = `${provider}:${normalized}`;
   let entry = instruments.get(key);
@@ -64,16 +130,23 @@ export async function fetchPublicInstrument(provider: "gateio" | "binance", symb
   return entry.value;
 }
 
+const venueHistoricalFetchers: Record<DirectVenue, typeof fetchGateioHistoricalBars> = {
+  gateio: fetchGateioHistoricalBars,
+  binance: fetchBinanceHistoricalBars,
+  bybit: fetchBybitHistoricalBars,
+  okx: fetchOkxHistoricalBars,
+};
+
 /** Public chart history retains the same envelope and exclusive cutoff as /api/bars. */
-export async function fetchPublicBars(provider: "gateio" | "binance", symbol: string, timeframe: Timeframe, to: number, count: number): Promise<BarsResult> {
+export async function fetchPublicBars(provider: DirectVenue, symbol: string, timeframe: Timeframe, to: number, count: number): Promise<BarsResult> {
   if (to > Date.now()) throw new Error("Invalid future historical cutoff");
   const range = chartHistoryRange(to, count, timeframe), contract = await fetchPublicInstrument(provider, symbol);
-  const fetcher = provider === "gateio" ? fetchGateioHistoricalBars : fetchBinanceHistoricalBars;
+  const fetcher = venueHistoricalFetchers[provider];
   const bars = normalizeChartBars(await fetcher(contract.symbol, timeframe, range.from, range.lastOpen, publicFetch)).filter(bar => bar.t >= range.from && bar.t < to);
   if (!bars.length || bars.some(bar => alignToTimeframe(bar.t, timeframe) !== bar.t)) throw new Error("Selected venue returned no valid aligned history");
   const retrievedAt = Date.now();
   return { symbol, canonicalSymbol: `${contract.root}${contract.currency}`, nativeSymbol: contract.symbol, timeframe, selectedProvider: provider, effectiveProvider: provider,
     environment: "live", dataStatus: "HISTORICAL", contract, retrievedAt, sourceTimestamp: bars.at(-1)?.t ?? null, timestampUnit: "ms", integrity: "provider-ohlcv", cache: "network",
     requestedFrom: range.from, requestedTo: to, requestedCount: count, gapCount: range.expected - bars.length,
-    hasOpenCandle: bars.some(bar => bar.t + TIMEFRAME_SECONDS[timeframe] * 1000 > retrievedAt), volumeUnit: provider === "gateio" ? "contracts" : "base", bars };
+    hasOpenCandle: bars.some(bar => bar.t + TIMEFRAME_SECONDS[timeframe] * 1000 > retrievedAt), volumeUnit: provider === "gateio" || provider === "okx" ? "contracts" : "base", bars };
 }

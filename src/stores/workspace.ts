@@ -33,6 +33,7 @@ export interface SavedWorkspace {
   timeframe: string;
   timezone: ChartTimezone;
   createdAt: number;
+  aggregated?: boolean;
   chartDocuments?: ChartDocument[];
 }
 
@@ -40,6 +41,8 @@ interface WorkspaceState {
   layoutLocked: boolean;
   marketProvider: MarketProvider;
   setMarketProvider: (provider: MarketProvider) => void;
+  aggregated: boolean;
+  setAggregated: (aggregated: boolean) => void;
   activeWorkspaceId: string;
   activeView: ViewId;
   setView: (v: ViewId) => void;
@@ -85,7 +88,7 @@ interface WorkspaceState {
 const P0_DEFAULT_SYMBOL = "BTCUSDT";
 const P0_TIMEFRAMES = new Set(["1m", "5m", "15m", "30m", "1h", "4h", "1d"]);
 
-type PersistedWorkspace = Partial<Pick<WorkspaceState, "marketProvider" | "activeWorkspaceId" | "sidebarCollapsed" | "symbol" | "timeframe" | "timezone" | "workspaces">>;
+type PersistedWorkspace = Partial<Pick<WorkspaceState, "marketProvider" | "aggregated" | "activeWorkspaceId" | "sidebarCollapsed" | "symbol" | "timeframe" | "timezone" | "workspaces">>;
 
 const SUPPORTED_TIMEZONES = new Set<ChartTimezone>(["America/New_York", "UTC", "Europe/London", "Asia/Tokyo", "Asia/Dubai", "local"]);
 
@@ -104,10 +107,11 @@ export function migratePersistedWorkspace(value: unknown): PersistedWorkspace {
         symbol: typeof workspace.symbol === "string" ? workspace.symbol : P0_DEFAULT_SYMBOL,
         timeframe: P0_TIMEFRAMES.has(workspace.timeframe) ? workspace.timeframe : "5m",
         timezone: SUPPORTED_TIMEZONES.has(workspace.timezone as ChartTimezone) ? workspace.timezone : timezone,
+        aggregated: typeof workspace.aggregated === "boolean" ? workspace.aggregated : true,
       }))
     : [];
   const activeWorkspaceId = typeof persisted.activeWorkspaceId === "string" && (persisted.activeWorkspaceId === "local-default" || workspaces.some(workspace => workspace.id === persisted.activeWorkspaceId)) ? persisted.activeWorkspaceId : "local-default";
-  return { ...persisted, marketProvider: MARKET_PROVIDERS.includes(persisted.marketProvider as MarketProvider) ? persisted.marketProvider : "gateio", activeWorkspaceId, symbol: typeof persisted.symbol === "string" ? persisted.symbol : P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
+  return { ...persisted, marketProvider: MARKET_PROVIDERS.includes(persisted.marketProvider as MarketProvider) ? persisted.marketProvider : "gateio", aggregated: typeof persisted.aggregated === "boolean" ? persisted.aggregated : true, activeWorkspaceId, symbol: typeof persisted.symbol === "string" ? persisted.symbol : P0_DEFAULT_SYMBOL, timeframe, timezone, workspaces };
 }
 
 export const useWorkspace = create<WorkspaceState>()(
@@ -116,6 +120,8 @@ export const useWorkspace = create<WorkspaceState>()(
       layoutLocked: false,
       marketProvider: "gateio",
       setMarketProvider: (marketProvider) => set({ marketProvider, connection: { state: "connecting", provider: marketProvider, environment: marketProvider === "mock" ? "simulation" : "live", dataStatus: "DISCONNECTED" } }),
+      aggregated: true,
+      setAggregated: (aggregated) => set({ aggregated }),
       activeWorkspaceId: "local-default",
       activeView: "chart",
       setView: (v) => set({ activeView: v }),
@@ -165,6 +171,7 @@ export const useWorkspace = create<WorkspaceState>()(
           symbol: s.symbol,
           timeframe: s.timeframe,
           timezone: s.timezone,
+          aggregated: s.aggregated,
           createdAt: Date.now(),
         };
         ws.chartDocuments = workspaceChartDocuments(Object.values(useChartDocuments.getState().documents).filter(document => document.workspaceId === s.activeWorkspaceId), ws.id);
@@ -199,6 +206,7 @@ export const useWorkspace = create<WorkspaceState>()(
           symbol: ws.symbol,
           timeframe: ws.timeframe,
           timezone: ws.timezone,
+          aggregated: ws.aggregated ?? true,
         });
       },
       mergeCloudWorkspaces: (cloudWorkspaces) => {
@@ -211,10 +219,11 @@ export const useWorkspace = create<WorkspaceState>()(
     {
       name: "zterminal-workspace",
       storage: createJSONStorage(() => legacyWorkspaceStorage),
-      version: 5,
+      version: 6,
       migrate: (persistedState) => migratePersistedWorkspace(persistedState),
       partialize: (s) => ({
         marketProvider: s.marketProvider,
+        aggregated: s.aggregated,
         activeWorkspaceId: s.activeWorkspaceId,
         sidebarCollapsed: s.sidebarCollapsed,
         symbol: s.symbol,

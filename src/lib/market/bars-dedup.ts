@@ -6,7 +6,7 @@ import { normalizeGateioSymbol } from "./gateio";
 import { chartHistoryRange, normalizeChartBars } from "./chart-data";
 import { alignToTimeframe } from "./session";
 import { cachedChartHistory, cacheChartHistory } from "./bar-cache";
-import { fetchPublicBars } from "./public-data";
+import { fetchPublicBars, DIRECT_VENUES, type DirectVenue } from "./public-data";
 import { FREE_TIER_CONFIG } from "../config/free-tier-policy";
 
 const memoryCache = new Map<string, { expiresAt: number; result: BarsResult }>();
@@ -33,10 +33,10 @@ export async function fetchBarsDeduplicated(
   if (!pending) {
     pending = (async (): Promise<BarsResult> => {
       try {
-        if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_MARKET_TRANSPORT !== "gateway" && (provider === "gateio" || provider === "binance")) {
+        if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_MARKET_TRANSPORT !== "gateway" && (DIRECT_VENUES as readonly string[]).includes(provider)) {
           let result: BarsResult;
           try {
-            result = await fetchPublicBars(provider, symbol, timeframe, toMs, barsCount);
+            result = await fetchPublicBars(provider as DirectVenue, symbol, timeframe, toMs, barsCount);
             void cacheChartHistory(result).catch(() => {});
           } catch (error) {
             const saved = await cachedChartHistory(provider, symbol, timeframe, toMs, barsCount, allowOlderHistory);

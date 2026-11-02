@@ -30,11 +30,12 @@ const TIMEFRAMES: { value: Timeframe; label: string }[] = [
 ];
 
 const PROVIDERS = [
-  { id: "gateio", label: "Gate.io" },
-  { id: "bybit", label: "Bybit (Free)" },
+  { id: "aggregated", label: "Aggregated (4 venues)" },
   { id: "binance", label: "Binance (Free)" },
-  { id: "coinbase", label: "Coinbase" },
+  { id: "bybit", label: "Bybit (Free)" },
   { id: "okx", label: "OKX" },
+  { id: "gateio", label: "Gate.io" },
+  { id: "coinbase", label: "Coinbase" },
 ];
 
 type Props = {
@@ -137,29 +138,34 @@ export function ChartToolbar(props: Props) {
             </button></PopoverTrigger>
             <PopoverContent align="start" className="zt-chart-toolbar-menu w-auto min-w-[130px] p-1">
                 <div className="px-2 py-0.5 text-[9px] text-[#8b949e] border-b border-[#21262d] uppercase tracking-wider font-semibold">
-                  Free Providers
+                  Providers
                 </div>
-                {PROVIDERS.map((prov) => (
-                  <button
-                    key={prov.id}
-                    type="button"
-                    onClick={() => {
-                      props.onProviderChange?.(prov.id);
-                      setShowProviderMenu(false);
-                    }}
-                    className={cn(
-                      "w-full text-left px-2 py-1 text-xs hover:bg-[#161b22] flex items-center justify-between",
-                      props.providerLabel.toLowerCase().includes(prov.id)
-                        ? "text-[#38bdf8] font-bold"
-                        : "text-[#c9d1d9]"
-                    )}
-                  >
-                    <span>{prov.label}</span>
-                    {props.providerLabel.toLowerCase().includes(prov.id) && (
-                      <span className="text-[10px]">✓</span>
-                    )}
-                  </button>
-                ))}
+                {PROVIDERS.map((prov) => {
+                  const isSelected = prov.id === "aggregated"
+                    ? props.providerLabel.toLowerCase().includes("aggregated")
+                    : !props.providerLabel.toLowerCase().includes("aggregated") && props.providerLabel.toLowerCase().includes(prov.id);
+                  return (
+                    <button
+                      key={prov.id}
+                      type="button"
+                      onClick={() => {
+                        props.onProviderChange?.(prov.id);
+                        setShowProviderMenu(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2 py-1 text-xs hover:bg-[#161b22] flex items-center justify-between",
+                        isSelected
+                          ? "text-[#38bdf8] font-bold"
+                          : "text-[#c9d1d9]"
+                      )}
+                    >
+                      <span>{prov.label}</span>
+                      {isSelected && (
+                        <span className="text-[10px]">✓</span>
+                      )}
+                    </button>
+                  );
+                })}
             </PopoverContent></Popover>
           </div>
 
