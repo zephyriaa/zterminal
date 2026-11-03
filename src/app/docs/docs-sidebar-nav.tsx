@@ -7,8 +7,9 @@ import styles from "./docs.module.css";
 
 const DOCS_NAV = [
   { href: "/docs", label: "Overview" },
-  { href: "/docs/windows/install", label: "Windows installation" },
+  { href: "/docs/backtesting", label: "Backtesting & AI Guide" },
   { href: "/docs/python-research", label: "Python Research API" },
+  { href: "/docs/windows/install", label: "Windows installation" },
   { href: "/docs/zscript", label: "ZScript migration" },
 ];
 

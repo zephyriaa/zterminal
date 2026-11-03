@@ -28,6 +28,14 @@ export default function PythonResearchDocumentationPage() {
         The ZTerminal Research API runs real Python and vectorbt on your computer. Pair the local helper once, write a strategy in standard pandas, and run vectorized backtests with visible empirical limits. Python strategy code executes through the paired local helper on your machine rather than on the ZTerminal web server.
       </p>
 
+      <div className={styles.callout}>
+        <strong>Looking to write strategies with AI?</strong> Read the comprehensive{" "}
+        <Link href="/docs/backtesting" className={styles.textLink}>
+          Backtesting &amp; AI Strategy Guide <Arrow />
+        </Link>{" "}
+        for system prompts, backtest settings schemas, and ready-to-test code recipes.
+      </div>
+
       {/* LOCAL EXECUTION SECTION */}
       <section data-public-reveal="content" className={styles.docSection}>
         <h2 className={styles.sectionTitle}>Local execution &amp; user permissions</h2>
@@ -100,6 +108,9 @@ export default function PythonResearchDocumentationPage() {
         <div className={styles.linkRow}>
           <Link href="/terminal" className={styles.primaryButtonSmall}>
             Launch web terminal <Arrow />
+          </Link>
+          <Link href="/docs/backtesting" className={styles.textLink}>
+            AI &amp; Backtesting Guide <Arrow />
           </Link>
           <Link href="/docs/zscript" className={styles.textLink}>
             Read ZScript migration notes <Arrow />
