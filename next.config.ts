@@ -54,11 +54,11 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/terminal",
+        source: "/(terminal|workspaces)",
         headers: [
           {
             key: "Cache-Control",
-            value: "private, no-store",
+            value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
           },
         ],
       },

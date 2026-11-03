@@ -40,13 +40,24 @@ function createClient() {
   }
 
   // Standard Node.js runtime (local dev or self-hosted VPS)
-  const client = new PrismaClient({
-    // Error event messages can include Prisma invocations and connection details.
-    log: [{ level: "error", emit: "event" }, { level: "warn", emit: "event" }],
-  });
-  client.$on("error", () => console.error("ZTerminal database error"));
-  client.$on("warn", () => console.warn("ZTerminal database warning"));
-  return client;
+  try {
+    const client = new PrismaClient({
+      // Error event messages can include Prisma invocations and connection details.
+      log: [{ level: "error", emit: "event" }, { level: "warn", emit: "event" }],
+    });
+    client.$on("error", () => console.error("ZTerminal database error"));
+    client.$on("warn", () => console.warn("ZTerminal database warning"));
+    return client;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("requires an active driver adapter")) {
+      return new PrismaClient({
+        adapter: new PrismaPg({
+          connectionString: "postgresql://unconfigured:unconfigured@127.0.0.1:5432/unconfigured",
+        }),
+      });
+    }
+    throw error;
+  }
 }
 
 // A Worker socket belongs to its request. Reusing a module-level pool can hang
