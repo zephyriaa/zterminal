@@ -5,7 +5,7 @@ import io
 import math
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
@@ -134,43 +134,70 @@ def execute_quant_backtest(
     if len(bars) == 0:
         raise ValueError("Cannot run backtest on empty bar dataset")
 
-    # Load dataframe
+    started = time.perf_counter()
     frame = pd.DataFrame(bars)
-    if "t" in frame.columns:
-        frame.index = pd.to_datetime(frame.pop("t"), unit="ms", utc=True)
-    elif "timestamp" in frame.columns:
-        frame.index = pd.to_datetime(frame.pop("timestamp"), unit="ms", utc=True)
-    else:
-        frame.index = pd.date_range(start="2025-01-01", periods=len(frame), freq="5min", tz="UTC")
-
+    timestamp = "t" if "t" in frame else "timestamp"
+    if timestamp not in frame:
+        raise ValueError("Bars require millisecond timestamps")
+    frame.index = pd.to_datetime(frame.pop(timestamp), unit="ms", utc=True)
+    if frame.index.hasnans or not frame.index.is_monotonic_increasing or not frame.index.is_unique:
+        raise ValueError("Bar timestamps must be unique and increasing")
     for col in ("open", "high", "low", "close", "volume"):
-        if col not in frame.columns:
-            # Map shorthand o, h, l, c, v if needed
-            short_col = col[0]
-            if short_col in frame.columns:
-                frame[col] = frame.pop(short_col)
-            else:
-                frame[col] = 100.0
+        if col not in frame and col[0] in frame:
+            frame[col] = frame.pop(col[0])
+        if col not in frame:
+            raise ValueError(f"Missing bar column: {col}")
         frame[col] = frame[col].astype(float)
+    prices = frame[["open", "high", "low", "close"]]
+    if (not np.isfinite(frame[["open", "high", "low", "close", "volume"]]).all().all()
+            or (prices <= 0).any().any() or (frame.volume < 0).any()
+            or (frame.high < prices.max(axis=1)).any() or (frame.low > prices.min(axis=1)).any()):
+        raise ValueError("Invalid OHLCV bars")
+    for name, default, maximum in [
+        ("initial_capital", 100000, math.inf), ("quantity_step", .001, math.inf),
+        ("multiplier", 1, math.inf), ("allocation", 1, 1),
+        ("fee_bps", 2.5, 10000), ("slippage_bps", 1, 9999)]:
+        value = config.get(name, default)
+        if (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+                or value < 0 or value > maximum or value == 0 and name not in ("fee_bps", "slippage_bps")):
+            raise ValueError(f"Invalid execution setting: {name}")
+    direction = config.get("direction", "both")
+    if direction not in ("long", "short", "both"):
+        raise ValueError("Invalid direction")
+    if any(isinstance(value, (list, tuple, np.ndarray)) for value in params.values()):
+        raise ValueError("Parameter grids require cross-validation, which is unavailable")
 
     limiter.check()
-
-    from .cv import perform_purged_kfold_cv
-    from .simulation import run_discrete_event_simulation
-
-    # 1. VectorBT Purged K-Fold validation
-    best_params, deflated_sharpe = perform_purged_kfold_cv(frame, params)
-    
-    # 2. Strict T+1 execution via NautilusTrader adapter
-    sharpe, sortino, max_dd, pnl = run_discrete_event_simulation(frame, best_params, config)
-    
+    namespace = {"pd": pd, "np": np}
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        exec(compile(source, "<strategy>", "exec"), namespace)
+        strategy = namespace.get("strategy")
+        if not callable(strategy):
+            raise ValueError("Source must define strategy(data, params)")
+        signals = strategy(frame.copy(), dict(params))
+    limiter.check()
+    if not isinstance(signals, dict):
+        raise ValueError("Strategy must return a signal dictionary")
+    shifted = []
+    for name in ("entries", "exits", "short_entries", "short_exits"):
+        signal = signals.get(name, np.zeros(len(frame), dtype=bool))
+        if isinstance(signal, pd.Series) and not signal.index.equals(frame.index):
+            raise ValueError(f"Misaligned signal: {name}")
+        values = np.asarray(signal)
+        if values.shape != (len(frame),) or values.dtype != np.dtype(bool):
+            raise ValueError(f"Signal must be an aligned boolean vector: {name}")
+        shifted.append(np.r_[False, values[:-1]])
+    if direction == "long": shifted[2][:] = False
+    if direction == "short": shifted[0][:] = False
+    equity, trades, exposure = simulate_positions(frame, *shifted, config, limiter)
+    limiter.check()
+    times = frame.index.as_unit("ms").asi8
     return {
-        "strategy_id": str(uuid.uuid4()),
-        "optimized_params": best_params,
-        "tear_sheet": {
-            "sharpe_ratio": float(sharpe),
-            "deflated_sharpe_ratio": float(deflated_sharpe),
-            "sortino_ratio": float(sortino),
-            "max_drawdown_pct": float(max_dd),
-        }
+        "result_id": str(uuid.uuid4()), "execution_model": "bar_next_open_v1",
+        "metrics": compute_metrics(equity, float(config.get("initial_capital", 100000)),
+                                   trades, int(times[0]), int(times[-1]), exposure),
+        "equity_curve": [{"t": int(t), "equity": float(value)} for t, value in zip(times, equity)],
+        "trades": trades, "bars_processed": len(frame), "stdout": output.getvalue(),
+        "elapsed_ms": (time.perf_counter() - started) * 1000,
     }

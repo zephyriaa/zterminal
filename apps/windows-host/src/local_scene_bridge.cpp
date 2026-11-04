@@ -147,7 +147,7 @@ constexpr DWORD kMaximumBridgeWaitMilliseconds = 15'000;
             || !parse_i64((*iterator)[6].str(), candle.volume)) {
             return bridge_failure(L"local scene bridge returned an unparseable candle");
         }
-        if (candle.volume <= 0
+        if (candle.volume < 0
             || candle.low_ticks > candle.open_ticks
             || candle.low_ticks > candle.close_ticks
             || candle.high_ticks < candle.open_ticks

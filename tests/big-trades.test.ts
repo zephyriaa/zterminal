@@ -29,3 +29,10 @@ test("Big Trades keeps a bounded mutable trade buffer", () => {
   buffer.push({ ...base, sequence: 3, timestamp: 1_500 });
   assert.equal(buffer.snapshot(1, DEFAULT_BIG_TRADES_SETTINGS).clusters.length, 2);
 });
+
+test("Big Trades distinguishes observed raw and aggregate events and rejects fabricated zero prints", () => {
+  const settings = { ...DEFAULT_BIG_TRADES_SETTINGS, minimumNotional: 0 };
+  const result = aggregateBigTrades([{ ...base, conditions: ["raw-trade"] }, { ...base, sequence: 2, conditions: ["aggregate-trade"] }, { ...base, sequence: 3, quantity: 0 }], 1, settings);
+  assert.deepEqual(result.clusters.map(cluster => cluster.granularity).sort(), ["aggregate", "individual"]);
+  assert.ok(result.clusters.every(cluster => cluster.count === 1 && cluster.quantity > 0));
+});

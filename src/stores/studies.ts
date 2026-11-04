@@ -21,5 +21,5 @@ export const useStudies = create<State>()(persist((set) => ({
   const state = saved as Partial<State> | undefined; if (!state || !Array.isArray(state.instances)) return current; const ids = new Set<string>();
   const instances = state.instances.map(migrateStudy).filter((item): item is IndicatorInstance => { if (!item || ids.has(item.id)) return false; try { validateStudy(item); ids.add(item.id); return true; } catch { return false; } }).slice(0, 50);
   const supported = (items: unknown) => Array.isArray(items) ? items.filter(id => typeof id === "string" && (id.startsWith("python:") || INDICATOR_LIBRARY.some(item => item.id === id))).slice(0, 20) : [];
-  return { ...current, instances: instances.length ? instances : defaults(), favorites: supported(state.favorites), recent: supported(state.recent) };
+  return { ...current, instances: state.instances.length === 0 ? [] : instances.length ? instances : defaults(), favorites: supported(state.favorites), recent: supported(state.recent) };
 } }));

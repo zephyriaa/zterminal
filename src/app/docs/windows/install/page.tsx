@@ -3,7 +3,7 @@ import Link from "next/link";
 import { publicWindowsRelease } from "@/lib/releases/windows-release";
 import styles from "../../docs.module.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Installing ZTerminal on Windows — Documentation",

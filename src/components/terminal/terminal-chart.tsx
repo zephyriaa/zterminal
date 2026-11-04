@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
-import { getContract } from "@/lib/market/contracts";
-import type { Bar } from "@/lib/market/types";
-import { subscribeMarketTrades, useMarketStream } from "@/hooks/use-market-stream";
+import { useMarketContract } from "@/hooks/use-market-contract";
+import { pricePrecision } from "@/lib/market/contracts";
+import type { Bar, BarsResult, ContractMetadata } from "@/lib/market/types";
+import { useMarketStream } from "@/hooks/use-market-stream";
 import { alignToTimeframe } from "@/lib/market/session";
 import { TIMEFRAME_SECONDS, type Timeframe } from "@/lib/market/types";
-import { normalizeChartBars } from "@/lib/market/chart-data";
+import { prependChartHistory } from "@/lib/market/chart-data";
 import { fetchBarsDeduplicated } from "@/lib/market/bars-dedup";
 import { buildVolumeProfile, calculateVolatility, classifyRegime, computeOpeningRange, type VolumeProfile } from "@/domain/analytics/market";
 import type { ChartTimezone } from "@/stores/workspace";
@@ -19,8 +20,9 @@ import type { DrawingCoordinates } from "@/lib/chart/drawings/coordinates";
 import type { DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
 import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import { bigTradesSettings } from "@/lib/chart/overlays/contracts";
-import { BigTradesBuffer, type BigTradeCluster } from "@/lib/chart/overlays/big-trades";
+import { type BigTradeCluster } from "@/lib/chart/overlays/big-trades";
 import { BigTradesPrimitive } from "@/lib/chart/overlays/big-trades-primitive";
+import { VolumeProfilePrimitive } from "@/lib/chart/overlays/volume-profile-primitive";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
 import { isDrawingVisible } from "@/lib/chart/drawings/geometry";
 import { DrawingPrimitive } from "@/lib/chart/drawings/primitive";
@@ -29,6 +31,7 @@ import type { IndicatorInstance } from "@/lib/indicator-library";
 import { createStudy, migrateStudy } from "@/lib/indicator-library";
 import { evaluateIndicator } from "@/lib/chart/indicators/evaluators";
 import type { IndicatorEvaluationResult } from "@/lib/local-research/contracts";
+import { matchesPythonEvaluation } from "@/lib/local-research/indicator-evaluation";
 import {
   createChart,
   IChartApi,
@@ -70,8 +73,12 @@ export interface TradeMarker {
 
 export type ChartSettings = ChartSettingsV2;
 export { DEFAULT_CHART_SETTINGS } from "@/lib/chart/contracts";
+const EMPTY_BARS: Bar[] = [];
+const EMPTY_PYTHON_EVALUATIONS: Record<string, IndicatorEvaluationResult> = {};
 
 interface ChartProps {
+  drawingScopeKey?: string;
+  captureActive?: boolean;
   symbol: string;
   timeframe: Timeframe;
   chartType: ChartType;
@@ -82,6 +89,7 @@ interface ChartProps {
   replayEnabled?: boolean;
   markers?: TradeMarker[];
   snapshot?: Bar[];
+  snapshotContract?: ContractMetadata;
   focusRange?: { from: number; to: number } | null;
   settings?: ChartSettings;
   volumePaneHeight?: number;
@@ -128,16 +136,19 @@ function themeColors() {
 }
 
 export function TerminalChart({
+  drawingScopeKey = "chart",
+  captureActive = true,
   symbol,
   timeframe,
   chartType,
   indicators,
   indicatorInstances,
-  pythonEvaluations = {},
+  pythonEvaluations = EMPTY_PYTHON_EVALUATIONS,
   replayIndex,
   replayEnabled = false,
   markers,
   snapshot,
+  snapshotContract,
   focusRange,
   settings = DEFAULT_CHART_SETTINGS,
   markPrice,
@@ -159,24 +170,36 @@ export function TerminalChart({
   const drawingPrimitiveRef = useRef<DrawingPrimitive | null>(null);
   const drawingCoordinatesRef = useRef<DrawingCoordinates | null>(null);
   const bigTradesPrimitiveRef = useRef<BigTradesPrimitive | null>(null);
-  const bigTradesBufferRef = useRef(new BigTradesBuffer(4_000));
-  const bigTradesFrameRef = useRef<number>(0);
+  const volumeProfilePrimitiveRef = useRef<VolumeProfilePrimitive | null>(null);
+  const [studyWarnings, setStudyWarnings] = useState<string[]>([]);
   const visibleDrawingsRef = useRef<DrawingObject[]>([]);
   const drawingPreviewRef = useRef<DrawingObject | null>(null);
   const settingsRef = useRef(settings);
 
   const [liveBars, setBars] = useState<Bar[]>([]);
-  const bars = snapshot ?? liveBars;
+  const [history, setHistory] = useState<BarsResult | null>(null);
+  const [historyIdentity, setHistoryIdentity] = useState<string | null>(null);
   const markerPlugin = useRef<ReturnType<typeof createSeriesMarkers<Time>> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paging, setPaging] = useState(false);
+  const [historyEnd, setHistoryEnd] = useState(false);
+  const [pageMessage, setPageMessage] = useState<string | null>(null);
+  const loadOlderRef = useRef<(() => void) | null>(null);
+  const pageViewRef = useRef<{ from: Time; to: Time } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [internalReplayIndex, setInternalReplayIndex] = useState<number | null>(null);
   const [replayPlaying, setReplayPlaying] = useState(false);
   const [hoveredBigTrade, setHoveredBigTrade] = useState<BigTradeCluster | null>(null);
 
-  const contract = getContract(symbol);
+  const { lastTrade, provider, dataStatus, tradeStatus, trades: observedTrades, observations, observation } = useMarketStream(symbol, { trades: 2000, depth: false });
+  const liveContract = useMarketContract(symbol, provider);
+  const contract = snapshotContract ?? liveContract;
+  const flowReady = provider === "mock" ? dataStatus === "SIMULATED" : (tradeStatus ?? dataStatus) === "LIVE" && contract.verified === true;
+  const historyKey = `${provider}:${symbol}:${timeframe}`;
+  const bars = snapshot ?? (historyIdentity === historyKey ? liveBars : EMPTY_BARS);
+  const activeHistory = !snapshot && historyIdentity === historyKey ? history : null;
   const tfSec = TIMEFRAME_SECONDS[timeframe];
-  const effectiveReplayIndex = replayIndex ?? (replayEnabled ? internalReplayIndex : null);
+  const effectiveReplayIndex = replayIndex ?? (replayEnabled ? Math.min(Math.max(0, bars.length - 1), internalReplayIndex ?? Math.max(0, bars.length - Math.min(120, bars.length))) : null);
   const activeBigTradesSettings = useMemo(() => bigTradesSettings(overlays), [overlays]);
 
   useEffect(() => { barsRef.current = bars; }, [bars]);
@@ -188,6 +211,15 @@ export function TerminalChart({
     const sorted = Array.from(uniqueBars.values()).sort((a, b) => a.t - b.t);
     return effectiveReplayIndex == null ? sorted : sorted.slice(0, effectiveReplayIndex + 1);
   }, [bars, effectiveReplayIndex]);
+
+  const pythonProvider = snapshot ? snapshotContract?.exchange.toLowerCase() : activeHistory?.effectiveProvider;
+  const pythonSymbol = snapshot ? snapshotContract?.symbol ?? symbol : activeHistory?.nativeSymbol ?? contract.symbol;
+  const captureRef = useRef({ active: captureActive, ready: false, symbol, timeframe, provider: "unknown", status: "unavailable" });
+  useEffect(() => { captureRef.current = { active: captureActive, ready: availableBars.length > 0 && !loading && !err, symbol: pythonSymbol, timeframe, provider: pythonProvider ?? "unknown", status: effectiveReplayIndex != null ? "candle replay" : snapshot ? "archived" : activeHistory?.dataStatus ?? "unavailable" }; }, [captureActive, availableBars.length, loading, err, pythonSymbol, timeframe, pythonProvider, effectiveReplayIndex, snapshot, activeHistory?.dataStatus]);
+  const pythonBindings = useMemo(() => (indicatorInstances ?? []).filter(study => study.kind === "python" && study.enabled && (study.visibility.timeframes === "all" || study.visibility.timeframes.includes(timeframe))).map(study => {
+    const evaluation = study.artifactId ? pythonEvaluations[study.artifactId] : undefined;
+    return { study, evaluation, valid: matchesPythonEvaluation(evaluation, study, { provider: pythonProvider, symbol: pythonSymbol, product: contract.product, timeframe }, availableBars) };
+  }), [indicatorInstances, pythonEvaluations, pythonProvider, pythonSymbol, contract.product, timeframe, availableBars]);
 
   const volumeProfile = useMemo<VolumeProfile | null>(() => {
     if (!indicators.profile || availableBars.length < 2) return null;
@@ -204,26 +236,28 @@ export function TerminalChart({
     return { volatility, regime, openingRange };
   }, [availableBars]);
 
-  const { lastTrade, provider } = useMarketStream(symbol, { trades: 1, depth: false });
+
 
   // Archived data is immutable; live history belongs to the current provider and instrument.
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     // These states mirror the lifecycle of the external historical-data request.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(!snapshot);
-    setErr(null);
+    setErr(null); setPaging(false); setHistoryEnd(false); setPageMessage(null); pageViewRef.current = null;
     if (snapshot) return;
     setBars([]);
+    setHistory(null); setHistoryIdentity(null);
     (async () => {
       try {
         const to = Date.now();
         const barsCount = 600;
-        const from = to - barsCount * tfSec * 1000;
-        const historicalProvider = provider === "binance" ? "binance" : "gateio";
-        const normalizedBars = await fetchBarsDeduplicated(historicalProvider, symbol, timeframe, to, barsCount);
+        const historicalProvider = provider ?? "gateio";
+        const result = await fetchBarsDeduplicated(historicalProvider, symbol, timeframe, to, barsCount, controller.signal);
         if (cancelled) return;
-        setBars(normalizedBars);
+        setHistory(result); setHistoryIdentity(historyKey);
+        setBars(result.bars);
         setLoading(false);
       } catch (e) {
         if (!cancelled) {
@@ -233,9 +267,9 @@ export function TerminalChart({
       }
     })();
     return () => {
-      cancelled = true;
+      cancelled = true; controller.abort();
     };
-  }, [provider, symbol, timeframe, tfSec, snapshot]);
+  }, [provider, symbol, timeframe, tfSec, snapshot, historyKey]);
 
   // Handle live trade update
   useEffect(() => {
@@ -264,21 +298,23 @@ export function TerminalChart({
       } else if (bucket > last.t) {
         next.push({
           t: bucket,
-          o: last.c,
-          h: Math.max(last.c, price),
-          l: Math.min(last.c, price),
+          o: price,
+          h: price,
+          l: price,
           c: price,
           v: lastTrade.quantity,
         });
-        if (next.length > 2000) next.shift();
+        if (next.length > 12000) next.shift();
       }
       return next;
     });
   }, [lastTrade, timeframe, snapshot]);
 
   useEffect(() => {
-    onLatestBar?.(bars.at(-1) ?? null);
-  }, [bars, onLatestBar]);
+    onLatestBar?.(availableBars.at(-1) ?? null);
+  }, [availableBars, onLatestBar]);
+
+  useEffect(() => { onCrosshair?.(null); }, [historyKey, effectiveReplayIndex, onCrosshair]);
 
   // Handle replay
   useEffect(() => {
@@ -455,7 +491,9 @@ function applyZTerminalWatermark(
         timeframe?: string;
         onComplete?: (success: boolean, message?: string) => void;
       }>;
-      if (!chartRef.current) {
+      const captured = captureRef.current;
+      if (!captured.active) return;
+      if (!chartRef.current || !captured.ready) {
         customEvent.detail?.onComplete?.(false, "Chart is not ready for capture");
         return;
       }
@@ -463,14 +501,14 @@ function applyZTerminalWatermark(
         const rawCanvas = chartRef.current.takeScreenshot();
         const canvas = applyZTerminalWatermark(
           rawCanvas,
-          customEvent.detail?.symbol || symbol,
-          customEvent.detail?.timeframe || timeframe
+          `${captured.symbol} · ${captured.provider} · ${captured.status}`,
+          captured.timeframe
         );
         if (customEvent.detail.mode === "download") {
           const dataUrl = canvas.toDataURL("image/png");
           const a = document.createElement("a");
           a.href = dataUrl;
-          a.download = customEvent.detail.filename;
+          a.download = `zterminal-${captured.provider}-${captured.symbol}-${captured.timeframe}-${new Date().toISOString().slice(0, 10)}.png`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -505,10 +543,50 @@ function applyZTerminalWatermark(
       window.removeEventListener("zterminal:capture-chart", onCapture);
       resizeObserver.disconnect();
       markerPlugin.current?.detach(); markerPlugin.current = null;
-      if (bigTradesFrameRef.current) cancelAnimationFrame(bigTradesFrameRef.current);
       chart.remove(); chartRef.current = null; seriesRef.current = null; volumeSeriesRef.current = null; drawingPrimitiveRef.current = null; bigTradesPrimitiveRef.current = null; indicatorSeriesRef.current.clear();
     };
   }, []);
+
+  // Pan left near the loaded boundary, or explicitly request one older page.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || snapshot || historyIdentity !== historyKey) return;
+    const controller = new AbortController();
+    let active = true, pending = false, ended = false;
+    let pages = 0, failedCutoff: number | null = null;
+    let previousFrom: number | null = null;
+    const loadOlder = async (manual = false) => {
+      const current = barsRef.current;
+      if (!active || pending || ended || !current.length) return;
+      if (current.length >= 12000 || pages >= 20) { ended = true; setHistoryEnd(true); setPageMessage("Chart session limit: 12,000 candles or 20 older pages. Reload to start a new window."); return; }
+      const cutoff = current[0].t;
+      if (cutoff <= 0) { ended = true; setHistoryEnd(true); setPageMessage("Reached the beginning of supported UTC history."); return; }
+      if (!manual && failedCutoff === cutoff) return;
+      pending = true; pages++; setPaging(true); setPageMessage(null);
+      try {
+        const result = await fetchBarsDeduplicated(provider, symbol, timeframe, cutoff, Math.min(600, 12000 - current.length), controller.signal);
+        if (!active) return;
+        if (!result.bars.length) { ended = true; setHistoryEnd(true); setPageMessage("No earlier candles available from this venue."); return; }
+        const latest = barsRef.current;
+        if (!latest.length || latest[0].t !== cutoff) return;
+        pageViewRef.current = chart.timeScale().getVisibleRange();
+        setBars(previous => previous[0]?.t === cutoff ? prependChartHistory(previous, result.bars).slice(-12000) : previous);
+        setPageMessage(result.gapCount ? `Earlier page has ${result.gapCount} missing candles; no padding applied.` : null);
+      } catch (error) {
+        failedCutoff = cutoff;
+        if (active) setPageMessage(`Earlier history unavailable: ${error instanceof Error ? error.message : "request failed"}`);
+      } finally { pending = false; if (active) setPaging(false); }
+    };
+    loadOlderRef.current = () => { void loadOlder(true); };
+    const onRange = (range: { from: number; to: number } | null) => {
+      if (!range) return;
+      const movedLeft = previousFrom !== null && range.from < previousFrom;
+      previousFrom = range.from;
+      if (movedLeft && range.from < 40 && !pageViewRef.current) void loadOlder();
+    };
+    chart.timeScale().subscribeVisibleLogicalRangeChange(onRange);
+    return () => { active = false; controller.abort(); loadOlderRef.current = null; chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRange); };
+  }, [historyIdentity, historyKey, provider, symbol, timeframe, snapshot]);
 
   // Sync settings when they change
   useEffect(() => {
@@ -565,44 +643,31 @@ function applyZTerminalWatermark(
     const bigTradesPrimitive = new BigTradesPrimitive(setHoveredBigTrade);
     mainSeries.attachPrimitive(bigTradesPrimitive);
     bigTradesPrimitiveRef.current = bigTradesPrimitive;
+    const volumeProfilePrimitive = new VolumeProfilePrimitive();
+    mainSeries.attachPrimitive(volumeProfilePrimitive);
+    volumeProfilePrimitiveRef.current = volumeProfilePrimitive;
   }, [chartType]);
+
+  useEffect(() => { volumeProfilePrimitiveRef.current?.setProfile(volumeProfile, contract.tickSize); }, [volumeProfile, contract.tickSize, chartType]);
+
+  useEffect(() => {
+    if (Number.isFinite(contract.tickSize) && contract.tickSize > 0) seriesRef.current?.applyOptions({ priceFormat: { type: "price", minMove: contract.tickSize } });
+    else seriesRef.current?.applyOptions({ priceFormat: { type: "custom", formatter: value => String(value) } });
+  }, [chartType, contract.tickSize]);
 
   useEffect(() => {
     const primitive = bigTradesPrimitiveRef.current;
     if (!primitive) return;
     primitive.setClusters(
-      activeBigTradesSettings
-        ? bigTradesBufferRef.current.snapshot(contract.tickSize, activeBigTradesSettings).clusters
+      activeBigTradesSettings && flowReady && effectiveReplayIndex == null && !snapshot && observations
+        ? observations.bigTrades(contract.tickSize, activeBigTradesSettings, observation).clusters
         : [],
       activeBigTradesSettings,
+      timeframe,
     );
-  }, [activeBigTradesSettings, chartType, contract.tickSize]);
+  }, [activeBigTradesSettings, chartType, contract.tickSize, effectiveReplayIndex, snapshot, flowReady, observations, observation, observedTrades, timeframe]);
 
-  useEffect(() => {
-    bigTradesBufferRef.current.clear();
-    if (!activeBigTradesSettings) {
-      bigTradesPrimitiveRef.current?.setClusters([], null);
-      return;
-    }
-    const updateRenderer = () => {
-      bigTradesFrameRef.current = 0;
-      const primitive = bigTradesPrimitiveRef.current;
-      if (!primitive) return;
-      primitive.setClusters(
-        bigTradesBufferRef.current.snapshot(contract.tickSize, activeBigTradesSettings).clusters,
-        activeBigTradesSettings,
-      );
-    };
-    const unsubscribe = subscribeMarketTrades(symbol, trade => {
-      bigTradesBufferRef.current.push(trade);
-      if (!bigTradesFrameRef.current) bigTradesFrameRef.current = requestAnimationFrame(updateRenderer);
-    });
-    return () => {
-      unsubscribe();
-      if (bigTradesFrameRef.current) cancelAnimationFrame(bigTradesFrameRef.current);
-      bigTradesFrameRef.current = 0;
-    };
-  }, [activeBigTradesSettings, contract.tickSize, symbol]);
+  useEffect(() => { setHoveredBigTrade(null); }, [flowReady, provider, symbol, activeBigTradesSettings]);
 
   useEffect(() => {
     const sorted = [...bars].sort((a, b) => a.t - b.t);
@@ -656,18 +721,25 @@ function applyZTerminalWatermark(
       seriesRef.current.removePriceLine(markPriceLineRef.current);
       markPriceLineRef.current = null;
     }
-    if (markPrice == null || !Number.isFinite(markPrice)) return;
+    if (effectiveReplayIndex != null || snapshot || !availableBars.length || markPrice == null || !Number.isFinite(markPrice)) return;
     markPriceLineRef.current = seriesRef.current.createPriceLine({ price: markPrice, color: themeColors().mdata, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: "MARK" });
     return () => {
       if (seriesRef.current && markPriceLineRef.current) seriesRef.current.removePriceLine(markPriceLineRef.current);
       markPriceLineRef.current = null;
     };
-  }, [chartType, markPrice]);
+  }, [chartType, markPrice, effectiveReplayIndex, snapshot, availableBars.length]);
 
   // Feed data to chart
   useEffect(() => {
     const chart = chartRef.current;
-    if (!chart || !seriesRef.current || !availableBars.length) return;
+    if (!chart || !seriesRef.current) return;
+    if (!availableBars.length) {
+      seriesRef.current.setData([]);
+      volumeSeriesRef.current?.setData([]);
+      for (const series of indicatorSeriesRef.current.values()) series.setData([]);
+      setStudyWarnings(current => current.length ? [] : current);
+      return;
+    }
     
     const timeData = availableBars.map(b => (b.t / 1000) as Time);
     
@@ -704,11 +776,16 @@ function applyZTerminalWatermark(
       ...(indicators.customStudies ?? []).map(study => migrateStudy({ ...study, presetId: study.kind === "ema" && study.period === 50 ? "ema50" : study.kind === "ema" ? "ema20" : study.kind === "sma" ? "sma20" : study.kind === "wma" ? "wma20" : study.kind === "vwma" ? "vwma20" : study.kind === "bollinger" ? "bollinger20" : study.kind === "donchian" ? "donchian20" : "vwap" })).filter((study): study is IndicatorInstance => study !== null),
     ];
     const activeOutputs = new Set<string>();
+    const warnings: string[] = [];
     for (const study of indicatorInstances ?? legacy) {
       const timeframeVisible = study.visibility.timeframes === "all" || study.visibility.timeframes.includes(timeframe);
       if (!study.enabled || !timeframeVisible || study.kind === "volume" || study.kind === "profile") continue;
-      const evaluation = study.kind === "python" && study.artifactId ? pythonEvaluations[study.artifactId] : undefined;
-      const evaluated = evaluation ? Object.entries(evaluation.outputs).map(([id, output]) => { const byTime = new Map(output.points.map(point => [point.time, point.value])); return { id, values: availableBars.map(bar => byTime.get(bar.t) ?? null) }; }) : evaluateIndicator(study, availableBars, timezone);
+      const binding = study.kind === "python" ? pythonBindings.find(item => item.study.id === study.id) : undefined;
+      if (study.kind === "python" && !binding?.valid) continue;
+      const evaluation = binding?.evaluation;
+      let evaluated;
+      try { evaluated = evaluation ? Object.entries(evaluation.outputs).map(([id, output]) => { const byTime = new Map(output.points.map(point => [point.time, point.value])); return { id, values: availableBars.map(bar => byTime.get(bar.t) ?? null) }; }) : evaluateIndicator(study, availableBars, timezone); }
+      catch (error) { warnings.push(`${study.name}: ${(error as Error).message}`); continue; }
       for (const output of study.outputs) {
         const values = evaluated.find(item => item.id === output.id)?.values;
         if (!output.visible || !values) continue;
@@ -725,13 +802,15 @@ function applyZTerminalWatermark(
       }
     }
     for (const [key, series] of indicatorSeriesRef.current) if (!activeOutputs.has(key)) { chart.removeSeries(series); indicatorSeriesRef.current.delete(key); }
+    setStudyWarnings(current => current.length === warnings.length && current.every((value, index) => value === warnings[index]) ? current : warnings);
+    if (pageViewRef.current) { chart.timeScale().setVisibleRange(pageViewRef.current); pageViewRef.current = null; }
     
-  }, [availableBars, chartType, indicatorInstances, indicators, pythonEvaluations, settings.candleUpColor, settings.candleDownColor, timeframe, timezone]);
+  }, [availableBars, chartType, indicatorInstances, indicators, pythonBindings, settings.candleUpColor, settings.candleDownColor, timeframe, timezone]);
 
   useEffect(() => {
     if (!seriesRef.current) return;
     if (!markerPlugin.current) markerPlugin.current = createSeriesMarkers(seriesRef.current, []);
-    const tvMarkers = [...(markers ?? [])].sort((a, b) => a.t - b.t).map(m => ({
+    const tvMarkers = [...(markers ?? [])].filter(marker => availableBars.length && marker.t >= availableBars[0].t && marker.t <= availableBars[availableBars.length - 1].t).sort((a, b) => a.t - b.t).map(m => ({
         time: (m.t / 1000) as Time,
         position: m.side === "buy" ? "belowBar" : "aboveBar",
         color: m.side === "buy" ? themeColors().pos : themeColors().neg,
@@ -739,7 +818,7 @@ function applyZTerminalWatermark(
         text: m.label || "",
       })) as any;
     markerPlugin.current.setMarkers(tvMarkers);
-  }, [markers, chartType, settings.candleUpColor, settings.candleDownColor]);
+  }, [markers, availableBars, chartType, settings.candleUpColor, settings.candleDownColor]);
 
   useEffect(() => {
     if (!chartRef.current || !snapshot?.length) return;
@@ -760,10 +839,11 @@ function applyZTerminalWatermark(
             <span>Provider</span><span className="text-right text-foreground">{hoveredBigTrade.provider}</span>
             <span>Symbol</span><span className="text-right text-foreground">{hoveredBigTrade.symbol}</span>
             <span>Price</span><span className="text-right text-foreground">{hoveredBigTrade.price.toLocaleString()}</span>
-            <span>Quantity</span><span className="text-right text-foreground">{hoveredBigTrade.quantity.toLocaleString()}</span>
-            <span>Notional</span><span className="text-right text-foreground">${hoveredBigTrade.notional.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            <span>Quantity</span><span className="text-right text-foreground">{hoveredBigTrade.quantity.toLocaleString()} {hoveredBigTrade.quantityUnit ?? "native units"}</span>
+            <span>Quote notional</span><span className="text-right text-foreground">{hoveredBigTrade.notional.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
             <span>Prints</span><span className="text-right text-foreground">{hoveredBigTrade.count}</span>
             <span>First / last</span><span className="text-right text-foreground">{new Date(hoveredBigTrade.firstTimestamp).toLocaleTimeString()} / {new Date(hoveredBigTrade.lastTimestamp).toLocaleTimeString()}</span>
+            <span>Chart anchor</span><span className="text-right text-foreground">Containing {timeframe} candle</span>
             <span>Granularity</span><span className="text-right text-foreground">{hoveredBigTrade.granularity}</span>
           </div>
         </div>
@@ -776,6 +856,7 @@ function applyZTerminalWatermark(
           magnet={magnetMode}
           bars={availableBars}
           drawings={drawings}
+          scopeKey={`${drawingScopeKey}:${historyKey}`}
           selectedId={selectedDrawingId}
           coordinates={() => drawingCoordinatesRef.current}
           viewport={() => ({ width: chartRef.current?.timeScale().width() ?? 0, height: chartRef.current?.panes()[0]?.getHeight() ?? 0 })}
@@ -794,7 +875,10 @@ function applyZTerminalWatermark(
           }}
         />
       )}
-      {volumeProfile && <VolumeProfileOverlay profile={volumeProfile} />}
+      {pythonBindings.length > 0 && <div role="status" className="absolute left-2 top-2 z-20 max-w-[60%] bg-panel/95 px-2 py-1 text-[9px]">{pythonBindings.map(({ study, evaluation, valid }) => <p key={study.id}>{valid && evaluation?.dataset ? `${study.name}: saved ${evaluation.dataset.provider}/${evaluation.dataset.symbol}/${evaluation.dataset.timeframe}, revision ${evaluation.artifact.revision}, ${new Date(evaluation.dataset.from).toISOString()} → ${new Date(evaluation.dataset.to).toISOString()}. Matching captured candles only.` : `${study.name}: no matching saved evaluation. Update Helper if needed and re-run Preview for this market, parameters and data range.`}</p>)}</div>}
+      {volumeProfile && <div className="absolute bottom-8 left-2 z-20 bg-panel px-2 py-1 text-[9px]">OHLCV profile estimate · all loaded {effectiveReplayIndex == null ? "candles" : "replay-prefix candles"} · 70% value area · volume {activeHistory?.volumeUnit ?? "captured dataset units"}</div>}
+      {studyWarnings.length > 0 && <div role="status" className="absolute left-2 top-12 z-20 bg-panel px-2 py-1 text-[9px]">{studyWarnings.map(warning => <p key={warning}>{warning}</p>)}</div>}
+      {activeBigTradesSettings && (effectiveReplayIndex != null || snapshot) && <div role="status" className="absolute bottom-14 left-2 z-20 bg-panel px-2 py-1 text-[9px]">Big Trades unavailable: this candle dataset has no recorded trade events.</div>}
       {marketContext && <MarketContextOverlay context={marketContext} tickSize={contract.tickSize} />}
       
       {replayEnabled && internalReplayIndex != null && (
@@ -812,6 +896,7 @@ function applyZTerminalWatermark(
         </div>
       )}
       
+      {activeHistory && <div className="absolute right-2 top-2 z-20 bg-panel px-2 py-1 text-[9px]" aria-label="History provenance">{activeHistory.selectedProvider} / {activeHistory.effectiveProvider} · {activeHistory.nativeSymbol} · {activeHistory.contract.product} · {activeHistory.environment} · {activeHistory.dataStatus} · {activeHistory.cache} · retrieved {new Date(activeHistory.retrievedAt).toLocaleString()} · source {activeHistory.sourceTimestamp == null ? "unknown" : new Date(activeHistory.sourceTimestamp).toLocaleString()} · {activeHistory.integrity} · volume {activeHistory.volumeUnit} · missing {activeHistory.gapCount} · {activeHistory.hasOpenCandle ? "includes unfinished candle" : "closed candles"}</div>}
       {loading && (
         <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/50 text-[11px] text-muted-foreground uppercase tracking-wider backdrop-blur-sm">
           loading…
@@ -822,6 +907,10 @@ function applyZTerminalWatermark(
           {err}
         </div>
       )}
+      {!snapshot && !loading && bars.length > 0 && <div className="absolute bottom-2 left-2 z-20 flex items-center gap-2 bg-panel px-2 py-1 text-[10px]">
+        <button type="button" disabled={paging || historyEnd} onClick={() => loadOlderRef.current?.()}>{paging ? "Loading earlier history…" : "Load earlier history"}</button>
+        {pageMessage && <span role="status">{pageMessage}</span>}
+      </div>}
       {!loading && !err && !bars.length && (
         <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/80 text-center text-[11px] text-muted-foreground backdrop-blur-sm">
           No historical candles available for this market and timeframe.
@@ -831,14 +920,9 @@ function applyZTerminalWatermark(
   );
 }
 
-function VolumeProfileOverlay({ profile }: { profile: VolumeProfile }) {
-  const levels = profile.levels.slice(-28);
-  const maximum = Math.max(...levels.map((level) => level.volume), 1);
-  return <aside className="zt-volume-profile" aria-label="Volume profile overlay"><div className="zt-volume-profile-title">VOL PROFILE</div><div className="zt-volume-profile-levels">{levels.map((level) => <div key={level.price} className="zt-volume-profile-level"><i style={{ width: `${Math.max(3, (level.volume / maximum) * 100)}%` }} /><span>{level.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span></div>)}</div><div className="zt-volume-profile-key"><span>POC <b>{profile.pointOfControl?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span><span>VAH <b>{profile.valueAreaHigh?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span><span>VAL <b>{profile.valueAreaLow?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? "—"}</b></span></div></aside>;
-}
 
 function MarketContextOverlay({ context, tickSize }: { context: { volatility: ReturnType<typeof calculateVolatility>; regime: ReturnType<typeof classifyRegime>; openingRange: ReturnType<typeof computeOpeningRange> }; tickSize: number }) {
-  const price = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: Math.max(2, Math.min(8, Math.round(-Math.log10(tickSize)))) });
+  const price = (value: number) => Number.isFinite(tickSize) ? value.toLocaleString(undefined, { maximumFractionDigits: Math.max(2, pricePrecision(tickSize)) }) : String(value);
   const range = context.openingRange.complete && Number.isFinite(context.openingRange.high) ? `${price(context.openingRange.low)}–${price(context.openingRange.high)}` : "Awaiting range";
   return <aside className="zt-market-context-strip" aria-label="Market intelligence context"><span><b>REGIME</b>{context.regime.kind.replaceAll("_", " ")} · {(context.regime.confidence * 100).toFixed(0)}%</span><span><b>ATR</b>{context.volatility.atr == null ? "—" : price(context.volatility.atr)}</span><span><b>RV</b>{context.volatility.realizedVolatility == null ? "—" : `${(context.volatility.realizedVolatility * 100).toFixed(3)}%`}</span><span><b>OR 00:00–00:30 UTC</b>{range}</span></aside>;
 }

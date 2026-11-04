@@ -97,6 +97,6 @@ export function LocalWorkstation({ platform }: { platform: WorkstationPlatform }
         </>}
       </section>
     </div>
-    <footer role="status">{busy ? "Working locally…" : status}</footer>
+    <footer><span role="status">{busy ? "Working locally…" : status}</span><span> · TradingView Lightweight Charts™ · Copyright (с) 2025 <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView, Inc.</a></span></footer>
   </main>;
 }

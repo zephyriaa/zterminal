@@ -12,7 +12,7 @@ import {
 } from "@/components/public/public-primitives";
 import styles from "./download.module.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "ZTerminal for Windows — Native Quantitative Workstation",

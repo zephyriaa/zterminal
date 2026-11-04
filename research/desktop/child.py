@@ -30,7 +30,10 @@ def main():
     try:
         import engine
         request = json.loads((folder / "request.json").read_text(encoding="utf-8"))
-        if request.get("operation") == "monte_carlo":
+        if request.get("operation") == "research_analysis":
+            from research_analysis import execute_analysis
+            result = execute_analysis(request, lambda status: atomic(folder / "status.json", status))
+        elif request.get("operation") == "monte_carlo":
             import analytics
             result = analytics.monte_carlo(request["result"], request["simulations"], request["seed"])
         elif request.get("operation") == "indicator":
@@ -43,6 +46,8 @@ def main():
         # Syntax/name errors in strategy.py carry editor positions.
         import traceback
         details = {"message": f"{type(error).__name__}: {error}"}
+        if hasattr(error, "research_trials"):
+            details["detail"] = json.dumps({"trials": error.research_trials}, allow_nan=False)[:32768]
         frames = [f for f in traceback.extract_tb(error.__traceback__) if f.filename in ("strategy.py", "indicator.py")]
         if isinstance(error, SyntaxError):
             details.update(line=error.lineno, column=error.offset)

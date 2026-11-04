@@ -11,6 +11,33 @@
 
 export type ProviderId = "mock" | "gateio" | "binance" | "bybit" | "okx" | "mexc" | "coinbase" | "deribit" | "rithmic-test" | "rithmic-prod" | "databento";
 export type Environment = "simulation" | "paper" | "live";
+export const MARKET_PROVIDERS = ["gateio", "binance", "bybit", "okx", "coinbase", "mock"] as const;
+export type MarketProvider = typeof MARKET_PROVIDERS[number];
+
+export interface BarsResult {
+  symbol: string;
+  canonicalSymbol: string;
+  nativeSymbol: string;
+  timeframe: Timeframe;
+  selectedProvider: string;
+  effectiveProvider: string;
+  environment: Environment;
+  dataStatus: DataStatus;
+  contract: ContractMetadata;
+  retrievedAt: number;
+  sourceTimestamp: number | null;
+  timestampUnit: "ms";
+  integrity: "provider-ohlcv" | "simulated";
+  reason?: string;
+  cache: "network" | "memory" | "server";
+  requestedFrom: number;
+  requestedTo: number;
+  requestedCount: number;
+  gapCount: number;
+  hasOpenCandle: boolean;
+  volumeUnit: "contracts" | "base" | "simulated";
+  bars: Bar[];
+}
 
 export type Exchange = "CME" | "CBOT" | "COMEX" | "NYMEX" | "NASDAQ" | "NYSE" | "ICE" | "GATEIO" | "BINANCE" | "BYBIT" | "OKX" | "MEXC" | "COINBASE" | "DERIBIT";
 export type Side = "buy" | "sell";
@@ -32,6 +59,8 @@ export interface ContractMetadata {
   /** True only when the underlying provider genuinely supplies real depth/MBO. */
   supportsDepth: boolean;
   supportsMBO: boolean;
+  quantityStep?: number;
+  verified?: boolean;
 }
 
 export type SessionId = "cme" | "equity" | "crypto";
@@ -45,9 +74,14 @@ export interface TradeEvent {
   exchange: Exchange;
   timestamp: number;      // epoch ms (UTC)
   sequence: number;
+  /** Source identity retained when sequence is adapter-local delivery order. */
+  eventId?: string;
+  sourceSequence?: string;
   price: number;
   quantity: number;
   side: Side;              // aggressor side
+  quantityUnit?: "base" | "contracts";
+  contractMultiplier?: number; // Linear quote notional = price × contracts × multiplier.
   conditions?: string[];
 }
 
@@ -81,6 +115,7 @@ export interface DepthEvent {
   exchange: Exchange;
   timestamp: number;
   sequence: number;
+  sourceSequence?: string;
   levels: DepthLevel[];
 }
 
@@ -129,10 +164,14 @@ export interface FeedHealth {
   state: FeedHealthState;
   updatedAt: number;
   lastMessageAt?: number;
+  lastDepthAt?: number;
+  depthReady?: boolean;
   latencyMs?: number;
   sequence?: number;
   reconnectCount?: number;
   reason?: string;
+  /** Independently observed inputs; a transport heartbeat cannot certify either. */
+  streams?: { trades: { state: FeedHealthState; lastMessageAt?: number; reason?: string }; depth: { state: FeedHealthState; lastMessageAt?: number; reason?: string } };
 }
 
 /** Market-by-order (MBO) — only when provider genuinely supplies it. */

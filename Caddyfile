@@ -1,10 +1,10 @@
 :{$PORT:8080} {
 	@market_data path /socket.io /socket.io/* /healthz /readyz /health/market-data /contracts
 	handle @market_data {
-		reverse_proxy 127.0.0.1:3003
+		reverse_proxy 127.0.0.1:{$MARKET_DATA_PORT:3003}
 	}
 
 	handle {
-		reverse_proxy 127.0.0.1:3000
+		reverse_proxy 127.0.0.1:{$APP_PORT:3000}
 	}
 }

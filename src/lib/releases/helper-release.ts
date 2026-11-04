@@ -1,18 +1,25 @@
 import { z } from "zod";
+import { supportsCurrentResearch } from "../local-research/compatibility";
 
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 const helperReleaseSchema = z.object({
-  version: z.string().regex(SEMVER_PATTERN).optional(),
+  version: z.string().regex(SEMVER_PATTERN),
   download_url: z.string().url(),
+  format: z.enum(["portable-zip", "installer"]).default("installer"),
+  sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+  bytes: z.number().int().positive(),
   platform: z.literal("windows").default("windows"),
   architecture: z.literal("x64").default("x64"),
+  protocol: z.number().int().positive().optional(),
+  researchSchemas: z.array(z.number().int().positive()).optional(),
+  features: z.array(z.string()).optional(),
 });
 
 export type HelperRelease = z.infer<typeof helperReleaseSchema>;
 export type HelperReleaseResolution =
   | { available: true; release: HelperRelease }
-  | { available: false; reason: "HELPER_RELEASE_NOT_CONFIGURED" | "HELPER_RELEASE_CONFIGURATION_INVALID" };
+  | { available: false; reason: "HELPER_RELEASE_NOT_CONFIGURED" | "HELPER_RELEASE_CONFIGURATION_INVALID" | "HELPER_RELEASE_INCOMPATIBLE" };
 
 /**
  * The local-research helper is a separate artifact from the desktop workstation.
@@ -34,7 +41,8 @@ export function resolveHelperRelease(env: NodeJS.ProcessEnv = process.env): Help
     if (!parsed.success) return { available: false, reason: "HELPER_RELEASE_CONFIGURATION_INVALID" };
     const url = new URL(parsed.data.download_url);
     const path = url.pathname.toLowerCase();
-    if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase()) || ![".exe", ".msix"].some((suffix) => path.endsWith(suffix))) {
+    const extensions = parsed.data.format === "portable-zip" ? [".zip"] : [".exe", ".msix"];
+    if (url.protocol !== "https:" || url.username || url.password || url.port || url.hash || !allowedHosts.has(url.hostname.toLowerCase()) || !extensions.some((suffix) => path.endsWith(suffix))) {
       return { available: false, reason: "HELPER_RELEASE_CONFIGURATION_INVALID" };
     }
     return { available: true, release: parsed.data };
@@ -43,9 +51,16 @@ export function resolveHelperRelease(env: NodeJS.ProcessEnv = process.env): Help
   }
 }
 
+/** Legacy records remain resolvable, but must not be offered as current research runtimes. */
+export function resolveResearchHelperRelease(env: NodeJS.ProcessEnv = process.env): HelperReleaseResolution {
+  const resolution = resolveHelperRelease(env);
+  if (resolution.available && !supportsCurrentResearch(resolution.release)) return { available: false, reason: "HELPER_RELEASE_INCOMPATIBLE" };
+  return resolution;
+}
+
 /** Public, credential-free release metadata for the in-terminal download action. */
 export function publicHelperRelease() {
-  const resolution = resolveHelperRelease();
+  const resolution = resolveResearchHelperRelease();
   if (!resolution.available) return resolution;
   return { available: true as const, ...resolution.release };
 }

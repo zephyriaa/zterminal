@@ -1050,6 +1050,7 @@ html.lenis, html.lenis body {
 .zt-chart-content { position:relative; display:flex; height:100%; min-height:0; flex-direction:column; background:#090d17; }
 .zt-chart-toolbar { display:flex; min-height:35px; flex:0 0 35px; align-items:center; gap:5px; padding:0 9px; overflow-x:auto; border-bottom:1px solid rgba(139,155,192,.14); background:rgba(10,15,27,.82); scrollbar-width:none; }
 .zt-chart-toolbar::-webkit-scrollbar { display:none; }
+.zt-chart-toolbar:has(.zt-chart-toolbar-menu) { overflow:visible; position:relative; z-index:50; }
 .zt-chart-contract { flex:0 0 auto; color:#c6d2e8; font-family:var(--font-geist-mono, ui-monospace, monospace); font-size:9px; font-weight:700; white-space:nowrap; }
 .zt-chart-contract small { margin-left:5px; color:#71819e; font-size:7.5px; font-weight:600; letter-spacing:.1em; }
 .zt-chart-timeframes { display:flex; flex:0 0 auto; gap:2px; }

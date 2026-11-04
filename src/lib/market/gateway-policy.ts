@@ -23,10 +23,19 @@ export function validateSubscriptionRequest(
   if (options.activeSubscriptionCount >= options.maximumSubscriptions) {
     return { ok: false, error: "subscription limit reached" };
   }
+  if (!request || (request.types !== undefined && (!Array.isArray(request.types) || request.types.some(type => typeof type !== "string")))) return { ok: false, error: "unsupported subscription event type" };
   const requested = request.types ?? ["trade", "quote", "depth"];
   const allowed = new Set<MarketSubscriptionType>(["trade", "quote", "depth", "derivatives", "liquidation"]);
   if (!requested.length || requested.some((type) => !allowed.has(type as MarketSubscriptionType))) {
     return { ok: false, error: "unsupported subscription event type" };
   }
   return { ok: true, types: new Set(requested as MarketSubscriptionType[]) };
+}
+
+/** Public build-time origin, never an authenticated gateway URL. */
+export function publicGatewayOrigin(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const url = new URL(value);
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.pathname !== "/" || url.search || url.hash) throw new Error("NEXT_PUBLIC_MARKET_GATEWAY_URL must be an unauthenticated HTTP(S) origin");
+  return url.origin;
 }

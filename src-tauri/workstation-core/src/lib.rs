@@ -18,6 +18,11 @@ use zt_storage::{SegmentKey, SegmentStore};
 
 pub type Result<T> = std::result::Result<T, String>;
 pub const MAX_IMPORT_BYTES: usize = 8 * 1024 * 1024;
+pub mod catalog;
+pub mod presentation;
+pub mod native;
+pub mod startup;
+pub mod strategy;
 const MAX_BARS: usize = 100_000;
 
 fn err(e: impl std::fmt::Display) -> String {
@@ -47,6 +52,8 @@ pub struct Dataset {
     pub from_ms: u64,
     pub count: usize,
     pub imported_at_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exact_units: Option<native::ExactUnits>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -55,6 +62,8 @@ pub struct Workspace {
     pub document: WorkspaceDocumentV2,
     pub chart: ChartDocumentV3,
     pub dataset: Option<Dataset>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub strategy: Option<strategy::LocalStrategy>,
 }
 
 #[derive(Serialize, Debug)]
@@ -63,6 +72,7 @@ pub struct Summary {
     pub id: String,
     pub name: String,
     pub revision: u64,
+    pub updated_at_ms: Option<u64>,
 }
 
 /// This command accepts contents, never a path supplied by the webview.
@@ -98,10 +108,12 @@ impl Store {
         let mut conn = Connection::open(root.join("workstation.sqlite3")).map_err(err)?;
         conn.busy_timeout(std::time::Duration::from_secs(3))
             .map_err(err)?;
+        conn.create_scalar_function("zt_lower",1,rusqlite::functions::FunctionFlags::SQLITE_UTF8 | rusqlite::functions::FunctionFlags::SQLITE_DETERMINISTIC,|ctx|Ok(ctx.get::<String>(0)?.to_lowercase())).map_err(err)?;
+        conn.create_collation("zt_name",|a,b|a.to_lowercase().cmp(&b.to_lowercase())).map_err(err)?;
         let version: u32 = conn
             .query_row("PRAGMA user_version", [], |r| r.get(0))
             .map_err(err)?;
-        if version > 1 {
+        if version > 2 {
             return Err("Unsupported newer workstation database; no downgrade performed".into());
         }
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;")
@@ -114,18 +126,27 @@ impl Store {
                 PRAGMA user_version=1;").map_err(err)?;
             tx.commit().map_err(err)?;
         }
+        if version < 2 {
+            let tx = conn.transaction().map_err(err)?;
+            tx.execute_batch("CREATE TABLE workspace_metadata(id TEXT PRIMARY KEY, updated_at_ms INTEGER NOT NULL);
+                CREATE TABLE studies(id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL, revision INTEGER NOT NULL, source_hash TEXT NOT NULL, source_bytes INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);
+                CREATE TABLE catalog_trash(id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload BLOB NOT NULL, deleted_at_ms INTEGER NOT NULL);
+                PRAGMA user_version=2;").map_err(err)?;
+            tx.commit().map_err(err)?;
+        }
         Ok(Self { conn, root })
     }
 
     pub fn list(&self) -> Result<Vec<Summary>> {
         self.conn
-            .prepare("SELECT id,name,revision FROM workspaces ORDER BY name,id")
+            .prepare("SELECT w.id,w.name,w.revision,m.updated_at_ms FROM workspaces w LEFT JOIN workspace_metadata m ON m.id=w.id ORDER BY w.name,w.id")
             .map_err(err)?
             .query_map([], |r| {
                 Ok(Summary {
                     id: r.get(0)?,
                     name: r.get(1)?,
                     revision: r.get(2)?,
+                    updated_at_ms: r.get(3)?,
                 })
             })
             .map_err(err)?
@@ -144,7 +165,10 @@ impl Store {
 
     pub fn select(&self, id: &str) -> Result<Workspace> {
         let workspace = self.load(id)?;
+        let tx=self.conn.unchecked_transaction().map_err(err)?;
         self.conn.execute("INSERT INTO state VALUES('last',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [id]).map_err(err)?;
+        self.conn.execute("INSERT INTO state VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",params![format!("opened:{id}"),now_ms().to_string()]).map_err(err)?;
+        tx.commit().map_err(err)?;
         Ok(workspace)
     }
 
@@ -208,6 +232,7 @@ impl Store {
                 replay: None,
             },
             dataset: None,
+            strategy: None,
         };
         self.commit(workspace, 0)
     }
@@ -219,16 +244,16 @@ impl Store {
             || !w.chart.indicators.is_empty()
             || w.chart.drawings.is_some()
             || w.chart.replay.is_some()
-            || w.document.presentation.is_some()
         {
             return Err("Unsupported Phase 1 chart state".into());
         }
+        self.presentation_for(w)?;
         let chart = w
             .document
             .documents
             .first()
             .ok_or("Chart reference missing")?;
-        if w.document.documents.len() != 1
+        if w.document.documents.len() != 1 + usize::from(w.strategy.is_some())
             || w.document.active_document.as_deref() != Some(w.chart.id.as_str())
             || chart.id != w.chart.id
             || chart.revision != w.chart.revision
@@ -236,10 +261,22 @@ impl Store {
         {
             return Err("Workspace/chart reference mismatch".into());
         }
+        if let Some(strategy) = &w.strategy {
+            self.validate_strategy(strategy)?;
+            let reference = &w.document.documents[1];
+            if reference.id != strategy.document.id
+                || reference.revision != strategy.document.revision
+                || self.artifact(&reference.artifact)?
+                    != serde_json::to_vec(&strategy.document).map_err(err)?
+            {
+                return Err("Workspace/strategy reference mismatch".into());
+            }
+        }
         match (&w.dataset, &w.chart.dataset) {
             (None, None) => (),
             (Some(d), Some(reference)) => {
-                if d.version != 1
+                if ![1, 2].contains(&d.version)
+                    || (d.version == 2 && d.exact_units.is_none())
                     || reference.id != "imported-history"
                     || reference.revision != 1
                     || self.artifact(&reference.artifact)? != serde_json::to_vec(d).map_err(err)?
@@ -290,6 +327,21 @@ impl Store {
         if name.trim().is_empty() || name.len() > 256 {
             return Err("Invalid workspace name".into());
         }
+        if let (Some(from), Some(to), Some(dataset)) = (from, to, &w.dataset) {
+            let end = dataset
+                .interval_ms
+                .checked_mul(dataset.count as u64)
+                .and_then(|span| dataset.from_ms.checked_add(span))
+                .ok_or("Dataset coverage overflow")?;
+            if from < 0
+                || to <= from
+                || (from as u64) < dataset.from_ms
+                || (to as u64) > end
+                || ((to - from) as u64) < dataset.interval_ms
+            {
+                return Err("Viewport is outside retained history or narrower than one bar".into());
+            }
+        }
         w.document.name = name.trim().into();
         w.document.revision += 1;
         w.chart.revision += 1;
@@ -306,6 +358,14 @@ impl Store {
             revision: w.chart.revision,
             artifact: reference,
         }];
+        if let Some(strategy) = &w.strategy {
+            w.document.documents.push(DocumentReference {
+                id: strategy.document.id.clone(),
+                revision: strategy.document.revision,
+                artifact: self
+                    .put_artifact(&serde_json::to_vec(&strategy.document).map_err(err)?)?,
+            });
+        }
         w.document.active_document = Some(w.chart.id.clone());
         self.validate(&w)?;
         let bytes = serde_json::to_vec(&w).map_err(err)?;
@@ -327,16 +387,36 @@ impl Store {
         tx.execute("INSERT INTO workspaces VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,revision=excluded.revision,payload=excluded.payload,hash=excluded.hash",
             params![w.document.id,w.document.name,w.document.revision,bytes,hash(&bytes)]).map_err(err)?;
         tx.execute("INSERT INTO state VALUES('last',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [&w.document.id]).map_err(err)?;
+        tx.execute("INSERT INTO workspace_metadata VALUES(?,?) ON CONFLICT(id) DO UPDATE SET updated_at_ms=excluded.updated_at_ms", params![w.document.id,now_ms()]).map_err(err)?;
         tx.commit().map_err(err)?;
         Ok(w)
     }
 
     pub fn import(&mut self, id: &str, revision: u64, input: Import) -> Result<Workspace> {
+        self.import_with_units(id, revision, input, None)
+    }
+
+    pub(crate) fn import_with_units(
+        &mut self,
+        id: &str,
+        revision: u64,
+        input: Import,
+        exact: Option<native::ExactUnits>,
+    ) -> Result<Workspace> {
         let mut w = self.load(id)?;
         if w.document.revision != revision {
             return Err("Workspace changed; reopen before importing".into());
         }
-        let bars = parse_csv(&input, now_ms())?;
+        let bars = match &exact {
+            Some(units) => parse_csv_with_units(
+                &input,
+                now_ms(),
+                &units.price_step,
+                &units.quantity_step,
+                true,
+            )?,
+            None => parse_csv(&input, now_ms())?,
+        };
         let key = SegmentKey {
             symbol_id: 1,
             interval_ns: input.interval_ms * 1_000_000,
@@ -357,7 +437,7 @@ impl Store {
             Err(e) => return Err(err(e)),
         }
         let dataset = Dataset {
-            version: 1,
+            version: if exact.is_some() { 2 } else { 1 },
             symbol: input.symbol.trim().into(),
             source_name: input.source_name,
             source: self.put_artifact(input.csv.as_bytes())?,
@@ -368,6 +448,7 @@ impl Store {
             from_ms: bars[0].open_time_ns / 1_000_000,
             count: bars.len(),
             imported_at_ms: imported_at,
+            exact_units: exact,
         };
         w.chart.dataset = Some(DocumentReference {
             id: "imported-history".into(),
@@ -445,6 +526,22 @@ fn units(value: &str, step: f64) -> Result<i64> {
 }
 
 fn parse_csv(input: &Import, now: u64) -> Result<Vec<Bar>> {
+    parse_csv_with_units(
+        input,
+        now,
+        &input.tick_size.to_string(),
+        &input.quantity_step.to_string(),
+        false,
+    )
+}
+
+fn parse_csv_with_units(
+    input: &Import,
+    now: u64,
+    price_step: &str,
+    quantity_step: &str,
+    native: bool,
+) -> Result<Vec<Bar>> {
     if input.csv.len() > MAX_IMPORT_BYTES
         || input.symbol.trim().is_empty()
         || input.symbol.len() > 80
@@ -474,7 +571,7 @@ fn parse_csv(input: &Import, now: u64) -> Result<Vec<Bar>> {
             return Err(format!("Invalid CSV row {}", index + 2));
         }
         let t: u64 = values[0].parse().map_err(err)?;
-        if t % input.interval_ms != 0
+        if !t.is_multiple_of(input.interval_ms)
             || t.checked_add(input.interval_ms).is_none_or(|end| end > now)
             || t > u64::MAX / 1_000_000
             || bars
@@ -489,11 +586,31 @@ fn parse_csv(input: &Import, now: u64) -> Result<Vec<Bar>> {
             symbol_id: 1,
             open_time_ns: t * 1_000_000,
             interval_ns: input.interval_ms * 1_000_000,
-            open_ticks: units(values[1], input.tick_size)?,
-            high_ticks: units(values[2], input.tick_size)?,
-            low_ticks: units(values[3], input.tick_size)?,
-            close_ticks: units(values[4], input.tick_size)?,
-            volume: units(values[5], input.quantity_step)?,
+            open_ticks: if native {
+                native::units(values[1], price_step, false)?
+            } else {
+                units(values[1], input.tick_size)?
+            },
+            high_ticks: if native {
+                native::units(values[2], price_step, false)?
+            } else {
+                units(values[2], input.tick_size)?
+            },
+            low_ticks: if native {
+                native::units(values[3], price_step, false)?
+            } else {
+                units(values[3], input.tick_size)?
+            },
+            close_ticks: if native {
+                native::units(values[4], price_step, false)?
+            } else {
+                units(values[4], input.tick_size)?
+            },
+            volume: if native {
+                native::units(values[5], quantity_step, true)?
+            } else {
+                units(values[5], input.quantity_step)?
+            },
             last_sequence: index as u64 + 1,
             data_status: DataStatus::Live,
         });

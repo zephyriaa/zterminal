@@ -66,7 +66,8 @@ export function sessionVolMultiplier(utcMs: number): number {
 /** Align a timestamp down to the start of a timeframe bucket (UTC). */
 export function alignToTimeframe(utcMs: number, tf: Timeframe): number {
   const sec = TIMEFRAME_SECONDS[tf];
-  const bucket = Math.floor(utcMs / 1000 / sec) * sec * 1000;
+  const offset = tf === "1w" ? 4 * 86400000 : 0; // Monday UTC, rather than the epoch Thursday.
+  const bucket = Math.floor((utcMs - offset) / 1000 / sec) * sec * 1000 + offset;
   return bucket;
 }
 

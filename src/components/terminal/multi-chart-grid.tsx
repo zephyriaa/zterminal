@@ -23,7 +23,7 @@ import { DrawingToolbar } from "./drawing-toolbar";
 import { DrawingInspector } from "./drawing-inspector";
 import { DrawingObjects } from "./drawing-objects";
 import { SecondaryDrawingChart } from "./secondary-drawing-chart";
-import type { Bar, Timeframe } from "@/lib/market/types";
+import type { Bar, ContractMetadata, Timeframe } from "@/lib/market/types";
 import type { ChartType, DrawingAnchor, DrawingObject, DrawingType } from "@/lib/chart/contracts";
 import type { ChartOverlayInstance } from "@/lib/chart/overlays/contracts";
 import type { DrawingTool, MagnetMode } from "@/lib/chart/drawings/contracts";
@@ -62,6 +62,7 @@ const POPULAR_TICKERS = [
 ];
 
 interface MultiChartGridProps {
+  drawingScopeKey: string;
   primarySymbol: string;
   primaryTimeframe: Timeframe;
   chartType: ChartType;
@@ -97,6 +98,7 @@ interface MultiChartGridProps {
   markers?: TradeMarker[];
   focusRange?: { from: number; to: number } | null;
   archivedBars?: Bar[];
+  archivedContract?: ContractMetadata;
   overlays?: ChartOverlayInstance[];
 }
 
@@ -169,9 +171,11 @@ export function MultiChartGrid(props: MultiChartGridProps) {
             ))}
         </div>
         <TerminalChart
+          drawingScopeKey={props.drawingScopeKey}
           symbol={props.primarySymbol}
           timeframe={props.primaryTimeframe}
           snapshot={props.archivedBars}
+          snapshotContract={props.archivedContract}
           markers={props.markers}
           focusRange={props.focusRange}
           chartType={props.chartType}
@@ -305,9 +309,12 @@ export function MultiChartGrid(props: MultiChartGridProps) {
             <div className="zt-chart-stage h-full w-full relative" data-drawing-chart="primary">
               <DrawingToolbar tool={props.drawingTool} magnet={props.magnetMode} onTool={props.onDrawingTool} onMagnet={props.onMagnetMode} onClear={props.onClearDrawings} persistent={props.persistentDrawing} onPersistent={props.onPersistentDrawing} onUndo={props.onUndoDrawings} onRedo={props.onRedoDrawings} canUndo={props.canUndoDrawings} canRedo={props.canRedoDrawings} onObjects={() => setObjectsOpen(value => !value)} />
               <TerminalChart
+                drawingScopeKey={props.drawingScopeKey}
+                captureActive={activePaneIndex === 0}
                 symbol={props.primarySymbol}
                 timeframe={props.primaryTimeframe}
                 snapshot={props.archivedBars}
+                snapshotContract={props.archivedContract}
                 markers={props.markers}
                 focusRange={props.focusRange}
                 chartType={props.chartType}
@@ -338,7 +345,7 @@ export function MultiChartGrid(props: MultiChartGridProps) {
               {selectedDrawing && <DrawingInspector key={selectedDrawing.id} drawing={selectedDrawing} onChange={patch => props.onUpdateDrawing?.(selectedDrawing.id, patch)} onDuplicate={() => props.onDuplicateDrawing?.(selectedDrawing.id)} onDelete={() => props.onDeleteDrawing?.(selectedDrawing.id)} onClose={() => props.onSelectDrawing(null)} />}
             </div>
           ) : (
-            <SecondaryDrawingChart pane={{ ...pane, symbol: paneSymbol, timeframe: paneTimeframe }} indicators={secondaryIndicators} settings={props.settings} timezone={props.timezone} />
+            <SecondaryDrawingChart captureActive={activePaneIndex === index} pane={{ ...pane, symbol: paneSymbol, timeframe: paneTimeframe }} indicators={secondaryIndicators} settings={props.settings} timezone={props.timezone} />
           )}
         </div>
       </div>

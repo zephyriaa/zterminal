@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextRequest } from "next/server";
-import { GET as exportUserData } from "../src/app/api/user/export/route.ts";
-import { DELETE as deleteUserProfile } from "../src/app/api/user/profile/route.ts";
+import { GET as exportUserData } from "../src/app/api/user/export/route";
+import { DELETE as deleteUserProfile } from "../src/app/api/user/profile/route";
 
 test("GDPR Art. 20 / CCPA Data Portability: export endpoint enforces verified authentication", async () => {
   const response = await exportUserData();

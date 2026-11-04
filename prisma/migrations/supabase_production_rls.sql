@@ -22,6 +22,7 @@ DECLARE table_name text;
 BEGIN
   FOREACH table_name IN ARRAY ARRAY[
     'User', 'Account', 'Session', 'VerificationToken', 'Post', 'Workspace',
+    'NativeAuthorizationCode', 'NativeDeviceSession', 'NativeRefreshToken',
     'CloudWorkspaceState', 'Strategy', 'StrategyVersion', 'Dataset',
     'BacktestRun', 'ResearchSource', 'ResearchSourceExcerpt', 'RuleSpec',
     'RuleSpecRevision', 'DataRequirementAssessment', 'DatasetImport',

@@ -26,6 +26,18 @@ def strategy(data, params):
 
 
 class ExecutionTests(unittest.TestCase):
+    def test_indicator_identity_includes_market_and_retains_its_input_dataset(self):
+        request = fixture('def calculate(data, params):\n    return {"close": data.close}')
+        request.update(operation="indicator", artifact={"id": "bound", "kind": "indicator", "revision": 1}, outputs={})
+        original = execute_indicator(request)
+        other = copy.deepcopy(request)
+        for value in (other["config"], other["dataset"]): value["symbol"] = "ETH_USDT"
+        changed = execute_indicator(other)
+        self.assertNotEqual(original["inputHash"], changed["inputHash"])
+        self.assertEqual(original["dataset"], request["dataset"])
+        self.assertEqual(original["inputHash"], digest(original["input"]))
+        self.assertEqual(changed["dataset"]["symbol"], "ETH_USDT")
+
     def test_custom_indicator_outputs_are_aligned_hashed_and_bounded_to_input(self):
         request = fixture('''import zterminal as zt
 def calculate(data, params):

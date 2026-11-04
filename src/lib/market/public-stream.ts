@@ -595,6 +595,8 @@ export class PublicMarketDataProvider {
         price: safeNumber(raw.p),
         quantity: safeNumber(raw.q),
         side: raw.m === true ? "sell" : "buy",
+        conditions: ["aggregate-trade"],
+        quantityUnit: "base",
       });
     } else if (eventType === "bookTicker") {
       this.emit(symbol, {

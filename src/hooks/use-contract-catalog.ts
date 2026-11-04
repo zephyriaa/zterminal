@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ContractMetadata } from "@/lib/market/types";
+import { useWorkspace } from "@/stores/workspace";
 import { registerRuntimeContracts } from "@/lib/market/contracts";
 
 export type ContractCatalogue = {
@@ -9,6 +10,7 @@ export type ContractCatalogue = {
   environment?: string;
   state?: string;
   reason?: string;
+  verified?: boolean;
   contracts: ContractMetadata[];
   loading: boolean;
   error?: string;
@@ -17,23 +19,18 @@ export type ContractCatalogue = {
 const EMPTY_CATALOGUE: ContractCatalogue = { contracts: [], loading: true };
 
 // Module-level singleton cache to deduplicate simultaneous calls across widgets
-let cachedCatalogue: ContractCatalogue | null = null;
-let cachedAt = 0;
-let inFlightPromise: Promise<ContractCatalogue> | null = null;
+const cachedCatalogues = new Map<string, { at: number; catalogue: ContractCatalogue }>();
+const inFlightPromises = new Map<string, Promise<ContractCatalogue>>();
 const CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
 
-async function fetchCatalogueSingleton(): Promise<ContractCatalogue> {
-  const now = Date.now();
-  if (cachedCatalogue && now - cachedAt < CACHE_TTL_MS) {
-    return cachedCatalogue;
-  }
-  if (inFlightPromise) {
-    return inFlightPromise;
-  }
-
-  inFlightPromise = (async () => {
+async function fetchCatalogueSingleton(provider: string): Promise<ContractCatalogue> {
+  const cached = cachedCatalogues.get(provider);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.catalogue;
+  const pending = inFlightPromises.get(provider);
+  if (pending) return pending;
+  const request = (async () => {
     try {
-      const response = await fetch("/api/contracts", {
+      const response = await fetch(`/api/contracts?provider=${encodeURIComponent(provider)}`, {
         headers: { Accept: "application/json" },
       });
       const payload = (await response.json()) as {
@@ -41,6 +38,7 @@ async function fetchCatalogueSingleton(): Promise<ContractCatalogue> {
         environment?: string;
         state?: string;
         reason?: string;
+        verified?: boolean;
         contracts?: ContractMetadata[];
         error?: string;
       };
@@ -52,14 +50,14 @@ async function fetchCatalogueSingleton(): Promise<ContractCatalogue> {
         environment: payload.environment,
         state: payload.state,
         reason: payload.reason,
+        verified: payload.verified === true,
         contracts,
         loading: false,
         error: response.ok
           ? undefined
           : payload.error ?? payload.reason ?? "Active provider catalogue unavailable",
       };
-      cachedCatalogue = result;
-      cachedAt = Date.now();
+      cachedCatalogues.set(provider, { catalogue: result, at: Date.now() });
       return result;
     } catch (error) {
       return {
@@ -68,28 +66,27 @@ async function fetchCatalogueSingleton(): Promise<ContractCatalogue> {
         error: error instanceof Error ? error.message : "Active provider catalogue unavailable",
       };
     } finally {
-      inFlightPromise = null;
+      inFlightPromises.delete(provider);
     }
   })();
 
-  return inFlightPromise;
+  inFlightPromises.set(provider, request);
+  return request;
 }
 
 /** Fetches and shares a deduplicated, cached catalogue across all components. */
 export function useContractCatalogue(): ContractCatalogue {
-  const [catalogue, setCatalogue] = useState<ContractCatalogue>(
-    cachedCatalogue && Date.now() - cachedAt < CACHE_TTL_MS ? cachedCatalogue : EMPTY_CATALOGUE
-  );
-
+  const provider = useWorkspace(state => state.marketProvider);
+  const [loaded, setLoaded] = useState<{ provider: string; catalogue: ContractCatalogue } | null>(null);
   useEffect(() => {
     let cancelled = false;
-    void fetchCatalogueSingleton().then((data) => {
-      if (!cancelled) setCatalogue(data);
+    void fetchCatalogueSingleton(provider).then((data) => {
+      if (!cancelled) setLoaded({ provider, catalogue: data });
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [provider]);
 
-  return catalogue;
+  return loaded?.provider === provider ? loaded.catalogue : EMPTY_CATALOGUE;
 }

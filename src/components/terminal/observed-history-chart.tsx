@@ -17,7 +17,7 @@ export function LocalHistoryChart({ bars, from, to, onRange }: {
     interacting.current = false;
     const chart = createChart(container.current, {
       autoSize: true,
-      layout: { background: { type: ColorType.Solid, color: "#10151e" }, textColor: "#aeb9cb", attributionLogo: true },
+      layout: { background: { type: ColorType.Solid, color: "#10151e" }, textColor: "#aeb9cb", attributionLogo: false },
       grid: { vertLines: { color: "#1b2533" }, horzLines: { color: "#1b2533" } },
       timeScale: { timeVisible: true, secondsVisible: false },
     });

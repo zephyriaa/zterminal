@@ -37,11 +37,12 @@ test("Binance depth synchronizer correctly transitions from SYNCING to LIVE via 
   assert.equal(bridged, true);
   assert.equal(sync.status, "LIVE");
 
-  // delta3 deleted "50000" (qty=0) and updated asks
+  // The boundary event ending at the snapshot ID applies before delta3.
+  // delta3 deletes 50000; the boundary event's 50000.5 bid remains.
   const bestBid = sync.book.bestBid();
   assert.notEqual(bestBid, undefined);
-  assert.equal(bestBid?.price, 49999);
-  assert.equal(bestBid?.size, 5.0);
+  assert.equal(bestBid?.price, 50000.5);
+  assert.equal(bestBid?.size, 1.0);
 });
 
 test("Binance depth synchronizer detects sequence gap and transitions to ERROR for automatic resync", () => {

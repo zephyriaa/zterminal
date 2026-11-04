@@ -76,3 +76,37 @@ test("detects sequence gaps and removes zero-size depth levels", () => {
   assert.equal(book.levels().some((level) => level.price === 9), false);
   assert.equal(book.apply({ U: 14, u: 14, t: 3, b: [], a: [] }), false);
 });
+
+test("best quote follows unordered insertions, replacements, deletions and resets", () => {
+  const book = new GateOrderBook();
+  assert.equal(book.bestQuote(), null);
+  book.buffer({ U: 11, u: 11, t: 1, b: [], a: [] });
+  book.bootstrap({ id: 10, current: 10, update: 10,
+    bids: [["8", "2"], ["9", "3"], ["7", "1"]], asks: [["13", "2"], ["11", "4"], ["12", "1"]] });
+  assert.deepEqual(book.bestQuote(), { bid: 9, bidSize: 3, ask: 11, askSize: 4 });
+  book.apply({ U: 12, u: 12, t: 2, b: [{ p: "9", s: "0" }, { p: "8", s: "5" }], a: [{ p: "11", s: "0" }] });
+  assert.deepEqual(book.bestQuote(), { bid: 8, bidSize: 5, ask: 12, askSize: 1 });
+  book.apply({ U: 13, u: 13, t: 3, b: [], a: [{ p: "12", s: "0" }, { p: "13", s: "0" }] });
+  assert.equal(book.bestQuote(), null);
+  book.reset();
+  assert.equal(book.bestQuote(), null);
+});
+
+test("best quote equals sorted depth through deterministic randomized updates", () => {
+  const book = new GateOrderBook();
+  book.buffer({ U: 2, u: 2, t: 1, b: [], a: [] });
+  book.bootstrap({ id: 1, current: 1, update: 1, bids: [["99", "1"]], asks: [["101", "1"]] });
+  let seed = 717;
+  for (let sequence = 3; sequence < 203; sequence++) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const offset = seed % 50;
+    const size = String(seed % 7);
+    book.apply({ U: sequence, u: sequence, t: sequence,
+      b: [{ p: String(99 - offset), s: size }], a: [{ p: String(101 + offset), s: size }] });
+    const levels = book.levels();
+    const bid = levels.find(level => level.side === "buy");
+    const ask = levels.find(level => level.side === "sell");
+    assert.deepEqual(book.bestQuote(), bid && ask
+      ? { bid: bid.price, bidSize: bid.size, ask: ask.price, askSize: ask.size } : null);
+  }
+});

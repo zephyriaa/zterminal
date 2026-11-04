@@ -11,19 +11,23 @@ export async function GET(request: NextRequest) {
     const response = await fetch(provider === "gateio" ? `${GATEIO_REST_URL}/futures/usdt/contracts/${symbol}` : `${BINANCE_FUTURES_REST_URL}/fapi/v1/exchangeInfo`, { signal: AbortSignal.any([request.signal, AbortSignal.timeout(15_000)]), cache: "no-store", headers: { "X-Gate-Size-Decimal": "1" } });
     if (!response.ok) throw new Error("Provider instrument metadata is unavailable");
     const raw = await response.json();
-    let multiplier: number, quantityStep: number;
+    let multiplier: number, quantityStep: number, tickSize: number, minimumQuantity: number, minimumNotional: number;
     if (provider === "gateio") {
       if (raw.name !== symbol || raw.in_delisting) throw new Error("Instrument is unavailable for new research requests");
       // Decimal lot contracts require a distinct precision contract; do not guess a step.
       if (raw.enable_decimal) throw new Error("Decimal Gate contract sizes are not supported in this preview. Select a whole-contract instrument.");
-      multiplier = parseGateDecimal(raw.quanto_multiplier, "contract multiplier"); quantityStep = 1;
+      multiplier = parseGateDecimal(raw.quanto_multiplier, "contract multiplier"); quantityStep = 1; tickSize = parseGateDecimal(raw.order_price_round, "price tick"); minimumQuantity = Number(raw.order_size_min); minimumNotional = 0;
     } else {
       const contract = raw.symbols?.find((p: { symbol: string }) => p.symbol === symbol);
       if (contract?.contractType !== "PERPETUAL" || contract?.quoteAsset !== "USDT") throw new Error("Select a USDT perpetual instrument");
       const lot = contract.filters?.find((p: { filterType: string }) => p.filterType === "LOT_SIZE");
-      multiplier = 1; quantityStep = Number(lot?.stepSize);
+      multiplier = 1; quantityStep = Number(lot?.stepSize); minimumQuantity = Number(lot?.minQty);
+      tickSize = Number(contract.filters?.find((p: { filterType: string }) => p.filterType === "PRICE_FILTER")?.tickSize);
+      const minimum = contract.filters?.find((p: { filterType: string }) => ["MIN_NOTIONAL", "NOTIONAL"].includes(p.filterType));
+      minimumNotional = Number(minimum?.notional ?? minimum?.minNotional ?? 0);
     }
-    if (![multiplier, quantityStep].every(v => Number.isFinite(v) && v > 0)) throw new Error("Invalid provider quantity units");
-    return NextResponse.json({ provider, symbol, multiplier, quantityStep, verifiedAt: Date.now() }, { headers: { "Cache-Control": "no-store" } });
+    if (![multiplier, quantityStep, tickSize, minimumQuantity].every(v => Number.isFinite(v) && v > 0)) throw new Error("Invalid provider quantity units");
+    if (!Number.isFinite(minimumNotional) || minimumNotional < 0) throw new Error("Invalid minimum notional");
+    return NextResponse.json({ provider, symbol, multiplier, quantityStep, tickSize, minimumQuantity, minimumNotional, verifiedAt: Date.now() }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 422 }); }
 }

@@ -1,7 +1,8 @@
 import type { TradeEvent } from "@/lib/market/types";
+import { tradeGranularity, tradeNotional } from "@/lib/market/trade-units";
 import type { BigTradesOverlaySettings } from "./contracts";
 
-export const BIG_TRADES_CALCULATION_VERSION = "1.0.0";
+export const BIG_TRADES_CALCULATION_VERSION = "1.1.0";
 
 export type BigTradeCluster = {
   id: string;
@@ -11,6 +12,7 @@ export type BigTradeCluster = {
   price: number;
   side: "buy" | "sell";
   quantity: number;
+  quantityUnit?: TradeEvent["quantityUnit"];
   notional: number;
   count: number;
   provider: TradeEvent["provider"];
@@ -29,12 +31,6 @@ function priceBucket(price: number, tickSize: number) {
   return Number((Math.round(price / tickSize) * tickSize).toFixed(decimals));
 }
 
-function tradeGranularity(trade: TradeEvent): BigTradeCluster["granularity"] {
-  if (trade.provider === "binance") return "aggregate";
-  if (trade.provider === "gateio") return "individual";
-  return "unknown";
-}
-
 /**
  * Deterministically groups observed exchange prints by bucket, tick price and
  * aggressor side. It never infers a side or promotes aggregate prints to
@@ -49,11 +45,12 @@ export function aggregateBigTrades(
   const windowMs = settings.aggregationWindowMs;
   for (const trade of trades) {
     const quantity = Number.isFinite(trade.quantity) && trade.quantity > 0 ? trade.quantity : 0;
-    const notional = quantity * trade.price;
-    if (!Number.isFinite(trade.price) || trade.price <= 0 || quantity < settings.minimumQuantity) continue;
+    const notional = tradeNotional(trade);
+    if (notional == null) continue;
+    if (!Number.isFinite(trade.price) || trade.price <= 0 || !Number.isFinite(trade.timestamp) || !["buy", "sell"].includes(trade.side) || quantity <= 0 || quantity < settings.minimumQuantity) continue;
     const timestamp = Math.floor(trade.timestamp / windowMs) * windowMs;
     const price = priceBucket(trade.price, tickSize);
-    const key = `${trade.provider}:${trade.symbol}:${timestamp}:${price}:${trade.side}`;
+    const key = `${trade.provider}:${trade.symbol}:${timestamp}:${price}:${trade.side}:${tradeGranularity(trade)}:${trade.quantityUnit ?? "legacy"}`;
     const current = grouped.get(key);
     if (current) {
       current.quantity += quantity;
@@ -70,6 +67,7 @@ export function aggregateBigTrades(
       price,
       side: trade.side,
       quantity,
+      quantityUnit: trade.quantityUnit,
       notional,
       count: 1,
       provider: trade.provider,

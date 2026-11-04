@@ -11,6 +11,7 @@ import { snapDrawingPoint } from "@/lib/chart/drawings/snapping";
 type Gesture = { drawing: DrawingObject; index: number | null; start: DrawingAnchor; pointerId: number };
 type Creation = { type: DrawingType; anchors: DrawingAnchor[]; down: ScreenPoint; pointerId: number; dragging: boolean };
 type Props = {
+  scopeKey: string;
   tool: DrawingTool; magnet: MagnetMode; bars: Bar[]; drawings: DrawingObject[]; selectedId: string | null;
   coordinates: () => DrawingCoordinates | null;
   viewport: () => { width: number; height: number };
@@ -39,6 +40,7 @@ export function DrawingInteractionLayer(props: Props) {
     const element = input.current, surface = element?.parentElement;
     if (!element || !surface) return;
     let gesture: Gesture | null = null, creation: Creation | null = null, draft: DrawingObject | null = null;
+    const releasedPointers = new Set<number>();
     let frame = 0, nextPreview: DrawingObject | null = null;
     const publish = (value: DrawingObject | null) => {
       draft = value; nextPreview = value;
@@ -49,7 +51,7 @@ export function DrawingInteractionLayer(props: Props) {
       frame = 0; draft = null; nextPreview = null;
       live.current.onPreview(null); live.current.onSnap(null);
     };
-    const release = (id: number | undefined) => { if (id != null && element.hasPointerCapture(id)) element.releasePointerCapture(id); };
+    const release = (id: number | undefined) => { if (id != null && element.hasPointerCapture(id)) { releasedPointers.add(id); element.releasePointerCapture(id); } };
     const cancel = () => { const id = gesture?.pointerId ?? creation?.pointerId; gesture = null; creation = null; clear(); release(id); setMenu(null); };
     cancelRef.current = cancel;
     const screen = (event: MouseEvent | PointerEvent) => { const rect = surface.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; };
@@ -115,6 +117,7 @@ export function DrawingInteractionLayer(props: Props) {
       if (isControl(event)) return;
       const p = screen(event);
       if (!gesture && !creation) { surface.style.cursor = inPane(p) && pick(p) ? "pointer" : ""; return; }
+      if (!inPane(p)) { event.stopPropagation(); cancel(); return; }
       const anchor = gesture?.index === null ? live.current.coordinates()?.unproject(p) : anchorFor(p, event.shiftKey, creation?.anchors.at(-1));
       if (!anchor) return;
       event.stopPropagation();
@@ -135,6 +138,7 @@ export function DrawingInteractionLayer(props: Props) {
       }
     };
     const up = (event: PointerEvent) => {
+      if ((gesture || creation) && !inPane(screen(event))) { event.stopPropagation(); cancel(); return; }
       if (gesture) {
         event.stopPropagation();
         const id = gesture.drawing.id;
@@ -145,7 +149,7 @@ export function DrawingInteractionLayer(props: Props) {
         if (creation.dragging && drawingAnchorCount(creation.type) === 2 && creation.type !== "polyline" && draft) complete(creation.type, draft.anchors);
       }
     };
-    const lost = () => { if (gesture) cancel(); };
+    const lost = (event: PointerEvent) => { if (releasedPointers.delete(event.pointerId)) return; if (gesture || creation) cancel(); };
     const context = (event: MouseEvent) => {
       if (isControl(event)) return;
       if (gesture || creation) { event.preventDefault(); event.stopPropagation(); cancel(); return; }
@@ -158,7 +162,7 @@ export function DrawingInteractionLayer(props: Props) {
     const keyboard = (event: KeyboardEvent) => {
       if (isControl(event) || event.target instanceof Element && event.target.closest(".monaco-editor")) return;
       if (event.key === "Escape") { cancel(); live.current.onSelect(null); live.current.onTool("cursor"); }
-      if (event.key === "Enter" && creation?.type === "polyline" && creation.anchors.length >= 2) { event.preventDefault(); complete(creation.type, creation.anchors); }
+      if (event.key === "Enter" && document.activeElement === element && creation?.type === "polyline" && creation.anchors.length >= 2) { event.preventDefault(); complete(creation.type, creation.anchors); }
     };
     const doubleClick = (event: MouseEvent) => {
       if (creation?.type === "polyline") {
@@ -181,7 +185,7 @@ export function DrawingInteractionLayer(props: Props) {
       window.removeEventListener("keydown", keyboard);
     };
   }, []);
-  useEffect(() => { cancelRef.current(); }, [props.tool]);
+  useEffect(() => { cancelRef.current(); }, [props.tool, props.scopeKey]);
   const selected = menu ? props.drawings.find(drawing => drawing.id === menu.id) : null;
   const command = (action: () => void) => { action(); setMenu(null); };
   return <div ref={input} className="zt-drawing-input" style={{ pointerEvents: "none" }} tabIndex={-1} aria-label="Chart drawing interaction layer">

@@ -1,23 +1,19 @@
-param(
-  [switch]$Recreate
-)
-
-$ErrorActionPreference = "Stop"
-$repositoryRoot = Split-Path -Parent $PSScriptRoot
-$environmentPath = Join-Path $repositoryRoot ".venv-research"
-$pythonPath = Join-Path $environmentPath "Scripts\python.exe"
-
+param([switch]$Recreate)
+. "$PSScriptRoot/dev-environment.ps1"
+$environmentPath = [IO.Path]::GetFullPath((Join-Path $repositoryRoot '.venv-research'))
+if (-not $environmentPath.StartsWith(($repositoryRoot + [IO.Path]::DirectorySeparatorChar), [StringComparison]::OrdinalIgnoreCase)) {
+  throw 'The Python environment must stay within the repository.'
+}
 if ($Recreate -and (Test-Path -LiteralPath $environmentPath)) {
   Remove-Item -LiteralPath $environmentPath -Recurse -Force
 }
-
-if (-not (Test-Path -LiteralPath $pythonPath)) {
-  & py -3.12 -m venv $environmentPath
+if (-not (Test-Path -LiteralPath '.venv-research/Scripts/python.exe')) {
+  Invoke-DevCommand 'py' @('-3.12', '-m', 'venv', '.venv-research')
 }
-
-& $pythonPath -m pip install --upgrade pip
-& $pythonPath -m pip install -r (Join-Path $repositoryRoot "research\desktop\requirements.txt") -r (Join-Path $repositoryRoot "research\api\requirements.txt")
-
-$env:PYTHONPATH = "$(Join-Path $repositoryRoot 'research\desktop');$(Join-Path $repositoryRoot 'research\api')"
-& $pythonPath -m unittest discover -s (Join-Path $repositoryRoot "research\desktop") -p "test_*.py"
-& $pythonPath -m unittest discover -s (Join-Path $repositoryRoot "research\api\tests") -p "test_*.py"
+Invoke-DevCommand '.\.venv-research\Scripts\python.exe' @('-m', 'pip', 'install', '-r', 'research/requirements-dev.txt')
+if (-not (Test-Path -LiteralPath 'out/research-runtime/python.exe')) { & "$PSScriptRoot/prepare-helper.ps1" }
+if (-not (Test-Path -LiteralPath '.venv-event/Scripts/python.exe')) {
+  Invoke-DevCommand 'py' @('-3.12', '-m', 'venv', '.venv-event')
+}
+Invoke-DevCommand '.\.venv-event\Scripts\python.exe' @('-m', 'pip', 'install', '-r', 'research/desktop/requirements-event.in')
+& "$PSScriptRoot/check-dev.ps1" -Component Python

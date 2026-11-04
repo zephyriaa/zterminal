@@ -1,3 +1,4 @@
+import { alignToTimeframe } from "./session";
 import { TIMEFRAME_SECONDS, type Bar, type Timeframe } from "./types";
 import { normalizeBars } from "./gateio";
 
@@ -27,7 +28,7 @@ function klineToBar(raw: unknown): Bar {
     h: decimal(raw[2], "kline high"),
     l: decimal(raw[3], "kline low"),
     c: decimal(raw[4], "kline close"),
-    v: Math.abs(decimal(raw[5], "kline volume")),
+    v: decimal(raw[5], "kline volume"),
   };
 }
 
@@ -44,11 +45,11 @@ export async function fetchBinanceHistoricalBars(
 ): Promise<Bar[]> {
   const symbol = normalizeBinanceSymbol(inputSymbol);
   if (!symbol) throw new Error(`unsupported Binance USDⓈ-M symbol: ${inputSymbol}`);
-  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs >= toMs) throw new Error("invalid historical candle range");
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) throw new Error("invalid historical candle range");
 
   const intervalMs = TIMEFRAME_SECONDS[timeframe] * 1_000;
   const output: Bar[] = [];
-  let cursor = Math.floor(fromMs / intervalMs) * intervalMs;
+  let cursor = alignToTimeframe(fromMs, timeframe);
   let pages = 0;
 
   while (cursor <= toMs) {

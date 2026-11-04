@@ -12,10 +12,10 @@ import { useWorkspace } from "@/stores/workspace";
 import { useResearch } from "@/stores/research";
 import { intervalMs } from "@/lib/local-research/dataset";
 import type { TradeMarker } from "./terminal-chart";
-import { getContract, formatSymbol } from "@/lib/market/contracts";
+import { formatSymbol, pricePrecision } from "@/lib/market/contracts";
 import { useMarketStream } from "@/hooks/use-market-stream";
-import { publicMarketData, type StreamProvider } from "@/lib/market/public-stream";
-import type { Bar, Timeframe } from "@/lib/market/types";
+import { MARKET_PROVIDERS, type MarketProvider, type Bar, type Timeframe } from "@/lib/market/types";
+import { useMarketContract } from "@/hooks/use-market-contract";
 import { ChartToolbar } from "./chart-toolbar";
 import { chartDocumentKey, createChartDocument, PRIMARY_CHART_ID, type InstrumentKey, type DrawingObject } from "@/lib/chart/contracts";
 import { useChartDocuments } from "@/stores/chart-documents";
@@ -26,13 +26,13 @@ import { useMultiChart } from "@/stores/multi-chart";
 
 function formatPrice(value: number | undefined | null, tick: number) {
   if (value == null || !Number.isFinite(value)) return "—";
-  const digits = Math.max(2, Math.min(8, Math.round(-Math.log10(tick))));
+  if (!Number.isFinite(tick)) return value.toLocaleString();
+  const digits = Math.max(2, pricePrecision(tick));
   return value.toLocaleString("en-US", { minimumFractionDigits: tick >= 1 ? 2 : digits, maximumFractionDigits: tick >= 1 ? 2 : digits });
 }
 
 export function ReferenceChartWorkspace() {
-  const { activeWorkspaceId, symbol, timeframe, setTimeframe, timezone } = useWorkspace();
-  const contract = getContract(symbol);
+  const { activeWorkspaceId, symbol, timeframe, setTimeframe, timezone, setMarketProvider } = useWorkspace();
   const archivedChart = useResearch(s => s.chartResult);
   const selectedTrade = useResearch(s => s.selectedTrade);
   const pythonEvaluations = useResearch(s => s.indicatorResults);
@@ -53,7 +53,6 @@ export function ReferenceChartWorkspace() {
   const setIndicatorsOpen = (_open: boolean) => dock.openPanel("indicators");
   const setSettingsOpen = (_open: boolean) => dock.openPanel("chart-settings");
   const { layout: multiChartLayout, setLayout: setMultiChartLayout } = useMultiChart();
-  const [selectedProvider, setSelectedProvider] = useState<StreamProvider | undefined>();
   const instances = useStudies(s => s.instances);
   const appearance = useTerminalAppearance(state => state.appearance);
   const [crosshairBar, setCrosshairBar] = useState<Bar | null>(null);
@@ -67,16 +66,15 @@ export function ReferenceChartWorkspace() {
   const [documentsHydrated, setDocumentsHydrated] = useState(false);
   const indicatorDocumentRef = useRef<string | null>(null);
   const indicatorLoadingRef = useRef(false);
-  const { lastTrade, derivatives, dataStatus, provider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
-  useEffect(() => {
-    if (selectedProvider && selectedProvider !== provider) {
-      publicMarketData.setProvider(selectedProvider);
-    }
-  }, [provider, selectedProvider]);
+  const { lastTrade, derivatives, dataStatus, provider, effectiveProvider, gatewayProvider, health, reason } = useMarketStream(symbol, { trades: 1, depth: false });
   const chartProvider = archivedChart?.dataset.provider ?? provider ?? "gateio";
-  const chartContract = getContract(chartSymbol);
-  const instrument = useMemo<InstrumentKey>(() => ({ provider: chartProvider, exchange: chartContract.exchange, product: "perpetual", nativeSymbol: chartSymbol }), [chartContract.exchange, chartProvider, chartSymbol]);
+  const liveContract = useMarketContract(chartSymbol, chartProvider);
+  const chartContract = useMemo(() => archivedChart ? { ...liveContract, symbol: archivedChart.dataset.symbol, exchange: archivedChart.dataset.provider === "gateio" ? "GATEIO" as const : "BINANCE" as const, product: "perpetual" as const, tickSize: archivedChart.config.tickSize ?? archivedChart.instrument?.tickSize ?? Number.NaN, multiplier: archivedChart.config.multiplier, quantityStep: archivedChart.config.quantityStep } : liveContract, [archivedChart, liveContract]);
+  const contract = chartContract;
+  const identityReady = Boolean(archivedChart || chartContract.verified || chartProvider === "mock");
+  const instrument = useMemo<InstrumentKey>(() => ({ provider: chartProvider, exchange: chartContract.exchange, product: chartContract.product, nativeSymbol: chartContract.verified ? chartContract.symbol : chartSymbol }), [chartContract, chartProvider, chartSymbol]);
   const chartDocumentId = chartDocumentKey(activeWorkspaceId, PRIMARY_CHART_ID, instrument);
+  const olderDocument = useChartDocuments(state => Object.values(state.documents).find(document => document.workspaceId === activeWorkspaceId && document.chartId === PRIMARY_CHART_ID && document.id !== chartDocumentId && document.instrument.nativeSymbol.replace(/[_-]/g, "") === chartSymbol.replace(/[_-]/g, "")));
   const storedChartDocument = useChartDocuments(state => state.documents[chartDocumentId]);
   const fallbackChartDocument = useMemo(() => createChartDocument({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: { backgroundColor: appearance.chartBackground, candleUpColor: appearance.upColor, candleDownColor: appearance.downColor, gridOpacity: appearance.gridOpacity / 100 } }), [activeWorkspaceId, appearance.chartBackground, appearance.downColor, appearance.gridOpacity, appearance.upColor, chartTimeframe, instrument]);
   const chartDocument = storedChartDocument ?? fallbackChartDocument;
@@ -107,11 +105,11 @@ export function ReferenceChartWorkspace() {
   }, []);
 
   useEffect(() => {
-    if (!documentsHydrated) return;
+    if (!documentsHydrated || !identityReady) return;
     const store = useChartDocuments.getState();
     store.ensure({ workspaceId: activeWorkspaceId, instrument, timeframe: chartTimeframe as Timeframe, settings: fallbackChartDocument.settings });
     if (useChartDocuments.getState().documents[chartDocumentId]?.timeframe !== chartTimeframe) store.setTimeframe(chartDocumentId, chartTimeframe as Timeframe);
-  }, [activeWorkspaceId, chartDocumentId, chartTimeframe, documentsHydrated, fallbackChartDocument.settings, instrument]);
+  }, [activeWorkspaceId, chartDocumentId, chartTimeframe, documentsHydrated, fallbackChartDocument.settings, instrument, archivedChart, chartContract.verified, identityReady]);
 
   useEffect(() => {
     if (!studiesHydrated) return;
@@ -168,11 +166,11 @@ export function ReferenceChartWorkspace() {
           <div className="zt-chart-actions"><button type="button" onClick={() => setReplay(value => !value)}>{replay ? "Exit replay" : "Bar replay"}</button><button type="button" onClick={() => window.dispatchEvent(new Event("zterminal:refresh-chart"))}>Refresh chart</button></div>
           <ChartToolbar
             symbol={formatSymbol(chartSymbol)}
-            productLabel={archivedChart ? "ARCHIVED" : "PERPETUAL"}
+            productLabel={archivedChart ? "ARCHIVED" : chartContract.product.toUpperCase()}
             timeframe={chartTimeframe as Timeframe}
             archived={Boolean(archivedChart)}
-            price={formatPrice(livePrice, contract.tickSize)}
-            providerLabel={(selectedProvider || provider || chartProvider).toUpperCase()}
+            price={formatPrice(identityReady ? livePrice : null, contract.tickSize)}
+            providerLabel={chartProvider.toUpperCase()}
             dataStatus={dataStatus}
             statusReason={reason ?? health?.reason}
             chartType={chartType}
@@ -185,12 +183,16 @@ export function ReferenceChartWorkspace() {
             onReturnLive={() => useResearch.setState({ chartResult: null, selectedTrade: null })}
             onLayoutChange={setMultiChartLayout}
             onProviderChange={next => {
-              if (next === "binance" || next === "gateio" || next === "bybit" || next === "coinbase") {
-                setSelectedProvider(next);
+              if (MARKET_PROVIDERS.includes(next as MarketProvider)) {
+                setMarketProvider(next as MarketProvider);
               }
             }}
           />
+          {!identityReady && <p role="status">Instrument metadata is unverified. Provider history must confirm the market before prices or saved drawings are used. Existing documents remain saved.</p>}
+          {archivedChart && !Number.isFinite(chartContract.tickSize) && <p role="status">Archived tick size was not captured. Current live precision is not substituted.</p>}
+          {olderDocument && <p role="status">Saved drawings under an older instrument identity remain stored separately. Verify their original market before reusing them.</p>}
           <MultiChartGrid
+            drawingScopeKey={chartDocumentId}
             primarySymbol={chartSymbol}
             primaryTimeframe={chartTimeframe as Timeframe}
             chartType={chartType}
@@ -206,7 +208,7 @@ export function ReferenceChartWorkspace() {
             latestBar={latestBar}
             onCrosshair={setCrosshairBar}
             onLatestBar={setLatestBar}
-            drawings={chartDocument.drawings}
+            drawings={identityReady ? chartDocument.drawings : []}
             selectedDrawingId={selectedDrawingId}
             drawingTool={drawingTool}
             persistentDrawing={persistentDrawing}
@@ -231,9 +233,10 @@ export function ReferenceChartWorkspace() {
             markers={chartSettings.showStrategyTrades ? markers : []}
             focusRange={focusRange}
             archivedBars={archivedChart?.dataset.bars}
+            archivedContract={archivedChart ? chartContract : undefined}
             overlays={chartDocument.overlays}
           />
-          {!archivedChart && <FeedInspector provider={provider} dataStatus={dataStatus} health={health} reason={reason} />}
+          {!archivedChart && <FeedInspector provider={provider} effectiveProvider={effectiveProvider} gatewayProvider={gatewayProvider} dataStatus={dataStatus} health={health} reason={reason} />}
         </div>
   );
 }

@@ -5,21 +5,27 @@ import styles from "./docs.module.css";
 
 export const metadata: Metadata = {
   title: "Documentation — ZTerminal",
-  description: "Official guides, Python research API reference, and installation documents for ZTerminal.",
+  description: "Official guides, Python research API reference, backtesting engine manual, and installation documents for ZTerminal.",
 };
 
 const GUIDES = [
   {
-    title: "Windows installation",
-    tag: "WORKSTATION SETUP",
-    description: "Verified release availability, code signing, cryptographic checksum verification, and native installation.",
-    href: "/docs/windows/install",
+    title: "Backtesting & AI Strategy Guide",
+    tag: "AI STRATEGY AUTHORING",
+    description: "Empower your AI (ChatGPT, Claude, Cursor) to write vectorized Python strategies, configure backtest settings, and eliminate look-ahead bias.",
+    href: "/docs/backtesting",
   },
   {
     title: "Python Research API",
     tag: "STRATEGY DEVELOPMENT",
     description: "Write Python strategies, run local research, and inspect reproducible backtest evidence.",
     href: "/docs/python-research",
+  },
+  {
+    title: "Windows installation",
+    tag: "WORKSTATION SETUP",
+    description: "Verified release availability, code signing, cryptographic checksum verification, and native installation.",
+    href: "/docs/windows/install",
   },
   {
     title: "ZScript migration",

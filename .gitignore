@@ -88,3 +88,11 @@ audit-captures/
 audit_screenshots/
 calibrated-captures/
 tmp/
+
+# Local development data and environments
+/prisma/*.db
+/prisma/*.db-*
+/db/*.db
+/db/*.db-*
+/.venv-event/
+/data/

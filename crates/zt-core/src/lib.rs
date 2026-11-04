@@ -1260,7 +1260,7 @@ fn validate_local_segment_bars(key: SegmentKey, bars: &[Bar]) -> Result<(), Loca
                 "bars are not contiguous for the declared segment key",
             ));
         }
-        if bar.volume <= 0
+        if bar.volume < 0
             || bar.low_ticks > bar.open_ticks
             || bar.low_ticks > bar.close_ticks
             || bar.high_ticks < bar.open_ticks

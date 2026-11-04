@@ -10,12 +10,17 @@
 #include "local_monte_carlo_bridge.h"
 #include "local_scene_bridge.h"
 #include "local_segment_catalog_bridge.h"
+#include "native_chart_host.h"
 
 #include <windows.h>
 #include <windowsx.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include <d2d1.h>
+#include <dwrite_3.h>
 #include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dxgi1_3.h>
 #include <psapi.h>
 #include <wrl/client.h>
 
@@ -29,6 +34,7 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -41,8 +47,8 @@ namespace {
 constexpr wchar_t kWindowClass[] = L"ZTerminalPhase0NativeHost";
 constexpr wchar_t kWindowTitle[] = L"ZTerminal";
 constexpr std::size_t kMaximumVisibleCandles = 2'000;
-constexpr std::size_t kVerticesPerCandle = 12;
-constexpr std::size_t kMaximumVertices = (kMaximumVisibleCandles * kVerticesPerCandle) + 24;
+constexpr std::size_t kVerticesPerCandle = 32;
+constexpr std::size_t kMaximumVertices = (kMaximumVisibleCandles * kVerticesPerCandle) + 1024;
 
 using Clock = std::chrono::steady_clock;
 
@@ -91,6 +97,8 @@ struct ChartCandle {
     double high{};
     double low{};
     double close{};
+    uint64_t time_ns{};
+    int64_t volume{},open_ticks{},high_ticks{},low_ticks{},close_ticks{};
 };
 
 struct ChartView {
@@ -101,7 +109,14 @@ struct ChartView {
     bool dragging{};
     int drag_start_x{};
     std::size_t drag_start_first{};
+    double logical_first{-1}, logical_count{}, drag_logical_first{};
 };
+
+zterminal::chart::Scene verified_scene;
+int64_t price_origin{};
+zterminal::native_chart::Appearance chart_appearance;
+double chart_scale{1};
+zterminal::chart::View effective_view(const ChartView& v) { return {v.logical_first<0 ? double(v.first):v.logical_first,v.logical_count<=0 ? double(v.visible):v.logical_count}; }
 
 struct Vertex {
     float position[2];
@@ -137,6 +152,8 @@ struct Vertex {
             .high = std::max(open, close) + spread,
             .low = std::min(open, close) - spread,
             .close = close,
+            .time_ns = (index+1)*60'000'000'000ULL,
+            .volume = static_cast<int64_t>(index%1000),
         });
         prior_close = close;
     }
@@ -225,12 +242,14 @@ void append_rectangle(
 
 class Renderer final {
 public:
-    bool initialize(HWND window) {
+    bool initialize(HWND window, zterminal::native_chart::AttachSwapChain attach = {}) {
         window_ = window;
+        attach_swap_chain_ = std::move(attach);
         return recreate_device_resources();
     }
 
     bool recreate_device_resources() {
+        text_target_.Reset(); text_brush_.Reset(); text_format_.Reset(); font_collection_.Reset(); text_factory_.Reset(); d2d_factory_.Reset();
         render_target_.Reset();
         vertex_buffer_.Reset();
         clear_retained_vertices(false);
@@ -261,30 +280,58 @@ public:
         };
 
         ComPtr<IDXGIAdapter> output_adapter = desktop_output_adapter();
-        HRESULT result = D3D11CreateDeviceAndSwapChain(
-            output_adapter.Get(),
-            output_adapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
-            nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-            levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION, &descriptor,
-            swap_chain_.GetAddressOf(), device_.GetAddressOf(), &selected_feature_level_, context_.GetAddressOf());
+        const auto create_device = [&](IDXGIAdapter* adapter, D3D_DRIVER_TYPE driver) {
+            if (attach_swap_chain_) {
+                return D3D11CreateDevice(adapter, driver, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                    levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION,
+                    device_.ReleaseAndGetAddressOf(), &selected_feature_level_, context_.ReleaseAndGetAddressOf());
+            }
+            return D3D11CreateDeviceAndSwapChain(adapter, driver, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION, &descriptor,
+                swap_chain_.ReleaseAndGetAddressOf(), device_.ReleaseAndGetAddressOf(),
+                &selected_feature_level_, context_.ReleaseAndGetAddressOf());
+        };
+        HRESULT result = create_device(output_adapter.Get(),
+            output_adapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE);
         if (FAILED(result) && output_adapter) {
             // A display adapter can reject a requested feature level. Retain the
             // legacy hardware fallback before considering software rendering.
             output_adapter.Reset();
-            result = D3D11CreateDeviceAndSwapChain(
-                nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION, &descriptor,
-                swap_chain_.GetAddressOf(), device_.GetAddressOf(), &selected_feature_level_, context_.GetAddressOf());
+            result = create_device(nullptr, D3D_DRIVER_TYPE_HARDWARE);
         }
         if (FAILED(result) && !recovering_device_) {
             used_warp_ = true;
-            result = D3D11CreateDeviceAndSwapChain(
-                nullptr, D3D_DRIVER_TYPE_WARP, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                levels.data(), static_cast<UINT>(levels.size()), D3D11_SDK_VERSION, &descriptor,
-                swap_chain_.GetAddressOf(), device_.GetAddressOf(), &selected_feature_level_, context_.GetAddressOf());
+            result = create_device(nullptr, D3D_DRIVER_TYPE_WARP);
         }
         if (FAILED(result)) {
+            last_renderer_error_ = result;
             return false;
+        }
+        if (attach_swap_chain_) {
+            ComPtr<IDXGIDevice> dxgi_device;
+            ComPtr<IDXGIAdapter> adapter;
+            ComPtr<IDXGIFactory2> factory;
+            ComPtr<IDXGISwapChain1> composition_chain;
+            DXGI_SWAP_CHAIN_DESC1 composition{};
+            composition.Width = std::max<UINT>(1, width_);
+            composition.Height = std::max<UINT>(1, height_);
+            composition.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            composition.SampleDesc.Count = 1;
+            composition.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            composition.BufferCount = 2;
+            composition.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+            composition.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+            composition.Scaling = DXGI_SCALING_STRETCH;
+            if (FAILED(result = device_.As(&dxgi_device))
+                || FAILED(result = dxgi_device->GetAdapter(adapter.GetAddressOf()))
+                || FAILED(result = adapter->GetParent(IID_PPV_ARGS(factory.GetAddressOf())))
+                || FAILED(result = factory->CreateSwapChainForComposition(device_.Get(), &composition, nullptr, composition_chain.GetAddressOf()))
+                || FAILED(result = composition_chain.As(&swap_chain_))
+                || FAILED(result = attach_swap_chain_(swap_chain_.Get()))) {
+                last_renderer_error_ = result;
+                return false;
+            }
+            if(!apply_composition_scale())return false;
         }
         populate_adapter_diagnostics();
         if (!create_render_target() || !create_pipeline()) {
@@ -302,6 +349,7 @@ public:
         context_->ClearState();
         context_->Flush();
         render_target_.Reset();
+        text_target_.Reset(); text_brush_.Reset();
         const HRESULT result = swap_chain_->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
         if (SUCCEEDED(result) && create_render_target()) {
             width_ = width;
@@ -325,13 +373,14 @@ public:
         std::uint64_t view_revision,
         bool force_rebuild,
         bool unsynchronised_present,
-        bool verify_pixels = false
+        bool verify_pixels = false,
+        std::optional<zterminal::native_chart::RasterSnapshot>* raster = nullptr
     ) {
         if (!context_ || !render_target_ || !swap_chain_ || !vertex_buffer_) {
             return;
         }
         const auto frame_started = Clock::now();
-        constexpr float background[] = {0.027F, 0.047F, 0.075F, 1.0F};
+        const auto& background=chart_appearance.background;
         ID3D11RenderTargetView* const targets[] = {render_target_.Get()};
         context_->OMSetRenderTargets(1, targets, nullptr);
         // ClearState during resize discards the viewport too. Bind the complete
@@ -339,7 +388,7 @@ public:
         const D3D11_VIEWPORT viewport{0.0F, 0.0F, static_cast<float>(width_), static_cast<float>(height_), 0.0F, 1.0F};
         context_->RSSetViewports(1, &viewport);
         context_->RSSetState(rasterizer_state_.Get());
-        context_->ClearRenderTargetView(render_target_.Get(), background);
+        context_->ClearRenderTargetView(render_target_.Get(), background.data());
 
         bool can_draw = false;
         if (candles.empty()) {
@@ -378,6 +427,10 @@ public:
             context_->Draw(retained_vertex_count_, 0);
         }
 
+        draw_labels(candles, view);
+        // Flip Present rotates the buffers. Diagnostic readback must observe
+        // this completed frame before Present, never a previous back buffer.
+        if (raster) *raster = capture_raster();
         if (verify_pixels && !verified_chart_pixels_.has_value()) {
             verified_chart_pixels_ = verify_rendered_pixels();
         }
@@ -398,6 +451,9 @@ public:
     [[nodiscard]] D3D_FEATURE_LEVEL feature_level() const { return selected_feature_level_; }
     [[nodiscard]] const std::wstring& adapter_description() const { return adapter_description_; }
     [[nodiscard]] FrameSummary frame_summary() const { return frame_stats_.summarize(); }
+    [[nodiscard]] FrameSummary geometry_summary() const { return geometry_stats_.summarize(); }
+    [[nodiscard]] UINT pixel_width() const { return width_; }
+    [[nodiscard]] UINT pixel_height() const { return height_; }
     [[nodiscard]] std::uint64_t resize_successes() const { return resize_successes_; }
     [[nodiscard]] std::uint64_t resize_failures() const { return resize_failures_; }
     [[nodiscard]] std::uint64_t device_recoveries() const { return device_recoveries_; }
@@ -408,8 +464,22 @@ public:
     [[nodiscard]] std::uint64_t retained_draw_reuses() const { return retained_draw_reuses_; }
     [[nodiscard]] std::uint64_t retained_vertex_clears() const { return retained_vertex_clears_; }
     [[nodiscard]] std::uint64_t retained_vertex_rebuilds() const { return retained_vertex_rebuilds_; }
+    std::pair<double,double> interaction_bounds(const std::vector<ChartCandle>& candles,const ChartView& view) const { auto p=plot(candles,view); return {p.left,p.left+(p.right-p.left)*p.count/p.slots}; }
+    void set_scale(double scale) {
+        auto next=std::clamp(scale,.5,4.0); if(next==chart_scale)return; chart_scale=next;
+        (void)apply_composition_scale();
+        if(text_factory_) (void)text_factory_->CreateTextFormat(L"Geist Mono",font_collection_.Get(),DWRITE_FONT_WEIGHT_NORMAL,DWRITE_FONT_STYLE_NORMAL,DWRITE_FONT_STRETCH_NORMAL,float(12*chart_scale),L"en-US",text_format_.ReleaseAndGetAddressOf());
+        advance_geometry_revision();
+    }
 
 private:
+    bool apply_composition_scale() {
+        if(!attach_swap_chain_)return true;
+        ComPtr<IDXGISwapChain2> chain;
+        if(FAILED(swap_chain_.As(&chain)))return false;
+        const DXGI_MATRIX_3X2_F inverse{float(1/chart_scale),0,0,float(1/chart_scale),0,0};
+        auto result=chain->SetMatrixTransform(&inverse); if(FAILED(result))last_renderer_error_=result; return SUCCEEDED(result);
+    }
     [[nodiscard]] static bool is_device_loss(HRESULT result) {
         return result == DXGI_ERROR_DEVICE_REMOVED
             || result == DXGI_ERROR_DEVICE_RESET
@@ -438,14 +508,30 @@ private:
         back_buffer->GetDesc(&description);
         width_ = description.Width;
         height_ = description.Height;
-        return SUCCEEDED(device_->CreateRenderTargetView(back_buffer.Get(), nullptr, render_target_.GetAddressOf()));
+        if(FAILED(device_->CreateRenderTargetView(back_buffer.Get(), nullptr, render_target_.GetAddressOf()))) return false;
+        if(!d2d_factory_ && FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,d2d_factory_.GetAddressOf()))) return false;
+        if(!text_factory_ && FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,__uuidof(IDWriteFactory),reinterpret_cast<IUnknown**>(text_factory_.GetAddressOf())))) return false;
+        if(!font_collection_) {
+            ComPtr<IDWriteFactory5> factory; ComPtr<IDWriteFontSetBuilder1> builder; ComPtr<IDWriteFontSet> fonts;
+            if(FAILED(text_factory_.As(&factory)) || FAILED(factory->CreateFontSetBuilder(builder.GetAddressOf())))return false;
+            wchar_t exe[32768]{}; GetModuleFileNameW(nullptr,exe,32768); auto assets=std::filesystem::path(exe).parent_path()/L"Assets";
+            for(auto name:{L"Geist-Regular.ttf",L"GeistMono.ttf"}) {
+                ComPtr<IDWriteFontFile> file; if(FAILED(factory->CreateFontFileReference((assets/name).c_str(),nullptr,file.GetAddressOf())) || FAILED(builder->AddFontFile(file.Get())))return false;
+            }
+            if(FAILED(builder->CreateFontSet(fonts.GetAddressOf())) || FAILED(factory->CreateFontCollectionFromFontSet(fonts.Get(),font_collection_.GetAddressOf())))return false;
+        }
+        ComPtr<IDXGISurface> surface; if(FAILED(back_buffer.As(&surface))) return false;
+        auto props=D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_IGNORE),96,96);
+        if(FAILED(d2d_factory_->CreateDxgiSurfaceRenderTarget(surface.Get(),props,text_target_.ReleaseAndGetAddressOf()))) return false;
+        if(FAILED(text_target_->CreateSolidColorBrush(D2D1::ColorF(.65f,.64f,.72f),text_brush_.ReleaseAndGetAddressOf()))) return false;
+        return SUCCEEDED(text_factory_->CreateTextFormat(L"Geist Mono",font_collection_.Get(),DWRITE_FONT_WEIGHT_NORMAL,DWRITE_FONT_STYLE_NORMAL,DWRITE_FONT_STRETCH_NORMAL,float(12*chart_scale),L"en-US",text_format_.ReleaseAndGetAddressOf()));
     }
 
 public:
     [[nodiscard]] std::optional<std::uint64_t> verified_chart_pixels() const { return verified_chart_pixels_; }
     // Explicit diagnostic only. Reading pixels catches a successful Draw/Present
     // that produced no chart, which aggregate HRESULT counters cannot detect.
-    [[nodiscard]] std::optional<std::uint64_t> verify_rendered_pixels() {
+    [[nodiscard]] std::optional<zterminal::native_chart::RasterSnapshot> capture_raster() {
         ComPtr<ID3D11Texture2D> back_buffer;
         if (FAILED(swap_chain_->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf())))) return std::nullopt;
         D3D11_TEXTURE2D_DESC description{};
@@ -459,16 +545,19 @@ public:
         context_->CopyResource(staging.Get(), back_buffer.Get());
         D3D11_MAPPED_SUBRESOURCE mapped{};
         if (FAILED(context_->Map(staging.Get(), 0, D3D11_MAP_READ, 0, &mapped))) return std::nullopt;
-        std::uint64_t count = 0;
+        zterminal::native_chart::RasterSnapshot result{description.Width,description.Height,{}};
+        result.bgra.resize(size_t(description.Width)*description.Height*4);
         for (UINT row = 0; row < description.Height; ++row) {
             const auto* pixels = static_cast<const unsigned char*>(mapped.pData) + row * mapped.RowPitch;
-            for (UINT column = 0; column < description.Width; ++column) {
-                const auto* pixel = pixels + column * 4;
-                // Chart and crosshair colors are well outside the dark clear color.
-                if (pixel[0] > 40 || pixel[1] > 40 || pixel[2] > 40) ++count;
-            }
+            std::memcpy(result.bgra.data()+size_t(row)*description.Width*4,pixels,size_t(description.Width)*4);
         }
         context_->Unmap(staging.Get(), 0);
+        return result;
+    }
+    [[nodiscard]] std::optional<std::uint64_t> verify_rendered_pixels() {
+        auto image=capture_raster(); if(!image)return std::nullopt;
+        std::uint64_t count=0;
+        for(size_t i=0;i<image->bgra.size();i+=4)if(image->bgra[i]>40||image->bgra[i+1]>40||image->bgra[i+2]>40)++count;
         return count;
     }
 
@@ -540,6 +629,7 @@ private:
         const ChartView& view,
         RenderInputRevision input_revision
     ) {
+        const auto started=Clock::now();
         retained_vertices_.clear();
         if (retained_vertices_.capacity() < kMaximumVertices) {
             retained_vertices_.reserve(kMaximumVertices);
@@ -553,50 +643,179 @@ private:
         retained_input_revision_ = input_revision;
         retained_upload_required_ = retained_vertex_count_ > 0;
         ++retained_vertex_rebuilds_;
+        geometry_stats_.add(std::chrono::duration<double,std::milli>(Clock::now()-started).count());
     }
 
+    struct Plot {
+        double left, right, top, bottom, volume_top, volume_bottom;
+        double first, count, low, high, maximum_volume, slots;
+        zterminal::chart::PriceProjection price;bool valid;
+    };
+    double measured_width(const std::wstring& text) const {
+        ComPtr<IDWriteTextLayout> layout; DWRITE_TEXT_METRICS metrics{};
+        if(!text_factory_ || !text_format_ || FAILED(text_factory_->CreateTextLayout(text.data(),static_cast<UINT32>(text.size()),text_format_.Get(),10000,1000,layout.GetAddressOf())) || FAILED(layout->GetMetrics(&metrics))) return 0;
+        return metrics.widthIncludingTrailingWhitespace;
+    }
+    std::wstring price_label(double relative) const {
+        if(verified_scene.version==2 && relative>=double(INT64_MIN) && relative<double(INT64_MAX)) {
+            auto delta=static_cast<int64_t>(std::llround(relative));
+            if((delta>0 && price_origin>INT64_MAX-delta)||(delta<0 && price_origin<INT64_MIN-delta)) return L"Out of range";
+            auto label=zterminal::chart::format_units(price_origin+delta,verified_scene.price_step);
+            return std::wstring(label.begin(),label.end());
+        }
+        std::wostringstream s; s<<std::fixed<<std::setprecision(2)<<relative; return s.str();
+    }
+    Plot plot(const std::vector<ChartCandle>& candles,const ChartView& view) const {
+        auto v=effective_view(view); v.count=std::clamp(v.count,1.0,double(std::min(kMaximumVisibleCandles,candles.size())));
+        v.first=std::clamp(v.first,0.0,std::max(0.0,double(candles.size())-v.count));
+        double low=std::numeric_limits<double>::max(),high=std::numeric_limits<double>::lowest(),volume=0;
+        auto end=std::min(candles.size(),size_t(std::ceil(v.first+v.count)));
+        for(size_t i=size_t(v.first);i<end;++i) { low=std::min(low,candles[i].low); high=std::max(high,candles[i].high); volume=std::max(volume,double(candles[i].volume)); }
+        auto& a=chart_appearance;
+        double price_bottom=std::max(33*chart_scale,double(height_)*(a.volume?1-a.volume_ratio-.02:1)-28*chart_scale);
+        double volume_top=a.volume?price_bottom+20*chart_scale:price_bottom,volume_bottom=a.volume?std::max(volume_top+1,double(height_)-28*chart_scale):price_bottom;
+        auto projection=zterminal::chart::PriceProjection::make(a.scale,a.inverted,price_origin,candles[size_t(v.first)].close,low,high,32*chart_scale,price_bottom,a.margin_top,a.margin_bottom);
+        auto transformed_low=projection?projection->axis.low:low,transformed_high=projection?projection->axis.high:high;
+        auto label=[&](double q){if(projection&&a.scale==zterminal::chart::ScaleMode::Percentage){std::wostringstream t;t<<std::fixed<<std::setprecision(2)<<q<<L'%';return t.str();}return price_label(projection?projection->inverse(q):q);};
+        double axis=std::max(90*chart_scale,std::max(measured_width(label(transformed_low)),measured_width(label(transformed_high)))+18*chart_scale);
+        double slots=v.count+(v.first+v.count>=double(candles.size())-.00001?a.future_bars:0);
+        return {12*chart_scale,std::max(13*chart_scale,double(width_)-axis),32*chart_scale,price_bottom,volume_top,volume_bottom,v.first,v.count,transformed_low,transformed_high,std::max(1.0,volume),slots,projection.value_or(zterminal::chart::PriceProjection{}),bool(projection)};
+    }
+    std::wstring axis_label(double relative,const Plot& p) const {
+        if(chart_appearance.scale!=zterminal::chart::ScaleMode::Percentage)return price_label(relative);
+        std::wostringstream text;text<<std::fixed<<std::setprecision(std::clamp(int(std::ceil(-std::log10(100/std::abs(p.price.base))))+1,2,18))<<p.price.forward(relative)<<L'%';return text.str();
+    }
+
+    std::vector<double> axis_ticks(const Plot& p) const {
+        std::vector<double> result;
+        auto levels=zterminal::chart::tick_levels(p.low,p.high,unsigned(std::clamp((p.bottom-p.top)/(30*chart_scale),2.0,6.0)),chart_appearance.scale==zterminal::chart::ScaleMode::Normal?1.0:0.0);
+        for(auto level:levels){auto relative=std::round(p.price.inverse(level));if(chart_appearance.scale==zterminal::chart::ScaleMode::Logarithmic)relative=std::max(relative,1-double(price_origin));if(result.empty()||relative!=result.back())result.push_back(relative);}
+        return result;
+    }
+    static std::wstring utc_label(uint64_t ns) {
+        // Windows FILETIME uses 100 ns units since 1601. Preserve originals.
+        auto ticks=ns/100+116444736000000000ULL; FILETIME ft{DWORD(ticks),DWORD(ticks>>32)}; SYSTEMTIME st{};
+        if(!FileTimeToSystemTime(&ft,&st)) return L"UTC out of range";
+        std::wostringstream s; s<<std::setfill(L'0')<<std::setw(4)<<st.wYear<<L'-'<<std::setw(2)<<st.wMonth<<L'-'<<std::setw(2)<<st.wDay<<L' '<<std::setw(2)<<st.wHour<<L':'<<std::setw(2)<<st.wMinute<<L':'<<std::setw(2)<<st.wSecond<<L" UTC"; return s.str();
+    }
+public:
+    bool valid_projection(const std::vector<ChartCandle>& candles,const ChartView& view) const {return candles.empty()||plot(candles,view).valid;}
+    bool contains_data_point(const std::vector<ChartCandle>& candles,const ChartView& view,int x,int y) const {
+        if(candles.empty())return false;
+        auto p=plot(candles,view);
+        return p.valid&&p.right-p.left>=2&&p.bottom-p.top>=2&&x>=p.left&&x<p.right&&y>=p.top&&y<(chart_appearance.volume?p.volume_bottom:p.bottom);
+    }
+    std::wstring last_visible_price(const std::vector<ChartCandle>& candles,const ChartView& view) const {
+        if(candles.empty())return {};
+        auto p=plot(candles,view);
+        auto last=std::min(candles.size(),size_t(std::ceil(p.first+p.count)))-1;
+        return price_label(candles[last].close);
+    }
+    std::wstring pointer_readout(const std::vector<ChartCandle>& candles,const ChartView& view) const {
+        if(!view.has_cursor||!contains_data_point(candles,view,view.cursor.x,view.cursor.y))return {};
+        auto p=plot(candles,view);
+        if(view.cursor.x<p.left||view.cursor.x>=p.right||view.cursor.y<p.top||view.cursor.y>=p.volume_bottom)return {};
+        auto index=size_t(p.first+(view.cursor.x-p.left)/(p.right-p.left)*p.slots);
+        if(index>=candles.size())return L"Future time · no observation";
+        const auto& b=candles[index];
+        auto label=utc_label(b.time_ns)+L"  O "+price_label(b.open)+L" H "+price_label(b.high)+L" L "+price_label(b.low)+L" C "+price_label(b.close);
+        if(verified_scene.version==2) {
+            auto quantity=zterminal::chart::format_units(b.volume,verified_scene.quantity_step);
+            label+=L" V "+std::wstring(quantity.begin(),quantity.end());
+        }
+        return label;
+    }
+private:
+    void draw_labels(const std::vector<ChartCandle>& candles,const ChartView& view) {
+        if(candles.empty() || !text_target_) return;
+        auto p=plot(candles,view); if(!p.valid || p.right-p.left<2 || p.bottom-p.top<2) return;
+        text_target_->BeginDraw();
+        auto text=[&](std::wstring label,double x,double y,double width) { text_target_->DrawText(label.data(),UINT32(label.size()),text_format_.Get(),D2D1::RectF(float(x),float(y),float(x+width),float(y+20*chart_scale)),text_brush_.Get(),D2D1_DRAW_TEXT_OPTIONS_CLIP); };
+        auto transform=p.price;
+        auto last=std::min(candles.size(),size_t(std::ceil(p.first+p.count)))-1;
+        auto last_y=transform.y(candles[last].close);
+        for(auto level:axis_ticks(p)) {
+            if(!chart_appearance.price_line||std::abs(transform.y(level)-last_y)>=20*chart_scale)text(axis_label(level,p),p.right+8*chart_scale,transform.y(level)-8*chart_scale,width_-p.right-8*chart_scale);
+        }
+        if(chart_appearance.price_line&&(!chart_appearance.crosshair||!view.has_cursor||view.cursor.y>=p.bottom||std::abs(view.cursor.y-last_y)>=20*chart_scale)) {
+            auto original=text_brush_->GetColor();
+            const auto& ink=candles[last].close>=candles[last].open?chart_appearance.up:chart_appearance.down;
+            text_brush_->SetColor(D2D1::ColorF(ink[0],ink[1],ink[2]));
+            text_target_->FillRectangle(D2D1::RectF(float(p.right+4*chart_scale),float(last_y-10*chart_scale),float(width_),float(last_y+10*chart_scale)),text_brush_.Get());
+            text_brush_->SetColor(ink[0]*.2126+ink[1]*.7152+ink[2]*.0722>.45?D2D1::ColorF(.04f,.04f,.06f):D2D1::ColorF(.94f,.94f,.97f));
+            text(axis_label(candles[last].close,p),p.right+8*chart_scale,last_y-9*chart_scale,width_-p.right-8*chart_scale);
+            text_brush_->SetColor(original);
+        }
+        double prior_end=-1;
+        size_t prior_index=SIZE_MAX;
+        for(int i=0;i<=4;++i) {
+            auto index=std::min(candles.size()-1,size_t(p.first+(p.count-1)*i/4));
+            if(index==prior_index) continue;
+            prior_index=index;
+            auto label=utc_label(candles[index].time_ns);
+            double w=measured_width(label),center=p.left+(double(index)-p.first+.5)*(p.right-p.left)/p.slots;
+            double x=std::clamp(center-w/2,0.0,std::max(0.0,double(width_)-w));
+            if(x>prior_end+8*chart_scale) { text(label,x,height_-24*chart_scale,w+2); prior_end=x+w; }
+        }
+        if(chart_appearance.volume)text(L"Volume",p.left,p.volume_top-16*chart_scale,80*chart_scale);
+        if(chart_appearance.crosshair && view.has_cursor && view.cursor.x>=p.left && view.cursor.x<p.right && view.cursor.y>=p.top && view.cursor.y<p.volume_bottom) {
+            text(pointer_readout(candles,view),p.left,6*chart_scale,p.right-p.left);
+            if(view.cursor.y<p.bottom)text(axis_label(transform.price(view.cursor.y),p),p.right+8*chart_scale,view.cursor.y-8*chart_scale,width_-p.right-8*chart_scale);
+        }
+        auto result=text_target_->EndDraw(); if(FAILED(result)) { last_renderer_error_=result; if(result==D2DERR_RECREATE_TARGET) { text_target_.Reset(); (void)recover_device(result); } }
+    }
     void chart_vertices(
         const std::vector<ChartCandle>& candles,
         const ChartView& view,
         std::vector<Vertex>& vertices
     ) const {
-        const std::size_t visible = std::min({view.visible, kMaximumVisibleCandles, candles.size()});
-        const std::size_t first = std::min(view.first, candles.size() - visible);
-        const std::size_t last = first + visible;
-        double low = std::numeric_limits<double>::max();
-        double high = std::numeric_limits<double>::lowest();
-        for (std::size_t index = first; index < last; ++index) {
-            low = std::min(low, candles[index].low);
-            high = std::max(high, candles[index].high);
-        }
-        const double padding = std::max((high - low) * 0.08, 1.0);
-        low -= padding;
-        high += padding;
-        const double range = std::max(high - low, 1.0);
-        const float slot = 2.0F / static_cast<float>(visible);
-        const float body_half_width = std::max(slot * 0.28F, 0.0004F);
-        const float wick_half_width = std::max(slot * 0.05F, 0.0002F);
-        const auto y = [low, range](double price) { return static_cast<float>(((price - low) / range) * 2.0 - 1.0); };
-
-        vertices.reserve(kMaximumVertices);
-        for (std::size_t local_index = 0; local_index < visible; ++local_index) {
-            const ChartCandle& candle = candles[first + local_index];
-            const float x = -1.0F + (static_cast<float>(local_index) + 0.5F) * slot;
+        auto p=plot(candles,view); if(!p.valid || p.right-p.left<2 || p.bottom-p.top<2) return;
+        auto transform=p.price;
+        auto rectangle=[&](double l,double t,double r,double b,const std::array<float,4>& color,double clip_top,double clip_bottom) {
+            auto clip=zterminal::chart::clipped({l,t,r,b},{p.left,clip_top,p.right,clip_bottom}); if(!clip)return;
+            l=clip->left; r=clip->right; t=clip->top; b=clip->bottom;
+            append_rectangle(vertices,float(l/width_*2-1),float(1-t/height_*2),float(r/width_*2-1),float(1-b/height_*2),color);
+        };
+        const double slot=(p.right-p.left)/p.slots;
+        auto mixed=[](std::array<float,4> color,double opacity){for(int i=0;i<3;++i)color[i]=float(color[i]*opacity+chart_appearance.background[i]*(1-opacity));color[3]=1;return color;};
+        const auto grid=mixed({1,1,1,1},chart_appearance.grid_opacity);
+        if(chart_appearance.grid)for(auto level:axis_ticks(p)) { auto y=transform.y(level); rectangle(p.left,y,p.right,y+chart_scale,grid,p.top,p.bottom); }
+        if(chart_appearance.grid)for(int i=0;i<=4;++i) { auto x=p.left+(p.right-p.left)*i/4; rectangle(x,p.top,x+chart_scale,p.volume_bottom,grid,p.top,p.volume_bottom); }
+        const auto last=std::min(candles.size(),size_t(std::ceil(p.first+p.count)));
+        if(chart_appearance.price_line&&last){const auto& ink=candles[last-1].close>=candles[last-1].open?chart_appearance.up:chart_appearance.down;auto y=transform.y(candles[last-1].close);rectangle(p.left,y,p.right,y+chart_scale,mixed(ink,.4),p.top,p.bottom);}
+        for (size_t index=size_t(p.first);index<last;++index) {
+            const ChartCandle& candle = candles[index];
+            const double x=p.left+(double(index)-p.first+.5)*slot;
             const bool rising = candle.close >= candle.open;
-            const std::array<float, 4> color = rising
-                ? std::array<float, 4>{0.106F, 0.725F, 0.565F, 1.0F}
-                : std::array<float, 4>{0.875F, 0.306F, 0.353F, 1.0F};
-            append_rectangle(vertices, x - wick_half_width, y(candle.high), x + wick_half_width, y(candle.low), color);
-            const float top = y(std::max(candle.open, candle.close));
-            const float bottom = y(std::min(candle.open, candle.close));
-            append_rectangle(vertices, x - body_half_width, top, x + body_half_width, std::min(bottom, top - 0.002F), color);
+            const auto& a=chart_appearance;const auto& color=rising?a.up:a.down;
+            auto g=zterminal::chart::project_candle(candle.open,candle.high,candle.low,candle.close,candle.volume,x,slot,transform,p.volume_top,p.volume_bottom,p.maximum_volume,chart_scale);
+            if(a.type==zterminal::native_chart::ChartType::Candles) {
+                if(a.wicks)rectangle(g.wick.left,g.wick.top,g.wick.right,g.wick.bottom,rising?a.wick_up:a.wick_down,p.top,p.bottom);
+                rectangle(g.body.left,g.body.top,g.body.right,g.body.bottom,a.borders?(rising?a.border_up:a.border_down):color,p.top,p.bottom);
+                if(a.borders)rectangle(g.body.left+chart_scale,g.body.top+chart_scale,g.body.right-chart_scale,g.body.bottom-chart_scale,color,p.top,p.bottom);
+            } else if(a.type==zterminal::native_chart::ChartType::Bars) {
+                rectangle(x-chart_scale*.5,g.wick.top,x+chart_scale*.5,g.wick.bottom,color,p.top,p.bottom);
+                auto o=transform.y(candle.open),c=transform.y(candle.close);
+                rectangle(x-slot*.35,o,x,o+chart_scale,color,p.top,p.bottom);rectangle(x,c,x+slot*.35,c+chart_scale,color,p.top,p.bottom);
+            } else if(index>0) {
+                auto x0=x-slot,y0=transform.y(candles[index-1].close),y1=transform.y(candle.close);
+                // Clip each segment to the semantic price pane before thickening.
+                auto segment=zterminal::chart::clip_line({p.left,p.top,p.right,p.bottom},{x0,y0},{x,y1});
+                if(segment){auto [u,v]=*segment;
+                    auto vertex=[&](double px,double py,const std::array<float,4>& ink){return Vertex{{float(px/width_*2-1),float(1-py/height_*2)}, {ink[0],ink[1],ink[2],1}};};
+                    if(a.type==zterminal::native_chart::ChartType::Area){auto fill=mixed(a.up,.18);auto left=vertex(u.x,u.y,fill),right=vertex(v.x,v.y,fill),bottom_left=vertex(u.x,p.bottom,fill),bottom_right=vertex(v.x,p.bottom,fill);vertices.insert(vertices.end(),{left,right,bottom_right,left,bottom_right,bottom_left});}
+                    auto dx=v.x-u.x,dy=v.y-u.y,length=std::max(.0001,std::hypot(dx,dy));auto ox=-dy/length*chart_scale*.75,oy=dx/length*chart_scale*.75;
+                    auto a0=vertex(u.x+ox,u.y+oy,a.up),a1=vertex(v.x+ox,v.y+oy,a.up),a2=vertex(v.x-ox,v.y-oy,a.up),a3=vertex(u.x-ox,u.y-oy,a.up);vertices.insert(vertices.end(),{a0,a1,a2,a0,a2,a3});
+                }
+            }
+            if(a.volume)rectangle(g.volume.left,g.volume.top,g.volume.right,g.volume.bottom,color,p.volume_top,p.volume_bottom);
         }
-        if (view.has_cursor && width_ > 0 && height_ > 0) {
-            const float x = (static_cast<float>(view.cursor.x) / static_cast<float>(width_)) * 2.0F - 1.0F;
-            const float y_cursor = 1.0F - (static_cast<float>(view.cursor.y) / static_cast<float>(height_)) * 2.0F;
+        if (chart_appearance.crosshair && view.has_cursor && width_ > 0 && height_ > 0) {
             constexpr std::array<float, 4> crosshair{0.58F, 0.68F, 0.79F, 0.55F};
-            append_rectangle(vertices, x - 0.001F, -1.0F, x + 0.001F, 1.0F, crosshair);
-            append_rectangle(vertices, -1.0F, y_cursor - 0.001F, 1.0F, y_cursor + 0.001F, crosshair);
+            if(view.cursor.x>=p.left && view.cursor.x<p.right && view.cursor.y>=p.top && view.cursor.y<p.volume_bottom) {
+                rectangle(view.cursor.x,p.top,view.cursor.x+chart_scale,p.volume_bottom,crosshair,p.top,p.volume_bottom);
+                if(view.cursor.y<p.bottom) rectangle(p.left,view.cursor.y,p.right,view.cursor.y+chart_scale,crosshair,p.top,p.bottom);
+            }
         }
     }
 
@@ -614,6 +833,7 @@ private:
     }
 
     HWND window_{};
+    zterminal::native_chart::AttachSwapChain attach_swap_chain_;
     bool used_warp_{};
     bool recovering_device_{};
     D3D_FEATURE_LEVEL selected_feature_level_{};
@@ -621,6 +841,7 @@ private:
     UINT height_{820};
     std::wstring adapter_description_;
     FrameStats frame_stats_;
+    FrameStats geometry_stats_;
     std::uint64_t resize_successes_{};
     std::uint64_t resize_failures_{};
     std::uint64_t device_recoveries_{};
@@ -645,6 +866,12 @@ private:
     ComPtr<ID3D11InputLayout> input_layout_;
     ComPtr<ID3D11Buffer> vertex_buffer_;
     ComPtr<ID3D11RasterizerState> rasterizer_state_;
+    ComPtr<ID2D1Factory> d2d_factory_;
+    ComPtr<ID2D1RenderTarget> text_target_;
+    ComPtr<ID2D1SolidColorBrush> text_brush_;
+    ComPtr<IDWriteFactory> text_factory_;
+    ComPtr<IDWriteTextFormat> text_format_;
+    ComPtr<IDWriteFontCollection1> font_collection_;
     std::optional<std::uint64_t> verified_chart_pixels_;
 };
 
@@ -771,7 +998,7 @@ void destroy_workspace_overlay() {
 
 void request_frame(HWND window) {
     render_requested = true;
-    InvalidateRect(window, nullptr, FALSE);
+    if (window != nullptr) InvalidateRect(window, nullptr, FALSE);
 }
 
 void advance_chart_revision(std::uint64_t& revision) {
@@ -791,6 +1018,7 @@ void advance_chart_view_revision() {
 }
 
 void update_title(HWND window) {
+    if (window == nullptr) return;
     SetWindowTextW(window, chart_source == ChartSource::FixtureDiagnostic
         ? L"ZTerminal - diagnostic synthetic candles" : kWindowTitle);
     update_workspace_overlay(window);
@@ -800,6 +1028,13 @@ bool apply_local_scene_result(
     const zterminal::local_scene::Request& request,
     const zterminal::local_scene::Result& result
 ) {
+    if(result.availability==zterminal::local_scene::Availability::Live || result.availability==zterminal::local_scene::Availability::Cached) {
+        if(!request.interval_ns || result.first_bar!=request.first_bar || result.candles.size()!=request.visible_bars || result.first_bar>result.total_bars || result.candles.size()>result.total_bars-result.first_bar) return false;
+        for(size_t i=0;i<result.candles.size();++i) {
+            auto& c=result.candles[i]; auto index=result.first_bar+i;
+            if(index>(UINT64_MAX-request.start_ns)/request.interval_ns || c.open_time_ns!=request.start_ns+index*request.interval_ns || c.volume<0 || c.low_ticks>std::min(c.open_ticks,c.close_ticks) || c.high_ticks<std::max(c.open_ticks,c.close_ticks) || c.low_ticks>c.high_ticks) return false;
+        }
+    }
     local_availability = result.availability;
     local_diagnostic = result.diagnostic;
     local_total_bars = result.total_bars == 0 ? result.retained_bars : result.total_bars;
@@ -818,12 +1053,15 @@ bool apply_local_scene_result(
     chart_source = ChartSource::LocalScene;
     active_local_scene_request = request;
     chart_candles.reserve(result.candles.size());
+    price_origin=result.candles.empty()?0:result.candles.front().low_ticks;
+    verified_scene={}; chart_view.logical_first=-1; chart_view.logical_count=0;
     for (const zterminal::local_scene::Candle& candle : result.candles) {
         chart_candles.push_back({
-            .open = static_cast<double>(candle.open_ticks),
-            .high = static_cast<double>(candle.high_ticks),
-            .low = static_cast<double>(candle.low_ticks),
-            .close = static_cast<double>(candle.close_ticks),
+            .open = zterminal::chart::tick_delta(candle.open_ticks,price_origin),
+            .high = zterminal::chart::tick_delta(candle.high_ticks,price_origin),
+            .low = zterminal::chart::tick_delta(candle.low_ticks,price_origin),
+            .close = zterminal::chart::tick_delta(candle.close_ticks,price_origin),
+            .time_ns=candle.open_time_ns,.volume=candle.volume,.open_ticks=candle.open_ticks,.high_ticks=candle.high_ticks,.low_ticks=candle.low_ticks,.close_ticks=candle.close_ticks,
         });
     }
     chart_view.visible = std::min(chart_view.visible, chart_candles.size());
@@ -1307,10 +1545,10 @@ void write_startup_status(const char* stage, long result_code) {
     output << "}\n";
 }
 
-void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
+void write_diagnostics(const Renderer& native_renderer, double launch_ms, std::optional<std::filesystem::path> destination = {}) {
     wchar_t app_data[MAX_PATH]{};
     const DWORD app_data_length = GetEnvironmentVariableW(L"LOCALAPPDATA", app_data, MAX_PATH);
-    const std::filesystem::path root = app_data_length > 0 && app_data_length < MAX_PATH
+    const std::filesystem::path root = destination ? destination->parent_path() : app_data_length > 0 && app_data_length < MAX_PATH
         ? std::filesystem::path(app_data) / L"ZTerminal" / L"logs"
         : std::filesystem::temp_directory_path() / L"ZTerminal" / L"logs";
     std::error_code error;
@@ -1322,7 +1560,7 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     memory.cb = sizeof(memory);
     const bool has_memory = GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&memory), sizeof(memory)) != FALSE;
     const FrameSummary frames = native_renderer.frame_summary();
-    std::ofstream output(root / "phase0-host-last.json", std::ios::trunc);
+    std::ofstream output(destination.value_or(root / "phase0-host-last.json"), std::ios::trunc);
     if (!output) {
         return;
     }
@@ -1347,6 +1585,17 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
     output << "  \"local_monte_carlo_horizon_bars\": " << local_monte_carlo_result.horizon_bars << ",\n";
     output << "  \"local_monte_carlo_median_return_bps\": " << local_monte_carlo_result.median_return_bps << ",\n";
     output << "  \"fixture_candles\": " << chart_candles.size() << ",\n";
+    output << "  \"visible_candles\": " << effective_view(chart_view).count << ",\n";
+#ifdef ZT_NATIVE_CHART_LIBRARY
+    auto semantic=zterminal::native_chart::semantic_viewport();
+    output << "  \"semantic_from_ms\": " << semantic.first << ",\n";
+    output << "  \"semantic_to_ms\": " << semantic.second << ",\n";
+#endif
+    output << "  \"client_physical_width\": " << native_renderer.pixel_width() << ",\n";
+    output << "  \"client_physical_height\": " << native_renderer.pixel_height() << ",\n";
+    output << "  \"projection_scale\": " << chart_scale << ",\n";
+    output << "  \"geometry_samples\": " << native_renderer.geometry_summary().count << ",\n";
+    output << "  \"geometry_p95_ms\": " << native_renderer.geometry_summary().p95_ms << ",\n";
     output << "  \"benchmark_unsynchronised_present\": " << (unsynchronised_benchmark_present ? "true" : "false") << ",\n";
     output << "  \"benchmark_resize_once\": " << (benchmark_resize_once ? "true" : "false") << ",\n";
     output << "  \"driver\": \"" << (native_renderer.used_warp() ? "warp" : "hardware") << "\",\n";
@@ -1378,11 +1627,16 @@ void write_diagnostics(const Renderer& native_renderer, double launch_ms) {
 
 } // namespace
 
+#ifndef ZT_NATIVE_CHART_LIBRARY
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_command) {
     const auto process_started = Clock::now();
     write_startup_status("starting", 0);
     select_chart_source(command_line);
     chart_view.visible = std::min<std::size_t>(600, chart_candles.size());
+    if(chart_source==ChartSource::FixtureDiagnostic) {
+        auto requested=unsigned_option_value(command_line,L"--benchmark-visible=");
+        if(requested && *requested>0 && *requested<=kMaximumVisibleCandles)chart_view.visible=std::min<size_t>(size_t(*requested),chart_candles.size());
+    }
     chart_view.first = chart_candles.empty() ? 0 : chart_candles.size() - chart_view.visible;
 
     WNDCLASS window_class{};
@@ -1477,3 +1731,161 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR command_line, int show_
     renderer = nullptr;
     return static_cast<int>(message.wParam);
 }
+#else
+namespace zterminal::native_chart {
+namespace {
+std::unique_ptr<Renderer> composed_renderer;
+std::optional<std::filesystem::path> evidence_destination;
+unsigned viewport_width{1};
+}
+bool initialize(HWND owner, AttachSwapChain attach, const wchar_t* arguments) {
+    if (!attach || composed_renderer) return false;
+    select_chart_source(const_cast<wchar_t*>(arguments ? arguments : L""));
+    auto evidence=option_value(const_cast<wchar_t*>(arguments ? arguments : L""),L"--chart-evidence=");
+    evidence_destination=evidence?std::optional<std::filesystem::path>(*evidence):std::nullopt;
+    chart_view.visible = std::min<std::size_t>(600, chart_candles.size());
+    chart_view.first = chart_candles.empty() ? 0 : chart_candles.size() - chart_view.visible;
+    composed_renderer = std::make_unique<Renderer>();
+    if (!composed_renderer->initialize(owner, std::move(attach))) {
+        composed_renderer.reset();
+        return false;
+    }
+    renderer = composed_renderer.get();
+    return true;
+}
+void shutdown() {
+    if(composed_renderer&&evidence_destination)write_diagnostics(*composed_renderer,0,evidence_destination);
+    renderer = nullptr; composed_renderer.reset(); evidence_destination.reset();
+}
+bool resize(unsigned width, unsigned height) {
+    if (!composed_renderer || width == 0 || height == 0) return false;
+    viewport_width = width;
+    cancel_drag();
+    if (!composed_renderer->resize(width, height)) return false;
+    advance_chart_view_revision();
+    render_requested=true;
+    return true;
+}
+void render(bool verify_pixels) {
+    if (!composed_renderer) return;
+    composed_renderer->render(chart_candles, chart_view, chart_scene_revision,
+        chart_view_revision, force_chart_vertex_rebuild, false, verify_pixels);
+    force_chart_vertex_rebuild = false;
+    render_requested=false;
+}
+bool needs_render() { return render_requested; }
+std::optional<RasterSnapshot> capture_raster() {
+    std::optional<RasterSnapshot> raster;
+    if (composed_renderer) composed_renderer->render(chart_candles, chart_view, chart_scene_revision,
+        chart_view_revision, force_chart_vertex_rebuild, false, false, &raster);
+    return raster;
+}
+void set_scale(double scale) { if(composed_renderer) composed_renderer->set_scale(scale); render_requested=true; }
+void configure(const Appearance& value) {chart_appearance=value;advance_chart_view_revision();render_requested=true;}
+bool scale_available(){return !composed_renderer||composed_renderer->valid_projection(chart_candles,chart_view);}
+bool available() { return chart_source != ChartSource::Unavailable && scale_available(); }
+std::wstring availability_text() {
+    if(!scale_available())return L"PRICE SCALE UNAVAILABLE · use normal scale for non-positive prices or a zero percentage base";
+    if (chart_source == ChartSource::FixtureDiagnostic) return L"DIAGNOSTIC SYNTHETIC DATA";
+    return local_scene::availability_label(local_availability);
+}
+std::wstring diagnostic() { return local_diagnostic; }
+void pointer_move(int x, int y) {
+    if(chart_view.cursor.x==x && chart_view.cursor.y==y && chart_view.has_cursor && !chart_view.dragging) return;
+    chart_view.cursor = {x, y};
+    chart_view.has_cursor = true;
+    if (chart_view.dragging && !chart_candles.empty()) {
+        auto bounds=composed_renderer->interaction_bounds(chart_candles,chart_view); auto v=effective_view(chart_view);
+        double shift=(chart_view.drag_start_x-x)*v.count/std::max(1.0,bounds.second-bounds.first);
+        chart_view.logical_first=std::clamp(chart_view.drag_logical_first+shift,0.0,std::max(0.0,double(chart_candles.size())-v.count));
+    }
+    advance_chart_view_revision();
+    render_requested=true;
+}
+void pointer_leave() { chart_view.has_cursor = false; advance_chart_view_revision(); render_requested=true; }
+bool begin_drag(int x) {
+    if(!composed_renderer||!chart_view.has_cursor||!composed_renderer->contains_data_point(chart_candles,chart_view,x,chart_view.cursor.y))return false;
+    chart_view.dragging = true; chart_view.drag_start_x = x; chart_view.drag_start_first = chart_view.first; chart_view.drag_logical_first=effective_view(chart_view).first; return true;
+}
+void end_drag() { chart_view.dragging = false; }
+void cancel_drag() { if(chart_view.dragging) { chart_view.logical_first=chart_view.drag_logical_first; chart_view.dragging=false; advance_chart_view_revision(); render_requested=true; } }
+void zoom(int delta) {
+    if(!composed_renderer || chart_candles.empty() || !delta)return;
+    cancel_drag(); auto v=effective_view(chart_view); auto bounds=composed_renderer->interaction_bounds(chart_candles,chart_view);
+    double fraction=chart_view.has_cursor ? (chart_view.cursor.x-bounds.first)/std::max(1.0,bounds.second-bounds.first):.5;
+    auto result=chart::zoom_at(v,fraction,std::clamp(v.count*std::pow(.8,double(delta)/120),1.0,double(std::min(kMaximumVisibleCandles,chart_candles.size()))),double(chart_candles.size()));
+    chart_view.logical_first=result.first; chart_view.logical_count=result.count;
+    advance_chart_view_revision();
+    render_requested=true;
+}
+void fit() { if(chart_candles.empty())return; cancel_drag(); chart_view.logical_count=double(std::min(kMaximumVisibleCandles,chart_candles.size())); chart_view.logical_first=double(chart_candles.size())-chart_view.logical_count; advance_chart_view_revision(); render_requested=true; }
+void navigate(unsigned key) {
+    if(verified_scene.version!=2) { if(composed_renderer)navigate_local_scene(nullptr,key); render_requested=true; return; }
+    cancel_drag(); auto v=effective_view(chart_view); auto maximum=std::max(0.0,double(chart_candles.size())-v.count);
+    if(key==VK_HOME)v.first=0; else if(key==VK_END)v.first=maximum;
+    else if(key==VK_LEFT||key==VK_PRIOR)v.first=std::max(0.0,v.first-(key==VK_LEFT?1:v.count*.5));
+    else if(key==VK_RIGHT||key==VK_NEXT)v.first=std::min(maximum,v.first+(key==VK_RIGHT?1:v.count*.5)); else return;
+    chart_view.logical_first=v.first; advance_chart_view_revision(); render_requested=true;
+}
+bool select_verified_scene(const chart::Scene& s,uint64_t expected,const std::string& instrument,const std::string& hash,uint64_t dataset_revision) {
+    if(!chart::valid_scene(s,expected)||s.instrument!=instrument||s.hash!=hash||s.dataset_revision!=dataset_revision) return false;
+    if(verified_scene.version==2 && s.workspace_id==verified_scene.workspace_id && s.revision<verified_scene.revision)return false;
+    auto bars=chart::available_bars(s); std::vector<ChartCandle> converted;
+    auto origin=bars.empty()?0:bars.front().low;
+    for(auto b:bars) {
+        auto o=chart::tick_delta(b.open,origin),h=chart::tick_delta(b.high,origin),l=chart::tick_delta(b.low,origin),c=chart::tick_delta(b.close,origin);
+        if(std::max({std::abs(o),std::abs(h),std::abs(l),std::abs(c)})>9007199254740991.0) return false;
+        converted.push_back({o,h,l,c,b.time_ns,b.volume,b.open,b.high,b.low,b.close});
+    }
+    cancel_drag(); verified_scene=s; price_origin=origin; chart_candles=std::move(converted); active_local_scene_request.reset();
+    chart_source=chart_candles.empty()?ChartSource::Unavailable:ChartSource::LocalScene; local_availability=chart_candles.empty()?local_scene::Availability::Unavailable:local_scene::Availability::Cached;
+    // Open a readable recent range; explicit Fit history still shows the bounded full range.
+    chart_view.logical_count=double(std::min<size_t>(100,chart_candles.size())); chart_view.logical_first=double(chart_candles.size())-chart_view.logical_count;
+    chart_view.visible=size_t(chart_view.logical_count); chart_view.first=size_t(chart_view.logical_first); chart_view.has_cursor=false;
+    advance_chart_scene_revision(); advance_chart_view_revision(); render_requested=true; return true;
+}
+std::pair<int64_t,int64_t> semantic_viewport() {
+    if(chart_candles.empty()||!verified_scene.interval_ns)return {0,0}; auto v=effective_view(chart_view);
+    auto time_at=[](double logical) {
+        const auto index=std::min(size_t(logical),chart_candles.size()-1);
+        const auto start=chart_candles[index].time_ns;
+        const auto end=index+1<chart_candles.size()?chart_candles[index+1].time_ns:start+verified_scene.interval_ns;
+        // ChartDocumentV3 stores milliseconds. Keep absolute nanoseconds in the
+        // scene and interpolate real adjacent timestamps before quantization.
+        return int64_t(std::llround((static_cast<long double>(start)+(logical-index)*static_cast<long double>(end-start))/1000000.0L));
+    };
+    return {time_at(v.first),time_at(v.first+v.count)};
+}
+bool restore_viewport(int64_t from,int64_t to) {
+    if(chart_candles.empty()||!verified_scene.interval_ns||from<0||to<=from)return false;
+    auto logical_at=[](int64_t ms) {
+        auto converted=chart::ms_to_ns(uint64_t(ms)); if(!converted)return -1.0;
+        auto ns=*converted;
+        if(ns<chart_candles.front().time_ns||ns>chart_candles.back().time_ns+verified_scene.interval_ns)return -1.0;
+        auto next=std::upper_bound(chart_candles.begin(),chart_candles.end(),ns,[](uint64_t t,const ChartCandle& b){return t<b.time_ns;});
+        auto index=size_t(next-chart_candles.begin()-1); auto start=chart_candles[index].time_ns;
+        auto end=next==chart_candles.end()?start+verified_scene.interval_ns:next->time_ns;
+        return double(index)+double(ns-start)/double(end-start);
+    };
+    double first=logical_at(from),end=logical_at(to),count=end-first;
+    if(first<0||count<1||count>kMaximumVisibleCandles||first+count>double(chart_candles.size())+.00001)return false;
+    chart_view.logical_first=first; chart_view.logical_count=count; advance_chart_view_revision(); render_requested=true; return true;
+}
+std::wstring readout() {
+    if(chart_candles.empty())return L"No available observations";
+    auto range=semantic_viewport(); auto summary=L"Verified imported history · "+std::to_wstring(chart_candles.size())+L" bars · viewport UTC ms "+std::to_wstring(range.first)+L" to "+std::to_wstring(range.second);
+    if(composed_renderer) {
+        summary+=L" · Last visible close "+composed_renderer->last_visible_price(chart_candles,chart_view);
+        auto pointer=composed_renderer->pointer_readout(chart_candles,chart_view); if(!pointer.empty())summary+=L" · "+pointer;
+    }
+    return summary;
+}
+bool select_scene(const local_scene::Request& request, const local_scene::Result& result) {
+    if (!apply_local_scene_result(request, result)) return false;
+    chart_view.visible = std::min<std::size_t>(600, chart_candles.size());
+    chart_view.first = chart_candles.empty() ? 0 : chart_candles.size() - chart_view.visible;
+    advance_chart_view_revision();
+    return true;
+}
+}
+#endif

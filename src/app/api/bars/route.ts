@@ -1,74 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateBars } from "@/lib/market/mock-provider";
-import {
-  GATEIO_REST_URL,
-  gateCandleToBar,
-  isGateioTimeframe,
-  normalizeBars,
-  normalizeGateioSymbol,
-} from "@/lib/market/gateio";
+import { fetchGateioHistoricalBars, isGateioTimeframe, normalizeGateioSymbol } from "@/lib/market/gateio";
+import { fetchBinanceHistoricalBars } from "@/lib/market/binance";
+import { chartHistoryRange, normalizeChartBars } from "@/lib/market/chart-data";
+import { alignToTimeframe } from "@/lib/market/session";
 import { fetchBybitHistoricalBars } from "@/lib/market/bybit";
-import { fetchCoinbaseHistoricalBars } from "@/lib/market/coinbase";
 import { fetchOkxHistoricalBars } from "@/lib/market/okx";
 import { getContract } from "@/lib/market/contracts";
-import { TIMEFRAME_SECONDS, type Bar, type Timeframe } from "@/lib/market/types";
+import { fetchInstrument } from "@/lib/market/instrument";
+import { TIMEFRAME_SECONDS, type Bar, type ContractMetadata, type Timeframe } from "@/lib/market/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const MAX_BARS = 1_000;
 const CACHE_TTL_MS = 15_000;
-const cache = new Map<string, { expiresAt: number; payload: unknown }>();
+const cache = new Map<string, { expiresAt: number; payload: Record<string, unknown> }>();
 
-const BINANCE_REST_URL = process.env.BINANCE_FUTURES_REST_URL ?? "https://fapi.binance.com";
-
-function parseBinanceBar(raw: unknown): Bar {
-  if (!Array.isArray(raw) || raw.length < 6) throw new Error("invalid Binance candle response");
-  const values = raw.slice(0, 6).map(Number);
-  if (!values.every(Number.isFinite)) throw new Error("invalid Binance candle values");
-  const [openTime, open, high, low, close, volume] = values;
-  if (openTime <= 0 || high < low || volume < 0) throw new Error("invalid Binance candle range");
-  return { t: openTime, o: open, h: high, l: low, c: close, v: volume };
-}
-
-function cacheResponse(key: string, payload: unknown) {
+function cacheResponse(key: string, payload: Record<string, unknown>) {
   cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
   if (cache.size > 200) {
     const oldest = cache.keys().next().value;
     if (oldest) cache.delete(oldest);
   }
-}
-
-async function fetchFromBinance(symbol: string, timeframe: Timeframe, limit: number): Promise<Bar[]> {
-  const cleanSymbol = symbol.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const formattedSymbol = cleanSymbol.endsWith("USDT") ? cleanSymbol : `${cleanSymbol}USDT`;
-  const url = new URL(`${BINANCE_REST_URL}/fapi/v1/klines`);
-  url.searchParams.set("symbol", formattedSymbol);
-  url.searchParams.set("interval", timeframe);
-  url.searchParams.set("limit", String(limit));
-
-  const response = await fetch(url, { headers: { Accept: "application/json" }, next: { revalidate: 0 } });
-  if (!response.ok) throw new Error(`Binance returned ${response.status}`);
-  const raw = await response.json();
-  if (!Array.isArray(raw)) throw new Error("invalid Binance response");
-  return raw.map(parseBinanceBar).sort((a, b) => a.t - b.t);
-}
-
-async function fetchFromGateio(symbolInput: string, timeframe: Timeframe, limit: number): Promise<Bar[]> {
-  const symbol = normalizeGateioSymbol(symbolInput) ?? "BTC_USDT";
-  const url = new URL(`${GATEIO_REST_URL}/futures/usdt/candlesticks`);
-  url.searchParams.set("contract", symbol);
-  url.searchParams.set("interval", timeframe);
-  url.searchParams.set("limit", String(limit));
-
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 0 },
-  });
-  if (!response.ok) throw new Error(`Gate.io returned ${response.status}`);
-  const raw = await response.json();
-  if (!Array.isArray(raw)) throw new Error("invalid Gate.io response");
-  return normalizeBars(raw.map(gateCandleToBar)).slice(-limit);
 }
 
 const SUPPORTED_PROVIDERS = ["gateio", "binance", "bybit", "coinbase", "okx", "mock"] as const;
@@ -77,120 +31,135 @@ type ProviderName = (typeof SUPPORTED_PROVIDERS)[number];
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams;
   const requestedProvider = (search.get("provider")?.toLowerCase() || "gateio") as ProviderName;
-  const requestedSymbol = search.get("symbol") || "BTCUSDT";
+  const requestedSymbol = search.get("symbol") ?? "";
   const timeframe = (search.get("tf") || "5m") as Timeframe;
   const requestedBars = Number(search.get("bars") ?? 500);
   const barsCount = Number.isFinite(requestedBars) ? Math.max(1, Math.min(MAX_BARS, Math.floor(requestedBars))) : 500;
 
+  const unavailable = (error: string, status = 422) => NextResponse.json({ symbol: requestedSymbol, requestedProvider, selectedProvider: requestedProvider, effectiveProvider: null, environment: requestedProvider === "mock" ? "simulation" : "live", dataStatus: "UNAVAILABLE", sourceTimestamp: null, integrity: "unavailable", reason: error, error }, { status, headers: { "Cache-Control": "no-store" } });
+  if (!SUPPORTED_PROVIDERS.includes(requestedProvider)) return unavailable("Unsupported provider");
+  if (requestedProvider !== "mock" && (!normalizeGateioSymbol(requestedSymbol) || requestedProvider === "coinbase")) return unavailable("No verified USDT perpetual mapping for this instrument and provider. Spot and tokenized products are distinct markets.");
+
   if (!isGateioTimeframe(timeframe)) {
-    return NextResponse.json({ error: "unsupported timeframe" }, { status: 400 });
+    return unavailable("unsupported timeframe", 400);
   }
+
+  const cutoff = Number(search.get("to") ?? Date.now());
+  if (!Number.isSafeInteger(cutoff) || cutoff <= 0 || cutoff > Date.now()) return unavailable("Invalid or future historical cutoff");
+  let range;
+  try { range = chartHistoryRange(cutoff, barsCount, timeframe); } catch (error) { return unavailable(error instanceof Error ? error.message : "Invalid historical range"); }
+  const interval = TIMEFRAME_SECONDS[timeframe] * 1000;
 
   // Handle Mock simulation explicitly if requested
   if (requestedProvider === "mock") {
     const symbol = requestedSymbol.toUpperCase();
-    const contract = getContract(symbol);
+    let contract;
+    try { contract = getContract(symbol); } catch { return unavailable("Unknown mock instrument"); }
     if (!contract || !TIMEFRAME_SECONDS[timeframe]) {
       return NextResponse.json({ error: "unknown mock symbol" }, { status: 400 });
     }
-    const to = Number(search.get("to") ?? Date.now());
-    const from = to - barsCount * TIMEFRAME_SECONDS[timeframe] * 1_000;
+    const { from, lastOpen: to } = range;
+    const bars = normalizeChartBars(generateBars(symbol, timeframe, from, to));
+    const retrievedAt = Date.now();
     return NextResponse.json({
       symbol,
       timeframe,
       provider: "mock",
+      selectedProvider: "mock",
+      effectiveProvider: "mock",
+      nativeSymbol: contract.symbol,
+      canonicalSymbol: contract.product === "perpetual" ? `${contract.root}${contract.currency}` : contract.symbol,
+      cache: "network",
+      retrievedAt,
+      sourceTimestamp: bars.at(-1)?.t ?? null,
+      requestedFrom: from, requestedTo: cutoff, requestedCount: barsCount, gapCount: 0, hasOpenCandle: to + interval > retrievedAt, volumeUnit: "simulated",
+      integrity: "simulated",
+      reason: "Explicit simulation selected",
+      contract: { ...contract, verified: false },
+      timestampUnit: "ms",
       environment: "simulation",
       dataStatus: "SIMULATED",
       from,
       to,
-      bars: generateBars(symbol, timeframe, from, to),
+      bars,
     });
   }
 
-  const cacheKey = `${requestedProvider}:${requestedSymbol}:${timeframe}:${barsCount}`;
+  const cacheKey = `${requestedProvider}:${requestedSymbol}:${timeframe}:${barsCount}:${cutoff}`;
   const cached = cache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
-    return NextResponse.json(cached.payload);
+    return NextResponse.json({ ...cached.payload, cache: "server" });
   }
 
-  // Order of providers to try (starting with the user-selected one, followed by fallbacks)
-  const providerSequence: ProviderName[] = [
-    requestedProvider,
-    "bybit",
-    "gateio",
-    "binance",
-    "okx",
-    "coinbase",
-  ].filter((v, i, a) => a.indexOf(v) === i) as ProviderName[];
+  // A different venue is a different instrument identity, not a transparent retry.
+  const providerSequence: ProviderName[] = [requestedProvider];
 
   let lastError: Error | null = null;
   let successfulBars: Bar[] | null = null;
   let effectiveProvider = requestedProvider;
+  let contract: ContractMetadata | null = null;
 
   for (const prov of providerSequence) {
     try {
+      const fetcher = (url: string | URL, init?: RequestInit) => fetch(url, { ...init, signal: AbortSignal.any([request.signal, AbortSignal.timeout(20000)]) });
+      const verified = await fetchInstrument(prov, requestedSymbol, request.signal);
       if (prov === "bybit") {
-        successfulBars = await fetchBybitHistoricalBars(requestedSymbol, timeframe, barsCount);
+        successfulBars = await fetchBybitHistoricalBars(verified.symbol, timeframe, range.from, range.lastOpen, fetcher);
         effectiveProvider = "bybit";
+        contract = verified;
         break;
       } else if (prov === "gateio") {
-        successfulBars = await fetchFromGateio(requestedSymbol, timeframe, barsCount);
+        successfulBars = await fetchGateioHistoricalBars(verified.symbol, timeframe, range.from, range.lastOpen, fetcher);
         effectiveProvider = "gateio";
+        contract = verified;
         break;
       } else if (prov === "binance") {
-        successfulBars = await fetchFromBinance(requestedSymbol, timeframe, barsCount);
+        successfulBars = await fetchBinanceHistoricalBars(verified.symbol, timeframe, range.from, range.lastOpen, fetcher);
         effectiveProvider = "binance";
+        contract = verified;
         break;
       } else if (prov === "okx") {
-        successfulBars = await fetchOkxHistoricalBars(requestedSymbol, timeframe, barsCount);
+        successfulBars = await fetchOkxHistoricalBars(verified.symbol, timeframe, range.from, range.lastOpen, fetcher);
         effectiveProvider = "okx";
-        break;
-      } else if (prov === "coinbase") {
-        successfulBars = await fetchCoinbaseHistoricalBars(requestedSymbol, timeframe, barsCount);
-        effectiveProvider = "coinbase";
+        contract = verified;
         break;
       }
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      // continue to next provider in failover sequence
+      // The selected instrument remains unavailable; no other venue is substituted.
     }
   }
 
-  if (!successfulBars || successfulBars.length === 0) {
-    // If all live providers fail (e.g. offline environment), fallback gracefully to synthetic mock
-    const fallbackContract = getContract(requestedSymbol);
-    if (fallbackContract) {
-      const to = Date.now();
-      const from = to - barsCount * (TIMEFRAME_SECONDS[timeframe] || 300) * 1_000;
-      const bars = generateBars(requestedSymbol, timeframe, from, to);
-      const payload = {
-        symbol: requestedSymbol,
-        requestedSymbol,
-        timeframe,
-        provider: "mock",
-        environment: "simulation",
-        dataStatus: "FAILOVER_SIMULATED",
-        from,
-        to,
-        bars,
-      };
-      return NextResponse.json(payload);
-    }
-
-    return NextResponse.json(
-      { error: lastError?.message || "Market data temporarily unavailable across all providers" },
-      { status: 503 }
-    );
+  if (successfulBars) successfulBars = normalizeChartBars(successfulBars).filter(bar => bar.t >= range.from && bar.t < cutoff);
+  if (successfulBars?.some(bar => alignToTimeframe(bar.t, timeframe) !== bar.t)) return unavailable("Provider candle alignment does not match the UTC timeframe", 503);
+  if (!successfulBars || successfulBars.length === 0 || !contract) {
+    return unavailable(lastError?.message || "Selected venue has no candle coverage in the requested range", 503);
   }
 
+  const retrievedAt = Date.now();
   const payload = {
     symbol: requestedSymbol,
     requestedSymbol,
     timeframe,
     provider: effectiveProvider,
     requestedProvider,
+    selectedProvider: requestedProvider,
+    effectiveProvider,
+    nativeSymbol: contract.symbol,
+    canonicalSymbol: `${contract.root}${contract.currency}`,
+    cache: "network",
+    retrievedAt,
+    sourceTimestamp: successfulBars.at(-1)?.t ?? null,
+    integrity: "provider-ohlcv",
+    reason: successfulBars.length < range.expected ? "Partial historical coverage; absent candles are not filled" : "Historical OHLCV does not establish a live subscription",
+    requestedFrom: range.from, requestedTo: cutoff, requestedCount: barsCount,
+    gapCount: range.expected - successfulBars.length,
+    hasOpenCandle: successfulBars.some(bar => bar.t + interval > retrievedAt),
+    volumeUnit: effectiveProvider === "gateio" || effectiveProvider === "okx" ? "contracts" : "base",
+    contract,
+    timestampUnit: "ms",
     environment: "live",
-    dataStatus: "LIVE",
+    dataStatus: "HISTORICAL",
     from: successfulBars[0]?.t ?? null,
     to: successfulBars.at(-1)?.t ?? null,
     bars: successfulBars,
@@ -199,7 +168,7 @@ export async function GET(request: NextRequest) {
   cacheResponse(cacheKey, payload);
   return NextResponse.json(payload, {
     headers: {
-      "Cache-Control": "public, max-age=10, s-maxage=30, stale-while-revalidate=60",
+      "Cache-Control": "no-store",
     },
   });
 }

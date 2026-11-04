@@ -36,6 +36,7 @@ export class BinanceOrderBook {
   private pending: BinanceBookDelta[] = [];
   private sequence = 0;
   private ready = false;
+  private snapshot: BinanceBookSnapshot | null = null;
 
   isReady() {
     return this.ready;
@@ -51,27 +52,34 @@ export class BinanceOrderBook {
     this.pending = [];
     this.sequence = 0;
     this.ready = false;
+    this.snapshot = null;
   }
 
   apply(delta: BinanceBookDelta): boolean {
+    try {
     this.assertDelta(delta);
     if (!this.ready) {
       this.pending.push(delta);
-      if (this.pending.length > 4_000) this.pending.splice(0, this.pending.length - 4_000);
+      if (this.snapshot) this.bootstrap(this.snapshot);
+      if (this.pending.length > 4_000) throw new Error("Binance book bootstrap overflow; resynchronize");
       return true;
     }
     if (delta.u <= this.sequence) return true;
     // Binance USDⓈ-M diff-depth explicitly supplies `pu`, the final update ID of
     // the preceding event. Event ranges can advance by more than one ID, so after
     // the first snapshot bridge `pu` is the authoritative continuity check.
-    if (delta.pu !== this.sequence) return false;
+    if (delta.pu !== this.sequence) { this.reset(); this.pending.push(delta); return false; }
     this.applyLevels(this.bids, delta.b);
     this.applyLevels(this.asks, delta.a);
+    this.assertUncrossed();
     this.sequence = delta.u;
     return true;
+    } catch (error) { this.reset(); throw error; }
   }
 
   bootstrap(snapshot: BinanceBookSnapshot): boolean {
+    try {
+    this.snapshot = snapshot;
     if (!Number.isInteger(snapshot.lastUpdateId)) throw new Error("invalid Binance snapshot sequence");
     this.bids.clear();
     this.asks.clear();
@@ -80,7 +88,7 @@ export class BinanceOrderBook {
     this.sequence = snapshot.lastUpdateId;
     this.ready = false;
 
-    const start = this.pending.findIndex((delta) => delta.U <= snapshot.lastUpdateId + 1 && delta.u >= snapshot.lastUpdateId + 1);
+    const start = this.pending.findIndex((delta) => delta.U <= snapshot.lastUpdateId && delta.u >= snapshot.lastUpdateId);
     if (start < 0) return false;
 
     const bridged = this.pending.slice(start);
@@ -89,8 +97,10 @@ export class BinanceOrderBook {
     if (!first) return false;
     this.applyLevels(this.bids, first.b);
     this.applyLevels(this.asks, first.a);
+    this.assertUncrossed();
     this.sequence = first.u;
     this.ready = true;
+    this.snapshot = null;
 
     for (const delta of bridged) {
       if (!this.apply(delta)) {
@@ -99,9 +109,11 @@ export class BinanceOrderBook {
       }
     }
     return true;
+    } catch (error) { this.reset(); throw error; }
   }
 
   levels(limit = 100): BinanceBookLevel[] {
+    if (!this.ready) return [];
     const bids = [...this.bids.entries()]
       .sort(([left], [right]) => right - left)
       .slice(0, limit)
@@ -114,6 +126,7 @@ export class BinanceOrderBook {
   }
 
   bestQuote() {
+    if (!this.ready) return null;
     const bid = [...this.bids.entries()].sort(([left], [right]) => right - left)[0];
     const ask = [...this.asks.entries()].sort(([left], [right]) => left - right)[0];
     if (!bid || !ask) return null;
@@ -126,9 +139,15 @@ export class BinanceOrderBook {
     }
   }
 
+  private assertUncrossed() {
+    const bid = Math.max(...this.bids.keys()), ask = Math.min(...this.asks.keys());
+    if (bid >= ask) throw new Error("crossed Binance order book");
+  }
+
   private applyLevels(target: Map<number, number>, levels: readonly [string, string][]) {
     for (const [rawPrice, rawSize] of levels) {
       const price = decimal(rawPrice);
+      if (price <= 0) throw new Error("invalid Binance order-book price");
       const size = decimal(rawSize);
       if (size === 0) target.delete(price);
       else target.set(price, size);
