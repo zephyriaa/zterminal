@@ -1,24 +1,8 @@
 use std::sync::Mutex;
 use tauri::{State, WebviewWindow};
-use zt_workstation_local::{ChartBar, Import, ShellPreferences, Store, Summary, Workspace};
+use zt_workstation_local::{ChartBar, Import, Store, Summary, Workspace};
 
 pub struct LocalState(pub Mutex<Result<Store, String>>);
-
-#[tauri::command]
-pub fn get_shell_preferences(
-    window: WebviewWindow,
-    state: State<'_, LocalState>,
-) -> Result<ShellPreferences, String> {
-    with_store(window, state, |s| s.preferences())
-}
-#[tauri::command]
-pub fn save_shell_preferences(
-    window: WebviewWindow,
-    state: State<'_, LocalState>,
-    preferences: ShellPreferences,
-) -> Result<ShellPreferences, String> {
-    with_store(window, state, |s| s.save_preferences(preferences))
-}
 
 fn with_store<T>(
     window: WebviewWindow,

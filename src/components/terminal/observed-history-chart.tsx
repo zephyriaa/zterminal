@@ -1,21 +1,34 @@
 "use client";
-import { useMemo } from "react";
-import { DEFAULT_CHART_SETTINGS, TerminalChart } from "./terminal-chart";
-import { TIMEFRAME_SECONDS, type Bar, type Timeframe } from "@/lib/market/types";
+import { useEffect, useRef } from "react";
+import { CandlestickSeries, ColorType, createChart, type Time, type UTCTimestamp } from "lightweight-charts";
+import type { Bar } from "@/lib/market/types";
 
-const indicators = { vwap: false, ema20: false, ema50: false, volume: false };
-
-/** Desktop adapter to ZTerminal's web chart engine; Rust supplies verified history. */
-export function LocalHistoryChart({ bars, symbol, intervalMs, from, to, onRange, gridPercent = 7 }: {
-  bars: Bar[]; symbol: string; intervalMs: number; from: number | null; to: number | null;
-  onRange: (from: number, to: number) => void; gridPercent?: number;
+/** Shared chart surface; callers supply observed history through their platform adapter. */
+export function LocalHistoryChart({ bars, from, to, onRange }: {
+  bars: Bar[]; from: number | null; to: number | null;
+  onRange: (from: number, to: number) => void;
 }) {
-  const timeframe = Object.entries(TIMEFRAME_SECONDS).find(([, seconds]) => seconds * 1000 === intervalMs)?.[0] as Timeframe | undefined;
-  const focusRange = useMemo(() => from != null && to != null ? { from, to } : null, [from, to]);
-  const settings = useMemo(() => ({ ...DEFAULT_CHART_SETTINGS, futureBars: 0, gridOpacity: gridPercent / 100, backgroundColor: "#0b0a10", candleUpColor: "#34d399", candleDownColor: "#fb7185", candleWickUpColor: "#34d399", candleWickDownColor: "#fb7185", showCandleBorders: false }), [gridPercent]);
-  const appearance = useMemo(() => ({ fontFamily: "Geist Mono", fontSize: 10, axisText: "#a8a2b5", gridColor: `rgba(181,162,232,${gridPercent / 100})` }), [gridPercent]);
-  if (!timeframe) return <p role="alert">Unsupported stored chart interval. No timeframe substitution performed.</p>;
-  return <div className="local-chart" role="img" aria-label="Imported historical candlestick chart. Drag to pan; mouse wheel to zoom.">
-    <TerminalChart dataMode="local" symbol={symbol} timeframe={timeframe} chartType="candles" snapshot={bars} focusRange={focusRange} settings={settings} appearance={appearance} indicators={indicators} timezone="UTC" onVisibleRangeChange={onRange} />
-  </div>;
+  const container = useRef<HTMLDivElement>(null);
+  const interacting = useRef(false);
+  const callback = useRef(onRange);
+  useEffect(() => { callback.current = onRange; }, [onRange]);
+  useEffect(() => {
+    if (!container.current || !bars.length) return;
+    interacting.current = false;
+    const chart = createChart(container.current, {
+      autoSize: true,
+      layout: { background: { type: ColorType.Solid, color: "#10151e" }, textColor: "#aeb9cb", attributionLogo: true },
+      grid: { vertLines: { color: "#1b2533" }, horzLines: { color: "#1b2533" } },
+      timeScale: { timeVisible: true, secondsVisible: false },
+    });
+    chart.addSeries(CandlestickSeries, { upColor: "#51c4a8", downColor: "#ef7c86", borderVisible: false, wickUpColor: "#51c4a8", wickDownColor: "#ef7c86" })
+      .setData(bars.map(b => ({ time: b.t / 1000 as UTCTimestamp, open: b.o, high: b.h, low: b.l, close: b.c })));
+    if (from != null && to != null) chart.timeScale().setVisibleRange({ from: from / 1000 as Time, to: to / 1000 as Time });
+    else chart.timeScale().fitContent();
+    chart.timeScale().subscribeVisibleTimeRangeChange(range => {
+      if (interacting.current && range && typeof range.from === "number" && typeof range.to === "number" && range.from < range.to) callback.current(range.from * 1000, range.to * 1000);
+    });
+    return () => chart.remove();
+  }, [bars, from, to]);
+  return <div ref={container} className="local-chart" role="img" aria-label="Imported historical candlestick chart. Drag to pan; mouse wheel to zoom." onPointerDownCapture={() => { interacting.current = true; }} onWheelCapture={() => { interacting.current = true; }} />;
 }

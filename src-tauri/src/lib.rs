@@ -21,9 +21,7 @@ pub fn run() {
             commands::create_workspace,
             commands::save_workspace,
             commands::import_history,
-            commands::load_scene,
-            commands::get_shell_preferences,
-            commands::save_shell_preferences
+            commands::load_scene
         ])
         .run(tauri::generate_context!())
         .expect("failed to run ZTerminal local workstation");

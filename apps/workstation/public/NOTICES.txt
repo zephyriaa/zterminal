@@ -1,4 +1,0 @@
-Geist Sans and Geist Mono: exact saved V2 WOFF2 assets (unchanged), copyright/license in geist-OFL.txt.
-Upstream license source: https://github.com/vercel/geist-font/blob/main/OFL.txt (retrieved 2026-10-11).
-Bundled application fonts do not require a network fetch. Other dependency notices/SBOM are a distribution milestone requirement.
-ZTerminal mark: existing saved project V2 brand asset, unchanged.

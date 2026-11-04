@@ -15,8 +15,6 @@
 
 These are routine implementation choices under the governing specification and EX-M1-01, not approved new designs. No materially different design is accepted. Any later material redesign must first be prepared in Penpot for review.
 
-User steering: reuse ZTerminal's existing engines, including charting and backtesting; do not introduce competing outsourced engines. The desktop now adapts the web `TerminalChart` component in local mode. Web defaults retain their provider path; local mode mounts no stream hook, fetches no history, and suppresses live-only overlays. Existing web code itself uses Lightweight Charts as its rendering dependency; reuse does not claim that dependency was removed. Dataset identity/range persistence still belong to the existing Rust Store. Research engine reuse is a required M4 review, not authorization to enable or rebuild backtesting in M1.
-
 ## Gate boundaries and deferred decisions
 
 D01–D04 block original visual/state/menu approval only where evidence is absent. D12 shell ownership/material/density resolution above proceeds provisionally; override hierarchy and remaining pages are M2/M5. D17 uses declared logical client captures and simulated raster DPR separately from native OS capture; OS 100/150/200% parity remains unresolved until measured. D02 historical diagnostics defect is superseded; comparison Spot/Futures details belong to M5.
