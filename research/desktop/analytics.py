@@ -5,6 +5,17 @@ import pandas as pd
 
 VERSION = "1.0.0"
 
+def daily_returns(equity, initial, from_ms, to_ms):
+    """Complete UTC daily account returns, including the initial-capital boundary."""
+    daily = equity.resample("1D").last().dropna()
+    returns = daily.pct_change(fill_method=None)
+    if from_ms % 86_400_000 == 0 and len(returns):
+        returns.iloc[0] = daily.iloc[0] / initial - 1
+    start = pd.Timestamp(from_ms, unit="ms", tz="UTC").ceil("D")
+    end = pd.Timestamp(to_ms, unit="ms", tz="UTC").floor("D")
+    returns = returns[(returns.index >= start) & (returns.index < end)].dropna()
+    return [{"time": int(t.value // 1_000_000), "return": float(value)} for t, value in returns.items() if math.isfinite(value)]
+
 def metric(value, reason="Undefined for this sample"):
     return {"value": float(value)} if value is not None and math.isfinite(float(value)) else {"value": None, "reason": reason}
 
@@ -41,6 +52,7 @@ def report(equity, initial, trades, from_ms, to_ms, exposure):
         "volatility": metric(std * math.sqrt(365) if valid_risk else None, risk_reason),
         "downsideVolatility": metric(downside * math.sqrt(365) if valid_risk else None, risk_reason),
         "calmar": metric(cagr / max_dd if cagr is not None and max_dd > 0 else None),
+        "returnToMaxDrawdown": metric((final / initial - 1) / max_dd if max_dd > 0 else None, "Drawdown is zero"),
         "totalTrades": metric(len(closed)), "openTrades": metric(len(trades) - len(closed)),
         "winners": metric(len(wins)), "losers": metric(len(losses)),
         "winRate": metric(len(wins) / len(closed) if closed else None, "No closed trades"),
@@ -95,15 +107,15 @@ def _drawdown(equity, dd, start, trough, recovery):
             "depth": float(dd[trough]), "durationMs": time(end) - time(start)}
 
 def monte_carlo(result, simulations=1000, seed=42):
-    if not isinstance(simulations, int) or not 100 <= simulations <= 5000:
-        raise ValueError("Simulations must be between 100 and 5,000")
+    if not isinstance(simulations, int) or not 100 <= simulations <= 20000:
+        raise ValueError("Simulations must be between 100 and 20,000")
     if not isinstance(seed, int) or not 0 <= seed <= 4294967295:
         raise ValueError("Seed must be an unsigned 32-bit integer")
     returns = np.array([t["accountReturn"] for t in result["trades"] if t["status"] == "closed"], dtype=float)
     if len(returns) < 2:
         raise ValueError("At least two closed trades are required for bootstrap analysis")
-    if len(returns) * simulations > 10_000_000:
-        raise ValueError("Reduce simulations: this sample exceeds the 10 million observation budget")
+    if len(returns) * simulations > 50_000_000:
+        raise ValueError("Reduce simulations: this sample exceeds the 50 million observation budget")
     if not np.isfinite(returns).all() or (returns <= -1).any():
         raise ValueError("Bootstrap requires finite returns greater than -100%")
     rng = np.random.default_rng(seed)
