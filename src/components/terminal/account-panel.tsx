@@ -11,6 +11,7 @@ import {
   Cloud,
   CloudOff,
   Database,
+  Download,
   Edit2,
   Image as ImageIcon,
   Loader2,
@@ -20,6 +21,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Trash2,
   Upload,
   UserRound,
   X,
@@ -83,6 +85,30 @@ export function AccountPanel({
   const [profileSuccessMsg, setProfileSuccessMsg] = useState<string | null>(null);
   const [profileErrorMsg, setProfileErrorMsg] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<"preset" | "upload" | "url">("preset");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const handleRequestDeletion = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setIsDeletingAccount(true);
+    try {
+      const res = await fetch("/api/user/profile", { method: "DELETE" });
+      if (res.ok) {
+        await signOut({ callbackUrl: "/" });
+      } else {
+        setProfileErrorMsg("Failed to complete account erasure. Please try again.");
+        setConfirmDelete(false);
+      }
+    } catch {
+      setProfileErrorMsg("Network error during erasure request.");
+      setConfirmDelete(false);
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
 
   const panelRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -518,6 +544,44 @@ export function AccountPanel({
               </div>
             </form>
           )}
+
+          {/* Privacy & Statutory Data Rights (GDPR Art. 17 & 20 / CCPA §1798.100) */}
+          <div className="mt-3 pt-3 border-t border-border/60 space-y-2">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="font-semibold text-muted-foreground uppercase tracking-wider">
+                Privacy &amp; Data Rights
+              </span>
+              <span className="font-mono text-muted-foreground/80">GDPR / CCPA</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href="/api/user/export"
+                download
+                className="flex-1 py-1.5 px-2.5 rounded border border-border hover:bg-surface text-[10.5px] font-medium text-foreground flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Download className="w-3 h-3 text-accent" />
+                Export My Data
+              </a>
+              <button
+                type="button"
+                onClick={() => void handleRequestDeletion()}
+                disabled={isDeletingAccount}
+                className="py-1.5 px-2.5 rounded border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-[10.5px] font-medium text-red-400 flex items-center justify-center gap-1 transition-colors"
+              >
+                {isDeletingAccount ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3 h-3" />
+                )}
+                {confirmDelete ? "Confirm Deletion" : "Delete Account"}
+              </button>
+            </div>
+            {confirmDelete && (
+              <p className="text-[9.5px] text-red-400 bg-red-950/40 border border-red-500/20 rounded p-1.5 leading-snug">
+                Warning: Permanent erasure of your account, cloud workspaces, and records. Click Confirm Deletion to proceed.
+              </p>
+            )}
+          </div>
         </div>
       ) : (
         /* Unauthenticated: Clean, Single Google Login */

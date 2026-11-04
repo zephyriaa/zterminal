@@ -1,0 +1,204 @@
+.legalPage {
+  position: relative;
+  overflow-x: hidden;
+  background: var(--public-bg);
+  min-height: 100vh;
+  color: var(--public-ink);
+}
+
+.legalPage > :global(.backgroundField) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.legalContainer {
+  position: relative;
+  z-index: 1;
+  max-width: var(--public-max-reading, 840px);
+  margin: 0 auto;
+  padding: calc(var(--public-header-height, 60px) + 48px) var(--public-gutter) 120px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--public-font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--public-lilac);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.breadcrumbLink {
+  color: var(--public-muted);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.breadcrumbLink:hover {
+  color: var(--public-ink);
+}
+
+.legalHeader {
+  margin-bottom: 48px;
+  border-bottom: 1px solid var(--public-line-soft);
+  padding-bottom: 32px;
+}
+
+.legalTitle {
+  font-family: var(--public-font-sans), sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--public-ink);
+  margin: 0 0 16px;
+}
+
+.legalSubtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--public-copy);
+  margin: 0 0 16px;
+}
+
+.legalMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-family: var(--public-font-mono), monospace;
+  font-size: 12px;
+  color: var(--public-muted);
+}
+
+.legalContent {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--public-copy);
+}
+
+.legalContent h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--public-ink);
+  margin: 40px 0 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--public-line-subtle);
+  letter-spacing: -0.01em;
+}
+
+.legalContent h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--public-lilac);
+  margin: 24px 0 12px;
+}
+
+.legalContent p {
+  margin: 0 0 16px;
+}
+
+.legalContent ul,
+.legalContent ol {
+  margin: 0 0 20px;
+  padding-left: 24px;
+}
+
+.legalContent li {
+  margin-bottom: 8px;
+}
+
+.legalContent a {
+  color: var(--public-lilac);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legalContent a:hover {
+  color: white;
+}
+
+.legalTableWrapper {
+  overflow-x: auto;
+  margin: 24px 0 32px;
+  border: 1px solid var(--public-line-soft);
+  border-radius: var(--public-radius);
+  background: var(--public-surface-card);
+}
+
+.legalTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+
+.legalTable th {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 16px;
+  font-family: var(--public-font-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--public-muted);
+  border-bottom: 1px solid var(--public-line-soft);
+}
+
+.legalTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--public-line-subtle);
+  color: var(--public-copy);
+}
+
+.legalTable tr:last-child td {
+  border-bottom: none;
+}
+
+.calloutBox {
+  background: var(--public-surface-card);
+  border: 1px solid var(--public-line);
+  border-left: 3px solid var(--public-lilac);
+  border-radius: var(--public-radius);
+  padding: 18px 22px;
+  margin: 24px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.calloutWarning {
+  border-left-color: var(--public-amber);
+  background: var(--public-amber-bg);
+}
+
+.actionRow {
+  display: flex;
+  gap: 12px;
+  margin: 28px 0;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--public-radius);
+  background: var(--public-surface-raised);
+  border: 1px solid var(--public-line);
+  color: var(--public-ink);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.actionButton:hover {
+  background: var(--public-glass-bg-hover);
+  border-color: var(--public-glass-border-focus);
+  color: white;
+}

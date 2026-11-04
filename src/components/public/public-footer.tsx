@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { CookiePreferencesButton } from "./cookie-preferences-button";
 import styles from "./public-shared.module.css";
 
 export function PublicFooter() {
@@ -86,6 +87,24 @@ export function PublicFooter() {
           </div>
 
           <div className={styles.footerCol}>
+            <p className={styles.footerColHeading}>LEGAL &amp; PRIVACY</p>
+            <ul className={styles.footerColList}>
+              <li>
+                <Link href="/privacy">Privacy Policy</Link>
+              </li>
+              <li>
+                <Link href="/terms">Terms of Service</Link>
+              </li>
+              <li>
+                <Link href="/cookies">Cookie Policy</Link>
+              </li>
+              <li>
+                <CookiePreferencesButton />
+              </li>
+            </ul>
+          </div>
+
+          <div className={styles.footerCol}>
             <p className={styles.footerColHeading}>SYSTEM</p>
             <ul className={styles.footerColList}>
               <li>
@@ -120,7 +139,7 @@ export function PublicFooter() {
           <p className={styles.disclaimer}>
             Decision-support software. Market data streams can be delayed or incomplete. Backtest
             simulations are hypothetical models subject to parameter sensitivity and execution friction,
-            not guarantees of future financial outcomes.
+            not guarantees of future financial outcomes (CFTC Rule 4.41).
           </p>
         </div>
       </div>

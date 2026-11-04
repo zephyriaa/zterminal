@@ -73,6 +73,33 @@ export async function PATCH(request: NextRequest) {
   } catch { return unavailable(); }
 }
 
+export async function DELETE(request: NextRequest) {
+  if (!isSameOriginMutation(request)) {
+    return NextResponse.json({ code: "INVALID_ORIGIN", message: "Open ZTerminal to request account erasure." }, { status: 403 });
+  }
+  try {
+    const session = await verifiedServerSession();
+    const userId = (session?.user as { id?: string } | undefined)?.id;
+    if (!userId) {
+      return NextResponse.json({ code: "AUTH_REQUIRED", message: "Sign in with a verified account to delete account." }, { status: 401 });
+    }
+
+    // GDPR Article 17 / CCPA §1798.105 Right to Erasure:
+    // Delete user's owned workspaces first, then cascade-delete the user identity record.
+    await db.$transaction(async (tx) => {
+      await tx.workspace.deleteMany({ where: { ownerId: userId } });
+      await tx.user.delete({ where: { id: userId } });
+    });
+
+    return NextResponse.json({
+      ok: true,
+      message: "Account and associated personal data erased successfully in accordance with GDPR Article 17 and CCPA.",
+    });
+  } catch {
+    return unavailable();
+  }
+}
+
 function unavailable() {
   return NextResponse.json({ code: "ACCOUNT_UNAVAILABLE", message: "Your account is temporarily unavailable. Try again shortly." }, { status: 503 });
 }

@@ -384,13 +384,19 @@
   box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
 }
 
-/* 4-Column Architectural Grid */
+/* 5-Column Architectural Grid */
 .footerColumns {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(24px, 4vw, 56px);
+  grid-template-columns: repeat(5, 1fr);
+  gap: clamp(20px, 3.2vw, 48px);
   padding: 44px 0;
   border-bottom: 1px solid var(--public-line-subtle);
+}
+
+@media (max-width: 960px) {
+  .footerColumns {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .footerCol {
@@ -427,6 +433,24 @@
 }
 
 .footerColList a:hover {
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.footerButton {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--public-copy);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: color var(--public-fast) var(--public-ease),
+              transform var(--public-fast) var(--public-ease);
+}
+
+.footerButton:hover {
   color: #ffffff;
   transform: translateX(2px);
 }

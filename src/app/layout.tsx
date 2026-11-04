@@ -5,6 +5,7 @@ import "@/components/terminal/terminal-glass.css";
 import "@/components/terminal/terminal-motion.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { CookieConsentBanner } from "@/components/public/cookie-consent-banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <CookieConsentBanner />
         </ThemeProvider>
       </body>
     </html>
